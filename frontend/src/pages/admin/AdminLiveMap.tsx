@@ -1,64 +1,101 @@
-import React, { useEffect, useState } from 'react';
-import { IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonBadge } from '@ionic/react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import { io } from 'socket.io-client';
+import React, { useState, useEffect } from 'react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonIcon, IonBadge, IonToast, IonSpinner } from '@ionic/react';
+import { locateOutline, refreshOutline, bicycleOutline, carOutline, personOutline } from 'ionicons/icons';
 import './AdminLiveMap.css';
 
-// Custom Markers
-const carIcon = new L.Icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', iconSize: [35, 35] });
-const bikeIcon = new L.Icon({ iconUrl: 'https://cdn-icons-png.flaticon.com/512/3418/3418139.png', iconSize: [35, 35] });
+interface User {
+  id: string;
+  name: string;
+  role: string;
+  lat: number;
+  lng: number;
+  lastSeen: string;
+}
 
 const AdminLiveMap: React.FC = () => {
-  const [drivers, setDrivers] = useState<any[]>([]);
-  const socket = io('http://localhost:5000');
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
   useEffect(() => {
-    // 1. Fetch initial active drivers
-    fetch('http://localhost:5000/api/admin/active-drivers')
-      .then(res => res.json())
-      .then(data => setDrivers(data));
-
-    // 2. Listen for Live Updates
-    socket.on('driver_location_update', (updatedDriver) => {
-      setDrivers(prev => {
-        const index = prev.findIndex(d => d.id === updatedDriver.id);
-        if (index !== -1) {
-          const newDrivers = [...prev];
-          newDrivers[index] = updatedDriver;
-          return newDrivers;
-        }
-        return [...prev, updatedDriver];
-      });
-    });
-
-    return () => { socket.disconnect(); };
+    getRealLocation();
+    loadDemoUsers();
   }, []);
+
+  const getRealLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          setError('GPS not available. Showing demo data.');
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+  };
+
+  const loadDemoUsers = () => {
+    setUsers([
+      { id: '1', name: 'Driver 1', role: 'driver', lat: (userLocation?.lat || 0.3136) + 0.01, lng: (userLocation?.lng || 32.5811) + 0.01, lastSeen: 'Now' },
+      { id: '2', name: 'Motorist 1', role: 'motorist', lat: (userLocation?.lat || 0.3136) - 0.01, lng: (userLocation?.lng || 32.5811) - 0.01, lastSeen: '2 min ago' },
+      { id: '3', name: 'Rider 1', role: 'rider', lat: (userLocation?.lat || 0.3136) + 0.005, lng: (userLocation?.lng || 32.5811) - 0.005, lastSeen: '5 min ago' },
+    ]);
+    setLoading(false);
+  };
+
+  const getRoleIcon = (role: string) => {
+    if (role === 'driver') return carOutline;
+    if (role === 'motorist') return bicycleOutline;
+    return personOutline;
+  };
 
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar className="admin-toolbar">
-          <IonButtons slot="start"><IonBackButton defaultHref="/admin/dashboard" /></IonButtons>
-          <IonTitle className="sora-font">Live Monitor</IonTitle>
-          <IonBadge slot="end" color="success" className="ion-margin-end">{drivers.length} Online</IonBadge>
+        <IonToolbar>
+          <IonTitle>Live Map</IonTitle>
+          <IonButton slot="end" fill="clear" onClick={() => { getRealLocation(); loadDemoUsers(); }}>
+            <IonIcon icon={refreshOutline} />
+          </IonButton>
         </IonToolbar>
       </IonHeader>
-      <IonContent>
-        <MapContainer center={[0.3476, 32.5825]} zoom={13} style={{ height: '100%', width: '100%' }}>
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-          {drivers.map(d => (
-            <Marker key={d.id} position={[d.lat, d.lng]} icon={d.type === 'car' ? carIcon : bikeIcon}>
-              <Popup>
-                <div style={{ color: 'black' }}>
-                  <strong>{d.name}</strong> <br />
-                  Status: {d.status} <br />
-                  <small>Last seen: {new Date().toLocaleTimeString()}</small>
-                </div>
-              </Popup>
-            </Marker>
+      <IonContent style={{ '--background': '#080c14', '--color': '#fff8f0' } as any}>
+        {error && <div style={{ padding: 8, background: 'rgba(232,93,117,0.2)', color: '#E85D75', textAlign: 'center', fontSize: 12 }}>{error}</div>}
+        
+        <div style={{ padding: 16 }}>
+          {userLocation ? (
+            <div style={{ background: 'linear-gradient(135deg, #1B4965, #0d2137)', borderRadius: 16, padding: 16, textAlign: 'center', marginBottom: 16 }}>
+              <IonIcon icon={locateOutline} style={{ fontSize: 40, color: '#FF6B35' }} />
+              <h3 style={{ color: '#fff' }}>Your Location</h3>
+              <p style={{ color: 'rgba(255,248,240,0.7)', fontSize: 14 }}>
+                Lat: {userLocation.lat.toFixed(4)} | Lng: {userLocation.lng.toFixed(4)}
+              </p>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: 40 }}>
+              <IonSpinner />
+              <p style={{ color: 'rgba(255,248,240,0.5)' }}>Getting your location...</p>
+            </div>
+          )}
+
+          <h3 style={{ color: '#fff', marginBottom: 12 }}>Active Users ({users.length})</h3>
+          
+          {users.map(user => (
+            <div key={user.id} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <IonIcon icon={getRoleIcon(user.role)} style={{ fontSize: 24, color: user.role === 'driver' ? '#4da6ff' : user.role === 'motorist' ? '#ffab40' : '#00e676' }} />
+              <div style={{ flex: 1 }}>
+                <strong style={{ color: '#fff' }}>{user.name}</strong>
+                <p style={{ color: 'rgba(255,248,240,0.5)', fontSize: 12, margin: 2 }}>Lat: {user.lat.toFixed(4)} Lng: {user.lng.toFixed(4)}</p>
+              </div>
+              <IonBadge color="success">{user.lastSeen}</IonBadge>
+            </div>
           ))}
-        </MapContainer>
+        </div>
+
+        <IonToast isOpen={!!error} onDidDismiss={() => setError('')} message={error} duration={3000} position="top" color="danger" />
       </IonContent>
     </IonPage>
   );

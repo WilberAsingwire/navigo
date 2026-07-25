@@ -1,28 +1,4 @@
-.admin-toolbar {
-  --background: #080808;
-  --color: #00e676;
-}
-
-/* This makes sure the map takes up the full screen minus the header */
-.leaflet-container {
-  height: 100%;
-  width: 100%;
-  background: #080808;
-}
-
-/* Customizing the Popup box for Dark Mode */
-.leaflet-popup-content-wrapper {
-  background: #111 !important;
-  color: white !important;
-  border-radius: 12px !important;
-  border: 1px solid #00e676;
-}
-
-.leaflet-popup-tip {
-  background: #111 !important;
-}
-
-.ion-margin-end {
-  margin-right: 15px;
-  font-weight: bold;
+.admin-content {
+  --background: #080c14;
+  --color: #fff8f0;
 }
