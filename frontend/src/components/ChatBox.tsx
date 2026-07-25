@@ -10,6 +10,8 @@ import {
 import { io, Socket } from 'socket.io-client';
 import './ChatBox.css';
 
+const SOCKET_URL = 'https://navigo-api.onrender.com';
+
 interface Message {
   id: string;
   text: string;
@@ -37,8 +39,6 @@ interface ChatBoxProps {
   onClose: () => void;
 }
 
-const SOCKET_URL = 'http://localhost:5000';
-
 const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -46,9 +46,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
   const [isConnected, setIsConnected] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Connect to Socket.io
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
@@ -81,7 +80,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
       }
     });
 
-    // Load previous messages
     newSocket.emit('load-messages', { rideId }, (loadedMessages: Message[]) => {
       setMessages(loadedMessages || []);
     });
@@ -93,7 +91,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
     };
   }, [rideId, currentUser.id]);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -102,7 +99,7 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
     if (!newMessage.trim() || !socket) return;
 
     const message: Message = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       text: newMessage.trim(),
       senderId: currentUser.id,
       senderName: currentUser.name,
@@ -114,8 +111,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
     socket.emit('send-message', { rideId, message });
     setMessages(prev => [...prev, message]);
     setNewMessage('');
-    
-    // Stop typing indicator
     socket.emit('typing', { rideId, userId: currentUser.id, isTyping: false });
   };
 
@@ -129,7 +124,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
         isTyping: value.length > 0 
       });
 
-      // Clear typing after 2 seconds of no input
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
         socket.emit('typing', { 
@@ -165,7 +159,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
     }
   };
 
-  // Quick reply templates
   const quickReplies = [
     'I\'m here',
     'On my way',
@@ -177,7 +170,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
 
   return (
     <div className="chat-box">
-      {/* Chat Header */}
       <div className="chat-header">
         <div className="chat-user-info">
           <IonAvatar className="chat-avatar">
@@ -206,7 +198,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
         </div>
       </div>
 
-      {/* Messages */}
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="chat-empty">
@@ -257,7 +248,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Replies */}
       <div className="quick-replies">
         {quickReplies.map((reply, index) => (
           <button 
@@ -273,7 +263,6 @@ const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undef
         ))}
       </div>
 
-      {/* Input */}
       <div className="chat-input-area">
         <IonTextarea
           className="chat-input"
