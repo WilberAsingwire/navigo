@@ -31,17 +31,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       exact={exact}
       path={path}
       render={(props) => {
-        // If guest trying to access protected route, redirect to login
         if (isGuest) {
           return <Redirect to="/login" />;
         }
 
-        // If not authenticated, redirect to login
         if (!isAuthenticated || !user) {
           return <Redirect to="/login" />;
         }
 
-        // If wrong role, redirect to their correct dashboard
         if (!allowedRoles.includes(user.role)) {
           const correctPath = `/${user.role}/home`;
           return <Redirect to={correctPath} />;
