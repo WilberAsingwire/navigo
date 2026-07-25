@@ -2,8 +2,7 @@ import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 /* --- AUTH PAGES --- */
 import Login from './pages/auth/Login';
@@ -18,15 +17,15 @@ import CustomerSavedPlaces from './pages/rider/CustomerSavedPlaces';
 import CustomerSupport from './pages/rider/CustomerSupport';
 import CustomerPayments from './pages/rider/CustomerPayments';
 import Profile from './pages/rider/Profile';
-import ActiveRide from './pages/rider/ActiveRide';          // ✅ NEW
-import RiderPayments from './pages/rider/RiderPayments';     // ✅ NEW
+import ActiveRide from './pages/rider/ActiveRide';
+import RiderPayments from './pages/rider/RiderPayments';
 
 /* --- DRIVER PAGES --- */
 import DriverHome from './pages/driver/DriverHome';
 import IncomingRequest from './pages/driver/IncomingRequest';
 import DriverEarnings from './pages/driver/DriverEarnings';
 import DriverVehicle from './pages/driver/DriverVehicle';
-import DriverDocuments from './pages/driver/DriverDocuments'; // ✅ NEW
+import DriverDocuments from './pages/driver/DriverDocuments';
 
 /* --- ADMIN PAGES --- */
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -34,7 +33,7 @@ import AdminUserReview from './pages/admin/AdminUserReview';
 import AdminSupport from './pages/admin/AdminSupport';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminLiveMap from './pages/admin/AdminLiveMap';
-import AdminApprovals from './pages/admin/AdminApprovals';   // ✅ NEW
+import AdminApprovals from './pages/admin/AdminApprovals';
 
 /* Core CSS */
 import '@ionic/react/css/core.css';
@@ -52,28 +51,32 @@ import './theme/variables.css';
 
 setupIonicReact();
 
-// Smart redirect
+// Simple auth check component
+const ProtectedContent: React.FC<{ allowedRoles: string[]; component: React.ComponentType<any> }> = ({ allowedRoles, component: Component, ...props }) => {
+  const { isAuthenticated, user, isLoading, isGuest } = useAuth();
+
+  if (isLoading) return <div className="ion-padding" style={{ color: '#fff', textAlign: 'center', marginTop: '50vh' }}>Loading...</div>;
+  if (isGuest || !isAuthenticated || !user) return <Redirect to="/login" />;
+  if (!allowedRoles.includes(user.role)) return <Redirect to={'/' + user.role + '/home'} />;
+  return <Component {...props} />;
+};
+
 const HomeRedirect: React.FC = () => {
   const savedUser = localStorage.getItem('navigo_user');
   if (savedUser) {
     try {
       const user = JSON.parse(savedUser);
-      const role = user.role || 'rider';
-      return <Redirect to={`/${role}/home`} />;
-    } catch {
-      return <Redirect to="/login" />;
-    }
+      return <Redirect to={'/' + user.role + '/home'} />;
+    } catch { return <Redirect to="/login" />; }
   }
   return <Redirect to="/login" />;
 };
 
-// Skip verification
 const SkipVerification: React.FC = () => <HomeRedirect />;
 
 const ActiveRidePlaceholder: React.FC = () => (
   <div className="ion-padding" style={{ color: '#fff', textAlign: 'center', marginTop: '30vh' }}>
     <h1>🗺️ Trip in Progress</h1>
-    <p>Active ride tracking coming soon!</p>
   </div>
 );
 
@@ -84,40 +87,45 @@ const App: React.FC = () => {
         <IonReactRouter>
           <IonRouterOutlet>
 
-           {/* --- Public Routes --- */}
-<Route exact path="/login" component={Login} />
-<Route exact path="/register" component={Register} />
-<Route exact path="/forgot-password" component={ForgotPassword} />
-<Route exact path="/verify-phone" component={SkipVerification} />
-<Route exact path="/explore" component={RideRequest} />
+            {/* Public Routes */}
+            <Route path="/login" component={Login} exact />
+            <Route path="/register" component={Register} exact />
+            <Route path="/forgot-password" component={ForgotPassword} exact />
+            <Route path="/verify-phone" component={SkipVerification} exact />
+            <Route path="/explore" component={RideRequest} exact />
 
-{/* --- Rider Routes --- */}
-<ProtectedRoute exact path="/rider/home" component={CustomerDashboard} allowedRoles={['rider', 'customer']} />
-<ProtectedRoute exact path="/rider/book" component={RideRequest} allowedRoles={['rider', 'customer']} />
-<ProtectedRoute exact path="/rider/active-ride" component={ActiveRide} allowedRoles={['rider', 'customer']} />     {/* ✅ NEW */}
-<ProtectedRoute exact path="/rider/history" component={CustomerRideHistory} allowedRoles={['rider', 'customer']} />
-<ProtectedRoute exact path="/rider/places" component={CustomerSavedPlaces} allowedRoles={['rider', 'customer']} />
-<ProtectedRoute exact path="/rider/payments" component={RiderPayments} allowedRoles={['rider', 'customer']} />     {/* ✅ NEW */}
-<ProtectedRoute exact path="/rider/support" component={CustomerSupport} allowedRoles={['rider', 'customer']} />
-<ProtectedRoute exact path="/rider/profile" component={Profile} allowedRoles={['rider', 'customer']} />
+            {/* Rider Routes */}
+            <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
+            <Route path="/rider/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
+            <Route path="/rider/active-ride" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} />} />
+            <Route path="/rider/history" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} />} />
+            <Route path="/rider/places" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} />} />
+            <Route path="/rider/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
+            <Route path="/rider/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
+            <Route path="/rider/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
 
-{/* --- Driver Routes --- */}
-<ProtectedRoute exact path="/driver/home" component={DriverHome} allowedRoles={['driver', 'motorist']} />
-<ProtectedRoute exact path="/driver/requests" component={IncomingRequest} allowedRoles={['driver', 'motorist']} />
-<ProtectedRoute exact path="/driver/earnings" component={DriverEarnings} allowedRoles={['driver', 'motorist']} />
-<ProtectedRoute exact path="/driver/vehicle" component={DriverVehicle} allowedRoles={['driver', 'motorist']} />
-<ProtectedRoute exact path="/driver/documents" component={DriverDocuments} allowedRoles={['driver', 'motorist']} /> {/* ✅ NEW */}
-<ProtectedRoute exact path="/driver/active-ride" component={ActiveRidePlaceholder} allowedRoles={['driver', 'motorist']} />
+            {/* Customer Routes (keep old paths) */}
+            <Route path="/customer/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
+            <Route path="/customer/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
 
-{/* --- Admin Routes --- */}
-<ProtectedRoute exact path="/admin/dashboard" component={AdminDashboard} allowedRoles={['admin']} />
-<ProtectedRoute exact path="/admin/approvals" component={AdminApprovals} allowedRoles={['admin']} />              {/* ✅ NEW */}
-<ProtectedRoute exact path="/admin/support" component={AdminSupport} allowedRoles={['admin']} />
-<ProtectedRoute exact path="/admin/users" component={AdminUsers} allowedRoles={['admin']} />
-<ProtectedRoute exact path="/admin/map" component={AdminLiveMap} allowedRoles={['admin']} />
+            {/* Driver Routes */}
+            <Route path="/driver/home" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} />} />
+            <Route path="/driver/requests" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={IncomingRequest} />} />
+            <Route path="/driver/earnings" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} />} />
+            <Route path="/driver/vehicle" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} />} />
+            <Route path="/driver/documents" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} />} />
+            <Route path="/driver/active-ride" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={ActiveRidePlaceholder} />} />
 
-{/* --- Default --- */}
-<Route exact path="/" component={HomeRedirect} />
+            {/* Admin Routes */}
+            <Route path="/admin/dashboard" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminDashboard} />} />
+            <Route path="/admin/approvals" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminApprovals} />} />
+            <Route path="/admin/support" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSupport} />} />
+            <Route path="/admin/users" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUsers} />} />
+            <Route path="/admin/map" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} />} />
+            <Route path="/admin/approve" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUserReview} />} />
+
+            {/* Default */}
+            <Route path="/" component={HomeRedirect} exact />
 
           </IonRouterOutlet>
         </IonReactRouter>
