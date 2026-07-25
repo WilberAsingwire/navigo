@@ -40,7 +40,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         }
 
         if (!allowedRoles.includes(user.role)) {
-          const correctPath = `/${user.role}/home`;
+          const correctPath = '/' + user.role + '/home';
           return <Redirect to={correctPath} />;
         }
 
