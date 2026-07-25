@@ -79,7 +79,7 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 
     // Validate role
-    const validRoles = ['customer', 'driver', 'motorist'];
+    const validRoles = ['rider', 'customer', 'driver', 'motorist'];
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role selected' });
     }
