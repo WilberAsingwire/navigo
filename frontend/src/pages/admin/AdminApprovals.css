@@ -1,0 +1,86 @@
+.admin-content {
+  --background: #080c14;
+  --color: #fff8f0;
+}
+
+.admin-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.admin-container h2 {
+  color: #fff8f0;
+  margin-bottom: 20px;
+}
+
+.loading-center {
+  text-align: center;
+  padding: 40px;
+  color: rgba(255, 248, 240, 0.6);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state ion-icon {
+  font-size: 64px;
+  color: #2D6A4F;
+}
+
+.empty-state p {
+  color: rgba(255, 248, 240, 0.5);
+}
+
+.driver-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 16px;
+}
+
+.driver-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.driver-header ion-avatar {
+  width: 48px;
+  height: 48px;
+}
+
+.driver-info h3 {
+  color: #fff8f0;
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.driver-docs-list {
+  background: transparent;
+  margin-bottom: 16px;
+}
+
+.driver-docs-list ion-item {
+  --background: transparent;
+  --color: rgba(255, 248, 240, 0.7);
+  font-size: 13px;
+}
+
+.driver-docs-list ion-icon {
+  color: #FF6B35;
+  font-size: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.action-buttons ion-button {
+  flex: 1;
+  font-size: 13px;
+}

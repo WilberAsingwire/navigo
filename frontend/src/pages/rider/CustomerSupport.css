@@ -1,0 +1,95 @@
+.support-bg {
+  --background: #080808;
+}
+
+.support-toolbar {
+  --background: #080808;
+  --color: white;
+}
+
+.sora-font {
+  font-weight: 800;
+}
+
+h3 {
+  color: white;
+  margin: 20px 0;
+  font-size: 1.2rem;
+}
+
+/* FAQ Accordion Styling */
+.custom-accordion {
+  background: #111;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #222;
+}
+
+.custom-accordion IonItem {
+  --background: #111;
+  --color: white;
+  --padding-start: 15px;
+}
+
+.custom-accordion [slot="content"] {
+  background: #1a1a1a;
+  color: #aaa;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Report Form Styling */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group IonLabel {
+  display: block;
+  color: #888;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.custom-input {
+  --background: #111;
+  --color: white;
+  --border-radius: 12px;
+  border: 1px solid #222;
+}
+
+/* Contact Grid Styling */
+.contact-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.contact-card {
+  background: #111;
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #222;
+}
+
+.contact-card IonIcon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.contact-card h4 {
+  margin: 0;
+  color: white;
+  font-weight: bold;
+}
+
+.contact-card p {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 5px 0 10px;
+}
+
+.whatsapp IonIcon { color: #00e676; }
+.email IonIcon { color: #4da6ff; }
+.call IonIcon { color: #ffab40; }

@@ -1,0 +1,167 @@
+.dashboard-bg {
+  --background: #080808;
+}
+
+.dashboard-toolbar {
+  --background: #080808;
+  --color: white;
+  padding-top: 10px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-greeting h2 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+
+.user-greeting p {
+  margin: 5px 0 0;
+  opacity: 0.6;
+  font-size: 0.9rem;
+}
+
+.notif-badge {
+  position: relative;
+  font-size: 1.6rem;
+}
+
+.dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #00e676;
+  border-radius: 50%;
+  border: 2px solid #080808;
+}
+
+.stat-card {
+  --background: #111111;
+  border-radius: 16px;
+  margin: 5px;
+}
+
+.stat-card h3 {
+  color: white;
+  margin: 10px 0 0;
+  font-weight: bold;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.5;
+}
+
+.book-now-btn {
+  --background: #00e676;
+  --color: #080808;
+  --border-radius: 20px;
+  height: 80px;
+}
+
+.btn-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.btn-content .text {
+  text-align: left;
+}
+
+.btn-content .title {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.btn-content .subtitle {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.section-title {
+  color: white;
+  font-size: 1.1rem;
+  margin: 20px 5px 15px;
+}
+
+.action-item {
+  text-align: center;
+}
+
+.icon-box {
+  background: #111111;
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-size: 1.5rem;
+  color: #00e676;
+}
+
+.action-item p {
+  color: white;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.promo-card {
+  --background: linear-gradient(135deg, #00e676, #00a859);
+  border-radius: 20px;
+  margin: 20px 5px;
+}
+
+.promo-card IonCardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #080808;
+}
+
+.promo-info h4 { margin: 0; font-weight: 800; }
+.promo-info p { font-size: 0.85rem; margin: 5px 0 10px; }
+
+.promo-img { font-size: 3rem; }
+
+.nearby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.view-all { color: #00e676; font-size: 0.8rem; }
+
+.driver-mini-card {
+  --background: #111111;
+  border-radius: 16px;
+  margin: 0 0 10px;
+}
+
+.driver-mini-card IonCardContent {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
+
+.mini-avatar { width: 45px; height: 45px; margin-right: 12px; }
+
+.driver-info { flex: 1; }
+.name-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.name-row h6 { margin: 0; color: white; font-weight: bold; }
+.dist { color: #00e676; font-size: 0.75rem; }
+.vehicle-row { display: flex; align-items: center; color: #666; font-size: 0.8rem; }
+.vehicle-row IonIcon { margin-right: 5px; }

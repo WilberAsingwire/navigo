@@ -1,0 +1,594 @@
+/* ============================================ */
+/* NAVIGO Ride Request Styles                   */
+/* Afro-Futurism Design Language                */
+/* ============================================ */
+
+.ride-request-content {
+  --background: #080c14;
+  --color: #fff8f0;
+}
+
+/* Step Indicator */
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px 10px;
+  background: linear-gradient(180deg, rgba(27, 73, 101, 0.3) 0%, transparent 100%);
+}
+
+.step-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.step-dot.active {
+  background: linear-gradient(135deg, #FF6B35, #E85D75);
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+  transform: scale(1.1);
+}
+
+.step-dot.completed {
+  background: #2D6A4F;
+  box-shadow: 0 0 10px rgba(45, 106, 79, 0.3);
+}
+
+.step-dot .step-icon {
+  font-size: 18px;
+}
+
+/* Location Step */
+.location-step {
+  padding: 16px;
+}
+
+.location-inputs {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.location-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.location-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pickup-dot {
+  background: #2D6A4F;
+  box-shadow: 0 0 8px rgba(45, 106, 79, 0.6);
+}
+
+.destination-dot {
+  background: #E85D75;
+  box-shadow: 0 0 8px rgba(232, 93, 117, 0.6);
+}
+
+.location-search {
+  --background: transparent;
+  --color: #fff8f0;
+  --placeholder-color: rgba(255, 248, 240, 0.5);
+  --border-radius: 8px;
+  flex: 1;
+  padding: 0;
+}
+
+.swap-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+  margin-right: 8px;
+}
+
+.swap-button {
+  --color: #FF6B35;
+  font-size: 20px;
+}
+
+/* Search Results */
+.search-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  color: rgba(255, 248, 240, 0.6);
+  justify-content: center;
+}
+
+.search-results {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.search-results ion-item {
+  --background: transparent;
+  --color: #fff8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-results ion-item h3 {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.search-results ion-item p {
+  font-size: 12px;
+  color: rgba(255, 248, 240, 0.5);
+}
+
+/* Saved Places */
+.saved-places {
+  margin-top: 16px;
+}
+
+.saved-places h4 {
+  color: rgba(255, 248, 240, 0.7);
+  font-size: 14px;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.saved-places ion-item {
+  --background: rgba(255, 255, 255, 0.05);
+  --color: #fff8f0;
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+/* Map Preview */
+.map-preview {
+  margin-top: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.map-placeholder {
+  height: 180px;
+  background: linear-gradient(135deg, rgba(27, 73, 101, 0.4), rgba(45, 106, 79, 0.3));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.map-icon {
+  font-size: 48px;
+  color: #FF6B35;
+  opacity: 0.7;
+}
+
+.map-placeholder p {
+  color: rgba(255, 248, 240, 0.6);
+  font-size: 14px;
+}
+
+/* Ride Type Step */
+.ride-type-step {
+  padding: 16px;
+}
+
+.ride-type-step h3 {
+  color: #fff8f0;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.ride-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ride-option-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.ride-option-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ride-option-card.selected {
+  background: rgba(255, 107, 53, 0.1);
+  border-color: var(--border-color, #FF6B35);
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.15);
+}
+
+.ride-option-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ride-emoji {
+  font-size: 32px;
+}
+
+.ride-info {
+  flex: 1;
+}
+
+.ride-info h4 {
+  color: #fff8f0;
+  font-size: 16px;
+  margin: 0;
+}
+
+.ride-info p {
+  color: rgba(255, 248, 240, 0.5);
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+.ride-price strong {
+  color: #FF6B35;
+  font-size: 16px;
+}
+
+.ride-option-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.ride-option-footer ion-chip {
+  --background: rgba(255, 255, 255, 0.08);
+  --color: rgba(255, 248, 240, 0.7);
+  font-size: 12px;
+}
+
+/* Payment Step */
+.payment-step {
+  padding: 16px;
+}
+
+.payment-step h3 {
+  color: #fff8f0;
+  margin: 16px 0 12px;
+  font-size: 16px;
+}
+
+.fare-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0 0 16px;
+}
+
+.fare-card h3 {
+  color: #FF6B35;
+  margin: 0 0 16px;
+}
+
+.fare-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fare-row {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 248, 240, 0.7);
+  font-size: 14px;
+}
+
+.fare-row.surge {
+  color: #E85D75;
+}
+
+.fare-row.discount {
+  color: #2D6A4F;
+}
+
+.fare-row.total {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+  color: #fff8f0;
+  font-size: 16px;
+}
+
+/* Promo Section */
+.promo-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 4px 8px;
+}
+
+.promo-input {
+  --background: transparent;
+  --color: #fff8f0;
+  flex: 1;
+}
+
+.promo-section ion-button {
+  --color: #FF6B35;
+  flex-shrink: 0;
+}
+
+/* Payment Methods */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-option.selected {
+  background: rgba(45, 106, 79, 0.15);
+  border-color: #2D6A4F;
+}
+
+.payment-option ion-icon {
+  font-size: 22px;
+  color: #FF6B35;
+}
+
+.payment-option span {
+  flex: 1;
+  color: #fff8f0;
+}
+
+.payment-option .card-last4 {
+  color: rgba(255, 248, 240, 0.5);
+  font-size: 12px;
+}
+
+.mobile-money-input {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.mobile-money-input ion-label {
+  color: rgba(255, 248, 240, 0.7);
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.mobile-money-input .phone-input {
+  --background: rgba(255, 255, 255, 0.1);
+  --color: #fff8f0;
+  border-radius: 8px;
+}
+
+.mobile-money-input ion-note {
+  color: rgba(255, 248, 240, 0.4);
+  font-size: 11px;
+  margin-top: 8px;
+  display: block;
+}
+
+/* Matching Step */
+.matching-step {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.matching-animation {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 24px;
+}
+
+.radar-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255, 107, 53, 0.2);
+  animation: radarPulse 2s ease-out infinite;
+}
+
+@keyframes radarPulse {
+  0% {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+  }
+  100% {
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+  }
+}
+
+.matching-car {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 40px;
+  color: #FF6B35;
+  animation: carBounce 1s ease-in-out infinite;
+}
+
+@keyframes carBounce {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -60%) scale(1.1); }
+}
+
+.matching-step h3 {
+  color: #fff8f0;
+  margin-bottom: 20px;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF6B35, #E85D75);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.matching-status {
+  color: rgba(255, 248, 240, 0.6);
+  font-size: 14px;
+}
+
+/* Driver Confirmed */
+.driver-confirmed {
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 64px;
+  color: #2D6A4F;
+  margin-bottom: 16px;
+  animation: scaleIn 0.5s ease;
+}
+
+@keyframes scaleIn {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.driver-confirmed h3 {
+  color: #fff8f0;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.driver-info-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.driver-info-card ion-avatar {
+  width: 56px;
+  height: 56px;
+}
+
+.driver-details h4 {
+  color: #fff8f0;
+  margin: 0;
+}
+
+.driver-details p {
+  color: rgba(255, 248, 240, 0.6);
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.driver-details .eta {
+  color: #FF6B35;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.confirm-btn {
+  --background: linear-gradient(135deg, #FF6B35, #E85D75);
+  --background-activated: linear-gradient(135deg, #E85D75, #FF6B35);
+  font-weight: 600;
+}
+
+/* Footer */
+.booking-footer {
+  background: rgba(8, 12, 20, 0.95);
+  -webkit-backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-content {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  align-items: center;
+}
+
+.next-btn {
+  --background: linear-gradient(135deg, #FF6B35, #E85D75);
+  --background-activated: linear-gradient(135deg, #E85D75, #FF6B35);
+  --background-disabled: rgba(255, 255, 255, 0.1);
+  --color-disabled: rgba(255, 248, 240, 0.3);
+  flex: 1;
+  font-weight: 600;
+  height: 48px;
+  border-radius: 12px;
+}
+
+/* Toast customization */
+ion-toast {
+  --background: rgba(27, 73, 101, 0.95);
+  --color: #fff8f0;
+  --border-radius: 12px;
+  --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}

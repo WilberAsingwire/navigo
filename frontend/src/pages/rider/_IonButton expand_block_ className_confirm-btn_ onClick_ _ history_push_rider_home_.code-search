@@ -1,0 +1,14 @@
+# Query: <IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/home')}>
+# ContextLines: 1
+
+2 results - 2 files
+
+frontend\src\pages\customer\RideRequest.tsx:
+  338                  </div>
+  339:                 <IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/home')}>
+  340                    View Ride <IonIcon icon={arrowForwardOutline} slot="end" />
+
+frontend\src\pages\rider\RideRequest.tsx:
+  338                  </div>
+  339:                 <IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/active-ride')}>
+  340                    View Ride <IonIcon icon={arrowForwardOutline} slot="end" />

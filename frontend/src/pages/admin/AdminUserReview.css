@@ -1,0 +1,68 @@
+.admin-bg {
+  --background: #080808;
+}
+
+.review-item {
+  --background: #111;
+  --color: white;
+  margin: 10px;
+  border-radius: 16px;
+  border: 1px solid #222;
+  --padding-start: 15px;
+}
+
+.review-modal {
+  --height: 70%;
+  --border-radius: 24px 24px 0 0;
+  --background: #111;
+  align-items: flex-end;
+}
+
+.modal-content {
+  background: #111;
+  height: 100%;
+  color: white;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 25px 0;
+}
+
+.info-box {
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #333;
+}
+
+.info-box IonIcon {
+  font-size: 1.5rem;
+  color: #00e676;
+  margin-bottom: 8px;
+}
+
+.info-box label {
+  display: block;
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.info-box p {
+  margin: 5px 0 0;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.action-buttons {
+  margin-top: 30px;
+}
+
+.approve-btn {
+  --border-radius: 12px;
+  height: 56px;
+  font-weight: bold;
+}

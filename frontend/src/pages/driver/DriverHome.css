@@ -1,0 +1,114 @@
+.driver-bg {
+  --background: #080808;
+}
+
+.driver-toolbar {
+  --background: #080808;
+  --color: white;
+  padding-top: 10px;
+}
+
+.status-banner {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.status-banner.online {
+  background: rgba(0, 230, 118, 0.1);
+  color: #00e676;
+}
+
+.status-banner.offline {
+  background: #1a1a1a;
+  color: #666;
+}
+
+.status-banner IonIcon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+.kpi-card {
+  --background: #111111;
+  border-radius: 16px;
+  margin: 5px;
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.trend {
+  font-size: 0.7rem;
+  color: #00e676;
+}
+
+.kpi-card h3 {
+  color: white;
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.4rem;
+}
+
+.kpi-card p {
+  margin: 5px 0 0;
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+.tool-btn {
+  --border-radius: 12px;
+  --border-color: #222;
+  --color: white;
+  margin: 5px;
+  height: 50px;
+}
+
+.trip-mini-card {
+  --background: #111111;
+  border-radius: 16px;
+  margin: 0 0 10px;
+}
+
+.trip-route {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.route-dots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+}
+
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.green { background: #00e676; }
+.dot.red { background: #ff5252; }
+.line { width: 1px; height: 20px; background: #333; }
+
+.route-names p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: white;
+  line-height: 1.8;
+}
+
+.trip-meta {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #222;
+  padding-top: 10px;
+  font-size: 0.8rem;
+}
+
+.time { color: #666; }

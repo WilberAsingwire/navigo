@@ -1,0 +1,87 @@
+.admin-bg {
+  --background: #050505; /* Slightly darker for Admin */
+}
+
+.admin-toolbar {
+  --background: #050505;
+  --color: #00e676;
+}
+
+.revenue-card {
+  --background: linear-gradient(135deg, #00e676, #00a859);
+  border-radius: 24px;
+  margin: 10px 0 20px;
+  color: #080808;
+}
+
+.rev-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rev-header p { font-weight: bold; margin: 0; opacity: 0.8; }
+
+.revenue-card h1 {
+  font-size: 2.8rem;
+  font-weight: 900;
+  margin: 15px 0;
+}
+
+.commission-box {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 15px;
+  border-radius: 16px;
+}
+
+.commission-box p { margin: 0; font-size: 0.8rem; }
+.commission-box h2 { margin: 5px 0 0; font-weight: 800; }
+.commission-box small { font-size: 0.9rem; }
+
+.admin-stat-box {
+  background: #111;
+  padding: 15px;
+  border-radius: 16px;
+  margin: 5px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #222;
+}
+
+.admin-stat-box IonIcon { font-size: 1.8rem; }
+.stat-info h3 { margin: 0; color: white; font-weight: 800; }
+.stat-info p { margin: 2px 0 0; font-size: 0.75rem; color: #666; }
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  gap: 15px;
+}
+
+.alert-item.warning { background: rgba(255, 171, 64, 0.1); color: #ffab40; }
+.alert-item.danger { background: rgba(255, 82, 82, 0.1); color: #ff5252; }
+.alert-item.success { background: rgba(0, 230, 118, 0.1); color: #00e676; }
+
+.alert-text { flex: 1; }
+.alert-text h4 { margin: 0; font-size: 0.9rem; font-weight: bold; }
+.alert-text p { margin: 3px 0 0; font-size: 0.8rem; opacity: 0.8; }
+
+.admin-btn {
+  --background: #00e676;
+  --color: #080808;
+  --border-radius: 16px;
+  height: 56px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.admin-btn-outline {
+  --border-radius: 16px;
+  --border-color: #333;
+  --color: white;
+  height: 56px;
+}

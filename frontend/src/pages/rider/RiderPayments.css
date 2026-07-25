@@ -1,0 +1,158 @@
+.payments-content {
+  --background: #080c14;
+  --color: #fff8f0;
+}
+
+.payments-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* Balance Card */
+.balance-card {
+  background: linear-gradient(135deg, #1B4965, #0d2137);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 24px;
+}
+
+.balance-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.balance-header ion-icon {
+  font-size: 24px;
+  color: #FF6B35;
+}
+
+.balance-header h3 {
+  color: rgba(255, 248, 240, 0.7);
+  margin: 0;
+  font-size: 14px;
+}
+
+.balance-amount {
+  color: #fff8f0;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 8px 0;
+}
+
+.add-funds-btn {
+  --color: #FF6B35;
+  font-size: 13px;
+}
+
+/* Payment List */
+.payments-container h3 {
+  color: #fff8f0;
+  margin-bottom: 12px;
+}
+
+.payment-list {
+  background: transparent;
+  margin-bottom: 16px;
+}
+
+.payment-item {
+  --background: rgba(255, 255, 255, 0.05);
+  --color: #fff8f0;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.payment-icon {
+  color: #FF6B35;
+  font-size: 22px;
+}
+
+.payment-item h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.payment-item p {
+  font-size: 12px;
+  color: rgba(255, 248, 240, 0.5);
+  margin: 2px 0 0;
+}
+
+/* Add Method Button */
+.add-method-btn {
+  --border-color: rgba(255, 107, 53, 0.3);
+  --color: #FF6B35;
+  --border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+/* Add Mobile Form */
+.add-mobile-form {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.add-mobile-form h4 {
+  color: #fff8f0;
+  margin: 0 0 12px;
+}
+
+.radio-item {
+  --background: transparent;
+  --color: #fff8f0;
+  font-size: 14px;
+}
+
+.mobile-input {
+  --background: rgba(255, 255, 255, 0.08);
+  --color: #fff8f0;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+
+.mobile-note {
+  display: block;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.form-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.form-buttons ion-button {
+  --border-radius: 10px;
+}
+
+/* Security Note */
+.security-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(45, 106, 79, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(45, 106, 79, 0.2);
+}
+
+.security-note ion-icon {
+  font-size: 24px;
+  color: #2D6A4F;
+  flex-shrink: 0;
+}
+
+.security-note p {
+  color: rgba(255, 248, 240, 0.5);
+  font-size: 12px;
+  margin: 0;
+}

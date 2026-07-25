@@ -1,0 +1,246 @@
+/* NAVIGO Auth Styles */
+.auth-content {
+  --background: #080c14;
+  --color: #fff8f0;
+}
+
+.auth-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-logo h1 {
+  font-size: 32px;
+  color: #FF6B35;
+  margin: 0;
+}
+
+.auth-logo p {
+  color: rgba(255, 248, 240, 0.6);
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+/* Role Segment */
+.role-segment {
+  margin-bottom: 20px;
+  --background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.role-segment ion-segment-button {
+  --color: rgba(255, 248, 240, 0.5);
+  --color-checked: #FF6B35;
+  --indicator-color: rgba(255, 107, 53, 0.15);
+  font-size: 12px;
+}
+
+.verification-notice {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.verification-notice ion-icon {
+  font-size: 24px;
+  color: #FF6B35;
+}
+
+.verification-notice p {
+  color: rgba(255, 248, 240, 0.8);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Input Fields */
+.auth-input {
+  --background: rgba(255, 255, 255, 0.05);
+  --color: #fff8f0;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.auth-input ion-icon[slot="start"] {
+  color: #FF6B35;
+  margin-right: 8px;
+}
+
+.auth-input ion-label {
+  color: rgba(255, 248, 240, 0.7) !important;
+  font-size: 12px;
+}
+
+.auth-input ion-note {
+  color: rgba(255, 248, 240, 0.4);
+  font-size: 11px;
+}
+
+.forgot-password-link {
+  text-align: right;
+  margin-bottom: 16px;
+}
+
+.forgot-password-link a {
+  color: #FF6B35;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+/* Error */
+.auth-error {
+  background: rgba(232, 93, 117, 0.15);
+  color: #E85D75;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Main Button */
+.auth-button {
+  --background: linear-gradient(135deg, #FF6B35, #E85D75);
+  --background-activated: linear-gradient(135deg, #E85D75, #FF6B35);
+  --border-radius: 12px;
+  font-weight: 600;
+  height: 48px;
+  margin-top: 8px;
+}
+
+/* Divider */
+.auth-divider {
+  margin: 24px 0;
+}
+
+.auth-divider ion-text {
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* Social Buttons */
+.social-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.social-btn {
+  --border-radius: 12px;
+  --border-color: rgba(255, 255, 255, 0.15);
+  --color: #fff8f0;
+  height: 44px;
+}
+
+.social-btn.google {
+  --background: rgba(219, 68, 55, 0.1);
+}
+
+.social-btn.facebook {
+  --background: rgba(66, 103, 178, 0.1);
+}
+
+.social-btn.github {
+  --background: rgba(255, 255, 255, 0.08);
+}
+
+/* Switch Link */
+.auth-switch {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.auth-switch a {
+  color: #FF6B35;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Guest Mode */
+.guest-mode {
+  text-align: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guest-mode ion-button {
+  --color: rgba(255, 248, 240, 0.6);
+  font-size: 14px;
+}
+
+.guest-mode ion-note {
+  font-size: 11px;
+}
+
+/* Terms */
+.terms-item {
+  --background: transparent;
+  --color: rgba(255, 248, 240, 0.6);
+  font-size: 13px;
+  margin: 8px 0;
+}
+
+.terms-label a {
+  color: #FF6B35;
+}
+
+/* Code Sent */
+.code-sent-message {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2D6A4F;
+}
+
+.code-sent-message ion-icon {
+  font-size: 40px;
+}
+
+.dev-code-box {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px dashed rgba(255, 193, 7, 0.5);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.dev-code-box p {
+  color: #FFC107;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Success */
+.success-message {
+  text-align: center;
+  padding: 30px 0;
+}
+
+.success-icon {
+  font-size: 64px;
+  color: #2D6A4F;
+  margin-bottom: 16px;
+}
+
+.success-message h2 {
+  color: #fff8f0;
+  margin: 0 0 8px;
+}
+
+.success-message p {
+  color: rgba(255, 248, 240, 0.6);
+  margin-bottom: 24px;
+}

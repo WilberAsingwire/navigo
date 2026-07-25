@@ -1,0 +1,99 @@
+.places-bg {
+  --background: #080808;
+}
+
+.places-toolbar {
+  --background: #080808;
+  --color: white;
+}
+
+.places-list {
+  background: transparent !important;
+  padding: 10px;
+}
+
+.place-item {
+  --background: #111;
+  --color: white;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid #1a1a1a;
+  --padding-start: 15px;
+}
+
+.place-icon-box {
+  background: rgba(0, 230, 118, 0.1);
+  color: #00e676;
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-right: 15px;
+}
+
+/* Modal Styling */
+.add-place-modal {
+  --height: 75%;
+  --border-radius: 24px 24px 0 0;
+  --background: #111;
+  align-items: flex-end;
+}
+
+.modal-content {
+  background: #111;
+  color: white;
+  height: 100%;
+}
+
+.input-label {
+  display: block;
+  color: #666;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.custom-input {
+  --background: #1a1a1a;
+  --border-radius: 12px;
+  --color: white;
+  border: 1px solid #333;
+}
+
+.icon-grid {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.icon-option {
+  width: 50px;
+  height: 50px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #666;
+  border: 2px solid transparent;
+  transition: 0.3s;
+}
+
+.icon-option.active {
+  border-color: #00e676;
+  color: #00e676;
+  background: rgba(0, 230, 118, 0.1);
+}
+
+.main-btn {
+  --background: #00e676;
+  --color: #080808;
+  --border-radius: 12px;
+  height: 56px;
+  font-weight: 900;
+}
