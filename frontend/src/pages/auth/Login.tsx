@@ -144,15 +144,7 @@ const Login: React.FC = () => {
               Facebook
             </IonButton>
 
-            <IonButton 
-              expand="block" 
-              fill="outline" 
-              className="social-btn github"
-              onClick={() => handleSocialLogin('github')}
-            >
-              <IonIcon icon={logoGithub} slot="start" />
-              GitHub
-            </IonButton>
+            
           </div>
 
           {/* Register Link */}
