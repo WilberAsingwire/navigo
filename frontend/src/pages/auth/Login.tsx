@@ -128,7 +128,7 @@ const Login: React.FC = () => {
               expand="block" 
               fill="outline" 
               className="social-btn google"
-              onClick={() => handleSocialLogin('google')}
+              onClick={() => window.location.href='https://navigo-fzdo.onrender.com/api/auth/google'}
             >
               <IonIcon icon={logoGoogle} slot="start" />
               Google
@@ -138,7 +138,7 @@ const Login: React.FC = () => {
               expand="block" 
               fill="outline" 
               className="social-btn facebook"
-              onClick={() => handleSocialLogin('facebook')}
+              onClick={() => window.location.href='https://navigo-fzdo.onrender.com/api/auth/facebook'}
             >
               <IonIcon icon={logoFacebook} slot="start" />
               Facebook

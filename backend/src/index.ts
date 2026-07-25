@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
@@ -11,40 +13,43 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
-// CORS - Allow all origins for now
 app.use(cors());
 app.use(express.json());
+app.use(passport.initialize());
 
-// Routes
+// Google OAuth
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    callbackURL: '/api/auth/google/callback'
+  },
+  (_accessToken, _refreshToken, profile, done) => {
+    return done(null, profile);
+  }
+));
+
+app.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+app.get('/api/auth/google/callback', passport.authenticate('google', { session: false }), (_req, res) => {
+  res.redirect(process.env.FRONTEND_URL || 'https://navigo-nu-eight.vercel.app/rider/home');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
 
-// Health check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', name: 'NAVIGO API', version: '1.0.0' });
-});
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', name: 'NAVIGO API', version: '1.0.0' }));
 
-// Socket.io
-const io = new Server(httpServer, {
-  cors: { origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] }
-});
-
+const io = new Server(httpServer, { cors: { origin: '*', methods: ['GET', 'POST'] } });
 const chatMessages: Record<string, any[]> = {};
 
 io.on('connection', (socket) => {
-  const userId = socket.handshake.query.userId as string;
-  console.log('🔌 Connected:', userId);
-
   socket.on('join-chat', ({ rideId }) => socket.join(rideId));
-  socket.on('load-messages', ({ rideId }, callback) => callback(chatMessages[rideId] || []));
+  socket.on('load-messages', ({ rideId }, cb) => cb(chatMessages[rideId] || []));
   socket.on('send-message', ({ rideId, message }) => {
     if (!chatMessages[rideId]) chatMessages[rideId] = [];
     chatMessages[rideId].push(message);
     socket.to(rideId).emit('new-message', message);
   });
-  socket.on('message-read', ({ messageId, rideId }) => socket.to(rideId).emit('message-read-confirmed', messageId));
-  socket.on('typing', ({ rideId, userId: typingUserId, isTyping }) => socket.to(rideId).emit('user-typing', { userId: typingUserId, isTyping }));
-  socket.on('disconnect', () => console.log('🔌 Disconnected:', userId));
+  socket.on('disconnect', () => {});
 });
 
 const PORT = process.env.PORT || 5000;
