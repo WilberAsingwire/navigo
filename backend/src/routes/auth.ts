@@ -295,8 +295,6 @@ router.get('/admin/pending-drivers', async (req: Request, res: Response) => {
   res.json({ count: pending.length, drivers: pending.map(sanitizeUser) });
 });
 
-// In backend/src/routes/auth.ts, update forgot-password:
-
 router.post('/forgot-password', async (req: Request, res: Response) => {
   try {
     const { phone } = req.body;
