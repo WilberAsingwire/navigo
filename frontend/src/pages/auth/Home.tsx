@@ -185,32 +185,6 @@ const Home: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* APP DOWNLOAD */}
-<div className="section app-section">
-  <h2>📱 Get the Full Experience</h2>
-  <p>Install NAVIGO on your phone for faster booking, live tracking, and exclusive rewards.</p>
-  <div className="app-buttons">
-    <div className="app-btn">
-      <span>🤖</span>
-      <div>
-        <strong>Android App</strong>
-        <p>Download .APK</p>
-      </div>
-    </div>
-    <div className="app-btn">
-      <span>🍎</span>
-      <div>
-        <strong>iOS App</strong>
-        <p>Coming Soon</p>
-      </div>
-    </div>
-  </div>
-</div>
-
-{/* FLOATING SUPPORT */}
-<div className="floating-support" onClick={() => history.push('/rider/support')}>
-  <IonIcon icon={callOutline} />
-</div>
 
         {/* FOOTER */}
         <div className="footer">

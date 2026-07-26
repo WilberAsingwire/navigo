@@ -3,7 +3,7 @@ import { Route, Redirect } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Home from './pages/auth/Home';
+<Route path="/" component={Home} exact />
 
 /* --- AUTH PAGES --- */
 import Login from './pages/auth/Login';
