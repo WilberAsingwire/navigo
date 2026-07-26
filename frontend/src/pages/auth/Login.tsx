@@ -8,7 +8,7 @@ import {
 import {
   phonePortraitOutline, lockClosedOutline, eyeOutline,
   eyeOffOutline, logInOutline, logoGoogle, logoFacebook,
-  arrowForwardOutline, fingerprintOutline, callOutline,
+  arrowForwardOutline, fingerPrintOutline, callOutline,
   informationCircleOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
@@ -141,7 +141,7 @@ const Login: React.FC = () => {
 
           {/* Biometric Hint */}
           <div style={{ textAlign: 'center', marginTop: 12 }}>
-            <IonIcon icon={fingerprintOutline} style={{ fontSize: 24, color: 'rgba(255,255,255,0.2)' }} />
+            <IonIcon icon={fingerPrintOutline} style={{ fontSize: 24, color: 'rgba(255,255,255,0.2)' }} />
             <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, margin: '4px 0 0' }}>Biometric login coming soon</p>
           </div>
 

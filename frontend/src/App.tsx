@@ -4,6 +4,7 @@ import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
 <Route path="/" component={Home} exact />
+import Home from './pages/auth/Home';
 
 /* --- AUTH PAGES --- */
 import Login from './pages/auth/Login';

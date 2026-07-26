@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle,
-  IonItem, IonInput, IonButton, IonIcon, IonSpinner, IonToast,
-  IonText, IonNote
-} from '@ionic/react';
+import { IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonItem, IonLabel, IonInput, IonButton, IonIcon, IonSpinner, IonToast, IonNote } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import {
   checkmarkCircleOutline, refreshOutline, arrowBackOutline,

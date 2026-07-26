@@ -41,7 +41,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
   const [unreadCount, setUnreadCount] = useState(0);
   const [showEmoji, setShowEmoji] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const typingTimeoutRef = useRef<any>(null);
 
   const EMOJIS = ['😊','😂','❤️','👍','🙏','🔥','🎉','😍','🤗','💪','👋','🚗','🏍️','⭐','✅','🆘'];
 
@@ -118,7 +118,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
 
   return (
     <div className="chat-box">
-      {/* HEADER */}
       <div className="chat-header">
         <div className="chat-user-info">
           <IonAvatar className="chat-avatar">
@@ -139,7 +138,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
         </div>
       </div>
 
-      {/* MESSAGES */}
       <div className="chat-messages">
         {!isConnected && <div className="chat-connecting"><IonSpinner name="crescent" /> Connecting...</div>}
         {messages.length === 0 && isConnected && (
@@ -184,14 +182,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
         <div ref={messagesEndRef} />
       </div>
 
-      {/* QUICK REPLIES */}
       <div className="quick-replies">
         {quickReplies.map((reply, i) => (
           <button key={i} className="quick-reply-btn" onClick={() => sendMessage(reply)}>{reply}</button>
         ))}
       </div>
 
-      {/* EMOJI PICKER */}
       {showEmoji && (
         <div className="emoji-picker">
           {EMOJIS.map((emoji, i) => (
@@ -200,7 +196,6 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
         </div>
       )}
 
-      {/* INPUT */}
       <div className="chat-input-area">
         <IonButton fill="clear" size="small" onClick={() => setShowEmoji(!showEmoji)}><IonIcon icon={happyOutline} /></IonButton>
         <IonButton fill="clear" size="small" onClick={shareLocation}><IonIcon icon={locationOutline} /></IonButton>
