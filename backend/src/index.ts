@@ -1,8 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
@@ -15,20 +13,6 @@ const httpServer = createServer(app);
 
 app.use(cors());
 app.use(express.json());
-app.use(passport.initialize());
-
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackURL: '/oauth/google/callback'
-  },
-  (_a: any, _r: any, profile: any, done: any) => done(null, profile)
-));
-
-app.get('/oauth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/oauth/google/callback', passport.authenticate('google', { session: false }), (_req: any, res: any) => {
-  res.redirect('https://navigo-nu-eight.vercel.app/rider/home');
-});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
