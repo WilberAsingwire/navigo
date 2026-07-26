@@ -118,6 +118,9 @@ const Login: React.FC = () => {
               <>Sign In <IonIcon icon={logInOutline} slot="end" /></>
             )}
           </IonButton>
+          <IonButton expand="block" fill="clear" size="small" onClick={() => history.push('/ussd')}>
+  📱 Book without internet? Dial *284*624#
+</IonButton>
 
           {/* Social Login */}
           <div className="auth-divider">

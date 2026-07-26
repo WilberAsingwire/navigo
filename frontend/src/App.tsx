@@ -19,6 +19,7 @@ import CustomerPayments from './pages/rider/CustomerPayments';
 import Profile from './pages/rider/Profile';
 import ActiveRide from './pages/rider/ActiveRide';
 import RiderPayments from './pages/rider/RiderPayments';
+import USSDInfo from './pages/rider/USSDInfo';
 
 /* --- DRIVER PAGES --- */
 import DriverHome from './pages/driver/DriverHome';
@@ -103,6 +104,7 @@ const App: React.FC = () => {
             <Route path="/rider/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
             <Route path="/rider/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
             <Route path="/rider/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
+<Route path="/ussd" component={USSDInfo} exact />
 
             {/* Customer Routes (keep old paths) */}
             <Route path="/customer/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />

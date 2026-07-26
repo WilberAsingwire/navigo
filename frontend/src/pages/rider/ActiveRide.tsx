@@ -14,6 +14,7 @@ import {
   checkmarkCircleOutline, walletOutline
 } from 'ionicons/icons';
 import ChatBox from '../../components/ChatBox';
+import SOSButton from '../../components/SOSButton';
 import './ActiveRide.css';
 
 const MOCK_DRIVER = {
@@ -197,10 +198,7 @@ const ActiveRide: React.FC = () => {
           )}
           {(rideStatus === 'arriving' || rideStatus === 'arrived') && (
             <>
-              <IonButton expand="block" className="safety-btn" fill="outline">
-                <IonIcon icon={shieldCheckmarkOutline} slot="start" />
-                Emergency
-              </IonButton>
+              <SOSButton userLocation={{ lat: 0.3150, lng: 32.5820 }} userName="Rider" userPhone="0770000000" />
               <IonButton expand="block" fill="clear" color="danger" size="small" onClick={() => setShowCancelModal(true)}>
                 Cancel Ride
               </IonButton>
