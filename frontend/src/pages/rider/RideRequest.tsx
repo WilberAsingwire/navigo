@@ -70,16 +70,24 @@ const RideRequest: React.FC = () => {
         async (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          setPickup({ lat, lng, address: 'Getting address...', name: '📍 Your Location' });
+          const accuracy = pos.coords.accuracy;
+          setPickup({ lat, lng, address: 'Locating you precisely...', name: '📍 Your Location' });
           try {
-            const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+            const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
+              params: { format: 'json', lat, lon: lng, zoom: 19, addressdetails: 1 },
+              headers: { 'Accept-Language': 'en' }
+            });
             const addr = res.data.display_name || '';
-            setPickup({ lat, lng, address: addr, name: '📍 ' + (res.data.address?.road || res.data.address?.suburb || addr.split(',')[0]) });
-            setPickupSearch(addr.split(',')[0]);
-          } catch { setPickup({ lat, lng, address: 'Current Location', name: '📍 Current Location' }); }
+            const street = res.data.address?.road || res.data.address?.path || res.data.address?.neighbourhood || res.data.address?.suburb || '';
+            const shortName = street || addr.split(',')[0];
+            setPickup({ lat, lng, address: addr, name: '📍 ' + shortName });
+            setPickupSearch(street || shortName);
+          } catch {
+            setPickup({ lat, lng, address: 'Your Location (' + Math.round(accuracy) + 'm accuracy)', name: '📍 Current Location' });
+          }
         },
         () => setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' }),
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
       );
     }
   };
@@ -87,8 +95,16 @@ const RideRequest: React.FC = () => {
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     try {
-      const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6&countrycodes=ug&addressdetails=1`);
-      return res.data.map((item: any) => ({ lat: parseFloat(item.lat), lng: parseFloat(item.lon), address: item.display_name }));
+      const res = await axios.get('https://nominatim.openstreetmap.org/search', {
+        params: { format: 'json', q: query, limit: 8, countrycodes: 'ug', addressdetails: 1, namedetails: 1, dedupe: 1 },
+        headers: { 'Accept-Language': 'en' }
+      });
+      return res.data.map((item: any) => ({
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon),
+        address: item.display_name,
+        name: item.namedetails?.name || item.address?.road || item.display_name.split(',')[0]
+      }));
     } catch { return []; }
   };
 
@@ -100,8 +116,8 @@ const RideRequest: React.FC = () => {
   };
 
   const selectLocation = (loc: Location) => {
-    if (searchingPickup) { setPickup(loc); setPickupSearch(loc.address.split(',')[0]); }
-    else { setDestination(loc); setDestSearch(loc.address.split(',')[0]); }
+    if (searchingPickup) { setPickup(loc); setPickupSearch(loc.name || loc.address.split(',')[0]); }
+    else { setDestination(loc); setDestSearch(loc.name || loc.address.split(',')[0]); }
     setSearchResults([]);
   };
 
@@ -115,7 +131,7 @@ const RideRequest: React.FC = () => {
     const timeFare = Math.round(dur * selectedRide.pricePerMinute);
     const surge = Math.round((base + distFare + timeFare) * (selectedRide.surgeMultiplier - 1));
     const total = Math.max(base + distFare + timeFare + surge - discount, base);
-    setFare({ distance: Math.round(dist * 10) / 10, duration: Math.round(dur), baseFare: base, distanceFare: distFare, timeFare, surgeFare: surge, totalFare: total, formattedTotal: `UGX ${total.toLocaleString()}` });
+    setFare({ distance: Math.round(dist * 10) / 10, duration: Math.round(dur), baseFare: base, distanceFare: distFare, timeFare, surgeFare: surge, totalFare: total, formattedTotal: 'UGX ' + total.toLocaleString() });
   };
 
   const applyPromo = () => {
@@ -142,11 +158,11 @@ const RideRequest: React.FC = () => {
         {step===BookingStep.LOCATION&&(
           <div className="booking-step location-step">
             <div className="location-inputs">
-              <div className="location-field"><div className="location-dot pickup-dot"/><IonSearchbar placeholder="Your pickup location" value={pickupSearch} onIonInput={e=>handleSearch(e.detail.value!,true)} onFocus={()=>setSearchingPickup(true)} className="location-search" debounce={300}/></div>
-              <div className="location-field"><div className="location-dot destination-dot"/><IonSearchbar placeholder="Where to?" value={destSearch} onIonInput={e=>handleSearch(e.detail.value!,false)} onFocus={()=>setSearchingPickup(false)} className="location-search" debounce={300}/></div>
+              <div className="location-field"><div className="location-dot pickup-dot"/><IonSearchbar placeholder="Your pickup location" value={pickupSearch} onIonInput={e=>handleSearch(e.detail.value!,true)} onFocus={()=>setSearchingPickup(true)} className="location-search" debounce={200}/></div>
+              <div className="location-field"><div className="location-dot destination-dot"/><IonSearchbar placeholder="Where to?" value={destSearch} onIonInput={e=>handleSearch(e.detail.value!,false)} onFocus={()=>setSearchingPickup(false)} className="location-search" debounce={200}/></div>
             </div>
-            {isSearching&&<div className="search-loading"><IonSpinner name="crescent"/> Searching...</div>}
-            {searchResults.length>0&&<IonList className="search-results">{searchResults.map((r,i)=><IonItem key={i} button onClick={()=>selectLocation(r)} className="search-item"><IonIcon icon={locationOutline} slot="start" color="warning"/><IonLabel className="search-label"><h3>{r.address.split(',')[0]}</h3><p>{r.address}</p></IonLabel></IonItem>)}</IonList>}
+            {isSearching&&<div className="search-loading"><IonSpinner name="crescent"/> Searching places near you...</div>}
+            {searchResults.length>0&&<IonList className="search-results">{searchResults.map((r,i)=><IonItem key={i} button onClick={()=>selectLocation(r)} className="search-item"><IonIcon icon={locationOutline} slot="start" color="warning"/><IonLabel className="search-label"><h3>{r.name||r.address.split(',')[0]}</h3><p>{r.address.split(',').slice(1,3).join(',')}</p></IonLabel></IonItem>)}</IonList>}
             {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px"/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div>}</div>}
           </div>
         )}
