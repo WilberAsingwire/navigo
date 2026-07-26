@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import {
   IonPage, IonContent, IonHeader, IonToolbar, IonTitle,
-  IonItem, IonLabel, IonInput, IonLabel, IonButton, IonIcon,
+  IonItem, IonLabel, IonInput, IonButton, IonIcon,
   IonSpinner, IonToast, IonSegment, IonSegmentButton,
   IonText, IonNote, IonCheckbox, IonProgressBar
 } from '@ionic/react';
