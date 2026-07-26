@@ -57,11 +57,11 @@ const RiderDashboard: React.FC = () => {
           <div className="header-content ion-padding-horizontal">
             <div className="user-greeting">
               <h2 className="sora-font">Hello, {userData?.name?.split(' ')[0] || user?.name || 'User'} 👋</h2>
-              <p>Ready for a trip in Kampala?</p>
+              <p>Ready for your next ride?</p>
             </div>
             <div className="header-actions">
                <IonAvatar className="header-avatar" onClick={() => history.push('/profile')}>
-                  <img src={userData?.avatar || "https://i.pravatar.cc/150?u=wilber"} alt="profile" />
+                  <img src={userData?.avatar || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.name || 'Rider') + "&background=FF6B35&color=fff&size=64"} alt="profile" />
                </IonAvatar>
             </div>
           </div>

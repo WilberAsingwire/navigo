@@ -1,81 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, 
-  IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonButton, 
-  IonModal, IonInput, useIonToast, IonFab, IonFabButton 
-} from '@ionic/react';
-import { 
-  homeOutline, briefcaseOutline, locationOutline, addOutline, 
-  trashOutline, heartOutline, restaurantOutline, checkmarkCircleOutline 
-} from 'ionicons/icons';
-import './CustomerSavedPlaces.css';
+import React, { useState } from 'react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonButton, IonInput } from '@ionic/react';
+import { homeOutline, briefcaseOutline, addCircleOutline, starOutline, locationOutline } from 'ionicons/icons';
 
-const RiderSavedPlaces: React.FC = () => {
-  const [presentToast] = useIonToast();
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [places, setPlaces] = useState<any[]>([]);
-  const [newPlace, setNewPlace] = useState({ name: '', address: '', icon: 'homeOutline' });
+const DEFAULT_PLACES = [
+  { id: 'home', name: 'Home', icon: homeOutline, address: 'Tap to set home address' },
+  { id: 'work', name: 'Work', icon: briefcaseOutline, address: 'Tap to set work address' },
+];
 
-  const fetchPlaces = async () => {
-    const res = await fetch('http://localhost:5000/api/users/places', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    });
-    setPlaces(await res.json());
-  };
+const CustomerSavedPlaces: React.FC = () => {
+  const [places, setPlaces] = useState(DEFAULT_PLACES);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [newAddress, setNewAddress] = useState('');
 
-  useEffect(() => { fetchPlaces(); }, []);
-
-  const handleSave = async () => {
-    await fetch('http://localhost:5000/api/users/places', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-      body: JSON.stringify(newPlace)
-    });
-    setShowAddModal(false);
-    fetchPlaces();
-    presentToast({ message: 'Place Saved! 📍', color: 'success', duration: 2000 });
+  const savePlace = (id: string) => {
+    setPlaces(places.map(p => p.id === id ? { ...p, address: newAddress || p.address } : p));
+    setEditing(null);
+    setNewAddress('');
   };
 
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar className="places-toolbar">
+        <IonToolbar>
           <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
-          <IonTitle className="sora-font">Saved Places</IonTitle>
+          <IonTitle>Saved Places</IonTitle>
         </IonToolbar>
       </IonHeader>
-
-      <IonContent className="places-bg">
-        <IonList lines="none" className="places-list ion-padding">
+      <IonContent style={{'--background': '#080c14', '--color': '#fff8f0'} as any} className="ion-padding">
+        <IonList style={{background: 'transparent'}}>
           {places.map(place => (
-            <IonItem key={place._id} className="place-item">
-              <div className="place-icon-box"><IonIcon icon={locationOutline} /></div>
-              <IonLabel><h2>{place.name}</h2><p>{place.address}</p></IonLabel>
-            </IonItem>
+            <div key={place.id} style={{background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, marginBottom: 10}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: 10}}>
+                <IonIcon icon={place.icon} style={{fontSize: 24, color: '#FF6B35'}} />
+                <div style={{flex: 1}}>
+                  <h3 style={{color: '#fff', margin: 0}}>{place.name}</h3>
+                  {editing === place.id ? (
+                    <IonInput value={newAddress} placeholder="Enter address" onIonInput={e => setNewAddress(e.detail.value!)} style={{color: '#fff', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '4px 8px', marginTop: 6}} />
+                  ) : (
+                    <p style={{color: 'rgba(255,248,240,0.5)', margin: '4px 0'}}>{place.address}</p>
+                  )}
+                </div>
+                {editing === place.id ? (
+                  <IonButton size="small" onClick={() => savePlace(place.id)}>Save</IonButton>
+                ) : (
+                  <IonButton size="small" fill="clear" onClick={() => { setEditing(place.id); setNewAddress(''); }}>Edit</IonButton>
+                )}
+              </div>
+            </div>
           ))}
         </IonList>
-
-        <IonFab vertical="bottom" horizontal="end" slot="fixed">
-          <IonFabButton color="success" onClick={() => setShowAddModal(true)}>
-            <IonIcon icon={addOutline} />
-          </IonFabButton>
-        </IonFab>
-
-        <IonModal isOpen={showAddModal} onDidDismiss={() => setShowAddModal(false)}>
-          <div className="ion-padding modal-content" style={{ background: '#080808', height: '100%', color: 'white' }}>
-            <h2 className="sora-font">Add New Place</h2>
-            <IonItem className="custom-input ion-margin-top" lines="none">
-              <IonInput placeholder="Name (e.g. Home)" onIonChange={e => setNewPlace({...newPlace, name: e.detail.value!})} />
-            </IonItem>
-            <IonItem className="custom-input ion-margin-top" lines="none">
-              <IonInput placeholder="Address (Plot, Street...)" onIonChange={e => setNewPlace({...newPlace, address: e.detail.value!})} />
-            </IonItem>
-            <IonButton expand="block" className="main-btn ion-margin-top" onClick={handleSave}>Save Location</IonButton>
-          </div>
-        </IonModal>
+        <IonButton expand="block" fill="outline" style={{'--color': '#FF6B35', marginTop: 16} as any}>
+          <IonIcon icon={addCircleOutline} slot="start" /> Add New Place
+        </IonButton>
       </IonContent>
     </IonPage>
   );
 };
 
-export default RiderSavedPlaces;
+export default CustomerSavedPlaces;

@@ -1,91 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, 
-  IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonBadge, 
-  IonModal, IonSegment, IonSegmentButton, IonProgressBar 
-} from '@ionic/react';
-import { IonButton } from '@ionic/react';
-import { 
-  locationOutline, carOutline, bicycleOutline, 
-  receiptOutline, chevronForwardOutline, starOutline, timeOutline 
-} from 'ionicons/icons';
-import './CustomerRideHistory.css';
+import React from 'react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonBadge } from '@ionic/react';
+import { carOutline, timeOutline, bicycleOutline } from 'ionicons/icons';
 
-const RiderRideHistory: React.FC = () => {
-  const [segment, setSegment] = useState<'all' | 'completed' | 'cancelled'>('all');
-  const [selectedRide, setSelectedRide] = useState<any>(null);
-  const [rides, setRides] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const MOCK_RIDES = [
+  { id: '1', date: 'July 25, 2026', from: 'Kampala Road', to: 'Acacia Mall', price: 'UGX 8,500', status: 'Completed', type: 'economy' },
+  { id: '2', date: 'July 24, 2026', from: 'Kololo', to: 'Ntinda', price: 'UGX 3,200', status: 'Completed', type: 'boda' },
+  { id: '3', date: 'July 22, 2026', from: 'Makerere', to: 'Wandegeya', price: 'UGX 4,100', status: 'Cancelled', type: 'economy' },
+];
 
-  useEffect(() => {
-    fetch('http://localhost:5000/api/rides/history', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-    .then(res => res.json())
-    .then(data => { setRides(data); setLoading(false); });
-  }, []);
-
-  const filteredRides = rides.filter(r => segment === 'all' || r.status === segment);
-
+const CustomerRideHistory: React.FC = () => {
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar className="history-toolbar">
+        <IonToolbar>
           <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
-          <IonTitle className="sora-font">Ride History</IonTitle>
-        </IonToolbar>
-        <IonToolbar className="history-toolbar">
-          <IonSegment value={segment} onIonChange={(e) => setSegment(e.detail.value as any)}>
-            <IonSegmentButton value="all"><IonLabel>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="completed"><IonLabel>Done</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="cancelled"><IonLabel>Cancelled</IonLabel></IonSegmentButton>
-          </IonSegment>
+          <IonTitle>Ride History</IonTitle>
         </IonToolbar>
       </IonHeader>
-
-      <IonContent className="history-bg">
-        {loading && <IonProgressBar type="indeterminate" color="success" />}
-        
-        <IonList lines="none" className="ride-list">
-          {filteredRides.map(ride => (
-            <IonItem key={ride._id} className="ride-item" onClick={() => setSelectedRide(ride)}>
-              <div className="ride-type-icon">
-                <IonIcon icon={ride.vehicleType === 'car' ? carOutline : bicycleOutline} />
-              </div>
-              <IonLabel>
-                <div className="ride-header">
-                  <h2 style={{ color: 'white' }}>{ride.destinationName}</h2>
-                  <span className="ride-price">{ride.fare.toLocaleString()} <small>UGX</small></span>
+      <IonContent style={{'--background': '#080c14', '--color': '#fff8f0'} as any} className="ion-padding">
+        {MOCK_RIDES.length === 0 ? (
+          <div style={{textAlign: 'center', marginTop: '40vh', color: 'rgba(255,248,240,0.5)'}}>
+            <IonIcon icon={carOutline} style={{fontSize: 48}} />
+            <p>No rides yet. Book your first ride!</p>
+          </div>
+        ) : (
+          <IonList style={{background: 'transparent'}}>
+            {MOCK_RIDES.map(ride => (
+              <IonItem key={ride.id} style={{'--background': 'rgba(255,255,255,0.05)', borderRadius: 12, marginBottom: 8, color: '#fff'} as any}>
+                <IonIcon icon={ride.type === 'boda' ? bicycleOutline : carOutline} slot="start" style={{color: '#FF6B35'}} />
+                <IonLabel>
+                  <h3 style={{color: '#fff'}}>{ride.from} → {ride.to}</h3>
+                  <p style={{color: 'rgba(255,248,240,0.5)'}}>{ride.date}</p>
+                </IonLabel>
+                <div style={{textAlign: 'right'}}>
+                  <strong style={{color: '#FF6B35'}}>{ride.price}</strong>
+                  <IonBadge color={ride.status === 'Completed' ? 'success' : 'danger'} style={{display: 'block', marginTop: 4}}>{ride.status}</IonBadge>
                 </div>
-                <p style={{ color: '#666' }}>{new Date(ride.createdAt).toLocaleDateString()}</p>
-              </IonLabel>
-              <IonIcon icon={chevronForwardOutline} slot="end" color="medium" />
-            </IonItem>
-          ))}
-        </IonList>
-
-        <IonModal isOpen={!!selectedRide} onDidDismiss={() => setSelectedRide(null)}>
-          {selectedRide && (
-            <div className="ion-padding modal-content" style={{ background: '#080808', height: '100%', color: 'white' }}>
-              <h2 className="sora-font" style={{ color: '#00e676' }}>Ride Summary</h2>
-              <div className="route-box ion-margin-top">
-                <p><IonIcon icon={locationOutline} color="success" /> {selectedRide.pickupName}</p>
-                <div className="route-line"></div>
-                <p><IonIcon icon={locationOutline} color="danger" /> {selectedRide.destinationName}</p>
-              </div>
-              
-              <div className="fare-breakdown ion-margin-top">
-                 <div className="fare-row"><span>Base Fare</span><span>{selectedRide.fare} UGX</span></div>
-                 <div className="fare-row total"><span>Total Paid</span><span>{selectedRide.fare} UGX</span></div>
-              </div>
-              
-              <IonButton expand="block" fill="clear" color="light" onClick={() => setSelectedRide(null)}>Close</IonButton>
-            </div>
-          )}
-        </IonModal>
+              </IonItem>
+            ))}
+          </IonList>
+        )}
       </IonContent>
     </IonPage>
   );
 };
 
-export default RiderRideHistory;
+export default CustomerRideHistory;
