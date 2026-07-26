@@ -21,44 +21,10 @@ import BodaSafeScore from '../../components/BodaSafeBadges';
 import NavigoMap from '../../components/NavigoMap';
 import './RideRequest.css';
 
-interface Location {
-  lat: number;
-  lng: number;
-  address: string;
-  name?: string;
-}
-
-interface RideOption {
-  id: string;
-  name: string;
-  description: string;
-  basePrice: number;
-  pricePerKm: number;
-  pricePerMinute: number;
-  capacity: number;
-  vehicleType: string;
-  surgeMultiplier: number;
-  color: string;
-  emoji: string;
-}
-
-interface FareEstimate {
-  distance: number;
-  duration: number;
-  baseFare: number;
-  distanceFare: number;
-  timeFare: number;
-  surgeFare: number;
-  totalFare: number;
-  formattedTotal: string;
-}
-
-enum BookingStep {
-  LOCATION = 0,
-  RIDE_TYPE = 1,
-  PAYMENT = 2,
-  MATCHING = 3
-}
+interface Location { lat: number; lng: number; address: string; name?: string; }
+interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
+interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
+enum BookingStep { LOCATION = 0, RIDE_TYPE = 1, PAYMENT = 2, MATCHING = 3 }
 
 const RIDE_OPTIONS: RideOption[] = [
   { id: 'boda', name: 'Boda Boda', description: 'Fastest • 1 passenger', basePrice: 2000, pricePerKm: 800, pricePerMinute: 100, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
@@ -68,9 +34,7 @@ const RIDE_OPTIONS: RideOption[] = [
 ];
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const R = 6371; const dLat = ((lat2 - lat1) * Math.PI) / 180; const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
@@ -78,7 +42,6 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 const RideRequest: React.FC = () => {
   const history = useHistory();
   const { isAuthenticated, isGuest } = useAuth();
-
   const [step, setStep] = useState<BookingStep>(BookingStep.LOCATION);
   const [pickup, setPickup] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
@@ -86,6 +49,7 @@ const RideRequest: React.FC = () => {
   const [destSearch, setDestSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Location[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchingPickup, setSearchingPickup] = useState(true);
   const [selectedRide, setSelectedRide] = useState(RIDE_OPTIONS[1]);
   const [fare, setFare] = useState<FareEstimate | null>(null);
   const [isMatching, setIsMatching] = useState(false);
@@ -98,13 +62,8 @@ const RideRequest: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [womenOnly, setWomenOnly] = useState(false);
 
-  useEffect(() => {
-    getCurrentLocation();
-  }, []);
-
-  useEffect(() => {
-    if (pickup && destination) calculateFare();
-  }, [pickup, destination, selectedRide, discount]);
+  useEffect(() => { getCurrentLocation(); }, []);
+  useEffect(() => { if (pickup && destination) calculateFare(); }, [pickup, destination, selectedRide, discount]);
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
@@ -124,18 +83,19 @@ const RideRequest: React.FC = () => {
     } catch { return []; }
   };
 
-  const handleSearch = async (query: string) => {
-    setDestSearch(query);
+  const handleSearch = async (query: string, isPickup: boolean = false) => {
+    if (isPickup) setPickupSearch(query); else setDestSearch(query);
+    setSearchingPickup(isPickup);
     if (query.length >= 3) {
       setIsSearching(true);
       setSearchResults(await searchLocation(query));
       setIsSearching(false);
-    }
+    } else { setSearchResults([]); }
   };
 
   const selectLocation = (loc: Location) => {
-    setDestination(loc);
-    setDestSearch(loc.address.split(',')[0]);
+    if (searchingPickup) { setPickup(loc); setPickupSearch(loc.address.split(',')[0]); }
+    else { setDestination(loc); setDestSearch(loc.address.split(',')[0]); }
     setSearchResults([]);
   };
 
@@ -149,41 +109,14 @@ const RideRequest: React.FC = () => {
     const timeFare = Math.round(dur * selectedRide.pricePerMinute);
     const surge = Math.round((base + distFare + timeFare) * (selectedRide.surgeMultiplier - 1));
     const total = Math.max(base + distFare + timeFare + surge - discount, base);
-
-    setFare({
-      distance: Math.round(dist * 10) / 10,
-      duration: Math.round(dur),
-      baseFare: base,
-      distanceFare: distFare,
-      timeFare,
-      surgeFare: surge,
-      totalFare: total,
-      formattedTotal: `UGX ${total.toLocaleString()}`
-    });
+    setFare({ distance: Math.round(dist * 10) / 10, duration: Math.round(dur), baseFare: base, distanceFare: distFare, timeFare, surgeFare: surge, totalFare: total, formattedTotal: `UGX ${total.toLocaleString()}` });
   };
 
   const handleBookRide = () => {
-    if (isGuest || !isAuthenticated) {
-      setShowLoginPrompt(true);
-      return;
-    }
-    setStep(BookingStep.MATCHING);
-    setIsMatching(true);
-    setMatchingProgress(0);
-
-    const interval = setInterval(() => {
-      setMatchingProgress(prev => {
-        if (prev >= 100) { clearInterval(interval); return 100; }
-        return prev + Math.random() * 15;
-      });
-    }, 500);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      setMatchingProgress(100);
-      setIsMatching(false);
-      setDriverFound(true);
-    }, 4000);
+    if (isGuest || !isAuthenticated) { setShowLoginPrompt(true); return; }
+    setStep(BookingStep.MATCHING); setIsMatching(true); setMatchingProgress(0);
+    const interval = setInterval(() => { setMatchingProgress(prev => { if (prev >= 100) { clearInterval(interval); return 100; } return prev + Math.random() * 15; }); }, 500);
+    setTimeout(() => { clearInterval(interval); setMatchingProgress(100); setIsMatching(false); setDriverFound(true); }, 4000);
   };
 
   const applyPromo = () => {
@@ -195,210 +128,38 @@ const RideRequest: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref={isGuest ? '/login' : '/rider/home'} />
-          </IonButtons>
-          <IonTitle>Book a Ride</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
+      <IonHeader className="ion-no-border"><IonToolbar><IonButtons slot="start"><IonBackButton defaultHref={isGuest ? '/login' : '/rider/home'} /></IonButtons><IonTitle>Book a Ride</IonTitle></IonToolbar></IonHeader>
       <IonContent className="ride-request-content">
-        <div className="step-indicator">
-          {['📍', '🚗', '💰', '🔍'].map((icon, i) => (
-            <div key={i} className={`step-dot ${i <= step ? 'active' : ''} ${i < step ? 'completed' : ''}`}>
-              <span className="step-icon">{icon}</span>
-            </div>
-          ))}
-        </div>
-
-        {isGuest && (
-          <div className="guest-banner">
-            <IonIcon icon={informationCircleOutline} />
-            <span>You're browsing as a guest. <b onClick={() => history.push('/login')} style={{cursor:'pointer',textDecoration:'underline'}}>Sign in</b> to book rides.</span>
-          </div>
-        )}
-
+        <div className="step-indicator">{['📍', '🚗', '💰', '🔍'].map((icon, i) => (<div key={i} className={`step-dot ${i <= step ? 'active' : ''} ${i < step ? 'completed' : ''}`}><span className="step-icon">{icon}</span></div>))}</div>
+        {isGuest && (<div className="guest-banner"><IonIcon icon={informationCircleOutline} /><span>You're browsing as a guest. <b onClick={() => history.push('/login')} style={{cursor:'pointer',textDecoration:'underline'}}>Sign in</b> to book rides.</span></div>)}
+        
         {step === BookingStep.LOCATION && (
           <div className="booking-step location-step">
             <div className="location-inputs">
-              <div className="location-field">
-                <div className="location-dot pickup-dot" />
-                <IonSearchbar placeholder="Pickup location" value={pickupSearch} onIonInput={e => setPickupSearch(e.detail.value!)} className="location-search" disabled />
-              </div>
-              <div className="location-field">
-                <div className="location-dot destination-dot" />
-                <IonSearchbar placeholder="Where to?" value={destSearch} onIonInput={e => handleSearch(e.detail.value!)} className="location-search" />
-              </div>
+              <div className="location-field"><div className="location-dot pickup-dot" /><IonSearchbar placeholder="Pickup location" value={pickupSearch} onIonInput={e => handleSearch(e.detail.value!, true)} onFocus={() => setSearchingPickup(true)} className="location-search" /></div>
+              <div className="location-field"><div className="location-dot destination-dot" /><IonSearchbar placeholder="Where to?" value={destSearch} onIonInput={e => handleSearch(e.detail.value!, false)} onFocus={() => setSearchingPickup(false)} className="location-search" /></div>
             </div>
-
             {isSearching && <div className="search-loading"><IonSpinner /> Searching...</div>}
-            
-            {searchResults.length > 0 && (
-              <IonList className="search-results">
-                {searchResults.map((r, i) => (
-                  <IonItem key={i} button onClick={() => selectLocation(r)}>
-                    <IonIcon icon={locationOutline} slot="start" color="primary" />
-                    <IonLabel><h3>{r.address.split(',')[0]}</h3><p>{r.address}</p></IonLabel>
-                  </IonItem>
-                ))}
-              </IonList>
-            )}
-
-           {pickup && destination && (
-  <div style={{ marginTop: 16, borderRadius: 16, overflow: 'hidden' }}>
-    <NavigoMap 
-      userLocation={{ lat: pickup.lat, lng: pickup.lng }}
-      destination={{ lat: destination.lat, lng: destination.lng }}
-      height="250px"
-      interactive={true}
-    />
-    {fare && (
-      <div style={{ textAlign: 'center', padding: '8px 0', color: '#FF6B35', fontWeight: 600, fontSize: 16 }}>
-        📍 {fare.distance} km • 🕐 ~{fare.duration} min • 💰 {fare.formattedTotal}
-      </div>
-    )}
-  </div>
-)}
+            {searchResults.length > 0 && (<IonList className="search-results">{searchResults.map((r, i) => (<IonItem key={i} button onClick={() => selectLocation(r)}><IonIcon icon={locationOutline} slot="start" color="primary" /><IonLabel><h3>{r.address.split(',')[0]}</h3><p>{r.address}</p></IonLabel></IonItem>))}</IonList>)}
+            {pickup && destination && (<div style={{ marginTop: 16, borderRadius: 16, overflow: 'hidden' }}><NavigoMap userLocation={{ lat: pickup.lat, lng: pickup.lng }} destination={{ lat: destination.lat, lng: destination.lng }} height="250px" interactive={true} />{fare && (<div style={{ textAlign: 'center', padding: '8px 0', color: '#FF6B35', fontWeight: 600, fontSize: 16 }}>📍 {fare.distance} km • 🕐 ~{fare.duration} min • 💰 {fare.formattedTotal}</div>)}</div>)}
           </div>
         )}
 
         {step === BookingStep.RIDE_TYPE && (
-          <div className="booking-step ride-type-step">
-            <h3>Choose Your Ride</h3>
-            <div className="ride-options">
-              {RIDE_OPTIONS.map(opt => {
-                const est = fare ? Math.round(opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier : null;
-                return (
-                  <div key={opt.id} className={`ride-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedRide(opt)}
-                    style={{ borderColor: selectedRide.id === opt.id ? opt.color : 'transparent' }}>
-                    <div className="ride-option-header">
-                      <span className="ride-emoji">{opt.emoji}</span>
-                      <div className="ride-info"><h4>{opt.name}</h4><p>{opt.description}</p></div>
-                      {est && <div className="ride-price"><strong>UGX {est.toLocaleString()}</strong></div>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* WOMEN PREFERRED TOGGLE */}
-            {selectedRide && (
-              <div style={{ background: 'rgba(255,105,180,0.08)', borderRadius: 12, padding: 14, marginTop: 14, border: womenOnly ? '2px solid #FF69B4' : '2px solid transparent' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 26 }}>👩</span>
-                    <div>
-                      <strong style={{ color: '#fff', fontSize: 14 }}>Women Preferred</strong>
-                      <p style={{ color: 'rgba(255,248,240,0.6)', fontSize: 11, margin: 2 }}>Match with female drivers only</p>
-                    </div>
-                  </div>
-                  <div 
-                    onClick={() => setWomenOnly(!womenOnly)}
-                    style={{ width: 52, height: 28, borderRadius: 14, background: womenOnly ? '#FF69B4' : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}
-                  >
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: womenOnly ? 27 : 3, transition: '0.3s' }} />
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="booking-step ride-type-step"><h3>Choose Your Ride</h3><div className="ride-options">{RIDE_OPTIONS.map(opt => { const est = fare ? Math.round(opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier : null; return (<div key={opt.id} className={`ride-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)} style={{ borderColor: selectedRide.id === opt.id ? opt.color : 'transparent' }}><div className="ride-option-header"><span className="ride-emoji">{opt.emoji}</span><div className="ride-info"><h4>{opt.name}</h4><p>{opt.description}</p></div>{est && <div className="ride-price"><strong>UGX {est.toLocaleString()}</strong></div>}</div></div>); })}</div>
+            {selectedRide && (<div style={{ background: 'rgba(255,105,180,0.08)', borderRadius: 12, padding: 14, marginTop: 14, border: womenOnly ? '2px solid #FF69B4' : '2px solid transparent' }}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ fontSize: 26 }}>👩</span><div><strong style={{ color: '#fff', fontSize: 14 }}>Women Preferred</strong><p style={{ color: 'rgba(255,248,240,0.6)', fontSize: 11, margin: 2 }}>Match with female drivers only</p></div></div><div onClick={() => setWomenOnly(!womenOnly)} style={{ width: 52, height: 28, borderRadius: 14, background: womenOnly ? '#FF69B4' : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}><div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: womenOnly ? 27 : 3, transition: '0.3s' }} /></div></div></div>)}
           </div>
         )}
 
         {step === BookingStep.PAYMENT && fare && (
-          <div className="booking-step payment-step">
-            <IonCard className="fare-card">
-              <IonCardContent>
-                <h3>Fare Breakdown</h3>
-                <div className="fare-details">
-                  <div className="fare-row"><span>Base fare</span><span>UGX {fare.baseFare.toLocaleString()}</span></div>
-                  <div className="fare-row"><span>Distance ({fare.distance} km)</span><span>UGX {fare.distanceFare.toLocaleString()}</span></div>
-                  <div className="fare-row"><span>Time (~{fare.duration} min)</span><span>UGX {fare.timeFare.toLocaleString()}</span></div>
-                  {fare.surgeFare > 0 && <div className="fare-row surge"><span>🔥 Peak pricing</span><span>UGX {fare.surgeFare.toLocaleString()}</span></div>}
-                  {discount > 0 && <div className="fare-row discount"><span>🎉 Discount</span><span>-UGX {discount.toLocaleString()}</span></div>}
-                  <div className="fare-row total"><strong>Total</strong><strong>{fare.formattedTotal}</strong></div>
-                </div>
-              </IonCardContent>
-            </IonCard>
-
-            <div className="promo-section">
-              <IonSearchbar placeholder="Promo code (NAVIGO50)" value={promoCode} onIonInput={e => setPromoCode(e.detail.value!)} className="promo-input" />
-              <IonButton size="small" fill="clear" onClick={applyPromo}>Apply</IonButton>
-            </div>
-
-            <p style={{color:'rgba(255,248,240,0.5)',fontSize:12,textAlign:'center'}}>
-              💡 Payment method selection coming in next update
-            </p>
-          </div>
+          <div className="booking-step payment-step"><IonCard className="fare-card"><IonCardContent><h3>Fare Breakdown</h3><div className="fare-details"><div className="fare-row"><span>Base fare</span><span>UGX {fare.baseFare.toLocaleString()}</span></div><div className="fare-row"><span>Distance ({fare.distance} km)</span><span>UGX {fare.distanceFare.toLocaleString()}</span></div><div className="fare-row"><span>Time (~{fare.duration} min)</span><span>UGX {fare.timeFare.toLocaleString()}</span></div>{fare.surgeFare > 0 && <div className="fare-row surge"><span>🔥 Peak pricing</span><span>UGX {fare.surgeFare.toLocaleString()}</span></div>}{discount > 0 && <div className="fare-row discount"><span>🎉 Discount</span><span>-UGX {discount.toLocaleString()}</span></div>}<div className="fare-row total"><strong>Total</strong><strong>{fare.formattedTotal}</strong></div></div></IonCardContent></IonCard><div className="promo-section"><IonSearchbar placeholder="Promo code (NAVIGO50)" value={promoCode} onIonInput={e => setPromoCode(e.detail.value!)} className="promo-input" /><IonButton size="small" fill="clear" onClick={applyPromo}>Apply</IonButton></div><p style={{color:'rgba(255,248,240,0.5)',fontSize:12,textAlign:'center'}}>💡 Payment method selection coming in next update</p></div>
         )}
 
         {step === BookingStep.MATCHING && (
-          <div className="booking-step matching-step">
-            {!driverFound ? (
-              <>
-                <div className="matching-animation"><div className="radar-pulse" /><IonIcon icon={carOutline} className="matching-car" /></div>
-                <h3>🔍 Finding nearby drivers...</h3>
-                {womenOnly && <p style={{color: '#FF69B4', fontSize: 13}}>👩 Searching for female drivers only</p>}
-                <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(matchingProgress, 100)}%` }} /></div>
-                <p className="matching-status">
-                  {matchingProgress < 30 && 'Scanning for available drivers...'}
-                  {matchingProgress >= 30 && matchingProgress < 60 && 'Connecting to nearest driver...'}
-                  {matchingProgress >= 60 && matchingProgress < 90 && 'Driver found! Confirming...'}
-                  {matchingProgress >= 90 && 'Almost there!'}
-                </p>
-              </>
-            ) : (
-              <div className="driver-confirmed">
-                <IonIcon icon={checkmarkCircleOutline} className="success-icon" />
-                <h3>🚗 Driver Found!</h3>
-                <div className="driver-info-card">
-                  <IonAvatar><img src="https://ui-avatars.com/api/?name=Sarah+K&background=FF69B4&color=fff&size=128" alt="Driver" /></IonAvatar>
-                  <div className="driver-details">
-                    <h4>{womenOnly ? 'Sarah K.' : 'John K.'}</h4>
-                    <p><IonIcon icon={starOutline} /> 4.8 • Toyota Prius • UBA 123A</p>
-                    <p className="eta">🕐 Arriving in 3 minutes</p>
-                  </div>
-                </div>
-                <BodaSafeScore badges={['helmet', 'sanitized', 'idverified']} rating={4.8} totalRides={156} />
-                <IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/active-ride')}>
-                  View Ride <IonIcon icon={arrowForwardOutline} slot="end" />
-                </IonButton>
-              </div>
-            )}
-          </div>
+          <div className="booking-step matching-step">{!driverFound ? (<><div className="matching-animation"><div className="radar-pulse" /><IonIcon icon={carOutline} className="matching-car" /></div><h3>🔍 Finding nearby drivers...</h3>{womenOnly && <p style={{color:'#FF69B4',fontSize:13}}>👩 Searching for female drivers only</p>}<div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(matchingProgress, 100)}%` }} /></div><p className="matching-status">{matchingProgress < 30 ? 'Scanning...' : matchingProgress < 60 ? 'Connecting...' : matchingProgress < 90 ? 'Driver found!' : 'Almost there!'}</p></>) : (<div className="driver-confirmed"><IonIcon icon={checkmarkCircleOutline} className="success-icon" /><h3>🚗 Driver Found!</h3><div className="driver-info-card"><IonAvatar><img src="https://ui-avatars.com/api/?name=Sarah+K&background=FF69B4&color=fff&size=128" alt="Driver" /></IonAvatar><div className="driver-details"><h4>{womenOnly ? 'Sarah K.' : 'John K.'}</h4><p><IonIcon icon={starOutline} /> 4.8 • Toyota Prius • UBA 123A</p><p className="eta">🕐 Arriving in 3 minutes</p></div></div><BodaSafeScore badges={['helmet','sanitized','idverified']} rating={4.8} totalRides={156} /><IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/active-ride')}>View Ride <IonIcon icon={arrowForwardOutline} slot="end" /></IonButton></div>)}</div>
         )}
 
-        {step !== BookingStep.MATCHING && (
-          <IonFooter className="booking-footer">
-            <div className="footer-content">
-              {step > 0 && <IonButton fill="outline" onClick={() => setStep(step - 1)}>Back</IonButton>}
-              <IonButton expand="block" className="next-btn"
-                disabled={(step === 0 && (!pickup || !destination))}
-                onClick={() => {
-                  if (step === BookingStep.PAYMENT) handleBookRide();
-                  else setStep(step + 1);
-                }}>
-                {step === BookingStep.LOCATION && 'Choose Ride'}
-                {step === BookingStep.RIDE_TYPE && 'Review Payment'}
-                {step === BookingStep.PAYMENT && (isGuest ? 'Sign In to Book' : `Confirm${womenOnly ? ' 👩' : ''} & Request`)}
-              </IonButton>
-            </div>
-          </IonFooter>
-        )}
-
-        <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
-          <div className="login-prompt-modal">
-            <h2>🚀 Ready to Ride?</h2>
-            <p>Sign in or create an account to book rides, track drivers, and earn rewards.</p>
-            <IonButton expand="block" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</IonButton>
-            <IonButton expand="block" fill="outline" onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</IonButton>
-            <IonButton expand="block" fill="clear" onClick={() => setShowLoginPrompt(false)}>Continue Browsing</IonButton>
-          </div>
-        </IonModal>
-
-        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} position="top" />
+        {step !== BookingStep.MATCHING && (<IonFooter className="booking-footer"><div className="footer-content">{step > 0 && <IonButton fill="outline" onClick={() => setStep(step - 1)}>Back</IonButton>}<IonButton expand="block" className="next-btn" disabled={(step === 0 && (!pickup || !destination))} onClick={() => { if (step === BookingStep.PAYMENT) handleBookRide(); else setStep(step + 1); }}>{step === BookingStep.LOCATION ? 'Choose Ride' : step === BookingStep.RIDE_TYPE ? 'Review Payment' : isGuest ? 'Sign In to Book' : `Confirm${womenOnly ? ' 👩' : ''} & Request`}</IonButton></div></IonFooter>)}
       </IonContent>
     </IonPage>
   );

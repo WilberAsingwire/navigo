@@ -592,3 +592,19 @@ ion-toast {
   --border-radius: 12px;
   --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
+.location-search .searchbar-input {
+  color: #fff !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+
+.location-search .searchbar-search-icon {
+  color: #FF6B35 !important;
+}
+
+.search-results ion-item h3 {
+  color: #fff !important;
+}
+
+.search-results ion-item p {
+  color: rgba(255,255,255,0.7) !important;
+}
