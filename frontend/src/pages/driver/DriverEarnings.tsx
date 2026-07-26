@@ -15,7 +15,7 @@ const DriverEarnings: React.FC = () => {
 
   const fetchEarnings = async (event?: any) => {
     try {
-      const res = await fetch('http://localhost:5000/api/drivers/earnings', {
+      const res = await fetch('https://navigo-fzdo.onrender.com/api/drivers/earnings', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       setEarningsData(await res.json());

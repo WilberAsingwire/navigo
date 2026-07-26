@@ -12,7 +12,7 @@ import BodaSafeScore from '../../components/BodaSafeBadges';
 import axios from 'axios';
 import './AdminApprovals.css';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://navigo-fzdo.onrender.com/api';
 
 interface Driver {
   id: string;

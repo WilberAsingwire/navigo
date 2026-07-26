@@ -5,50 +5,37 @@ import {
   IonIcon, IonButton, IonAvatar, IonProgressBar, IonRefresher, IonRefresherContent
 } from '@ionic/react';
 import {
-  notificationsOutline, carOutline, timeOutline,
+  carOutline, timeOutline,
   starOutline, walletOutline, locationOutline,
   arrowForwardOutline, bicycleOutline, chevronDownCircleOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import LoyaltyCard from '../../components/LoyaltyCard';
-import api from '../../services/api';
 import './CustomerDashboard.css';
 
 const RiderDashboard: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
-  const [userData, setUserData] = useState<any>(null);
-  const [nearbyDrivers, setNearbyDrivers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nearbyDrivers] = useState([
+    { id: '1', name: 'John K.', vehicle: 'Toyota Prius', type: 'car', distance: '0.5' },
+    { id: '2', name: 'Sarah M.', vehicle: 'Bajaj Boxer', type: 'bike', distance: '1.2' },
+    { id: '3', name: 'Peter O.', vehicle: 'Toyota Hiace', type: 'car', distance: '2.0' },
+  ]);
 
-  const fetchDashboardData = async (event?: any) => {
-    try {
-      const { data: userProfile } = await api.get('/users/profile');
-      setUserData(userProfile);
-
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const { data: drivers } = await api.get(`/rides/nearby?lat=${latitude}&lng=${longitude}`);
-          setNearbyDrivers(drivers);
-        },
-        (error) => {
-          console.error("Location Error:", error);
-          api.get('/rides/nearby?lat=0.3476&lng=32.5825').then(res => setNearbyDrivers(res.data));
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-
-    } catch (error) {
-      console.error("Dashboard Load Error:", error);
-    } finally {
-      setLoading(false);
-      if (event) event.target.complete();
-    }
+  const userData = {
+    name: user?.name || 'Rider',
+    stats: { totalRides: 5, rating: 4.8 }
   };
 
-  useEffect(() => { fetchDashboardData(); }, []);
+  useEffect(() => {
+    setTimeout(() => setLoading(false), 800);
+  }, []);
+
+  const handleRefresh = (event: any) => {
+    setTimeout(() => { setLoading(false); event.target.complete(); }, 1000);
+  };
 
   return (
     <IonPage>
@@ -56,26 +43,25 @@ const RiderDashboard: React.FC = () => {
         <IonToolbar className="dashboard-toolbar">
           <div className="header-content ion-padding-horizontal">
             <div className="user-greeting">
-              <h2 className="sora-font">Hello, {userData?.name?.split(' ')[0] || user?.name || 'User'} 👋</h2>
+              <h2 className="sora-font">Hello, {userData.name.split(' ')[0]} 👋</h2>
               <p>Ready for your next ride?</p>
             </div>
             <div className="header-actions">
-               <IonAvatar className="header-avatar" onClick={() => history.push('/profile')}>
-                  <img src={userData?.avatar || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.name || 'Rider') + "&background=FF6B35&color=fff&size=64"} alt="profile" />
-               </IonAvatar>
+              <IonAvatar className="header-avatar" onClick={() => history.push('/rider/profile')}>
+                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Rider')}&background=FF6B35&color=fff&size=64`} alt="profile" />
+              </IonAvatar>
             </div>
           </div>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding dashboard-bg">
-        <IonRefresher slot="fixed" onIonRefresh={fetchDashboardData}>
+        <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>
 
         {loading && <IonProgressBar type="indeterminate" color="success" />}
 
-        {/* ZAWADI LOYALTY CARD */}
         <LoyaltyCard points={280} tier="silver" />
 
         <IonGrid className="ion-no-padding">
@@ -83,14 +69,14 @@ const RiderDashboard: React.FC = () => {
             <IonCol size="6">
               <div className="stat-box">
                 <IonIcon icon={carOutline} color="primary" />
-                <h3>{userData?.stats?.totalRides || 0}</h3>
+                <h3>{userData.stats.totalRides}</h3>
                 <p>Total Rides</p>
               </div>
             </IonCol>
             <IonCol size="6">
               <div className="stat-box">
                 <IonIcon icon={starOutline} color="warning" />
-                <h3>{userData?.stats?.rating || 5.0}</h3>
+                <h3>{userData.stats.rating}</h3>
                 <p>Your Rating</p>
               </div>
             </IonCol>
@@ -143,7 +129,7 @@ const RiderDashboard: React.FC = () => {
             <IonCard key={i} className="driver-mini-card">
               <IonCardContent>
                 <IonAvatar className="mini-avatar">
-                  <img src={`https://i.pravatar.cc/150?u=${driver.id}`} alt="driver" />
+                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(driver.name)}&background=FF6B35&color=fff&size=64`} alt="driver" />
                 </IonAvatar>
                 <div className="driver-info">
                   <h6>{driver.name}</h6>
