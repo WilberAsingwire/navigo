@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle,
-  IonItem, IonInput, IonButton, IonIcon, IonSpinner, IonToast,
+  IonItem, IonInput, IonLabel, IonButton, IonIcon, IonSpinner, IonToast,
   IonText, IonNote
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';

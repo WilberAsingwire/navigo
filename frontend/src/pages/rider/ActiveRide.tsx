@@ -15,6 +15,7 @@ import {
 } from 'ionicons/icons';
 import ChatBox from '../../components/ChatBox';
 import SOSButton from '../../components/SOSButton';
+import NavigoMap from '../../components/NavigoMap';
 import './ActiveRide.css';
 
 const MOCK_DRIVER = {
@@ -126,27 +127,12 @@ const ActiveRide: React.FC = () => {
       </IonHeader>
 
       <IonContent className="active-ride-content">
-        {/* Map */}
-        <div className="ride-map">
-          <div className="map-placeholder">
-            <IonIcon icon={mapOutline} className="map-bg-icon" />
-            <div className="map-overlay">
-              <div className="driver-marker">
-                <IonAvatar className="driver-avatar-marker">
-                  <img src={MOCK_DRIVER.photo} alt={MOCK_DRIVER.name} />
-                </IonAvatar>
-                <div className="pulse-ring" />
-              </div>
-              <div className="route-line" />
-              <div className="rider-marker">
-                <div className="rider-dot" />
-              </div>
-            </div>
-            <div className="map-status-badge">
-              <IonBadge color={getStatusColor()}>{getStatusText()}</IonBadge>
-            </div>
-          </div>
-        </div>
+        <NavigoMap 
+  userLocation={{ lat: 0.3476, lng: 32.5825 }}
+  driverLocation={{ lat: 0.3500, lng: 32.5850 }}
+  height="280px"
+  showRoute={true}
+/>
 
         {/* Driver Info */}
         <div className="driver-info-section">

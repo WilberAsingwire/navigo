@@ -1,112 +1,15 @@
-.payments-bg {
-  --background: #080808;
-}
-
-.payments-toolbar {
-  --background: #080808;
-  --color: white;
-}
-
-.wallet-card {
-  --background: linear-gradient(135deg, #111, #1a1a1a);
-  border-radius: 24px;
-  border: 1px solid #222;
-  margin: 15px;
-}
-
-.wallet-info {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 10px 0 20px;
-}
-
-.wallet-icon {
-  font-size: 3rem;
-  color: #00e676;
-  background: rgba(0, 230, 118, 0.1);
-  padding: 15px;
-  border-radius: 20px;
-}
-
-.balance-text p { color: #666; margin: 0; font-size: 0.9rem; }
-.balance-text h1 { color: white; margin: 5px 0 0; font-weight: 900; font-size: 2rem; }
-.balance-text small { font-size: 0.9rem; color: #00e676; }
-
-.topup-btn {
-  --background: #00e676;
-  --color: #080808;
-  --border-radius: 14px;
-  height: 50px;
-  font-weight: bold;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.section-header h3 { color: white; font-size: 1.1rem; }
-
-.payment-list { background: transparent !important; padding: 10px; }
-
-.payment-item {
-  --background: #111;
-  --color: white;
-  margin-bottom: 12px;
-  border-radius: 16px;
-  border: 1px solid #1a1a1a;
-}
-
-.method-icon-box {
-  width: 45px;
-  height: 45px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  margin-right: 15px;
-}
-
-.method-icon-box.primary { background: rgba(77, 166, 255, 0.1); color: #4da6ff; }
-.method-icon-box.warning { background: rgba(255, 171, 64, 0.1); color: #ffab40; }
-.method-icon-box.success { background: rgba(0, 230, 118, 0.1); color: #00e676; }
-.method-icon-box.light { background: #222; color: #888; }
-
-/* Modal Styling */
-.payment-modal {
-  --height: 70%;
-  --border-radius: 24px 24px 0 0;
-  --background: #111;
-  align-items: flex-end;
-}
-
-.modal-content { background: #111; color: white; height: 100%; }
-
-.payment-options-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.option-card {
-  background: #1a1a1a;
-  padding: 20px;
-  border-radius: 16px;
-  text-align: center;
-  border: 2px solid transparent;
-}
-
-.option-card.active { border-color: #00e676; background: rgba(0, 230, 118, 0.05); }
-.option-card IonIcon { font-size: 2rem; display: block; margin: 0 auto 10px; color: #00e676; }
-.option-card span { font-size: 0.85rem; color: white; font-weight: bold; }
-
-.input-label { color: #666; font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; }
-
-.custom-input { --background: #1a1a1a; --border-radius: 12px; border: 1px solid #333; --color: white; }
-
-.main-btn { --background: #00e676; --color: #080808; --border-radius: 14px; height: 56px; font-weight: 900; }
+.payments-bg { --background: #080c14; }
+.payments-toolbar { --background: #080c14; }
+.sora-font { font-family: 'Sora', sans-serif; }
+.wallet-card { background: linear-gradient(135deg, #1B4965, #0d2137); border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); }
+.wallet-info { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.wallet-icon { font-size: 28px; color: #FF6B35; }
+.balance-text p { color: rgba(255,255,255,0.6); font-size: 11px; margin: 0; }
+.balance-text h1 { color: #fff; font-size: 32px; margin: 4px 0; }
+.topup-btn { --background: #FF6B35; --border-radius: 10px; font-weight: 600; margin-top: 8px; }
+.payment-list { background: transparent; }
+.payment-item { --background: rgba(255,255,255,0.03); margin-bottom: 6px; border-radius: 12px; }
+.method-icon-box { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
+.method-icon-box.warning { background: rgba(255,193,7,0.15); color: #FFC107; }
+.method-icon-box.light { background: rgba(255,255,255,0.08); color: #fff; }
+.main-btn { --background: #FF6B35; --border-radius: 12px; font-weight: 700; margin-top: 16px; }
