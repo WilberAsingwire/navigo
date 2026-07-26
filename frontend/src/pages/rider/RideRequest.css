@@ -83,12 +83,19 @@
 }
 
 .location-search {
-  --background: transparent;
-  --color: #fff8f0;
-  --placeholder-color: rgba(255, 248, 240, 0.5);
-  --border-radius: 8px;
-  flex: 1;
-  padding: 0;
+  --background: rgba(255, 255, 255, 0.12) !important;
+  --color: #ffffff !important;
+  --placeholder-color: #cccccc !important;
+  --icon-color: #FF6B35 !important;
+  border-radius: 10px !important;
+}
+
+.searchbar-input-container {
+  color: #fff !important;
+}
+
+.searchbar-input {
+  color: #fff !important;
 }
 
 .swap-button-container {

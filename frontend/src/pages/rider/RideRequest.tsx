@@ -25,12 +25,11 @@ interface Location { lat: number; lng: number; address: string; name?: string; }
 interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
 enum BookingStep { LOCATION = 0, RIDE_TYPE = 1, PAYMENT = 2, MATCHING = 3 }
-
 const RIDE_OPTIONS: RideOption[] = [
-  { id: 'boda', name: 'Boda Boda', description: 'Fastest • 1 passenger', basePrice: 2000, pricePerKm: 800, pricePerMinute: 100, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
-  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable • 4 seats', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'economy', surgeMultiplier: 1.0, color: '#2D6A4F', emoji: '🚗' },
-  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Premium • 4 seats', basePrice: 7000, pricePerKm: 1800, pricePerMinute: 200, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', emoji: '🚙' },
-  { id: 'xl', name: 'NAVIGO XL', description: 'Groups • 6 seats', basePrice: 10000, pricePerKm: 2200, pricePerMinute: 250, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', emoji: '🚐' }
+  { id: 'boda', name: 'Boda Boda', description: 'Fastest • 1 passenger', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
+  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable • 4 seats', basePrice: 3000, pricePerKm: 1000, pricePerMinute: 120, capacity: 4, vehicleType: 'economy', surgeMultiplier: 1.0, color: '#2D6A4F', emoji: '🚗' },
+  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Premium • 4 seats', basePrice: 5000, pricePerKm: 1500, pricePerMinute: 180, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', emoji: '🚙' },
+  { id: 'xl', name: 'NAVIGO XL', description: 'Groups • 6 seats', basePrice: 8000, pricePerKm: 2000, pricePerMinute: 220, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', emoji: '🚐' }
 ];
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -65,10 +64,21 @@ const RideRequest: React.FC = () => {
   useEffect(() => { getCurrentLocation(); }, []);
   useEffect(() => { if (pickup && destination) calculateFare(); }, [pickup, destination, selectedRide, discount]);
 
-  const getCurrentLocation = () => {
+ const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setPickup({ lat: pos.coords.latitude, lng: pos.coords.longitude, address: 'Current Location', name: '📍 Current Location' }),
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+            const addr = res.data.display_name || 'Current Location';
+            setPickup({ lat, lng, address: addr, name: '📍 ' + addr.split(',')[0] });
+            setPickupSearch(addr.split(',')[0]);
+          } catch {
+            setPickup({ lat, lng, address: 'Current Location', name: '📍 Current Location' });
+          }
+        },
         () => setPickup({ lat: 0.3136, lng: 32.5811, address: 'Kampala City Center', name: '📍 Kampala Center' }),
         { enableHighAccuracy: true, timeout: 10000 }
       );
