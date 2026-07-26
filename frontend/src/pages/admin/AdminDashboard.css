@@ -1,87 +1,199 @@
-.admin-bg {
-  --background: #050505; /* Slightly darker for Admin */
+.admin-dashboard {
+  --background: #080c14;
 }
 
-.admin-toolbar {
-  --background: #050505;
-  --color: #00e676;
+.admin-kpi-grid {
+  margin-bottom: 8px;
 }
 
-.revenue-card {
-  --background: linear-gradient(135deg, #00e676, #00a859);
-  border-radius: 24px;
-  margin: 10px 0 20px;
-  color: #080808;
+.admin-kpi-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
 }
 
-.rev-header {
+.admin-kpi-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-kpi-icon {
+  font-size: 22px;
+}
+
+.admin-kpi-change {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.admin-kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 6px 0;
+}
+
+.admin-kpi-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.admin-quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.admin-quick-action-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.admin-quick-action-card:hover {
+  background: rgba(255, 107, 53, 0.08);
+  border-color: rgba(255, 107, 53, 0.2);
+}
+
+.admin-quick-action-card:active {
+  transform: scale(0.97);
+}
+
+.admin-quick-action-icon {
+  font-size: 24px;
+  color: #FF6B35;
+}
+
+.admin-quick-action-label {
+  color: #ffffff;
+  font-size: 11px;
+  margin: 6px 0 0;
+}
+
+.admin-quick-action-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.admin-revenue-card {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 107, 53, 0.02));
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 107, 53, 0.1);
+}
+
+.admin-revenue-title {
+  color: #ffffff;
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.admin-revenue-subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  margin: 0 0 16px;
+}
+
+.admin-revenue-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 80px;
+}
+
+.admin-revenue-bar {
+  flex: 1;
+  background: linear-gradient(180deg, #FF6B35, #E85D75);
+  border-radius: 4px 4px 0 0;
+}
+
+.admin-revenue-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.admin-revenue-day {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.admin-alerts-section {
+  margin-top: 4px;
+}
+
+.admin-alerts-title {
+  color: #ffffff;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.admin-alert-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.admin-alert-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-alert-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.admin-alert-text {
+  color: #ffffff;
+  font-size: 12px;
+  flex: 1;
+}
+
+.admin-alert-time {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.admin-welcome-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 20px;
 }
 
-.rev-header p { font-weight: bold; margin: 0; opacity: 0.8; }
-
-.revenue-card h1 {
-  font-size: 2.8rem;
-  font-weight: 900;
-  margin: 15px 0;
+.admin-welcome-title {
+  color: #ffffff;
+  margin: 0;
+  font-size: 20px;
 }
 
-.commission-box {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 15px;
-  border-radius: 16px;
+.admin-welcome-subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  margin: 4px 0 0;
 }
 
-.commission-box p { margin: 0; font-size: 0.8rem; }
-.commission-box h2 { margin: 5px 0 0; font-weight: 800; }
-.commission-box small { font-size: 0.9rem; }
-
-.admin-stat-box {
-  background: #111;
-  padding: 15px;
-  border-radius: 16px;
-  margin: 5px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid #222;
-}
-
-.admin-stat-box IonIcon { font-size: 1.8rem; }
-.stat-info h3 { margin: 0; color: white; font-weight: 800; }
-.stat-info p { margin: 2px 0 0; font-size: 0.75rem; color: #666; }
-
-.alert-item {
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: 16px;
-  margin-bottom: 10px;
-  gap: 15px;
-}
-
-.alert-item.warning { background: rgba(255, 171, 64, 0.1); color: #ffab40; }
-.alert-item.danger { background: rgba(255, 82, 82, 0.1); color: #ff5252; }
-.alert-item.success { background: rgba(0, 230, 118, 0.1); color: #00e676; }
-
-.alert-text { flex: 1; }
-.alert-text h4 { margin: 0; font-size: 0.9rem; font-weight: bold; }
-.alert-text p { margin: 3px 0 0; font-size: 0.8rem; opacity: 0.8; }
-
-.admin-btn {
-  --background: #00e676;
-  --color: #080808;
-  --border-radius: 16px;
-  height: 56px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.admin-btn-outline {
-  --border-radius: 16px;
-  --border-color: #333;
-  --color: white;
-  height: 56px;
+.admin-status-badge {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 11px;
 }

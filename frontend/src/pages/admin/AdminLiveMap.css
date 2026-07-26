@@ -1,9 +1,2 @@
-.leaflet-container {
-  height: 100% !important;
-  width: 100% !important;
-  z-index: 1;
-}
-
-.admin-live-map {
-  --background: #080c14;
-}
+.leaflet-container { height: 100% !important; width: 100% !important; z-index: 1; border-radius: 12px; }
+.admin-live-map { --background: #080c14; }

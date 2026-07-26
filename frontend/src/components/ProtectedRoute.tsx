@@ -1,5 +1,6 @@
 import React from 'react';
 import { Route, Redirect } from 'react-router-dom';
+import { IonSpinner } from '@ionic/react';
 import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -14,14 +15,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles, 
   exact = false,
   path,
-  ...rest 
 }) => {
   const { isAuthenticated, user, isLoading, isGuest } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="ion-padding" style={{ color: '#fff', textAlign: 'center', marginTop: '50vh' }}>
-        <p>Loading NAVIGO...</p>
+      <div style={{ 
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
+        height: '100vh', background: '#080c14', color: '#fff', gap: 16 
+      }}>
+        <div style={{ fontSize: 40 }}>🚀</div>
+        <IonSpinner name="crescent" color="warning" />
+        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>Loading NAVIGO...</p>
       </div>
     );
   }
@@ -39,9 +44,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           return <Redirect to="/login" />;
         }
 
-        if (!allowedRoles.includes(user.role)) {
-          const correctPath = '/' + user.role + '/home';
-          return <Redirect to={correctPath} />;
+        const userRole = user.role || 'rider';
+        const normalizedRoles = allowedRoles.map(r => r === 'customer' ? 'rider' : r);
+        
+        if (!normalizedRoles.includes(userRole)) {
+          const redirectPath = userRole === 'admin' ? '/admin/dashboard' : 
+                              (userRole === 'driver' || userRole === 'motorist') ? '/driver/home' : '/rider/home';
+          return <Redirect to={redirectPath} />;
         }
 
         return <Component {...props} />;

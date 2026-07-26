@@ -1,44 +1,6 @@
-.admin-bg {
-  --background: #080808;
-}
-
-.admin-toolbar {
-  --background: #080808;
-  --color: white;
-}
-
-.admin-search {
-  --background: #111;
-  --color: white;
-  --placeholder-color: #666;
-  --icon-color: #00e676;
-  --border-radius: 12px;
-  padding: 0 10px 10px;
-}
-
-.admin-user-list {
-  background: transparent !important;
-}
-
-.user-list-item {
-  --background: #111;
-  --color: white;
-  margin: 8px 10px;
-  border-radius: 16px;
-  border: 1px solid #1a1a1a;
-  --padding-start: 12px;
-  --inner-padding-end: 12px;
-}
-
-.user-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-}
-
-.user-list-item IonAvatar {
-  width: 45px;
-  height: 45px;
-  border: 1px solid #333;
-}
+.admin-bg { --background: #080c14; }
+.admin-toolbar { --background: #080c14; }
+.admin-search { --background: rgba(255,255,255,0.06); --color: #fff; --placeholder-color: #888; border-radius: 12px; }
+.admin-user-list { background: transparent; }
+.user-list-item { --background: transparent; --padding-start: 8px; }
+.sora-font { font-family: 'Sora', sans-serif; }
