@@ -3,6 +3,7 @@ import { Route, Redirect } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import Home from './pages/auth/Home';
 
 /* --- AUTH PAGES --- */
 import Login from './pages/auth/Login';
@@ -134,7 +135,7 @@ const App: React.FC = () => {
             <Route path="/admin/approve" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUserReview} />} />
 
             {/* Default */}
-            <Route path="/" component={HomeRedirect} exact />
+           <Route path="/" component={Home} exact />
 
           </IonRouterOutlet>
         </IonReactRouter>
