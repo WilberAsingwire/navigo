@@ -52,10 +52,8 @@ import './theme/variables.css';
 
 setupIonicReact();
 
-// Simple auth check component
 const ProtectedContent: React.FC<{ allowedRoles: string[]; component: React.ComponentType<any> }> = ({ allowedRoles, component: Component, ...props }) => {
   const { isAuthenticated, user, isLoading, isGuest } = useAuth();
-
   if (isLoading) return <div className="ion-padding" style={{ color: '#fff', textAlign: 'center', marginTop: '50vh' }}>Loading...</div>;
   if (isGuest || !isAuthenticated || !user) return <Redirect to="/login" />;
   if (!allowedRoles.includes(user.role)) return <Redirect to={'/' + user.role + '/home'} />;
@@ -67,7 +65,10 @@ const HomeRedirect: React.FC = () => {
   if (savedUser) {
     try {
       const user = JSON.parse(savedUser);
-      return <Redirect to={'/' + user.role + '/home'} />;
+      const role = user.role || 'rider';
+      if (role === 'admin') return <Redirect to="/admin/dashboard" />;
+      if (role === 'driver' || role === 'motorist') return <Redirect to="/driver/home" />;
+      return <Redirect to="/rider/home" />;
     } catch { return <Redirect to="/login" />; }
   }
   return <Redirect to="/login" />;
@@ -94,6 +95,7 @@ const App: React.FC = () => {
             <Route path="/forgot-password" component={ForgotPassword} exact />
             <Route path="/verify-phone" component={SkipVerification} exact />
             <Route path="/explore" component={RideRequest} exact />
+            <Route path="/ussd" component={USSDInfo} exact />
 
             {/* Rider Routes */}
             <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
@@ -104,11 +106,15 @@ const App: React.FC = () => {
             <Route path="/rider/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
             <Route path="/rider/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
             <Route path="/rider/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
-<Route path="/ussd" component={USSDInfo} exact />
 
-            {/* Customer Routes (keep old paths) */}
-            <Route path="/customer/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
-            <Route path="/customer/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
+            {/* Customer Routes (backward compatible) */}
+            <Route path="/customer/home" exact render={() => <Redirect to="/rider/home" />} />
+            <Route path="/customer/book" exact render={() => <Redirect to="/rider/book" />} />
+            <Route path="/customer/history" exact render={() => <Redirect to="/rider/history" />} />
+            <Route path="/customer/places" exact render={() => <Redirect to="/rider/places" />} />
+            <Route path="/customer/payments" exact render={() => <Redirect to="/rider/payments" />} />
+            <Route path="/customer/support" exact render={() => <Redirect to="/rider/support" />} />
+            <Route path="/customer/profile" exact render={() => <Redirect to="/rider/profile" />} />
 
             {/* Driver Routes */}
             <Route path="/driver/home" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} />} />
@@ -120,6 +126,7 @@ const App: React.FC = () => {
 
             {/* Admin Routes */}
             <Route path="/admin/dashboard" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminDashboard} />} />
+            <Route path="/admin/home" exact render={() => <Redirect to="/admin/dashboard" />} />
             <Route path="/admin/approvals" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminApprovals} />} />
             <Route path="/admin/support" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSupport} />} />
             <Route path="/admin/users" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUsers} />} />
