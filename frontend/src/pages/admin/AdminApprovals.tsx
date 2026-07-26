@@ -8,6 +8,7 @@ import {
   checkmarkCircleOutline, closeCircleOutline, personOutline,
   carOutline, callOutline, timeOutline, documentTextOutline
 } from 'ionicons/icons';
+import BodaSafeScore from '../../components/BodaSafeBadges';
 import axios from 'axios';
 import './AdminApprovals.css';
 
@@ -113,7 +114,7 @@ const AdminApprovals: React.FC = () => {
                     </IonItem>
                     {driver.driverDocs?.nationalId && (
                       <IonItem lines="none">
-                        <IonIcon icon={cardOutline} slot="start" />
+                        <IonIcon icon={carOutline} slot="start" />
                         <IonLabel>NIN: {driver.driverDocs.nationalId}</IonLabel>
                       </IonItem>
                     )}

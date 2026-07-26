@@ -9,9 +9,10 @@ import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import BodaSafeScore from '../../components/BodaSafeBadges';
+import LoyaltyCard from '../../components/LoyaltyCard';
 import './DriverHome.css';
 
-const socket = io('http://localhost:5000');
+const socket = io('https://navigo-fzdo.onrender.com');
 
 const DriverHome: React.FC = () => {
   const history = useHistory();
@@ -37,7 +38,7 @@ const DriverHome: React.FC = () => {
     setIsOnline(online);
     socket.emit('update_driver_status', {
       online,
-      driverId: user?.id // Now using user context
+      driverId: user?.id
     });
   };
 
@@ -64,6 +65,12 @@ const DriverHome: React.FC = () => {
           <IonIcon icon={isOnline ? leafOutline : timeOutline} />
           <IonText>{isOnline ? "You are visible to riders" : "Go online to see requests"}</IonText>
         </div>
+
+        {/* Boda Safe Score */}
+        <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={stats.rating || 4.8} totalRides={156} />
+
+        {/* Zawadi Loyalty Card */}
+        <LoyaltyCard points={450} tier="gold" />
 
         <IonGrid className="ion-no-padding ion-margin-top">
           <IonRow>

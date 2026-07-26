@@ -11,6 +11,7 @@ import {
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import LoyaltyCard from '../../components/LoyaltyCard';
 import api from '../../services/api';
 import './CustomerDashboard.css';
 
@@ -23,11 +24,9 @@ const RiderDashboard: React.FC = () => {
 
   const fetchDashboardData = async (event?: any) => {
     try {
-      // 1. Get User Profile & Stats
       const { data: userProfile } = await api.get('/users/profile');
       setUserData(userProfile);
 
-      // 2. Get User's Current Location for Nearby Drivers
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
@@ -36,7 +35,6 @@ const RiderDashboard: React.FC = () => {
         },
         (error) => {
           console.error("Location Error:", error);
-          // Fallback to Kampala coordinates if location fails
           api.get('/rides/nearby?lat=0.3476&lng=32.5825').then(res => setNearbyDrivers(res.data));
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -76,6 +74,9 @@ const RiderDashboard: React.FC = () => {
         </IonRefresher>
 
         {loading && <IonProgressBar type="indeterminate" color="success" />}
+
+        {/* ZAWADI LOYALTY CARD */}
+        <LoyaltyCard points={280} tier="silver" />
 
         <IonGrid className="ion-no-padding">
           <IonRow>
