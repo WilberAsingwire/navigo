@@ -17,6 +17,7 @@ import {
 } from 'ionicons/icons';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import BodaSafeScore from '../../components/BodaSafeBadges';
 import './RideRequest.css';
 
 interface Location {

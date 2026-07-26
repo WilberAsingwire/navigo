@@ -8,6 +8,7 @@ import { useHistory } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import BodaSafeScore from '../../components/BodaSafeBadges';
 import './DriverHome.css';
 
 const socket = io('http://localhost:5000');
