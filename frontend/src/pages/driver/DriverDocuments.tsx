@@ -15,7 +15,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import './DriverDocuments.css';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://navigo-fzdo.onrender.com/api';
 
 const DriverDocuments: React.FC = () => {
   const history = useHistory();
@@ -30,6 +30,7 @@ const DriverDocuments: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [isFemaleDriver, setIsFemaleDriver] = useState(false);
 
   const verificationStatus = user?.verificationStatus || 'unverified';
 
@@ -49,7 +50,7 @@ const DriverDocuments: React.FC = () => {
         vehiclePlate: vehiclePlate.trim().toUpperCase(),
         vehicleModel: vehicleModel.trim(),
         vehicleColor: vehicleColor.trim(),
-        // In production: upload actual images to Cloudinary
+        isFemaleDriver: isFemaleDriver,
         vehiclePhoto: 'uploaded',
         selfieWithVehicle: 'uploaded'
       });
@@ -57,9 +58,9 @@ const DriverDocuments: React.FC = () => {
       setSuccess('Documents submitted! Admin will review within 24-48 hours.');
       setShowToast(true);
       
-      // Update local user
       const savedUser = JSON.parse(localStorage.getItem('navigo_user') || '{}');
       savedUser.verificationStatus = 'pending';
+      savedUser.isFemaleDriver = isFemaleDriver;
       localStorage.setItem('navigo_user', JSON.stringify(savedUser));
       
       setTimeout(() => history.push('/driver/home'), 2000);
@@ -92,7 +93,6 @@ const DriverDocuments: React.FC = () => {
 
       <IonContent className="docs-content">
         <div className="docs-container">
-          {/* Status Banner */}
           <IonCard className="status-card">
             <IonCardContent>
               <div className="status-header">
@@ -114,7 +114,6 @@ const DriverDocuments: React.FC = () => {
             </IonCardContent>
           </IonCard>
 
-          {/* Upload Form */}
           {(verificationStatus === 'unverified' || verificationStatus === 'rejected') && (
             <>
               <h3>📄 Required Documents</h3>
@@ -171,7 +170,25 @@ const DriverDocuments: React.FC = () => {
                 </IonItem>
               </IonList>
 
-              {/* Photo Upload Placeholders */}
+              {/* Female Driver Toggle */}
+              <div style={{ background: 'rgba(255,105,180,0.08)', borderRadius: 12, padding: 14, marginTop: 12, border: isFemaleDriver ? '2px solid #FF69B4' : '2px solid transparent' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 24 }}>👩</span>
+                    <div>
+                      <strong style={{ color: '#fff', fontSize: 14 }}>Female Driver</strong>
+                      <p style={{ color: 'rgba(255,248,240,0.6)', fontSize: 11, margin: 2 }}>Enable to appear in Women Preferred searches</p>
+                    </div>
+                  </div>
+                  <div 
+                    onClick={() => setIsFemaleDriver(!isFemaleDriver)}
+                    style={{ width: 52, height: 28, borderRadius: 14, background: isFemaleDriver ? '#FF69B4' : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}
+                  >
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: isFemaleDriver ? 27 : 3, transition: '0.3s' }} />
+                  </div>
+                </div>
+              </div>
+
               <div className="photo-uploads">
                 <div className="photo-upload-box">
                   <IonIcon icon={cloudUploadOutline} />

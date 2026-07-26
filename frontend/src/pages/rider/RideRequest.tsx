@@ -95,6 +95,7 @@ const RideRequest: React.FC = () => {
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [womenOnly, setWomenOnly] = useState(false);
 
   useEffect(() => {
     getCurrentLocation();
@@ -203,7 +204,6 @@ const RideRequest: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ride-request-content">
-        {/* Step Indicator */}
         <div className="step-indicator">
           {['📍', '🚗', '💰', '🔍'].map((icon, i) => (
             <div key={i} className={`step-dot ${i <= step ? 'active' : ''} ${i < step ? 'completed' : ''}`}>
@@ -212,7 +212,6 @@ const RideRequest: React.FC = () => {
           ))}
         </div>
 
-        {/* Guest Banner */}
         {isGuest && (
           <div className="guest-banner">
             <IonIcon icon={informationCircleOutline} />
@@ -220,7 +219,6 @@ const RideRequest: React.FC = () => {
           </div>
         )}
 
-        {/* Location Step */}
         {step === BookingStep.LOCATION && (
           <div className="booking-step location-step">
             <div className="location-inputs">
@@ -259,7 +257,6 @@ const RideRequest: React.FC = () => {
           </div>
         )}
 
-        {/* Ride Type Step */}
         {step === BookingStep.RIDE_TYPE && (
           <div className="booking-step ride-type-step">
             <h3>Choose Your Ride</h3>
@@ -279,10 +276,30 @@ const RideRequest: React.FC = () => {
                 );
               })}
             </div>
+
+            {/* WOMEN PREFERRED TOGGLE */}
+            {selectedRide && (
+              <div style={{ background: 'rgba(255,105,180,0.08)', borderRadius: 12, padding: 14, marginTop: 14, border: womenOnly ? '2px solid #FF69B4' : '2px solid transparent' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 26 }}>👩</span>
+                    <div>
+                      <strong style={{ color: '#fff', fontSize: 14 }}>Women Preferred</strong>
+                      <p style={{ color: 'rgba(255,248,240,0.6)', fontSize: 11, margin: 2 }}>Match with female drivers only</p>
+                    </div>
+                  </div>
+                  <div 
+                    onClick={() => setWomenOnly(!womenOnly)}
+                    style={{ width: 52, height: 28, borderRadius: 14, background: womenOnly ? '#FF69B4' : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}
+                  >
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: womenOnly ? 27 : 3, transition: '0.3s' }} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Payment Step */}
         {step === BookingStep.PAYMENT && fare && (
           <div className="booking-step payment-step">
             <IonCard className="fare-card">
@@ -310,13 +327,13 @@ const RideRequest: React.FC = () => {
           </div>
         )}
 
-        {/* Matching Step */}
         {step === BookingStep.MATCHING && (
           <div className="booking-step matching-step">
             {!driverFound ? (
               <>
                 <div className="matching-animation"><div className="radar-pulse" /><IonIcon icon={carOutline} className="matching-car" /></div>
                 <h3>🔍 Finding nearby drivers...</h3>
+                {womenOnly && <p style={{color: '#FF69B4', fontSize: 13}}>👩 Searching for female drivers only</p>}
                 <div className="progress-bar"><div className="progress-fill" style={{ width: `${Math.min(matchingProgress, 100)}%` }} /></div>
                 <p className="matching-status">
                   {matchingProgress < 30 && 'Scanning for available drivers...'}
@@ -330,14 +347,15 @@ const RideRequest: React.FC = () => {
                 <IonIcon icon={checkmarkCircleOutline} className="success-icon" />
                 <h3>🚗 Driver Found!</h3>
                 <div className="driver-info-card">
-                  <IonAvatar><img src="https://ui-avatars.com/api/?name=John+K&background=FF6B35&color=fff&size=128" alt="Driver" /></IonAvatar>
+                  <IonAvatar><img src="https://ui-avatars.com/api/?name=Sarah+K&background=FF69B4&color=fff&size=128" alt="Driver" /></IonAvatar>
                   <div className="driver-details">
-                    <h4>John K.</h4>
+                    <h4>{womenOnly ? 'Sarah K.' : 'John K.'}</h4>
                     <p><IonIcon icon={starOutline} /> 4.8 • Toyota Prius • UBA 123A</p>
                     <p className="eta">🕐 Arriving in 3 minutes</p>
                   </div>
                 </div>
-                <IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/home')}>
+                <BodaSafeScore badges={['helmet', 'sanitized', 'idverified']} rating={4.8} totalRides={156} />
+                <IonButton expand="block" className="confirm-btn" onClick={() => history.push('/rider/active-ride')}>
                   View Ride <IonIcon icon={arrowForwardOutline} slot="end" />
                 </IonButton>
               </div>
@@ -345,7 +363,6 @@ const RideRequest: React.FC = () => {
           </div>
         )}
 
-        {/* Footer */}
         {step !== BookingStep.MATCHING && (
           <IonFooter className="booking-footer">
             <div className="footer-content">
@@ -358,26 +375,19 @@ const RideRequest: React.FC = () => {
                 }}>
                 {step === BookingStep.LOCATION && 'Choose Ride'}
                 {step === BookingStep.RIDE_TYPE && 'Review Payment'}
-                {step === BookingStep.PAYMENT && (isGuest ? 'Sign In to Book' : 'Confirm & Request')}
+                {step === BookingStep.PAYMENT && (isGuest ? 'Sign In to Book' : `Confirm${womenOnly ? ' 👩' : ''} & Request`)}
               </IonButton>
             </div>
           </IonFooter>
         )}
 
-        {/* Login Prompt Modal */}
         <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
           <div className="login-prompt-modal">
             <h2>🚀 Ready to Ride?</h2>
             <p>Sign in or create an account to book rides, track drivers, and earn rewards.</p>
-            <IonButton expand="block" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>
-              Sign In
-            </IonButton>
-            <IonButton expand="block" fill="outline" onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>
-              Create Account
-            </IonButton>
-            <IonButton expand="block" fill="clear" onClick={() => setShowLoginPrompt(false)}>
-              Continue Browsing
-            </IonButton>
+            <IonButton expand="block" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</IonButton>
+            <IonButton expand="block" fill="outline" onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</IonButton>
+            <IonButton expand="block" fill="clear" onClick={() => setShowLoginPrompt(false)}>Continue Browsing</IonButton>
           </div>
         </IonModal>
 
