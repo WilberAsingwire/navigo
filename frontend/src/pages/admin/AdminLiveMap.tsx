@@ -62,7 +62,7 @@ const AdminLiveMap: React.FC = () => {
             <IonSpinner name="crescent" color="warning" />
           </div>
         )}
-        <div style={{ height: '60vh', width: '100%' }}>
+        <div style={{ height: '50vh', width: '100%', minHeight: '300px' }}>
           <MapContainer center={userLocation} zoom={14} style={{ height: '100%', width: '100%' }}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             <Marker position={userLocation} icon={riderIcon}>

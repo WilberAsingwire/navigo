@@ -1,4 +1,9 @@
-.admin-content {
+.leaflet-container {
+  height: 100% !important;
+  width: 100% !important;
+  z-index: 1;
+}
+
+.admin-live-map {
   --background: #080c14;
-  --color: #fff8f0;
 }
