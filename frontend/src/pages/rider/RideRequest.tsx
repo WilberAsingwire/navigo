@@ -18,6 +18,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import BodaSafeScore from '../../components/BodaSafeBadges';
+import NavigoMap from '../../components/NavigoMap';
 import './RideRequest.css';
 
 interface Location {
@@ -245,15 +246,21 @@ const RideRequest: React.FC = () => {
               </IonList>
             )}
 
-            {pickup && destination && fare && (
-              <div className="map-preview">
-                <div className="map-placeholder">
-                  <IonIcon icon={mapOutline} className="map-icon" />
-                  <p>{fare.distance} km • ~{fare.duration} min</p>
-                  <p style={{ color: '#FF6B35', fontWeight: 600, fontSize: 18 }}>{fare.formattedTotal}</p>
-                </div>
-              </div>
-            )}
+           {pickup && destination && (
+  <div style={{ marginTop: 16, borderRadius: 16, overflow: 'hidden' }}>
+    <NavigoMap 
+      userLocation={{ lat: pickup.lat, lng: pickup.lng }}
+      destination={{ lat: destination.lat, lng: destination.lng }}
+      height="250px"
+      interactive={true}
+    />
+    {fare && (
+      <div style={{ textAlign: 'center', padding: '8px 0', color: '#FF6B35', fontWeight: 600, fontSize: 16 }}>
+        📍 {fare.distance} km • 🕐 ~{fare.duration} min • 💰 {fare.formattedTotal}
+      </div>
+    )}
+  </div>
+)}
           </div>
         )}
 
