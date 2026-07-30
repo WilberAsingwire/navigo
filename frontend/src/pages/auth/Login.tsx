@@ -150,11 +150,7 @@ const Login: React.FC = () => {
           <div className="social-buttons">
             <IonButton expand="block" fill="outline" className="social-btn google"
               onClick={() => window.location.href = 'https://navigo-fzdo.onrender.com/auth/google'}>
-              <IonIcon icon={logoGoogle} slot="start" /> Google
-            </IonButton>
-            <IonButton expand="block" fill="outline" className="social-btn facebook"
-              onClick={() => window.location.href = 'https://navigo-fzdo.onrender.com/oauth/facebook'}>
-    
+              <IonIcon icon={logoGoogle} slot="start" /> Continue with Google
             </IonButton>
           </div>
 
