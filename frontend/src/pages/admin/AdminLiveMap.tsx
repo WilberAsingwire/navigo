@@ -42,7 +42,7 @@ const AdminLiveMap: React.FC = () => {
 
   const tileUrls: Record<string, string> = {
     standard: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    dark: 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
+    dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   };
 
   const generateUsers = useCallback(() => {
@@ -152,12 +152,10 @@ const AdminLiveMap: React.FC = () => {
             <IonChip outline={mapStyle !== 'dark'} color="medium" onClick={() => setMapStyle('dark')} style={{ fontSize: 10, cursor: 'pointer' }}>🌙 Dark</IonChip>
             <IonChip outline={mapStyle !== 'standard'} color="medium" onClick={() => setMapStyle('standard')} style={{ fontSize: 10, cursor: 'pointer' }}>🗺️ Light</IonChip>
           </div>
-          <IonSegment value={activeFilter} onIonChange={e => setActiveFilter(e.detail.value as any)} style={{ maxWidth: 280 }}>
-            <IonSegmentButton value="all"><IonLabel style={{ fontSize: 10 }}>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="drivers"><IonLabel style={{ fontSize: 10 }}>Drivers</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="motorists"><IonLabel style={{ fontSize: 10 }}>Boda</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="riders"><IonLabel style={{ fontSize: 10 }}>Riders</IonLabel></IonSegmentButton>
-          </IonSegment>
+          <IonSegmentButton value="all"><IonLabel style={{ fontSize: 10, color: '#fff' }}>All</IonLabel></IonSegmentButton>
+<IonSegmentButton value="drivers"><IonLabel style={{ fontSize: 10, color: '#fff' }}>Drivers</IonLabel></IonSegmentButton>
+<IonSegmentButton value="motorists"><IonLabel style={{ fontSize: 10, color: '#fff' }}>Boda</IonLabel></IonSegmentButton>
+<IonSegmentButton value="riders"><IonLabel style={{ fontSize: 10, color: '#fff' }}>Riders</IonLabel></IonSegmentButton>
         </div>
 
         {/* Map */}

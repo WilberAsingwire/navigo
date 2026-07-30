@@ -370,3 +370,8 @@ router.get('/_dev/users', (_req: Request, res: Response) => {
 });
 
 export default router;
+router.get('/me', (req: any, res: any) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ message: 'Not authenticated' });
+  res.json({ user: { name: 'User', role: 'rider' } });
+});

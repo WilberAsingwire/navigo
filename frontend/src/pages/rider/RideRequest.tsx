@@ -98,14 +98,23 @@ const RideRequest: React.FC = () => {
     if (query.length < 2) return [];
     try {
       const res = await axios.get('https://nominatim.openstreetmap.org/search', {
-        params: { format: 'json', q: query, limit: 8, countrycodes: 'ug', addressdetails: 1, namedetails: 1, dedupe: 1 },
-        headers: { 'Accept-Language': 'en' }
+        params: { 
+          format: 'json', 
+          q: query, 
+          limit: 10, 
+          countrycodes: 'ug',
+          addressdetails: 1, 
+          namedetails: 1,
+          extratags: 1,
+          dedupe: 1
+        },
+        headers: { 'Accept-Language': 'en', 'User-Agent': 'NAVIGO-RideApp/1.0' }
       });
       return res.data.map((item: any) => ({
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
         address: item.display_name,
-        name: item.namedetails?.name || item.address?.road || item.display_name.split(',')[0]
+        name: item.namedetails?.name || item.address?.road || item.address?.shop || item.address?.amenity || item.display_name.split(',')[0]
       }));
     } catch { return []; }
   };
