@@ -10,6 +10,7 @@ import Home from './pages/auth/Home';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import AuthCallback from './pages/auth/AuthCallback';
 
 /* --- RIDER PAGES --- */
 import CustomerDashboard from './pages/rider/CustomerDashboard';
@@ -98,6 +99,7 @@ const App: React.FC = () => {
             <Route path="/verify-phone" component={SkipVerification} exact />
             <Route path="/explore" component={RideRequest} exact />
             <Route path="/ussd" component={USSDInfo} exact />
+            <Route path="/auth/callback" component={AuthCallback} exact />
 
             {/* Rider Routes */}
             <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
