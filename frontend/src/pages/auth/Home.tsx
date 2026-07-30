@@ -147,7 +147,7 @@ const Home: React.FC = () => {
         {/* DRIVERS */}
         <div className="section driver-section">
           <h2>🤑 Earn With NAVIGO</h2>
-          <p className="section-sub">Join 5,000+ drivers earning daily. We take only 10% — you keep 90%.</p>
+         <div><strong>85%</strong><span>You Keep</span></div>
           <div className="driver-stats">
             <div><strong>UGX 50K-150K</strong><span>Daily Earnings</span></div>
             <div><strong>90%</strong><span>You Keep</span></div>

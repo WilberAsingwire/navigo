@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  IonContent, IonPage, IonHeader,IonToolbar, IonTitle, IonButtons, 
+  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, 
   IonBackButton, IonGrid, IonRow, IonCol, IonCard, IonCardContent, 
   IonIcon, IonText, IonButton, IonList, IonProgressBar, 
   IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, 
@@ -37,7 +37,6 @@ const DriverEarnings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [earningsData] = useState(MOCK_EARNINGS);
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'payouts'>('overview');
-  const [showWeekChart, setShowWeekChart] = useState(true);
 
   useEffect(() => { setTimeout(() => setLoading(false), 600); }, []);
 
@@ -73,7 +72,7 @@ const DriverEarnings: React.FC = () => {
               <h1 style={{ color: '#fff', fontSize: 36, fontWeight: 800, margin: '8px 0' }}>
                 UGX {earningsData.balance.toLocaleString()}
               </h1>
-              <IonButton expand="block" className="payout-btn" disabled={earningsData.balance < 50000}
+              <IonButton expand="block" disabled={earningsData.balance < 50000}
                 style={{ '--background': '#FF6B35', '--border-radius': 14, fontWeight: 700, height: 44, marginTop: 8 } as any}>
                 <IonIcon icon={arrowDownOutline} slot="start" /> Request Payout
               </IonButton>
@@ -89,7 +88,7 @@ const DriverEarnings: React.FC = () => {
               { label: 'Total', value: `UGX ${(earningsData.totalEarnings/1000000).toFixed(1)}M`, icon: statsChartOutline, color: '#2D6A4F' },
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
-                <IonIcon icon={s.icon} style={{ color: s.color,fontSize: 18, marginBottom: 4 }} />
+                <IonIcon icon={s.icon} style={{ color: s.color, fontSize: 18, marginBottom: 4 }} />
                 <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 2 }}>{s.value}</p>
                 <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{s.label}</span>
               </div>
@@ -111,9 +110,9 @@ const DriverEarnings: React.FC = () => {
 
           {/* Tabs */}
           <IonSegment value={activeTab} onIonChange={e => setActiveTab(e.detail.value as any)} style={{ marginBottom: 14 }}>
-            <IonSegmentButton value="overview"><IonLabel style={{ fontSize: 11 }}>Overview</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="history"><IonLabel style={{ fontSize: 11 }}>History</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="payouts"><IonLabel style={{ fontSize: 11 }}>Payouts</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="overview"><IonLabel style={{ fontSize: 11, color: '#fff' }}>Overview</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="history"><IonLabel style={{ fontSize: 11, color: '#fff' }}>History</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="payouts"><IonLabel style={{ fontSize: 11, color: '#fff' }}>Payouts</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* History Tab */}
@@ -134,7 +133,7 @@ const DriverEarnings: React.FC = () => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
                     <span style={{ color: 'rgba(255,255,255,0.3)' }}>{new Date(trip.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>You earned: UGX {(trip.fare * 0.85).toLocaleString()}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>You earned: UGX {(trip.fare * 0.85).toLocaleString()} (85%)</span>
                   </div>
                 </div>
               ))}
@@ -166,8 +165,8 @@ const DriverEarnings: React.FC = () => {
               {[
                 { label: 'Total Trips', value: earningsData.totalTrips, icon: receiptOutline },
                 { label: 'Avg Rating', value: earningsData.avgRating, icon: trendingUpOutline },
-                { label: 'Commission Rate', value: '15%', icon: cardOutline },
-                { label: 'Payout Method', value: 'MTN Money', icon: cashOutline },
+                { label: 'You Keep', value: '85%', icon: cashOutline },
+                { label: 'Payout Method', value: 'MTN Money', icon: cardOutline },
               ].map(s => (
                 <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
                   <IonIcon icon={s.icon} style={{ color: '#FF6B35', fontSize: 20, marginBottom: 6 }} />
