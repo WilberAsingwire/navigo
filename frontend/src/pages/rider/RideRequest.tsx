@@ -66,28 +66,30 @@ const RideRequest: React.FC = () => {
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
+      // Try to get cached position first for instant display
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          const accuracy = pos.coords.accuracy;
-          setPickup({ lat, lng, address: 'Locating you precisely...', name: '📍 Your Location' });
+          setPickup({ lat, lng, address: 'Getting address...', name: '📍 Your Location' });
           try {
-            const res = await axios.get('https://nominatim.openstreetmap.org/reverse', {
-              params: { format: 'json', lat, lon: lng, zoom: 19, addressdetails: 1 },
-              headers: { 'Accept-Language': 'en' }
-            });
+            const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
             const addr = res.data.display_name || '';
-            const street = res.data.address?.road || res.data.address?.path || res.data.address?.neighbourhood || res.data.address?.suburb || '';
-            const shortName = street || addr.split(',')[0];
+            const road = res.data.address?.road || '';
+            const suburb = res.data.address?.suburb || res.data.address?.neighbourhood || '';
+            const city = res.data.address?.city || res.data.address?.town || '';
+            const shortName = road || suburb || city || addr.split(',')[0];
             setPickup({ lat, lng, address: addr, name: '📍 ' + shortName });
-            setPickupSearch(street || shortName);
+            setPickupSearch(road || shortName);
           } catch {
-            setPickup({ lat, lng, address: 'Your Location (' + Math.round(accuracy) + 'm accuracy)', name: '📍 Current Location' });
+            setPickup({ lat, lng, address: 'Your Location', name: '📍 Current Location' });
           }
         },
-        () => setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' }),
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        (err) => {
+          console.log('GPS Error:', err.message);
+          setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
       );
     }
   };
