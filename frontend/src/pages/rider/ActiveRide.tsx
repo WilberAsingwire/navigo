@@ -16,6 +16,7 @@ import {
 import ChatBox from '../../components/ChatBox';
 import SOSButton from '../../components/SOSButton';
 import NavigoMap from '../../components/NavigoMap';
+import { processPayment, checkPaymentStatus } from '../../services/paymentService';
 import './ActiveRide.css';
 
 const MOCK_DRIVER = {
@@ -78,18 +79,56 @@ const ActiveRide: React.FC = () => {
     setShowPaymentModal(true);
   };
 
-  const handlePaymentComplete = () => {
-    if (paymentMethod === 'cash' && !cashReceived) {
-      setToastMsg('Please confirm cash payment was received');
-      setShowToast(true);
-      return;
-    }
-    setShowPaymentModal(false);
-    setRideStatus('completed');
-    setToastMsg('✅ Payment confirmed! Ride completed.');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+const handlePaymentComplete = async () => {
+  if (paymentMethod === 'cash' && !cashReceived) {
+    setToastMsg('Please confirm cash payment was received');
     setShowToast(true);
-    setTimeout(() => setShowRating(true), 1500);
-  };
+    return;
+  }
+
+  if (paymentMethod === 'cash') {
+    // Cash payment — driver confirms directly
+    const result = await processPayment(fare, '', 'cash');
+    if (result.success) {
+      setShowPaymentModal(false);
+      setRideStatus('completed');
+      setToastMsg('✅ Cash payment recorded! Ride completed.');
+      setShowToast(true);
+      setTimeout(() => setShowRating(true), 1500);
+    }
+    return;
+  }
+
+  // Mobile Money payment
+  if (paymentMethod === 'mtn' || paymentMethod === 'airtel') {
+    setIsProcessing(true);
+    const userPhone = JSON.parse(localStorage.getItem('navigo_user') || '{}')?.phone || '0772000000';
+    
+    const result = await processPayment(fare, userPhone, paymentMethod);
+    
+    if (result.success) {
+      setToastMsg(result.message);
+      setShowToast(true);
+      
+      // Check payment status
+      const status = await checkPaymentStatus(result.transactionId!, paymentMethod);
+      
+      if (status.status === 'completed') {
+        setShowPaymentModal(false);
+        setRideStatus('completed');
+        setToastMsg('✅ Payment confirmed! Ride completed.');
+        setShowToast(true);
+        setTimeout(() => setShowRating(true), 1500);
+      }
+    } else {
+      setToastMsg(result.message);
+      setShowToast(true);
+    }
+    setIsProcessing(false);
+  }
+};
 
   const handleSubmitRating = () => {
     setShowRating(false);

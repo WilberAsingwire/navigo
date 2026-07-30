@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, 
+  IonContent, IonPage, IonHeader,IonToolbar, IonTitle, IonButtons, 
   IonBackButton, IonGrid, IonRow, IonCol, IonCard, IonCardContent, 
   IonIcon, IonText, IonButton, IonList, IonProgressBar, 
   IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, 
@@ -89,7 +89,7 @@ const DriverEarnings: React.FC = () => {
               { label: 'Total', value: `UGX ${(earningsData.totalEarnings/1000000).toFixed(1)}M`, icon: statsChartOutline, color: '#2D6A4F' },
             ].map(s => (
               <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
-                <IonIcon icon={s.icon} style={{ color: s.color, fontSize: 18, marginBottom: 4 }} />
+                <IonIcon icon={s.icon} style={{ color: s.color,fontSize: 18, marginBottom: 4 }} />
                 <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 2 }}>{s.value}</p>
                 <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{s.label}</span>
               </div>

@@ -30,7 +30,9 @@ const Home: React.FC = () => {
         <div className="hero-section">
           <div className="hero-badge">🇺🇬 Uganda's #1 Ride-Hailing App</div>
           <h1 className="hero-title">Move Smart.<br/>Pay Less.<br/><span className="highlight">Arrive Safe.</span></h1>
-          <p className="hero-desc">The only app with Boda Safe certified drivers, women-preferred mode, and offline booking. Better than Uber. Cheaper than Bolt. Safer than SafeBoda.</p>
+          <p className="hero-desc">Uganda's smartest way to move. Boda Safe™ verified drivers • Women-preferred mode • Works offline. Ride with confidence.
+
+</p>
           <div className="hero-buttons">
             <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
               Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
