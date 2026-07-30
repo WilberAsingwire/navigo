@@ -7,7 +7,7 @@ import {
 } from '@ionic/react';
 import {
   phonePortraitOutline, lockClosedOutline, eyeOutline,
-  eyeOffOutline, logInOutline, logoGoogle, logoFacebook,
+  eyeOffOutline, logInOutline, logoGoogle, 
   arrowForwardOutline, fingerPrintOutline, callOutline,
   informationCircleOutline
 } from 'ionicons/icons';
@@ -154,7 +154,7 @@ const Login: React.FC = () => {
             </IonButton>
             <IonButton expand="block" fill="outline" className="social-btn facebook"
               onClick={() => window.location.href = 'https://navigo-fzdo.onrender.com/oauth/facebook'}>
-              <IonIcon icon={logoFacebook} slot="start" /> Facebook
+    
             </IonButton>
           </div>
 
