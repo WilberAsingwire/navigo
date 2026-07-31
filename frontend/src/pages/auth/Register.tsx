@@ -130,12 +130,19 @@ const Register: React.FC = () => {
             </div>
           )}
 
-          {(role === 'driver' || role === 'motorist') && (
-            <div className="verification-notice">
-              <IonIcon icon={shieldCheckmarkOutline} />
-              <p>You'll need to upload your driver's license and vehicle documents for verification after signing up.</p>
-            </div>
-          )}
+         {role === 'driver' && (
+  <div className="verification-notice">
+    <IonIcon icon={shieldCheckmarkOutline} />
+    <p>You'll need to upload your driver's license and vehicle documents for verification after signing up.</p>
+  </div>
+)}
+
+{role === 'motorist' && (
+  <div className="verification-notice" style={{ borderColor: '#ffab40', background: 'rgba(255,171,64,0.06)' }}>
+    <IonIcon icon={shieldCheckmarkOutline} style={{ color: '#ffab40' }} />
+    <p>Boda Safe™ certified! You'll need your driving permit and motorcycle documents for verification.</p>
+  </div>
+)}
 
           {/* Registration Card */}
           <IonCard className="register-card">

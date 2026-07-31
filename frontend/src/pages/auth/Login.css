@@ -156,3 +156,24 @@
   font-size: 11px;
   margin-top: 2px;
 }
+/* Fix blue outline on focused inputs */
+.auth-input.item-has-focus {
+  border-color: #FF6B35 !important;
+  --highlight-color-focused: #FF6B35;
+}
+
+/* Fix USSD link color */
+.ussd-link {
+  --color: #fff !important;
+}
+
+/* Spacing for "Don't have an account" */
+.auth-switch {
+  margin-top: 24px !important;
+}
+
+/* Button padding fix */
+.login-btn {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}

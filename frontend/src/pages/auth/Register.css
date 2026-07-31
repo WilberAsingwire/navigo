@@ -177,3 +177,28 @@
   flex-direction: column;
   justify-content: center;
 }
+
+/* Fix blue outline on focused inputs */
+.auth-input.item-has-focus {
+  border-color: #FF6B35 !important;
+  --highlight-color-focused: #FF6B35;
+}
+
+/* Phone helper text bigger */
+.input-helper {
+  font-size: 12px !important;
+  margin-top: 4px !important;
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* Checkbox spacing */
+.terms-wrap {
+  margin-top: 18px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Auth switch spacing */
+.auth-switch {
+  margin-top: 20px !important;
+  padding-bottom: 24px !important;
+}
