@@ -140,9 +140,9 @@ const Home: React.FC = () => {
         <div className="section women-section">
           <h2>👩 Women Preferred Mode</h2>
           <p>Request female drivers only — because every woman deserves to feel safe while traveling.</p>
-          <IonButton expand="block" className="women-btn" onClick={() => history.push('/register')}>
-            Available In-App — Sign Up to Enable
-          </IonButton>
+         <IonButton expand="block" className="women-btn" onClick={() => history.push('/register')}>
+  Available In-App — Sign Up to Enable
+</IonButton>
         </div>
 
         {/* DRIVERS */}

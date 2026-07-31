@@ -112,3 +112,97 @@ body { overflow-x: hidden; padding-right: 0 !important; }
 .footer-grid span { display: block; color: rgba(255,255,255,0.5); font-size: 11px; margin-bottom: 6px; cursor: pointer; }
 .footer-bottom { text-align: center; }
 .footer-bottom p { color: rgba(255,255,255,0.3); font-size: 11px; margin: 4px 0; }
+
+/* ============================================ */
+/* FINAL HOMEPAGE FIXES - Visibility & Polish   */
+/* ============================================ */
+
+/* 1. Orange Button Hover State */
+.hero-btn.primary:hover,
+.nav-signup-btn:hover {
+  --background: #e55a2a !important;
+  --background-activated: #cc4a1f !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255,107,53,0.3);
+  transition: all 0.2s ease;
+}
+
+/* 2. Women Preferred Button → Orange */
+.women-btn {
+  --background: #FF6B35 !important;
+  --background-activated: #e55a2a !important;
+  --color: #fff !important;
+  --border-radius: 14px;
+  max-width: 380px;
+  margin: 20px auto 0;
+  font-size: 15px;
+  font-weight: 700;
+  height: 48px;
+}
+
+/* 3. Zawadi Reward Tier Colored Borders */
+.tier-bronze { border-color: #cd7f32 !important; border-width: 2px !important; }
+.tier-silver { border-color: #c0c0c0 !important; border-width: 2px !important; }
+.tier-gold { border-color: #ffd700 !important; border-width: 2px !important; }
+.tier-platinum { border-color: #b9f2ff !important; border-width: 2px !important; }
+
+/* 4. Footer Social Icon Spacing */
+.footer-grid span {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* 5. BRIGHTEN ALL BODY TEXT (Invisible Text Fix) */
+.hero-desc {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+  line-height: 1.7 !important;
+}
+.section-sub {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+.section p {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+.safety-section p {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+}
+.women-section p {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+}
+.rewards-section p {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+}
+.cta-section p {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+}
+.driver-section .section-sub {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+}
+
+/* Hover transition for all clickable cards */
+.ride-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  border-color: rgba(255,255,255,0.12);
+}
+.feature-card:hover {
+  background: rgba(255,255,255,0.06);
+  transform: translateY(-1px);
+}
+.tier:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
