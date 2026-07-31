@@ -116,3 +116,48 @@ ion-badge[color="success"] {
 .leaflet-top.leaflet-right {
   margin-right: 8px !important;
 }
+
+/* ============================================ */
+/* FINAL ADMIN MAP FIXES                        */
+/* ============================================ */
+
+/* 1. Hide "myLocat..." text on location button */
+.leaflet-control-locate a {
+  font-size: 0 !important;
+  text-indent: -9999px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+}
+.leaflet-control-locate a::after {
+  content: "📍" !important;
+  font-size: 14px !important;
+  text-indent: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 100% !important;
+}
+
+/* 2. Leaflet attribution - smaller & transparent */
+.leaflet-control-attribution {
+  opacity: 0.4 !important;
+  font-size: 8px !important;
+  color: #666 !important;
+  background: transparent !important;
+}
+
+/* 3. Stats numbers -> Brand Orange */
+.admin-live-map .stats-bar div[style*="color"] {
+  color: #FF6B35 !important;
+}
+
+/* Nuke neon green ACTIVE badges */
+ion-badge[color="success"],
+.admin-live-map ion-badge {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+  border: 1px solid #10B981 !important;
+}
