@@ -47,7 +47,7 @@ const RiderDashboard: React.FC = () => {
               <p>Ready for your next ride?</p>
             </div>
             <div className="header-actions">
-              <IonAvatar className="header-avatar" onClick={() => history.push('/rider/profile')}>
+              <IonAvatar className="header-avatar" onClick={() => history.push('/rider/profile')}style={{marginRight: 12}}>
                 <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Rider')}&background=FF6B35&color=fff&size=64`} alt="profile" />
               </IonAvatar>
             </div>
@@ -84,7 +84,8 @@ const RiderDashboard: React.FC = () => {
         </IonGrid>
 
         <div className="booking-section ion-margin-vertical">
-          <IonButton expand="block" className="book-now-btn" onClick={() => history.push('/rider/book')}>
+         <IonButton expand="block" onClick={() => history.push('/rider/book')}
+  style={{'--background': '#FF6B35', '--background-activated': '#e55a2a', '--border-radius': 14, fontWeight: 700, height: 52, fontSize: 15, margin: '12px 0'} as any}>
             <div className="btn-content">
               <div className="text">
                 <span className="title">Request a Ride</span>
@@ -116,12 +117,18 @@ const RiderDashboard: React.FC = () => {
                 <p>Wallet</p>
               </div>
             </IonCol>
+            <IonCol size="4">
+  <div className="action-item" onClick={() => history.push('/rider/book')}>
+    <div className="icon-box"><IonIcon icon={carOutline} /></div>
+    <p>Book Ride</p>
+  </div>
+</IonCol>
           </IonRow>
         </IonGrid>
 
         <div className="nearby-header ion-margin-top">
           <h3 className="section-title sora-font">Drivers Around You</h3>
-          <span className="view-all" onClick={() => history.push('/rider/book')}>View Map</span>
+          <span className="view-all" onClick={() => history.push('/rider/book')} style={{color: '#FF6B35', fontWeight: 600}}>View Map</span>
         </div>
 
         <div className="nearby-scroll">

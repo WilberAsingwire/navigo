@@ -165,3 +165,11 @@
 .dist { color: #00e676; font-size: 0.75rem; }
 .vehicle-row { display: flex; align-items: center; color: #666; font-size: 0.8rem; }
 .vehicle-row IonIcon { margin-right: 5px; }
+/* Request a Ride button - Orange */
+.book-now-btn {
+  --background: #FF6B35 !important;
+  --color: #fff !important;
+}
+.book-now-btn .subtitle {
+  color: rgba(255,255,255,0.8) !important;
+}

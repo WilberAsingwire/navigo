@@ -73,13 +73,13 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({ points, tier, referralCode = 
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 34, fontWeight: 800, color: '#FF6B35', lineHeight: 1 }}>{points.toLocaleString()}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{points.toLocaleString()}</div>
             <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>POINTS</span>
           </div>
         </div>
 
         {/* Progress */}
-        <IonProgressBar value={progress / 100} style={{ height: 8, borderRadius: 4, marginBottom: 6 }} color={progress > 50 ? 'success' : 'warning'} />
+        <IonProgressBar value={progress / 100} style={{ height: 6, borderRadius: 3, marginBottom: 4, '--background': '#2A2A2A', '--progress-background': '#FF6B35' } as any} />
         <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '0 0 16px', textAlign: 'center' }}>
           {tier !== 'platinum' 
             ? `🚀 ${config.nextTier - points} pts to ${Object.values(TIER_CONFIG)[Object.keys(TIER_CONFIG).indexOf(tier) + 1]?.emoji} ${Object.values(TIER_CONFIG)[Object.keys(TIER_CONFIG).indexOf(tier) + 1]?.name} tier`
@@ -102,27 +102,27 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({ points, tier, referralCode = 
 
         {/* Rewards Tab */}
         {activeTab === 'rewards' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {ALL_REWARDS.map(reward => {
-              const canAfford = points >= reward.points;
-              return (
-                <div key={reward.name} onClick={() => handleRedeem(reward)}
-                  style={{
-                    background: canAfford ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.04)',
-                    borderRadius: 12, padding: 12, cursor: 'pointer', textAlign: 'center',
-                    border: canAfford ? '1px solid rgba(255,107,53,0.3)' : '1px solid transparent',
-                    opacity: canAfford ? 1 : 0.5, transition: '0.2s',
-                  }}>
-                  <span style={{ fontSize: 28 }}>{reward.emoji}</span>
-                  <p style={{ color: '#fff', fontSize: 11, margin: '6px 0 2px', fontWeight: 600 }}>{reward.name}</p>
-                  <span style={{ color: canAfford ? '#FF6B35' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700 }}>
-                    {canAfford ? '✓ Redeem' : `${reward.points} pts`}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+    {ALL_REWARDS.map(reward => {
+      const canAfford = points >= reward.points;
+      return (
+        <div key={reward.name} onClick={() => handleRedeem(reward)}
+          style={{
+            background: canAfford ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.04)',
+            borderRadius: 10, padding: 10, cursor: 'pointer', textAlign: 'center',
+            border: canAfford ? '1px solid rgba(255,107,53,0.3)' : '1px solid transparent',
+            opacity: canAfford ? 1 : 0.5,
+          }}>
+          <span style={{ fontSize: 22 }}>{reward.emoji}</span>
+          <p style={{ color: '#fff', fontSize: 10, margin: '4px 0', fontWeight: 600 }}>{reward.name}</p>
+          <span style={{ color: canAfford ? '#FF6B35' : 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 700 }}>
+            {canAfford ? '✓ Redeem' : `${reward.points} pts`}
+          </span>
+        </div>
+      );
+    })}
+  </div>
+)}
 
         {/* Challenges Tab */}
         {activeTab === 'challenges' && (
