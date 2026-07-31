@@ -19,11 +19,10 @@ const RiderDashboard: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [nearbyDrivers] = useState([
-    { id: '1', name: 'John K.', vehicle: 'Toyota Prius', type: 'car', distance: '0.5' },
-    { id: '2', name: 'Sarah M.', vehicle: 'Bajaj Boxer', type: 'bike', distance: '1.2' },
-    { id: '3', name: 'Peter O.', vehicle: 'Toyota Hiace', type: 'car', distance: '2.0' },
+    { id: '1', name: 'John K.', vehicle: '🚗 Toyota Prius', type: 'car', distance: '0.5' },
+    { id: '2', name: 'Sarah M.', vehicle: '🏍️ Bajaj Boxer', type: 'bike', distance: '1.2' },
+    { id: '3', name: 'Peter O.', vehicle: '🚗 Toyota Hiace', type: 'car', distance: '2.0' },
   ]);
-
   const userData = { name: user?.name || 'Rider', stats: { totalRides: 5, rating: 4.8 } };
 
   useEffect(() => { setTimeout(() => setLoading(false), 600); }, []);

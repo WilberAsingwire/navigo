@@ -56,9 +56,9 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({ points, tier, referralCode = 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 22 }}>{config.emoji}</span>
             <div>
-              <span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>Zawadi Rewards</span>
-              <IonBadge style={{ background: config.color, color: '#000', fontSize: 9, marginLeft: 6 }}>{config.name}</IonBadge>
-            </div>
+  <span style={{ color: '#fff', fontSize: 13, fontWeight: 700, display: 'block' }}>Zawadi Rewards</span>
+  <IonBadge style={{ background: config.color, color: '#000', fontSize: 9, marginTop: 3 }}>{config.name} • {config.cashback}</IonBadge>
+</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{points}</span>
