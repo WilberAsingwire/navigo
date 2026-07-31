@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>NAVIGO - Navigate Your World</title>
     <base href="/" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark" />
     <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
@@ -14,23 +14,61 @@
     <link rel="shortcut icon" type="image/png" href="/favicon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="NAVIGO" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="theme-color" content="#FF6B35" />
-    <style>
-      ion-header,
-      ion-header ion-toolbar,
-      .header-ios ion-toolbar,
-      .header-md ion-toolbar {
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1A1A1A" />
+
+    <!-- IMMEDIATE HEADER FIX - Runs before any CSS -->
+    <style id="header-fix">
+      html, body, ion-app, ion-header, ion-toolbar,
+      .header-ios, .header-md, .header-ios ion-toolbar, .header-md ion-toolbar,
+      ion-header:not(.ion-color) ion-toolbar:not(.ion-color),
+      .ion-page ion-header ion-toolbar {
         --background: #1A1A1A !important;
-        --color: #fff !important;
-        background: #1A1A1A !important;
+        --color: #ffffff !important;
+        background-color: #1A1A1A !important;
+        color: #ffffff !important;
       }
-      ion-header ion-title {
-        color: #fff !important;
+      ion-header ion-title,
+      .header-ios ion-title,
+      .header-md ion-title {
+        color: #ffffff !important;
       }
+    </style>
+
+    <!-- Kill any white flash -->
+    <style>
+      body { background-color: #080c14 !important; }
+      ion-app { background-color: #080c14 !important; }
     </style>
   </head>
   <body>
+    <!-- JavaScript header fix - runs after Ionic loads -->
+    <script>
+      (function() {
+        function fixHeaders() {
+          var headers = document.querySelectorAll('ion-header, ion-header ion-toolbar, .header-ios ion-toolbar, .header-md ion-toolbar');
+          headers.forEach(function(el) {
+            el.style.setProperty('--background', '#1A1A1A', 'important');
+            el.style.setProperty('--color', '#ffffff', 'important');
+            el.style.backgroundColor = '#1A1A1A';
+            el.style.color = '#ffffff';
+          });
+          var titles = document.querySelectorAll('ion-header ion-title');
+          titles.forEach(function(el) {
+            el.style.color = '#ffffff';
+          });
+        }
+        // Run immediately
+        fixHeaders();
+        // Run again after Ionic renders
+        setTimeout(fixHeaders, 100);
+        setTimeout(fixHeaders, 500);
+        setTimeout(fixHeaders, 1000);
+        // Watch for changes
+        new MutationObserver(fixHeaders).observe(document.documentElement, { childList: true, subtree: true });
+      })();
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
