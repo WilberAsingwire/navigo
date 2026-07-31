@@ -254,3 +254,34 @@ body { overflow-x: hidden; padding-right: 0 !important; }
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 }
+
+/* Orange Button Hover */
+.hero-btn.primary:hover, .nav-signup-btn:hover {
+  --background: #e55a2a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255,107,53,0.3);
+}
+
+/* Women Button -> Solid Orange */
+.women-btn {
+  --background: #FF6B35 !important;
+  --color: #fff !important;
+}
+
+/* Zawadi Colored Borders */
+.tier-bronze { border: 2px solid #cd7f32 !important; }
+.tier-silver { border: 2px solid #c0c0c0 !important; }
+.tier-gold { border: 2px solid #ffd700 !important; }
+.tier-platinum { border: 2px solid #b9f2ff !important; }
+
+/* Footer Icon Gap */
+.footer-grid span { display: flex !important; align-items: center; gap: 10px; }
+
+/* Bright body text */
+.hero-desc, .section-sub, .section p, .safety-section p, 
+.women-section p, .rewards-section p, .cta-section p {
+  color: #D1D5DB !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+.driver-section .section-sub { font-size: 18px !important; color: #fff !important; }

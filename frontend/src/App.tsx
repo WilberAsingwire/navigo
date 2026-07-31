@@ -11,6 +11,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import AuthCallback from './pages/auth/AuthCallback';
+import './pages/admin/AdminGlobal.css';
 
 /* --- RIDER PAGES --- */
 import CustomerDashboard from './pages/rider/CustomerDashboard';

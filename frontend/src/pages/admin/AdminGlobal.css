@@ -1,0 +1,104 @@
+/* ============================================ */
+/* ADMIN GLOBAL STYLES - Dark Theme + Orange    */
+/* ============================================ */
+
+/* Fix all admin headers */
+.admin-content ion-header,
+.admin-content ion-toolbar {
+  --background: #080c14 !important;
+  --color: #fff !important;
+}
+
+/* Fix tab blue underline -> Orange */
+ion-segment-button {
+  --indicator-color: #FF6B35 !important;
+  --color-checked: #FF6B35 !important;
+}
+ion-segment-button ion-label {
+  color: #fff !important;
+  font-size: 12px !important;
+}
+
+/* Status Badges - Muted Colors */
+ion-badge[color="success"] {
+  --background: rgba(16, 185, 129, 0.2) !important;
+  --color: #10B981 !important;
+}
+ion-badge[color="warning"] {
+  --background: rgba(245, 158, 11, 0.2) !important;
+  --color: #F59E0B !important;
+}
+ion-badge[color="danger"] {
+  --background: rgba(239, 68, 68, 0.2) !important;
+  --color: #EF4444 !important;
+}
+ion-badge[color="primary"] {
+  --background: rgba(77, 166, 255, 0.2) !important;
+  --color: #4da6ff !important;
+}
+
+/* Admin KPI Cards - Flat solid colors */
+.admin-kpi-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* Revenue Chart - Solid orange bars */
+.admin-revenue-bar {
+  background: #FF6B35 !important;
+}
+
+/* Quick Action Cards - Dark with orange accent */
+.admin-quick-action-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+.admin-quick-action-card:hover {
+  background: rgba(255,107,53,0.08) !important;
+}
+
+/* Map - Force dark theme */
+.leaflet-container {
+  background: #080c14 !important;
+}
+
+/* Map controls - Dark background */
+.leaflet-control-zoom a {
+  background: #1a1a2e !important;
+  color: #fff !important;
+  border-color: #333 !important;
+}
+
+/* Ticket IDs - White not yellow */
+.ticket-id {
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Open badge */
+.badge-open {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #F59E0B !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Approve/Reject buttons */
+.btn-approve {
+  --background: rgba(16, 185, 129, 0.15) !important;
+  --color: #10B981 !important;
+  --border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.btn-reject {
+  --background: rgba(239, 68, 68, 0.15) !important;
+  --color: #EF4444 !important;
+  --border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+/* Empty state */
+.empty-state ion-icon {
+  color: rgba(255,255,255,0.2) !important;
+  font-size: 48px;
+}
+.empty-state p {
+  color: rgba(255,255,255,0.4) !important;
+}

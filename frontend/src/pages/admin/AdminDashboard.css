@@ -197,3 +197,9 @@
   border-radius: 12px;
   font-size: 11px;
 }
+
+.admin-dashboard ion-header,
+.admin-dashboard ion-toolbar {
+  --background: #080c14;
+  --color: #fff;
+}
