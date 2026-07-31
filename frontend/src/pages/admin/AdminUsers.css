@@ -1,6 +1,41 @@
-.admin-bg { --background: #080c14; }
-.admin-toolbar { --background: #080c14; }
+.admin-content { --background: #080c14; }
+.admin-toolbar { --background: #1A1A1A; }
 .admin-search { --background: rgba(255,255,255,0.06); --color: #fff; --placeholder-color: #888; border-radius: 12px; }
 .admin-user-list { background: transparent; }
 .user-list-item { --background: transparent; --padding-start: 8px; }
 .sora-font { font-family: 'Sora', sans-serif; }
+
+/* Status Badges - Translucent with borders */
+ion-badge[color="success"],
+.user-status-active {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border: 1px solid #10B981 !important;
+  color: #10B981 !important;
+}
+ion-badge[color="warning"],
+.user-status-suspended {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid #F59E0B !important;
+  color: #F59E0B !important;
+}
+ion-badge[color="danger"],
+.user-status-banned {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid #EF4444 !important;
+  color: #EF4444 !important;
+}
+
+/* Avatars - Dark Gray */
+ion-avatar,
+.user-avatar {
+  background: #2A2A2A !important;
+}
+ion-avatar ion-icon {
+  display: none !important;
+}
+
+/* Stats Numbers - All Orange */
+.stats-number,
+.stat-value {
+  color: #FF6B35 !important;
+}
