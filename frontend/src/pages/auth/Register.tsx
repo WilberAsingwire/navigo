@@ -50,9 +50,9 @@ const Register: React.FC = () => {
 
   const getRoleInfo = (r: string) => {
     switch (r) {
-      case 'rider': return { text: 'Book rides, earn Zawadi points, get discounts! 🎁', color: '#FF6B35' };
-      case 'driver': return { text: 'Earn UGX 50K-150K daily, keep 85% of fares! 💰', color: '#4da6ff' };
-      case 'motorist': return { text: 'Boda Safe™ certified, free helmet, instant payouts! 🏍️', color: '#ffab40' };
+      case 'rider': return { text: '📱 Book rides, earn Zawadi points, and get exclusive discounts!', color: '#FF6B35' };
+      case 'driver': return { text: '🚗 Earn UGX 50K-150K daily driving your car. Keep 85% of every fare!', color: '#4da6ff' };
+      case 'motorist': return { text: '🏍️ Boda Safe™ certified! Free helmet, safety training & instant payouts!', color: '#ffab40' };
       default: return null;
     }
   };
