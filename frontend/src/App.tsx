@@ -39,6 +39,7 @@ import AdminSupport from './pages/admin/AdminSupport';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminLiveMap from './pages/admin/AdminLiveMap';
 import AdminApprovals from './pages/admin/AdminApprovals';
+import AdminSettings from './pages/admin/AdminSettings';
 
 /* Core CSS */
 import '@ionic/react/css/core.css';
@@ -137,6 +138,7 @@ const App: React.FC = () => {
             <Route path="/admin/users" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUsers} />} />
             <Route path="/admin/map" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} />} />
             <Route path="/admin/approve" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUserReview} />} />
+            <Route path="/admin/settings" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSettings} />} />
 
             {/* Default */}
            <Route path="/" component={Home} exact />
