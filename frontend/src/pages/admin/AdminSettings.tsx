@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonInput, IonButton, IonIcon, IonToggle, IonCard, IonCardContent, IonToast } from '@ionic/react';
-import { saveOutline, settingsOutline, cashOutline, carOutline, bicycleOutline, percentOutline, phonePortraitOutline, mailOutline, shieldCheckmarkOutline } from 'ionicons/icons';
+import { saveOutline, settingsOutline, cashOutline, carOutline, bicycleOutline, pieChartOutline, phonePortraitOutline, mailOutline, shieldCheckmarkOutline } from 'ionicons/icons';
 
 const AdminSettings: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
@@ -44,7 +44,7 @@ const AdminSettings: React.FC = () => {
               <h3 style={{color: '#fff', margin: '0 0 12px', fontSize: 15}}><IonIcon icon={settingsOutline} style={{color: '#FF6B35', marginRight: 6}} /> General</h3>
               <IonItem style={{'--background': 'transparent', color: '#fff'}}><IonLabel position="stacked" style={{color: '#D1D5DB'}}>App Name</IonLabel><IonInput value={settings.appName} onIonInput={e => setSettings({...settings, appName: e.detail.value!})} /></IonItem>
               <IonItem style={{'--background': 'transparent', color: '#fff'}}><IonLabel position="stacked" style={{color: '#D1D5DB'}}>Currency</IonLabel><IonInput value={settings.currency} /></IonItem>
-              <IonItem style={{'--background': 'transparent', color: '#fff'}}><IonLabel>Maintenance Mode</IonLabel><IonToggle checked={settings.maintenanceMode} onIonChange={e => setSettings({...settings, maintenanceMode: e.detail.checked})} color="warning" /></IonItem>
+              <IonItem style={{'--background': 'transparent', color: '#fff'}}><IonLabel style={{color: '#D1D5DB'}}>Maintenance Mode</IonLabel><IonToggle checked={settings.maintenanceMode} onIonChange={e => setSettings({...settings, maintenanceMode: e.detail.checked})} color="warning" /></IonItem>
             </IonCardContent>
           </IonCard>
 
@@ -62,7 +62,7 @@ const AdminSettings: React.FC = () => {
           {/* Driver Settings */}
           <IonCard style={{background: 'rgba(255,255,255,0.04)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 14}}>
             <IonCardContent>
-              <h3 style={{color: '#fff', margin: '0 0 12px', fontSize: 15}}><IonIcon icon={percentOutline} style={{color: '#FF6B35', marginRight: 6}} /> Driver Management</h3>
+              <h3 style={{color: '#fff', margin: '0 0 12px', fontSize: 15}}><IonIcon icon={pieChartOutline} style={{color: '#FF6B35', marginRight: 6}} /> Driver Management</h3>
               <IonItem style={{'--background': 'transparent', color: '#fff'}}><IonLabel style={{color: '#D1D5DB'}}>Commission Rate (%)</IonLabel><IonInput type="number" value={settings.driverCommission} /></IonItem>
               <IonItem style={{'--background': 'transparent', color: '#fff'}}><IonLabel style={{color: '#D1D5DB'}}>Auto-Approve Drivers</IonLabel><IonToggle checked={settings.autoApproveDrivers} color="success" /></IonItem>
             </IonCardContent>
