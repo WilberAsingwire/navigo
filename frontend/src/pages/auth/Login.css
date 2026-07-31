@@ -1,205 +1,158 @@
-/* Login Page Specific Styles */
+/* NAVIGO Login Page Styles */
 
-.login-content {
-  --background: #080c14;
-  --color: #fff8f0;
+/* Logo */
+.logo-main {
+  font-size: 36px !important;
+  margin-bottom: 2px !important;
+}
+.logo-tagline {
+  font-size: 14px !important;
 }
 
-.login-container {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 30px 20px;
+/* Login Card Container */
+.login-card {
+  background: rgba(255,255,255,0.04) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  margin: 0 0 20px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
 }
 
-.login-logo {
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.login-logo h1 {
-  font-size: 36px;
-  font-weight: 800;
-  color: #FF6B35;
-  margin: 0;
-}
-
-.login-logo p {
-  color: rgba(255, 248, 240, 0.5);
-  margin: 6px 0 0;
-  font-size: 14px;
-}
-
-.login-input {
-  --background: rgba(255, 255, 255, 0.05);
-  --color: #fff;
-  --placeholder-color: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  margin-bottom: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  --highlight-color-focused: #FF6B35;
-}
-
-.login-input ion-icon[slot="start"] {
-  color: #FF6B35;
-  font-size: 18px;
-  margin-right: 6px;
-}
-
-.login-input ion-label {
-  color: rgba(255, 248, 240, 0.6) !important;
-  font-size: 11px;
+/* Phone Input with Country Code */
+.phone-input-group {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
   margin-bottom: 4px;
 }
-
-.login-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.remember-me {
+.country-code {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px 0 0 12px;
+  padding: 0 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-right: none;
+}
+.country-code ion-icon {
+  color: #FF6B35;
+  font-size: 16px;
+}
+.phone-field {
+  --background: rgba(255,255,255,0.05);
+  border-radius: 0 12px 12px 0 !important;
+  flex: 1;
+  margin-bottom: 0 !important;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: none;
+}
+.input-helper {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  padding-left: 4px;
+  margin-bottom: 12px;
+  display: block;
 }
 
-.remember-me ion-checkbox {
-  --size: 16px;
+/* Password Field */
+.password-field {
+  margin-bottom: 4px !important;
+}
+.eye-btn {
+  --color: #888;
+}
+
+/* Remember & Forgot Row */
+.login-options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 0 18px;
+}
+.remember-me-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255,255,255,0.6);
+  font-size: 13px;
+}
+.custom-checkbox {
+  --size: 18px;
   --border-radius: 4px;
-  --border-color: rgba(255, 255, 255, 0.2);
+  --border-color: rgba(255,255,255,0.2);
   --background-checked: #FF6B35;
   --border-color-checked: #FF6B35;
 }
-
 .forgot-link {
   color: #FF6B35;
-  font-size: 12px;
+  font-size: 13px;
   text-decoration: none;
   font-weight: 500;
 }
 
-.forgot-link:hover {
-  text-decoration: underline;
-}
-
-.login-error {
-  background: rgba(232, 93, 117, 0.12);
-  color: #E85D75;
-  padding: 12px 14px;
-  border-radius: 12px;
-  margin-bottom: 18px;
-  font-size: 12px;
-  text-align: center;
-  border: 1px solid rgba(232, 93, 117, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
+/* Login Button */
 .login-btn {
   --background: linear-gradient(135deg, #FF6B35, #E85D75);
-  --background-activated: linear-gradient(135deg, #E85D75, #FF6B35);
   --border-radius: 14px;
   font-weight: 700;
   height: 50px;
   font-size: 15px;
-  --box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
-  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(255,107,53,0.2);
 }
 
-.ussd-btn {
-  --color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
+/* USSD Link */
+.ussd-link {
+  --color: #fff;
+  font-size: 13px;
+  font-weight: 500;
   margin-top: 4px;
 }
 
-.biometric-hint {
-  text-align: center;
-  margin: 14px 0;
-}
-
-.biometric-hint ion-icon {
-  font-size: 24px;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-.biometric-hint p {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 11px;
-  margin: 4px 0 0;
-}
-
-.login-divider {
+/* Divider */
+.auth-divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 28px 0 20px;
-  color: rgba(255, 255, 255, 0.3);
+  margin: 20px 0 16px;
+  color: rgba(255,255,255,0.4);
   font-size: 12px;
 }
-
-.login-divider::before,
-.login-divider::after {
+.auth-divider::before,
+.auth-divider::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255,255,255,0.12);
 }
 
-.social-btns {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.social-btn {
-  --border-radius: 12px;
-  --border-color: rgba(255, 255, 255, 0.12);
+/* Google Button */
+.google-btn {
+  --border-color: rgba(255,255,255,0.15);
   --color: #fff;
+  --border-radius: 12px;
   height: 46px;
   font-size: 14px;
   font-weight: 500;
 }
 
-.social-btn.google {
-  --background: rgba(219, 68, 55, 0.1);
-}
-
-.social-btn.facebook {
-  --background: rgba(66, 103, 178, 0.1);
-}
-
-.register-link {
-  text-align: center;
-  font-size: 13px;
-  color: rgba(255, 248, 240, 0.5);
-}
-
-.register-link a {
+/* Register Link */
+.create-account-link {
   color: #FF6B35;
-  text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 14px;
 }
 
-.guest-section {
-  text-align: center;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
+/* Guest Mode */
 .guest-btn {
-  --color: rgba(255, 248, 240, 0.5);
-  font-size: 13px;
+  --color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  letter-spacing: 0.5px;
 }
-
 .guest-note {
-  font-size: 10px;
-  color: rgba(255, 248, 240, 0.3);
-  margin-top: 4px;
+  font-size: 11px;
+  margin-top: 2px;
 }
