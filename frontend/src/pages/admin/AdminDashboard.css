@@ -59,3 +59,61 @@
 .admin-welcome-title { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
 .admin-welcome-subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin: 4px 0 0; }
 .admin-status-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; }
+/* ============================================ */
+/* FINAL ADMIN DASHBOARD FIXES                  */
+/* ============================================ */
+
+/* 1. Fix White Header */
+ion-header {
+  --background: #1A1A1A !important;
+}
+ion-toolbar {
+  --background: #1A1A1A !important;
+  --color: #fff !important;
+}
+ion-title {
+  color: #fff !important;
+  font-size: 18px;
+}
+
+/* 2. Fix Neon Green Online Button -> Muted */
+ion-badge[color="success"] {
+  --background: rgba(16, 185, 129, 0.25) !important;
+  --color: #10B981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  font-weight: 500;
+}
+
+/* 3. Quick Action Cards - Visible Borders */
+.admin-quick-action-card {
+  border: 1px solid #333 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 4. Center Icons Vertically in Quick Actions */
+.admin-quick-action-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 18px 12px !important;
+  gap: 8px;
+}
+
+/* 5. Chart Labels - Bigger & Brighter */
+.admin-revenue-day {
+  font-size: 12px !important;
+  color: #D1D5DB !important;
+  font-weight: 500;
+}
+
+/* 6. Activity List - Add spacing */
+.admin-alert-item {
+  gap: 14px !important;
+  padding: 14px 12px !important;
+}
+.admin-alert-text {
+  margin-left: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+}
