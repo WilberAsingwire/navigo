@@ -1,123 +1,14 @@
-.admin-content { --background: #080c14; --color: #fff8f0; }
+.admin-content { --background: #080c14; }
 .admin-container { max-width: 700px; margin: 0 auto; padding: 14px; }
 .loading-center { text-align: center; padding: 40px; color: rgba(255,255,255,0.5); }
-.empty-state { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.4); }
-.empty-state ion-icon { font-size: 48px; margin-bottom: 12px; }
-
+.empty-state { text-align: center; padding: 60px 20px; }
+.empty-state ion-icon { font-size: 48px; color: rgba(255,255,255,0.1); margin-bottom: 12px; }
+.empty-state p { color: #D1D5DB; font-size: 14px; }
 .driver-card { background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 12px; }
 .driver-header { display: flex; align-items: center; gap: 10px; }
 .driver-header ion-avatar { width: 44px; height: 44px; }
 .driver-info h3 { color: #fff; margin: 0; font-size: 15px; }
 .driver-info { flex: 1; }
-
 .driver-docs-list { background: transparent; margin: 10px 0; }
 .driver-docs-list ion-item { --background: transparent; --color: rgba(255,255,255,0.6); font-size: 12px; --padding-start: 0; }
 .driver-docs-list ion-icon { color: #FF6B35; font-size: 14px; margin-right: 6px; }
-
-.action-buttons { display: flex; gap: 8px; }
-.action-buttons ion-button { flex: 1; font-size: 12px; --border-radius: 10px; }
-/* Empty state */
-.admin-container .empty-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-.admin-container .empty-state ion-icon {
-  font-size: 64px;
-  color: rgba(255,255,255,0.1);
-  margin-bottom: 16px;
-}
-.admin-container .empty-state p {
-  color: #D1D5DB;
-  font-size: 14px;
-}
-.admin-container .empty-state .refresh-btn {
-  margin-top: 16px;
-  --color: #FF6B35;
-  --border-color: rgba(255,107,53,0.3);
-}
-
-/* Stats labels */
-.admin-container .admin-stat-label {
-  font-size: 14px !important;
-  color: #D1D5DB !important;
-}
-
-/* Stats labels */
-.admin-container .admin-stat-label {
-  font-size: 14px !important;
-  color: #D1D5DB !important;
-}
-
-/* Empty state */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-.empty-state ion-icon {
-  font-size: 64px;
-  color: rgba(255,255,255,0.1);
-  margin-bottom: 16px;
-}
-.empty-state p {
-  color: #D1D5DB;
-  font-size: 14px;
-}
-
-/* Fix segment labels */
-ion-segment-button ion-label {
-  color: #D1D5DB !important;
-  font-size: 12px !important;
-}
-
-/* ============================================ */
-/* FINAL APPROVALS PAGE FIXES                   */
-/* ============================================ */
-
-/* 1. Approve Button -> Solid Orange */
-.action-buttons ion-button[color="success"] {
-  --background: #FF6B35 !important;
-  --color: #fff !important;
-  --border-radius: 10px;
-}
-/* Reject Button -> Dark Gray with Red border */
-.action-buttons ion-button[color="danger"] {
-  --background: #2A2A2A !important;
-  --color: #EF4444 !important;
-  --border-color: #EF4444 !important;
-  --border-style: solid;
-  --border-width: 1px;
-  --border-radius: 10px;
-}
-
-/* 2. Status Badges - Translucent with borders */
-ion-badge[color="warning"] {
-  --background: rgba(245, 158, 11, 0.15) !important;
-  --color: #F59E0B !important;
-  border: 1px solid #F59E0B !important;
-}
-ion-badge[color="success"] {
-  --background: rgba(16, 185, 129, 0.15) !important;
-  --color: #10B981 !important;
-  border: 1px solid #10B981 !important;
-}
-ion-badge[color="danger"] {
-  --background: rgba(239, 68, 68, 0.15) !important;
-  --color: #EF4444 !important;
-  border: 1px solid #EF4444 !important;
-}
-
-/* 3. Role Badge -> Dark Gray pill */
-ion-badge[color="primary"] {
-  --background: #1E1E1E !important;
-  --color: #fff !important;
-  font-weight: 600;
-}
-
-/* 4. Eye Icon -> Circular button */
-.driver-header ion-icon[icon="eye-outline"],
-.driver-header ion-icon[icon="eye"] {
-  background: #1E1E1E;
-  border-radius: 50%;
-  padding: 8px;
-  font-size: 18px;
-}

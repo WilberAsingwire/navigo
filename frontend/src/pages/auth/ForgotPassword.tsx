@@ -73,14 +73,11 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
-          <IonButton slot="start" fill="clear" onClick={() => history.push('/login')}>
-            <IonIcon icon={arrowBackOutline} style={{ color: '#fff' }} />
-          </IonButton>
-          <IonTitle style={{ color: '#fff' }}>Reset Password</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+     <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
+  <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
+    ...
+  </IonToolbar>
+</IonHeader>
 
       <IonContent className="auth-content">
         <div className="auth-container">
