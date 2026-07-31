@@ -12,3 +12,38 @@
 .driver-docs-list { background: transparent; margin: 10px 0; }
 .driver-docs-list ion-item { --background: transparent; --color: rgba(255,255,255,0.6); font-size: 12px; --padding-start: 0; }
 .driver-docs-list ion-icon { color: #FF6B35; font-size: 14px; margin-right: 6px; }
+/* ============================================ */
+/* FINAL ADMIN APPROVALS FIXES                   */
+/* ============================================ */
+
+/* 1. Bulk Buttons - Dark with colored borders */
+.admin-container .bulk-approve,
+ion-button[color="success"].bulk-btn {
+  --background: #1A1A1A !important;
+  --color: #10B981 !important;
+  --border-color: #10B981 !important;
+  --border-style: solid;
+  --border-width: 1px;
+}
+.admin-container .bulk-reject,
+ion-button[color="danger"].bulk-btn {
+  --background: #1A1A1A !important;
+  --color: #EF4444 !important;
+  --border-color: #EF4444 !important;
+  --border-style: solid;
+  --border-width: 1px;
+}
+
+/* 2. Role Pills - Dark Gray */
+.driver-info ion-badge[color="primary"],
+.driver-info ion-badge[color="warning"][data-role] {
+  background: #2A2A2A !important;
+  color: #fff !important;
+}
+
+/* 3. Pending Badge - Translucent Yellow */
+ion-badge[color="warning"] {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid #F59E0B !important;
+  color: #F59E0B !important;
+}
