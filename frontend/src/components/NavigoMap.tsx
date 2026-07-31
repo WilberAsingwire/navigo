@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline } from 'react-leaflet';
 import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
 import L from 'leaflet';
@@ -69,21 +69,13 @@ const NavigoMap: React.FC<MapProps> = ({
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
+  const mapRef = useRef<HTMLDivElement>(null);
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
-    standard: {
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      attribution: '&copy; OpenStreetMap contributors'
-    },
-    dark: {
-      url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-    },
-    satellite: {
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      attribution: '&copy; Esri &mdash; Source: Esri'
-    },
+    standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
+    dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
+    satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
   };
 
   useEffect(() => {
@@ -109,7 +101,10 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 600); return () => clearTimeout(t); }, []);
+  useEffect(() => { 
+    const t = setTimeout(() => setLoading(false), 600); 
+    return () => clearTimeout(t); 
+  }, []);
 
   const openInGoogleMaps = () => {
     if (userLocation && destination) window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination.lat},${destination.lng}`, '_blank');
@@ -133,21 +128,22 @@ const NavigoMap: React.FC<MapProps> = ({
           )}
         </div>
       )}
-      <div style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}>
-        {loading && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', zIndex: 1000, transform: 'translate(-50%,-50%)', background: 'rgba(0,0,0,0.8)', padding: 16, borderRadius: 12 }}>
+      <div ref={mapRef} style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}>
+        {loading ? (
+          <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14' }}>
             <IonSpinner name="crescent" color="warning" />
           </div>
+        ) : (
+          <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true} dragging={interactive} scrollWheelZoom={interactive} touchZoom={interactive} attributionControl={true}>
+            <TileLayer url={tileUrls[mapStyle].url} attribution={tileUrls[mapStyle].attribution} />
+            <MapController center={center} follow={followUser} />
+            <LocateButton />
+            {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon}><Popup>📍 You</Popup></Marker><Circle center={[userLocation.lat, userLocation.lng]} radius={8} color="#2D6A4F" fillOpacity={0.1} /></>}
+            {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon}><Popup>🎯 Destination</Popup></Marker>}
+            {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverType === 'bike' ? bikeIcon : driverIcon}><Popup>{driverType === 'bike' ? '🏍️' : '🚗'} Driver</Popup></Marker>}
+            {routePoints.length > 1 && <Polyline positions={routePoints} color="#FF6B35" weight={4} opacity={0.7} />}
+          </MapContainer>
         )}
-        <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true} dragging={interactive} scrollWheelZoom={interactive} touchZoom={interactive} attributionControl={true}>
-          <TileLayer url={tileUrls[mapStyle].url} attribution={tileUrls[mapStyle].attribution} />
-          <MapController center={center} follow={followUser} />
-          <LocateButton />
-          {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon}><Popup>📍 You</Popup></Marker><Circle center={[userLocation.lat, userLocation.lng]} radius={8} color="#2D6A4F" fillOpacity={0.1} /></>}
-          {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon}><Popup>🎯 Destination</Popup></Marker>}
-          {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverType === 'bike' ? bikeIcon : driverIcon}><Popup>{driverType === 'bike' ? '🏍️' : '🚗'} Driver</Popup></Marker>}
-          {routePoints.length > 1 && <Polyline positions={routePoints} color="#FF6B35" weight={4} opacity={0.7} />}
-        </MapContainer>
       </div>
     </div>
   );
