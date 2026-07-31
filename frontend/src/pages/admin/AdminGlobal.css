@@ -102,3 +102,49 @@ ion-badge[color="primary"] {
 .empty-state p {
   color: rgba(255,255,255,0.4) !important;
 }
+
+/* ============================================ */
+/* GLOBAL ADMIN HEADER FIX - ALL ADMIN PAGES    */
+/* ============================================ */
+
+/* Force dark header on every admin page */
+ion-header,
+ion-header ion-toolbar,
+ion-header ion-toolbar.ion-color {
+  --background: #1A1A1A !important;
+  --color: #fff !important;
+  background: #1A1A1A !important;
+}
+
+/* Force white title text */
+ion-header ion-title {
+  color: #fff !important;
+}
+
+/* Fix any remaining white headers */
+.admin-content ion-header,
+.admin-content ion-toolbar {
+  --background: #1A1A1A !important;
+  --color: #fff !important;
+}
+
+/* Fix segment/tab bars in admin */
+ion-header ion-segment {
+  --background: #121212 !important;
+}
+
+/* Fix badge colors - muted */
+ion-badge[color="success"] {
+  --background: rgba(16, 185, 129, 0.2) !important;
+  --color: #10B981 !important;
+}
+ion-badge[color="warning"] {
+  --background: rgba(245, 158, 11, 0.15) !important;
+  --color: #F59E0B !important;
+}
+
+/* Hide yellow badge if value is 0 */
+ion-badge[color="warning"]:empty,
+ion-badge[color="warning"][data-value="0"] {
+  display: none;
+}
