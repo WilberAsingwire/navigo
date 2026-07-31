@@ -22,7 +22,7 @@ const Home: React.FC = () => {
           <span className="nav-logo">🚀 NAVIGO</span>
           <div className="nav-links">
             <span onClick={() => history.push('/login')}>Sign In</span>
-            <IonButton size="small" color="warning" onClick={() => history.push('/register')}>Sign Up</IonButton>
+            <IonButton size="small" className="nav-signup-btn" onClick={() => history.push('/register')}>Sign Up</IonButton>
           </div>
         </div>
 
@@ -30,15 +30,16 @@ const Home: React.FC = () => {
         <div className="hero-section">
           <div className="hero-badge">🇺🇬 Uganda's #1 Ride-Hailing App</div>
           <h1 className="hero-title">Move Smart.<br/>Pay Less.<br/><span className="highlight">Arrive Safe.</span></h1>
-          <p className="hero-desc">Uganda's smartest way to move. Boda Safe™ verified drivers • Women-preferred mode • Works offline. Ride with confidence.
-
-</p>
+          <p className="hero-desc">Uganda's smartest way to move. Boda Safe™ verified drivers • Women-preferred mode • Works offline. Ride with confidence.</p>
           <div className="hero-buttons">
             <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
               Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
             </IonButton>
             <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => history.push('/explore')}>
               <IonIcon icon={mapOutline} slot="start" /> See Prices Near You
+            </IonButton>
+            <IonButton expand="block" className="hero-btn ussd-btn" fill="clear" onClick={() => history.push('/ussd')}>
+              <IonIcon icon={phonePortraitOutline} slot="start" /> Book via USSD: *284*624#
             </IonButton>
           </div>
           <div className="hero-stats">
@@ -116,7 +117,7 @@ const Home: React.FC = () => {
               <IonCol size="6"><div className="feature-card"><IonIcon icon={walletOutline} /><h4>Lowest Prices</h4><p>Up to 30% cheaper than competitors</p></div></IonCol>
               <IonCol size="6"><div className="feature-card"><IonIcon icon={speedometerOutline} /><h4>Fastest Pickup</h4><p>Average 3 min wait time</p></div></IonCol>
               <IonCol size="6"><div className="feature-card"><IonIcon icon={phonePortraitOutline} /><h4>Works Offline</h4><p>Book via USSD on any phone</p></div></IonCol>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={heartOutline} /><h4>Women Preferred</h4><p>Match with female drivers only</p></div></IonCol>
+              <IonCol size="6"><div className="feature-card"><IonIcon icon={heartOutline} /><h4>Women Preferred</h4><p>Available in-app after sign up</p></div></IonCol>
               <IonCol size="6"><div className="feature-card"><IonIcon icon={lockClosedOutline} /><h4>Emergency SOS</h4><p>One-tap police & ambulance</p></div></IonCol>
             </IonRow>
           </IonGrid>
@@ -140,17 +141,17 @@ const Home: React.FC = () => {
           <h2>👩 Women Preferred Mode</h2>
           <p>Request female drivers only — because every woman deserves to feel safe while traveling.</p>
           <IonButton expand="block" className="women-btn" onClick={() => history.push('/register')}>
-            Enable Women Preferred
+            Available In-App — Sign Up to Enable
           </IonButton>
         </div>
 
         {/* DRIVERS */}
         <div className="section driver-section">
           <h2>🤑 Earn With NAVIGO</h2>
-         <div><strong>85%</strong><span>You Keep</span></div>
+          <p className="section-sub">Join 5,000+ drivers earning daily. We take only 15% — you keep 85%.</p>
           <div className="driver-stats">
             <div><strong>UGX 50K-150K</strong><span>Daily Earnings</span></div>
-            <div><strong>90%</strong><span>You Keep</span></div>
+            <div><strong>85%</strong><span>You Keep</span></div>
             <div><strong>Instant</strong><span>Cash Payouts</span></div>
           </div>
           <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
@@ -161,12 +162,12 @@ const Home: React.FC = () => {
         {/* ZAWADI REWARDS */}
         <div className="section rewards-section">
           <h2>🎁 Zawadi Rewards</h2>
-          <p>Earn points on every ride. Redeem for free rides, airtime, and more!</p>
+          <p>Earn points on every ride. Redeem for free rides, airtime, and more! 5 rides = Free Boda 🏍️</p>
           <div className="reward-tiers">
-            <div className="tier"><span>🥉</span><strong>Bronze</strong><p>0-500 pts</p></div>
-            <div className="tier"><span>🥈</span><strong>Silver</strong><p>500-1000 pts</p></div>
-            <div className="tier"><span>🥇</span><strong>Gold</strong><p>1000-2500 pts</p></div>
-            <div className="tier"><span>💎</span><strong>Platinum</strong><p>2500+ pts</p></div>
+            <div className="tier tier-bronze"><span>🥉</span><strong>Bronze</strong><p>0-500 pts</p></div>
+            <div className="tier tier-silver"><span>🥈</span><strong>Silver</strong><p>500-1,000 pts</p></div>
+            <div className="tier tier-gold"><span>🥇</span><strong>Gold</strong><p>1,000-2,500 pts</p></div>
+            <div className="tier tier-platinum"><span>💎</span><strong>Platinum</strong><p>2,500+ pts</p></div>
           </div>
         </div>
 
@@ -178,6 +179,10 @@ const Home: React.FC = () => {
             <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
               Sign Up Free <IonIcon icon={arrowForwardOutline} slot="end" />
             </IonButton>
+            <div className="app-store-badges">
+              <div className="store-badge">🤖 Google Play</div>
+              <div className="store-badge">🍎 App Store</div>
+            </div>
             <div className="ussd-box large">
               <IonIcon icon={phonePortraitOutline} />
               <div>
@@ -204,7 +209,14 @@ const Home: React.FC = () => {
             <div>
               <h4>Drive</h4>
               <span onClick={() => history.push('/register')}>Become a Driver</span>
-              <span onClick={() => history.push('/driver/earnings')}>Earnings</span>
+              <span onClick={() => history.push('/driver/earnings')}>Earnings Calculator</span>
+            </div>
+            <div>
+              <h4>Connect</h4>
+              <span>📘 Facebook</span>
+              <span>📷 Instagram</span>
+              <span>🐦 Twitter/X</span>
+              <span>🎵 TikTok</span>
             </div>
             <div>
               <h4>Company</h4>
