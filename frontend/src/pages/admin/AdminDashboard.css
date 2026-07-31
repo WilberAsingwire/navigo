@@ -1,205 +1,61 @@
-.admin-dashboard {
-  --background: #080c14;
+.admin-dashboard { --background: #080c14; }
+
+.admin-kpi-grid { margin-bottom: 8px; }
+
+.admin-kpi-card { 
+  background: rgba(255, 255, 255, 0.04); 
+  border-radius: 14px; 
+  padding: 14px; 
+  margin-bottom: 12px; 
+  border: 1px solid rgba(255, 255, 255, 0.06); 
 }
 
-.admin-kpi-grid {
-  margin-bottom: 8px;
-}
+.admin-kpi-icon { font-size: 22px; }
+.admin-kpi-change { font-size: 10px; font-weight: 600; }
+.admin-kpi-value { font-size: 22px; font-weight: 700; color: #ffffff; margin: 6px 0; }
+.admin-kpi-label { font-size: 11px; color: #D1D5DB; }
 
-.admin-kpi-card {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-}
+.admin-quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
 
-.admin-kpi-card:hover {
-  background: rgba(255, 255, 255, 0.06);
+.admin-quick-action-card { 
+  background: rgba(255, 255, 255, 0.04); 
+  border-radius: 14px; 
+  padding: 16px; 
+  text-align: center; 
+  cursor: pointer; 
+  border: 1px solid rgba(255, 255, 255, 0.06); 
+  transition: all 0.2s ease; 
 }
+.admin-quick-action-card:hover { background: rgba(255, 107, 53, 0.08); border-color: rgba(255, 107, 53, 0.2); }
+.admin-quick-action-icon { font-size: 24px; color: #FF6B35; }
+.admin-quick-action-label { color: #D1D5DB; font-size: 11px; margin: 6px 0 0; }
+.admin-quick-action-badge { position: absolute; top: 6px; right: 6px; font-size: 10px; padding: 2px 6px; }
 
-.admin-kpi-icon {
-  font-size: 22px;
-}
+.admin-revenue-card { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.06); }
+.admin-revenue-title { color: #ffffff; margin: 0 0 4px; font-size: 15px; font-weight: 700; }
+.admin-revenue-subtitle { color: #D1D5DB; font-size: 12px; margin: 0 0 16px; }
+.admin-revenue-chart { display: flex; align-items: flex-end; gap: 8px; height: 80px; }
+.admin-revenue-bar { flex: 1; background: #FF6B35; border-radius: 4px 4px 0 0; }
+.admin-revenue-labels { display: flex; justify-content: space-between; margin-top: 8px; }
+.admin-revenue-day { font-size: 9px; color: #D1D5DB; }
 
-.admin-kpi-change {
-  font-size: 10px;
-  font-weight: 600;
-}
+.admin-alerts-section { margin-top: 4px; }
+.admin-alerts-title { color: #ffffff; font-size: 16px; font-weight: 700; margin-bottom: 12px; }
 
-.admin-kpi-value {
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 6px 0;
+.admin-alert-item { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  background: rgba(255, 255, 255, 0.03); 
+  border-radius: 12px; 
+  padding: 12px; 
+  border: 1px solid rgba(255, 255, 255, 0.04); 
 }
+.admin-alert-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.admin-alert-text { color: #D1D5DB; font-size: 13px; flex: 1; }
+.admin-alert-time { color: rgba(255,255,255,0.3); font-size: 10px; white-space: nowrap; }
 
-.admin-kpi-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.admin-quick-actions-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.admin-quick-action-card {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: 16px;
-  text-align: center;
-  cursor: pointer;
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-}
-
-.admin-quick-action-card:hover {
-  background: rgba(255, 107, 53, 0.08);
-  border-color: rgba(255, 107, 53, 0.2);
-}
-
-.admin-quick-action-card:active {
-  transform: scale(0.97);
-}
-
-.admin-quick-action-icon {
-  font-size: 24px;
-  color: #FF6B35;
-}
-
-.admin-quick-action-label {
-  color: #ffffff;
-  font-size: 11px;
-  margin: 6px 0 0;
-}
-
-.admin-quick-action-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 8px;
-}
-
-.admin-revenue-card {
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 107, 53, 0.02));
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 24px;
-  border: 1px solid rgba(255, 107, 53, 0.1);
-}
-
-.admin-revenue-title {
-  color: #ffffff;
-  margin: 0 0 4px;
-  font-size: 15px;
-}
-
-.admin-revenue-subtitle {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 11px;
-  margin: 0 0 16px;
-}
-
-.admin-revenue-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 80px;
-}
-
-.admin-revenue-bar {
-  flex: 1;
-  background: linear-gradient(180deg, #FF6B35, #E85D75);
-  border-radius: 4px 4px 0 0;
-}
-
-.admin-revenue-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-}
-
-.admin-revenue-day {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.admin-alerts-section {
-  margin-top: 4px;
-}
-
-.admin-alerts-title {
-  color: #ffffff;
-  font-size: 16px;
-  margin-bottom: 12px;
-}
-
-.admin-alert-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 6px;
-  transition: all 0.2s ease;
-}
-
-.admin-alert-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.admin-alert-icon {
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.admin-alert-text {
-  color: #ffffff;
-  font-size: 12px;
-  flex: 1;
-}
-
-.admin-alert-time {
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
-.admin-welcome-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.admin-welcome-title {
-  color: #ffffff;
-  margin: 0;
-  font-size: 20px;
-}
-
-.admin-welcome-subtitle {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
-  margin: 4px 0 0;
-}
-
-.admin-status-badge {
-  padding: 6px 12px;
-  border-radius: 12px;
-  font-size: 11px;
-}
-
-.admin-dashboard ion-header,
-.admin-dashboard ion-toolbar {
-  --background: #080c14;
-  --color: #fff;
-}
+.admin-welcome-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.admin-welcome-title { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
+.admin-welcome-subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin: 4px 0 0; }
+.admin-status-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; }
