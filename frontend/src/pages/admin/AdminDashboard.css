@@ -1,7 +1,11 @@
+/* ============================================ */
+/* NAVIGO ADMIN DASHBOARD - COMPLETE CSS        */
+/* ============================================ */
+
 .admin-dashboard { --background: #080c14; }
 
+/* KPI Cards */
 .admin-kpi-grid { margin-bottom: 8px; }
-
 .admin-kpi-card { 
   background: rgba(255, 255, 255, 0.04); 
   border-radius: 14px; 
@@ -9,111 +13,79 @@
   margin-bottom: 12px; 
   border: 1px solid rgba(255, 255, 255, 0.06); 
 }
-
 .admin-kpi-icon { font-size: 22px; }
-.admin-kpi-change { font-size: 10px; font-weight: 600; }
+.admin-kpi-change { font-size: 11px; font-weight: 500; color: #D1D5DB; background: transparent; }
 .admin-kpi-value { font-size: 22px; font-weight: 700; color: #ffffff; margin: 6px 0; }
-.admin-kpi-label { font-size: 11px; color: #D1D5DB; }
+.admin-kpi-label { font-size: 14px !important; color: #D1D5DB !important; font-weight: 500; }
 
+/* Quick Actions */
 .admin-quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-
 .admin-quick-action-card { 
-  background: rgba(255, 255, 255, 0.04); 
+  background: rgba(255, 255, 255, 0.05); 
   border-radius: 14px; 
-  padding: 16px; 
+  padding: 18px 12px; 
   text-align: center; 
   cursor: pointer; 
-  border: 1px solid rgba(255, 255, 255, 0.06); 
+  border: 1px solid #333 !important; 
   transition: all 0.2s ease; 
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px;
 }
-.admin-quick-action-card:hover { background: rgba(255, 107, 53, 0.08); border-color: rgba(255, 107, 53, 0.2); }
+.admin-quick-action-card:hover { background: rgba(255, 107, 53, 0.08); border-color: rgba(255, 107, 53, 0.3); }
 .admin-quick-action-icon { font-size: 24px; color: #FF6B35; }
-.admin-quick-action-label { color: #D1D5DB; font-size: 11px; margin: 6px 0 0; }
+.admin-quick-action-label { color: #D1D5DB; font-size: 11px; margin: 0; }
 .admin-quick-action-badge { position: absolute; top: 6px; right: 6px; font-size: 10px; padding: 2px 6px; }
 
+/* Revenue Chart */
 .admin-revenue-card { background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.06); }
 .admin-revenue-title { color: #ffffff; margin: 0 0 4px; font-size: 15px; font-weight: 700; }
 .admin-revenue-subtitle { color: #D1D5DB; font-size: 12px; margin: 0 0 16px; }
 .admin-revenue-chart { display: flex; align-items: flex-end; gap: 8px; height: 80px; }
 .admin-revenue-bar { flex: 1; background: #FF6B35; border-radius: 4px 4px 0 0; }
 .admin-revenue-labels { display: flex; justify-content: space-between; margin-top: 8px; }
-.admin-revenue-day { font-size: 9px; color: #D1D5DB; }
+.admin-revenue-day { font-size: 12px !important; color: #D1D5DB !important; font-weight: 500; }
 
+/* Alerts */
 .admin-alerts-section { margin-top: 4px; }
 .admin-alerts-title { color: #ffffff; font-size: 16px; font-weight: 700; margin-bottom: 12px; }
-
 .admin-alert-item { 
   display: flex; 
   align-items: center; 
-  gap: 12px; 
+  gap: 14px; 
   background: rgba(255, 255, 255, 0.03); 
   border-radius: 12px; 
-  padding: 12px; 
+  padding: 14px 12px; 
   border: 1px solid rgba(255, 255, 255, 0.04); 
 }
 .admin-alert-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.admin-alert-text { color: #D1D5DB; font-size: 13px; flex: 1; }
+.admin-alert-text { color: #D1D5DB; font-size: 13px; flex: 1; margin-left: 4px; line-height: 1.4; }
 .admin-alert-time { color: rgba(255,255,255,0.3); font-size: 10px; white-space: nowrap; }
 
+/* Welcome */
 .admin-welcome-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .admin-welcome-title { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; }
 .admin-welcome-subtitle { color: rgba(255,255,255,0.5); font-size: 14px; margin: 4px 0 0; }
-.admin-status-badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; }
+.admin-status-badge { 
+  background: rgba(16, 185, 129, 0.2) !important; 
+  color: #10B981 !important; 
+  border: 1px solid rgba(16, 185, 129, 0.3) !important; 
+  font-weight: 500; 
+  padding: 6px 14px; 
+  border-radius: 20px; 
+  font-size: 12px; 
+}
+
 /* ============================================ */
-/* FINAL ADMIN DASHBOARD FIXES                  */
+/* GLOBAL HEADER FIXES                          */
 /* ============================================ */
-
-/* 1. Fix White Header */
-ion-header {
-  --background: #1A1A1A !important;
-}
-ion-toolbar {
-  --background: #1A1A1A !important;
-  --color: #fff !important;
-}
-ion-title {
-  color: #fff !important;
-  font-size: 18px;
-}
-
-/* 2. Fix Neon Green Online Button -> Muted */
-ion-badge[color="success"] {
-  --background: rgba(16, 185, 129, 0.25) !important;
-  --color: #10B981 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
-  font-weight: 500;
-}
-
-/* 3. Quick Action Cards - Visible Borders */
-.admin-quick-action-card {
-  border: 1px solid #333 !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-}
-
-/* 4. Center Icons Vertically in Quick Actions */
-.admin-quick-action-card {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 18px 12px !important;
-  gap: 8px;
-}
-
-/* 5. Chart Labels - Bigger & Brighter */
-.admin-revenue-day {
-  font-size: 12px !important;
-  color: #D1D5DB !important;
-  font-weight: 500;
-}
-
-/* 6. Activity List - Add spacing */
-.admin-alert-item {
-  gap: 14px !important;
-  padding: 14px 12px !important;
-}
-.admin-alert-text {
-  margin-left: 4px;
-  font-size: 13px;
-  line-height: 1.4;
+ion-header { --background: #1A1A1A !important; }
+ion-toolbar { --background: #1A1A1A !important; --color: #fff !important; }
+ion-title { color: #fff !important; font-size: 18px; }
+ion-badge[color="success"] { 
+  --background: rgba(16, 185, 129, 0.2) !important; 
+  --color: #10B981 !important; 
+  border: 1px solid rgba(16, 185, 129, 0.3) !important; 
 }
