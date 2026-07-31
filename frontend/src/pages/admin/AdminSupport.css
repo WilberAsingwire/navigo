@@ -9,3 +9,52 @@
 .ticket-desc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px; }
 .modal-content { --background: #080808; }
 .sora-font { font-family: 'Sora', sans-serif; }
+/* ============================================ */
+/* FINAL ADMIN SUPPORT FIXES                     */
+/* ============================================ */
+
+/* 1. Stats Numbers - All Orange */
+.admin-container .stat-value,
+.admin-support-stats div[style*="color"] {
+  color: #FF6B35 !important;
+}
+
+/* 2. Urgent/High Priority Tags - Translucent */
+ion-badge[color="danger"],
+.priority-urgent {
+  background: rgba(239, 68, 68, 0.15) !important;
+  border: 1px solid #EF4444 !important;
+  color: #EF4444 !important;
+}
+ion-badge[color="warning"],
+.priority-high {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid #F59E0B !important;
+  color: #F59E0B !important;
+}
+
+/* 3. Open Status - Neutral Gray */
+ion-badge[color="danger"][data-status="open"],
+.status-open {
+  background: rgba(156, 163, 175, 0.15) !important;
+  border: 1px solid #9CA3AF !important;
+  color: #9CA3AF !important;
+}
+
+/* 4. Ticket ID - Add spacing */
+.ticket-id {
+  margin-right: 8px !important;
+}
+
+/* 5. Filters - Dark container */
+.filter-row {
+  background: #1A1A1A !important;
+  padding: 8px !important;
+  border-radius: 12px !important;
+}
+
+/* 6. Card Text - More padding */
+.ticket-desc,
+.ticket-item p {
+  padding-left: 4px !important;
+}

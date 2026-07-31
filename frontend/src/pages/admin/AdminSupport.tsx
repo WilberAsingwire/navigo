@@ -159,7 +159,7 @@ const AdminSupport: React.FC = () => {
                     <h3 style={{ color: '#fff', margin: '4px 0', fontSize: 14 }}>{ticket.type}</h3>
                   </div>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <IonBadge color={getPriorityColor(ticket.priority)} style={{ fontSize: 9 }}>{ticket.priority}</IonBadge>
+                    <IonBadge style={{background: 'rgba(156,163,175,0.15)', border: '1px solid #9CA3AF', color: '#9CA3AF'}}>Open</IonBadge>
                     {getStatusBadge(ticket.status)}
                   </div>
                 </div>
