@@ -20,3 +20,28 @@ body {
   overflow-x: hidden;
   padding-right: 0 !important;
 }
+
+/* ============================================ */
+/* GLOBAL HEADER FIX - WORKS ON ALL PAGES       */
+/* ============================================ */
+
+/* Force ALL headers dark everywhere */
+:root ion-header,
+:root ion-toolbar {
+  --background: #1A1A1A !important;
+  --color: #ffffff !important;
+  background-color: #1A1A1A !important;
+  color: #ffffff !important;
+}
+
+/* Force all header titles white */
+:root ion-header ion-title {
+  color: #ffffff !important;
+}
+
+/* Remove any white header backgrounds */
+:root .header-ios ion-toolbar,
+:root .header-md ion-toolbar {
+  --background: #1A1A1A !important;
+  background: #1A1A1A !important;
+}
