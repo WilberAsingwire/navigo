@@ -40,3 +40,79 @@
   font-size: 12px !important;
   color: #D1D5DB !important;
 }
+/* ============================================ */
+/* FINAL MAP FIXES — Toggle, Badges, Zoom, Button */
+/* ============================================ */
+
+/* 1. Toggle — Remove glows, use Orange for selected */
+.admin-live-map ion-chip {
+  background: #2A2A2A !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #fff !important;
+}
+.admin-live-map ion-chip[color="warning"],
+.admin-live-map ion-chip[outline="false"] {
+  color: #FF6B35 !important;
+  font-weight: 700 !important;
+}
+.admin-live-map ion-chip[color="medium"] {
+  color: rgba(255,255,255,0.6) !important;
+}
+
+/* 2. Active Badge — Translucent green */
+.admin-live-map ion-badge[color="success"],
+.admin-live-map ion-badge {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+  border: 1px solid #10B981 !important;
+}
+
+/* 3. Zoom Buttons — Dark */
+.leaflet-control-zoom a,
+.leaflet-bar a {
+  background: #2A2A2A !important;
+  color: #fff !important;
+  border-color: #444 !important;
+  width: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  font-size: 16px !important;
+}
+
+/* 4. Orange Fly-to Button — Move inside */
+.leaflet-control .leaflet-bar a[title="My Location"],
+.leaflet-top.leaflet-right .leaflet-control a {
+  margin-right: 10px !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+}
+
+/* ============================================ */
+/* AGGRESSIVE OVERRIDE - Kill Neon Green        */
+/* ============================================ */
+
+/* Nuke ALL green badges */
+.admin-live-map ion-badge,
+.admin-live-map ion-badge[color="success"],
+.admin-live-map .ion-badge-success,
+ion-badge.success,
+ion-badge[color="success"] {
+  background: rgba(16, 185, 129, 0.15) !important;
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  color: #10B981 !important;
+  border: 1px solid #10B981 !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  --background: rgba(16, 185, 129, 0.15) !important;
+  --color: #10B981 !important;
+}
+
+/* Fix orange button off-screen */
+.leaflet-right {
+  right: 15px !important;
+}
+.leaflet-top.leaflet-right {
+  margin-right: 8px !important;
+}
