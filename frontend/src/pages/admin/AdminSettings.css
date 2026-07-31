@@ -1,0 +1,35 @@
+/* ============================================ */
+/* FINAL ADMIN SETTINGS FIXES                    */
+/* ============================================ */
+
+/* 1. Toggle - Dark Gray handle, Orange when ON */
+ion-toggle {
+  --background: #1A1A1A !important;
+  --background-checked: #FF6B35 !important;
+  --handle-background: #2A2A2A !important;
+  --handle-background-checked: #fff !important;
+  --border-color: #333 !important;
+  width: 48px;
+  height: 26px;
+  --handle-width: 22px;
+  --handle-height: 22px;
+}
+
+/* 2. Input Boxes - Better padding */
+.admin-settings-input {
+  --padding-top: 12px !important;
+  --padding-bottom: 12px !important;
+  --padding-start: 12px !important;
+  --padding-end: 12px !important;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* 3. Save button - Clean, small, bottom-aligned */
+.settings-save-btn {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  --padding-start: 8px;
+  --padding-end: 8px;
+}

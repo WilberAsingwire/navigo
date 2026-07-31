@@ -98,9 +98,9 @@ const AdminSettings: React.FC = () => {
               <div style={{display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14}}>
                 <IonIcon icon={pieChartOutline} style={{color: '#FF6B35', fontSize: 20, flexShrink: 0}} />
                 <h3 style={{color: '#fff', margin: 0, fontSize: 15, fontWeight: 700}}>Driver Management</h3>
-                <IonButton size="small" fill="clear" onClick={() => handleSave('Driver')} style={{marginLeft: 'auto', '--color': '#FF6B35'} as any}>
-                  <IonIcon icon={checkmarkCircleOutline} /> Save
-                </IonButton>
+               <IonButton size="small" fill="clear" onClick={() => handleSave('General')} className="settings-save-btn" style={{marginLeft: 'auto', '--color': '#FF6B35'} as any}>
+  Save
+</IonButton>
               </div>
               
               <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)'}}>
