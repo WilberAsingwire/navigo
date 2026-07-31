@@ -1,66 +1,159 @@
-.auth-bg {
-  --background: #080808; /* Your Navy Black */
+/* NAVIGO Register Page Styles */
+
+.logo-main { font-size: 32px !important; margin-bottom: 2px !important; }
+.logo-tagline { font-size: 14px !important; }
+
+/* Role Selector */
+.role-segment {
+  margin-bottom: 14px;
+  --background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  padding: 3px;
+}
+.role-segment .role-btn {
+  --color: rgba(255,255,255,0.35);
+  --color-checked: #FF6B35;
+  --indicator-color: rgba(255,107,53,0.15);
+  min-height: 40px;
+  --border-radius: 10px;
+}
+.role-segment ion-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+.role-segment ion-icon {
+  font-size: 18px;
 }
 
-.auth-container {
-  max-width: 500px;
-  margin: 40px auto;
-}
-
-.brand-text {
-  color: #00e676; /* Your Primary Green */
-  font-size: 2.5rem;
-  margin-bottom: 0;
-  font-weight: 900;
-}
-
-.tagline {
-  color: #ffffff;
-  opacity: 0.7;
-  margin-top: 5px;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.auth-list {
-  background: transparent !important;
-}
-
-.input-group {
-  margin-bottom: 20px;
-}
-
-.input-label {
-  color: #ffffff;
-  font-size: 0.9rem;
-  margin-bottom: 8px;
-  display: block;
-  opacity: 0.9;
-}
-
-.custom-input {
-  --background: #111111; /* Your Card Color */
-  --color: white;
+/* Role Info Card */
+.role-info-card {
+  background: rgba(255,255,255,0.05);
   border-radius: 12px;
-  border: 1px solid #222;
-  --padding-start: 15px;
-  transition: 0.3s;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 3px solid;
+}
+.role-info-card p {
+  color: rgba(255,255,255,0.75);
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.4;
 }
 
-.custom-input:focus-within {
-  border-color: #00e676;
+/* Verification Notice */
+.verification-notice {
+  background: rgba(255,107,53,0.06);
+  border: 1px solid rgba(255,107,53,0.15);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.verification-notice ion-icon { color: #FF6B35; font-size: 20px; flex-shrink: 0; }
+.verification-notice p { color: rgba(255,255,255,0.65); font-size: 12px; margin: 0; }
+
+/* Register Card */
+.register-card {
+  background: rgba(255,255,255,0.04) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  margin: 0 0 16px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
 }
 
-.main-btn {
-  --background: #00e676;
-  --color: #080808;
-  --border-radius: 12px;
-  font-weight: bold;
-  height: 56px;
-  margin-top: 30px;
+/* Phone Input with Country Code */
+.phone-input-group {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 4px;
+}
+.country-code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px 0 0 12px;
+  padding: 0 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-right: none;
+}
+.country-code ion-icon { color: #FF6B35; font-size: 16px; }
+.phone-field {
+  --background: rgba(255,255,255,0.05);
+  border-radius: 0 12px 12px 0 !important;
+  flex: 1;
+  margin-bottom: 0 !important;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: none;
+}
+.input-helper { font-size: 10px; color: rgba(255,255,255,0.4); padding-left: 4px; margin-bottom: 10px; display: block; }
+
+/* Password Strength */
+.password-strength { padding: 0 4px; margin-bottom: 8px; }
+
+/* Eye Button */
+.eye-btn { --color: #888; }
+
+/* Register Button */
+.register-btn {
+  --background: linear-gradient(135deg, #FF6B35, #E85D75);
+  --border-radius: 14px;
+  font-weight: 700;
+  height: 50px;
+  font-size: 15px;
+  margin-top: 8px;
+  box-shadow: 0 4px 15px rgba(255,107,53,0.2);
 }
 
-.link-text {
-  color: #00e676;
-  font-weight: bold;
-  cursor: pointer;
+/* Terms — below button */
+.terms-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+}
+.terms-wrap a { color: #FF6B35; text-decoration: none; font-weight: 500; }
+.custom-checkbox {
+  --size: 18px;
+  --border-radius: 4px;
+  --border-color: rgba(255,255,255,0.2);
+  --background-checked: #FF6B35;
+  --border-color-checked: #FF6B35;
+}
+
+/* Auth Inputs — subtle border */
+.auth-input {
+  --background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.auth-input ion-icon[slot="start"] { color: #FF6B35; font-size: 18px; }
+.auth-input ion-label { color: rgba(255,255,255,0.55) !important; font-size: 11px; }
+.auth-input ion-input { --placeholder-color: #9CA3AF; }
+
+/* Register Link */
+.create-account-link { color: #FF6B35; font-weight: 700; font-size: 14px; }
+
+/* Page centering */
+.auth-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
