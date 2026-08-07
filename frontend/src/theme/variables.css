@@ -1,47 +1,72 @@
 /* For information on how to create your own theme, please refer to:
 http://ionicframework.com/docs/theming/ */
-/* Custom dark scrollbar */
+
+:root {
+  /* Brand Constants */
+  --navigo-orange: #FF6B35;
+  --navigo-green: #2D6A4F;
+  --navigo-navy: #080C14;
+  --navigo-dark-grey: #1A1A1A;
+}
+
+/* --- LIGHT THEME --- */
+body.light {
+  --app-background: #F8F9FA;
+  --app-text: #1A1A1A;
+  --app-card-bg: #FFFFFF;
+  --app-secondary-text: #6B7280;
+  --app-border: #E5E7EB;
+  --app-footer-bg: #F1F3F5;
+
+  /* Ionic Header Overrides for Light Mode */
+  --ion-toolbar-background: #FFFFFF;
+  --ion-toolbar-color: #1A1A1A;
+}
+
+/* --- DARK THEME --- */
+body.dark {
+  --app-background: #080C14;
+  --app-text: #FFFFFF;
+  --app-card-bg: #1A1A1A;
+  --app-secondary-text: #D1D5DB;
+  --app-border: #2D3748;
+  --app-footer-bg: #0d1117;
+
+  /* Ionic Header Overrides for Dark Mode */
+  --ion-toolbar-background: #1A1A1A;
+  --ion-toolbar-color: #FFFFFF;
+}
+
+/* Global Header Fix - Using Variables */
+ion-header,
+ion-toolbar {
+  --background: var(--ion-toolbar-background) !important;
+  --color: var(--ion-toolbar-color) !important;
+  background-color: var(--ion-toolbar-background) !important;
+  color: var(--ion-toolbar-color) !important;
+}
+
+ion-header ion-title {
+  color: var(--ion-toolbar-color) !important;
+}
+
+/* Custom scrollbar - themed */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #080c14;
+  background: var(--app-background);
 }
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--app-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--app-secondary-text);
 }
 
 /* Prevent scrollbar overlap */
 body {
   overflow-x: hidden;
   padding-right: 0 !important;
-}
-
-/* ============================================ */
-/* GLOBAL HEADER FIX - WORKS ON ALL PAGES       */
-/* ============================================ */
-
-/* Force ALL headers dark everywhere */
-:root ion-header,
-:root ion-toolbar {
-  --background: #1A1A1A !important;
-  --color: #ffffff !important;
-  background-color: #1A1A1A !important;
-  color: #ffffff !important;
-}
-
-/* Force all header titles white */
-:root ion-header ion-title {
-  color: #ffffff !important;
-}
-
-/* Remove any white header backgrounds */
-:root .header-ios ion-toolbar,
-:root .header-md ion-toolbar {
-  --background: #1A1A1A !important;
-  background: #1A1A1A !important;
 }

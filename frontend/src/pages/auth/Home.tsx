@@ -1,17 +1,21 @@
 import React from 'react';
 import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import { 
-  carOutline, bicycleOutline, shieldCheckmarkOutline, starOutline, 
-  phonePortraitOutline, walletOutline, timeOutline, mapOutline, 
+import {
+  carOutline, bicycleOutline, shieldCheckmarkOutline, starOutline,
+  phonePortraitOutline, walletOutline, timeOutline, mapOutline,
   peopleOutline, giftOutline, arrowForwardOutline, callOutline,
   cashOutline, lockClosedOutline, heartOutline, speedometerOutline,
-  checkmarkCircleOutline, locationOutline
+  checkmarkCircleOutline, locationOutline, moonOutline, sunnyOutline
 } from 'ionicons/icons';
 import './Home.css';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const Home: React.FC = () => {
   const history = useHistory();
+  const { theme, toggleTheme } = useTheme();
+
 
   return (
     <IonPage>
@@ -19,8 +23,11 @@ const Home: React.FC = () => {
         
         {/* NAVBAR */}
         <div className="home-nav">
-          <span className="nav-logo">🚀 NAVIGOAT</span>
+          <span className="nav-logo">🚀 NAVIGO</span>
           <div className="nav-links">
+            <div className="theme-toggle" onClick={toggleTheme}>
+              <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
+            </div>
             <span onClick={() => history.push('/login')}>Sign In</span>
             <IonButton size="small" className="nav-signup-btn" onClick={() => history.push('/register')}>Sign Up</IonButton>
           </div>
@@ -77,7 +84,7 @@ const Home: React.FC = () => {
             </div>
             <div className="ride-card">
               <span className="ride-emoji">🚗</span>
-              <h3>NAVIGOAT Go</h3>
+              <h3>NAVIGO Go</h3>
               <p>Affordable car rides</p>
               <div className="ride-features">
                 <span><IonIcon icon={checkmarkCircleOutline} /> 4 seats</span>
@@ -97,7 +104,7 @@ const Home: React.FC = () => {
             </div>
             <div className="ride-card">
               <span className="ride-emoji">🚐</span>
-              <h3>NAVIGOAT XL</h3>
+              <h3>NAVIGO XL</h3>
               <p>Groups up to 6 people</p>
               <div className="ride-features">
                 <span><IonIcon icon={checkmarkCircleOutline} /> 6 seats</span>
@@ -110,7 +117,7 @@ const Home: React.FC = () => {
 
         {/* WHY NAVIGO */}
         <div className="section dark-section">
-          <h2>⭐ Why 2 Million+ Ugandans Choose NAVIGOAT</h2>
+          <h2>⭐ Why 2 Million+ Ugandans Choose NAVIGO</h2>
           <IonGrid>
             <IonRow>
               <IonCol size="6"><div className="feature-card"><IonIcon icon={shieldCheckmarkOutline} /><h4>Boda Safe™ Certified</h4><p>Every driver verified, trained & rated</p></div></IonCol>
@@ -147,7 +154,7 @@ const Home: React.FC = () => {
 
         {/* DRIVERS */}
         <div className="section driver-section">
-          <h2>🤑 Earn With NAVIGOAT</h2>
+          <h2>🤑 Earn With NAVIGO</h2>
           <p className="section-sub">Join 5,000+ drivers earning daily. We take only 15% — you keep 85%.</p>
           <div className="driver-stats">
             <div><strong>UGX 50K-150K</strong><span>Daily Earnings</span></div>
@@ -197,7 +204,7 @@ const Home: React.FC = () => {
         <div className="footer">
           <div className="footer-grid">
             <div>
-              <h4>🚀 NAVIGOAT</h4>
+              <h4>🚀 NAVIGO</h4>
               <p>Uganda's smartest ride-hailing app. Safe, affordable, reliable.</p>
             </div>
             <div>
@@ -227,7 +234,7 @@ const Home: React.FC = () => {
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© 2026 NAVIGOAT Technologies Uganda. All rights reserved.</p>
+            <p>© 2026 NAVIGO Technologies Uganda. All rights reserved.</p>
             <p>🇺🇬 Proudly Ugandan • Made in Kampala</p>
           </div>
         </div>

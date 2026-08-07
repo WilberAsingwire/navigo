@@ -1,12 +1,12 @@
-.dashboard-bg { --background: #080c14; }
+.dashboard-bg { --background: var(--app-background); }
 .sora-font { font-family: 'Sora', sans-serif; }
 
 /* Quick Actions Icons - All Orange */
-.icon-box { color: #FF6B35 !important; background: rgba(255,255,255,0.05) !important; }
+.icon-box { color: var(--navigo-orange) !important; background: rgba(255,255,255,0.05) !important; }
 
 /* Driver card spacing */
-.driver-mini-card { --background: rgba(255,255,255,0.04); border-radius: 12px; }
+.driver-mini-card { --background: var(--app-card-bg); border-radius: 12px; }
 .mini-avatar { margin-right: 10px; }
 
 /* View Map - Orange */
-.view-all { color: #FF6B35 !important; margin-right: 8px; }
+.view-all { color: var(--navigo-orange) !important; margin-right: 8px; }

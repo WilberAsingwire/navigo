@@ -4,7 +4,7 @@ import { Route, Redirect } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
-<Route path="/" component={Home} exact />
+import { ThemeProvider } from './context/ThemeContext';
 import Home from './pages/auth/Home';
 
 /* --- AUTH PAGES --- */
@@ -91,62 +91,64 @@ const ActiveRidePlaceholder: React.FC = () => (
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <IonApp>
-        <IonReactRouter>
-          <IonRouterOutlet>
+      <ThemeProvider>
+        <IonApp>
+          <IonReactRouter>
+            <IonRouterOutlet>
 
-            {/* Public Routes */}
-            <Route path="/login" component={Login} exact />
-            <Route path="/register" component={Register} exact />
-            <Route path="/forgot-password" component={ForgotPassword} exact />
-            <Route path="/verify-phone" component={SkipVerification} exact />
-            <Route path="/explore" component={RideRequest} exact />
-            <Route path="/ussd" component={USSDInfo} exact />
-            <Route path="/auth/callback" component={AuthCallback} exact />
+              {/* Public Routes */}
+              <Route path="/login" component={Login} exact />
+              <Route path="/register" component={Register} exact />
+              <Route path="/forgot-password" component={ForgotPassword} exact />
+              <Route path="/verify-phone" component={SkipVerification} exact />
+              <Route path="/explore" component={RideRequest} exact />
+              <Route path="/ussd" component={USSDInfo} exact />
+              <Route path="/auth/callback" component={AuthCallback} exact />
 
-            {/* Rider Routes */}
-            <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
-            <Route path="/rider/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
-            <Route path="/rider/active-ride" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} />} />
-            <Route path="/rider/history" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} />} />
-            <Route path="/rider/places" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} />} />
-            <Route path="/rider/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
-            <Route path="/rider/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
-            <Route path="/rider/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
+              {/* Rider Routes */}
+              <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
+              <Route path="/rider/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
+              <Route path="/rider/active-ride" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} />} />
+              <Route path="/rider/history" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} />} />
+              <Route path="/rider/places" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} />} />
+              <Route path="/rider/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
+              <Route path="/rider/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
+              <Route path="/rider/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
 
-            {/* Customer Routes (backward compatible) */}
-            <Route path="/customer/home" exact render={() => <Redirect to="/rider/home" />} />
-            <Route path="/customer/book" exact render={() => <Redirect to="/rider/book" />} />
-            <Route path="/customer/history" exact render={() => <Redirect to="/rider/history" />} />
-            <Route path="/customer/places" exact render={() => <Redirect to="/rider/places" />} />
-            <Route path="/customer/payments" exact render={() => <Redirect to="/rider/payments" />} />
-            <Route path="/customer/support" exact render={() => <Redirect to="/rider/support" />} />
-            <Route path="/customer/profile" exact render={() => <Redirect to="/rider/profile" />} />
+              {/* Customer Routes (backward compatible) */}
+              <Route path="/customer/home" exact render={() => <Redirect to="/rider/home" />} />
+              <Route path="/customer/book" exact render={() => <Redirect to="/rider/book" />} />
+              <Route path="/customer/history" exact render={() => <Redirect to="/rider/history" />} />
+              <Route path="/customer/places" exact render={() => <Redirect to="/rider/places" />} />
+              <Route path="/customer/payments" exact render={() => <Redirect to="/rider/payments" />} />
+              <Route path="/customer/support" exact render={() => <Redirect to="/rider/support" />} />
+              <Route path="/customer/profile" exact render={() => <Redirect to="/rider/profile" />} />
 
-            {/* Driver Routes */}
-            <Route path="/driver/home" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} />} />
-            <Route path="/driver/requests" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={IncomingRequest} />} />
-            <Route path="/driver/earnings" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} />} />
-            <Route path="/driver/vehicle" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} />} />
-            <Route path="/driver/documents" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} />} />
-            <Route path="/driver/active-ride" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={ActiveRidePlaceholder} />} />
+              {/* Driver Routes */}
+              <Route path="/driver/home" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} />} />
+              <Route path="/driver/requests" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={IncomingRequest} />} />
+              <Route path="/driver/earnings" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} />} />
+              <Route path="/driver/vehicle" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} />} />
+              <Route path="/driver/documents" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} />} />
+              <Route path="/driver/active-ride" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={ActiveRidePlaceholder} />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin/dashboard" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminDashboard} />} />
-            <Route path="/admin/home" exact render={() => <Redirect to="/admin/dashboard" />} />
-            <Route path="/admin/approvals" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminApprovals} />} />
-            <Route path="/admin/support" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSupport} />} />
-            <Route path="/admin/users" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUsers} />} />
-            <Route path="/admin/map" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} />} />
-            <Route path="/admin/approve" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUserReview} />} />
-            <Route path="/admin/settings" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSettings} />} />
+              {/* Admin Routes */}
+              <Route path="/admin/dashboard" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminDashboard} />} />
+              <Route path="/admin/home" exact render={() => <Redirect to="/admin/dashboard" />} />
+              <Route path="/admin/approvals" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminApprovals} />} />
+              <Route path="/admin/support" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSupport} />} />
+              <Route path="/admin/users" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUsers} />} />
+              <Route path="/admin/map" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} />} />
+              <Route path="/admin/approve" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUserReview} />} />
+              <Route path="/admin/settings" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSettings} />} />
 
-            {/* Default */}
-           <Route path="/" component={Home} exact />
+              {/* Default */}
+              <Route path="/" component={Home} exact />
 
-          </IonRouterOutlet>
-        </IonReactRouter>
-      </IonApp>
+            </IonRouterOutlet>
+          </IonReactRouter>
+        </IonApp>
+      </ThemeProvider>
     </AuthProvider>
   );
 };
