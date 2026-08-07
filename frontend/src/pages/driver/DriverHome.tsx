@@ -20,6 +20,13 @@ const DriverHome: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    const status = user?.verificationStatus || 'unverified';
+    if (status === 'unverified' || status === 'rejected') {
+      history.replace('/driver/documents');
+    }
+  }, [user, history]);
   const [stats] = useState({ 
     earnings: 85000, 
     rating: 4.8, 
@@ -37,6 +44,11 @@ const DriverHome: React.FC = () => {
   ]);
 
   const handleStatusToggle = (online: boolean) => {
+    if (user?.verificationStatus !== 'approved') {
+      setIsOnline(false);
+      alert('Your account must be approved by an admin before you can go online.');
+      return;
+    }
     setIsOnline(online);
   };
 

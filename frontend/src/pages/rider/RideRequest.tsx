@@ -66,9 +66,11 @@ const RideRequest: React.FC = () => {
   const [discount, setDiscount] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [womenOnly, setWomenOnly] = useState(false);
+  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
 
   useEffect(() => {
     getCurrentLocation();
+    fetchSavedPlaces();
 
     if (isAuthenticated && user) {
       const socket = socketService.connect(user.id);
@@ -96,6 +98,19 @@ const RideRequest: React.FC = () => {
   useEffect(() => {
     if (pickup && destination) calculateFare();
   }, [pickup, destination, selectedRide, discount]);
+
+  const fetchSavedPlaces = async () => {
+    if (!user?.id) return;
+    try {
+      const token = localStorage.getItem('navigo_token');
+      const res = await axios.get(`${API_URL}/api/users/saved-places/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSavedPlaces(res.data);
+    } catch (err) {
+      console.error('Error fetching saved places:', err);
+    }
+  };
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
@@ -181,6 +196,22 @@ const RideRequest: React.FC = () => {
       setDestSearch(loc.name || loc.address.split(',')[0]);
     }
     setSearchResults([]);
+  };
+
+  const useSavedPlace = (place: any, isPickup: boolean) => {
+    const loc: Location = {
+      lat: Number(place.lat),
+      lng: Number(place.lng),
+      address: place.address,
+      name: place.label
+    };
+    if (isPickup) {
+      setPickup(loc);
+      setPickupSearch(place.label);
+    } else {
+      setDestination(loc);
+      setDestSearch(place.label);
+    }
   };
 
   const calculateFare = () => {
@@ -345,6 +376,27 @@ const RideRequest: React.FC = () => {
                 />
               </div>
             </div>
+
+            {savedPlaces.length > 0 && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', padding: '0 4px' }}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginRight: 8 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Pickup:</span>
+                  {savedPlaces.map(p => (
+                    <IonChip key={`p-${p.id}`} onClick={() => useSavedPlace(p, true)} style={{ fontSize: 11, cursor: 'pointer' }}>
+                      <IonIcon icon={locationOutline} style={{ color: '#FF6B35' }} /> {p.label}
+                    </IonChip>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Dest:</span>
+                  {savedPlaces.map(p => (
+                    <IonChip key={`d-${p.id}`} onClick={() => useSavedPlace(p, false)} style={{ fontSize: 11, cursor: 'pointer' }}>
+                      <IonIcon icon={locationOutline} style={{ color: '#FF6B35' }} /> {p.label}
+                    </IonChip>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {isSearching && (
               <div className="search-loading">

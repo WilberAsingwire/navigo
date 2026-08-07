@@ -12,6 +12,8 @@ import {
 import ChatBox from '../../components/ChatBox';
 import SOSButton from '../../components/SOSButton';
 import NavigoMap from '../../components/NavigoMap';
+import socketService from '../../services/socketService';
+import { useAuth } from '../../context/AuthContext';
 import { processPayment, checkPaymentStatus } from '../../services/paymentService';
 import './ActiveRide.css';
 
@@ -21,6 +23,7 @@ type PaymentMethod = 'cash' | 'mtn' | 'airtel' | 'card';
 
 const ActiveRide: React.FC = () => {
   const history = useHistory();
+  const { user } = useAuth();
   const [rideStatus, setRideStatus] = useState<RideStatus>('arriving');
   const [eta, setEta] = useState(3);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -39,13 +42,31 @@ const ActiveRide: React.FC = () => {
   const [remainingTime, setRemainingTime] = useState(0);
 
   useEffect(() => {
-    if (rideStatus !== 'arriving') return;
-    const interval = setInterval(() => {
-      setDriverPos(prev => ({ lat: prev.lat + (0.3476 - prev.lat) * 0.08, lng: prev.lng + (32.5825 - prev.lng) * 0.08 }));
-      setEta(prev => { if (prev <= 1) { clearInterval(interval); setRideStatus('arrived'); return 0; } return Math.max(1, prev - 1); });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [rideStatus]);
+    if (!user) return;
+    const socket = socketService.connect(user.id);
+
+    // We need the rideId. In a real app, we'd get this from the route params.
+    // For now, we use a mock rideId 'ride_001'
+    const rideId = 'ride_001';
+    socket.emit('join-chat', { rideId }); // Join the ride room
+
+    socket.on('location-updated', (data: { lat: number; lng: number }) => {
+      setDriverPos({ lat: data.lat, lng: data.lng });
+    });
+
+    socket.on('status-changed', (data: { status: string }) => {
+      setRideStatus(data.status as RideStatus);
+      if (data.status === 'arrived') {
+        setToastMsg('🚕 Your driver has arrived!');
+        setShowToast(true);
+      }
+    });
+
+    return () => {
+      socket.off('location-updated');
+      socket.off('status-changed');
+    };
+  }, [user]);
 
   const handleCancel = () => { setShowCancelModal(false); setToastMsg('Ride cancelled'); setShowToast(true); setTimeout(() => history.push('/rider/home'), 1500); };
   const handleStartRide = () => { setRideStatus('started'); setToastMsg('🚗 Ride started!'); setShowToast(true); };

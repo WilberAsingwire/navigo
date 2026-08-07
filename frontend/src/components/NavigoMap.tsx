@@ -118,6 +118,26 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
+  useEffect(() => {
+    if (!userLocation || !driverLocation || !onDistanceChange) return;
+    const fetchDriverDist = async () => {
+      try {
+        const from = `${driverLocation.lng},${driverLocation.lat}`;
+        const to = `${userLocation.lng},${userLocation.lat}`;
+        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`);
+        const data = await res.json();
+        if (data.routes?.length > 0) {
+          const route = data.routes[0];
+          const d = Math.round(route.distance / 100) / 10;
+          const t = Math.round(route.duration / 60);
+          // We use a separate mechanism or the same onDistanceChange to report driver arrival
+          onDistanceChange(d, t);
+        }
+      } catch { }
+    };
+    fetchDriverDist();
+  }, [driverLocation, userLocation]);
+
   useEffect(() => { 
     const t = setTimeout(() => setLoading(false), 600); 
     return () => clearTimeout(t); 

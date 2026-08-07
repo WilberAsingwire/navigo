@@ -15,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 import './Login.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Login: React.FC = () => {
   const history = useHistory();
   const { login, continueAsGuest, error: authError, clearError } = useAuth();
@@ -156,7 +158,7 @@ const Login: React.FC = () => {
 
               {/* Google Login */}
               <IonButton expand="block" fill="outline" className="social-btn google-btn"
-                onClick={() => window.location.href = 'https://navigo-fzdo.onrender.com/auth/google'}>
+                onClick={() => window.location.href = `${API_URL}/auth/google`}>
                 <IonIcon icon={logoGoogle} slot="start" /> Continue with Google
               </IonButton>
 

@@ -4,7 +4,8 @@
       "Bash(Get-ChildItem -Path . -Recurse)",
       "Bash(Select-Object FullName)",
       "Bash(dir *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(npm install *)"
     ]
   }
 }
