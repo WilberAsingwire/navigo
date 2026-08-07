@@ -12,6 +12,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import AuthCallback from './pages/auth/AuthCallback';
+import CompleteSocialRegistration from './pages/auth/CompleteSocialRegistration';
 import './pages/admin/AdminGlobal.css';
 
 /* --- RIDER PAGES --- */
@@ -104,6 +105,7 @@ const App: React.FC = () => {
               <Route path="/explore" component={RideRequest} exact />
               <Route path="/ussd" component={USSDInfo} exact />
               <Route path="/auth/callback" component={AuthCallback} exact />
+              <Route path="/auth/complete-social-reg" component={CompleteSocialRegistration} exact />
 
               {/* Rider Routes */}
               <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />

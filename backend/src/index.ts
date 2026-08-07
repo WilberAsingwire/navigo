@@ -42,22 +42,35 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
-  (req: any, res) => {
+  async (req: any, res) => {
     const user = req.user;
     const name = user?.displayName || 'Google User';
     const email = user?.emails?.[0]?.value || '';
     const googleId = user?.id || '';
 
-    // Redirect to frontend with user data
-    const params = new URLSearchParams({
-      name,
-      email,
-      socialId: googleId,
-      provider: 'google'
-    }).toString();
+    const db = require('./config/database').getDB();
+    const existingUser = await db.get(
+      'SELECT * FROM users WHERE email = ? OR (socialProvider = ? AND socialId = ?)',
+      [email.toLowerCase().trim(), 'google', googleId]
+    );
 
     const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-nu-eight.vercel.app/auth/callback';
-    res.redirect(`${redirectUrl}?${params}`);
+
+    if (existingUser) {
+      // User exists, redirect with status existing
+      const token = require('./utils/auth').generateToken({ id: existingUser.id, role: existingUser.role });
+      res.redirect(`${redirectUrl}?status=existing&token=${token}`);
+    } else {
+      // New user, redirect with status new and their info
+      const params = new URLSearchParams({
+        status: 'new',
+        name,
+        email,
+        socialId: googleId,
+        provider: 'google'
+      }).toString();
+      res.redirect(`${redirectUrl}?${params}`);
+    }
   }
 );
 

@@ -40,16 +40,27 @@ const sanitizeUser = (user: any) => {
   return clean;
 };
 
+const normalizePhone = (phone: string) => {
+  let cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('256')) {
+    cleaned = cleaned.slice(3);
+  }
+  if (cleaned.length === 9 && cleaned.startsWith('7')) {
+    cleaned = '0' + cleaned;
+  }
+  return cleaned;
+};
+
 // ─── REGISTER ────────────────────────────────────────
 router.post('/register', async (req: Request, res: Response) => {
   try {
     const { name, phone, password, email, role } = req.body;
     const db = getDB();
 
-    const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
+    const cleanPhone = normalizePhone(phone);
     if (!cleanPhone.match(/^07\d{8}$/)) {
       return res.status(400).json({
-        message: 'Invalid phone number. Format: 0772000000'
+        message: 'Invalid phone number. Please use format 07... (e.g. 0772000000)'
       });
     }
 
@@ -117,7 +128,7 @@ router.post('/login', async (req: Request, res: Response) => {
   try {
     const { phone, password } = req.body;
     const db = getDB();
-    const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
+    const cleanPhone = normalizePhone(phone);
 
     const user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
     if (!user || !(await comparePassword(password, user.password))) {
@@ -139,57 +150,47 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-// ─── SOCIAL LOGIN ────────────────────────────────────
-router.post('/social-login', async (req: Request, res: Response) => {
+// ─── SOCIAL REGISTRATION ──────────────────────────
+router.post('/google-register', async (req: Request, res: Response) => {
   try {
-    const { provider, socialId, name, email, phone } = req.body;
+    const { name, email, phone, socialId, provider } = req.body;
     const db = getDB();
 
-    if (!provider || !socialId) {
-      return res.status(400).json({ message: 'Provider and socialId required.' });
+    if (!phone) return res.status(400).json({ message: 'Phone number is required for registration.' });
+    const cleanPhone = normalizePhone(phone);
+    if (!cleanPhone.match(/^07\d{8}$/)) {
+      return res.status(400).json({ message: 'Invalid phone number. Format: 0772000000' });
     }
 
-    let user = await db.get('SELECT * FROM users WHERE socialProvider = ? AND socialId = ?', [provider, socialId]);
-
-    if (!user && email) {
-      user = await db.get('SELECT * FROM users WHERE email = ?', email.toLowerCase().trim());
-      if (user) {
-        await db.run('UPDATE users SET socialProvider = ?, socialId = ? WHERE id = ?', [provider, socialId, user.id]);
-        user = await db.get('SELECT * FROM users WHERE id = ?', user.id);
-      }
+    const existingPhone = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    if (existingPhone) {
+      return res.status(400).json({ message: 'Phone already registered. Please login.' });
     }
 
-    if (!user) {
-      const userId = 'user_' + Date.now();
-      const cleanPhone = phone ? phone.replace(/\s+/g, '').replace('+256', '0') : '';
+    const userId = 'user_' + Date.now();
+    const newUser: any = {
+      id: userId,
+      name: name.trim(),
+      phone: cleanPhone,
+      email: email ? email.toLowerCase().trim() : null,
+      role: 'customer',
+      phoneVerified: 1,
+      verificationStatus: 'approved',
+      socialProvider: provider,
+      socialId: socialId,
+      createdAt: new Date().toISOString()
+    };
 
-      await db.run(
-        'INSERT INTO users (id, name, phone, email, role, phoneVerified, verificationStatus, socialProvider, socialId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [userId, name || `${provider} User`, cleanPhone, email?.toLowerCase().trim(), 'customer', phone ? 1 : 0, phone ? 'approved' : 'unverified', provider, socialId, new Date().toISOString()]
-      );
+    await db.run(
+      'INSERT INTO users (id, name, phone, email, role, phoneVerified, verificationStatus, socialProvider, socialId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [newUser.id, newUser.name, newUser.phone, newUser.email, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.socialProvider, newUser.socialId, newUser.createdAt]
+    );
 
-      user = {
-        id: userId,
-        name: name || `${provider} User`,
-        phone: cleanPhone,
-        email: email?.toLowerCase().trim(),
-        role: 'customer',
-        phoneVerified: !!phone,
-        verificationStatus: phone ? 'approved' : 'unverified',
-        socialProvider: provider,
-        socialId,
-        createdAt: new Date().toISOString()
-      };
-    }
-
-    res.json({
-      message: `Welcome, ${user.name}!`,
-      user: sanitizeUser(user),
-      token: generateToken({ id: user.id, role: user.role }),
-      needsPhone: !user.phone
-    });
+    const token = generateToken({ id: newUser.id, role: newUser.role });
+    res.json({ message: 'Registration successful!', user: sanitizeUser(newUser), token });
   } catch (error) {
-    res.status(500).json({ message: 'Social login failed.' });
+    console.error('Google register error:', error);
+    res.status(500).json({ message: 'Registration failed.' });
   }
 });
 

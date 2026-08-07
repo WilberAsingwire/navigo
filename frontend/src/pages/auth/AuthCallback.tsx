@@ -11,15 +11,22 @@ const AuthCallback: React.FC = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+    const token = params.get('token');
     const name = params.get('name');
     const email = params.get('email');
     const socialId = params.get('socialId');
     const provider = params.get('provider');
 
-    if (name && socialId && provider) {
-      socialLogin(provider, socialId, name, email || undefined)
-        .then(() => history.push('/rider/home'))
-        .catch(() => setError('Login failed. Please try again.'));
+    if (status === 'existing' && token) {
+      // User already exists, just save token and go to home
+      localStorage.setItem('navigo_token', token);
+      // Note: In a real app, we'd fetch the user profile here via /auth/me
+      history.push('/rider/home');
+    } else if (status === 'new' && name && socialId && provider) {
+      // New user, redirect to complete registration page
+      localStorage.setItem('temp_social_user', JSON.stringify({ name, email, socialId, provider }));
+      history.push('/auth/complete-social-reg');
     } else {
       setError('Invalid login response');
       setTimeout(() => history.push('/login'), 2000);
