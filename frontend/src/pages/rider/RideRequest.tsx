@@ -144,7 +144,7 @@ const RideRequest: React.FC = () => {
     } catch { return []; }
   };
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<any>(null);
 
   const handleSearch = async (query: string, isPickup: boolean) => {
     if (isPickup) setPickupSearch(query); else setDestSearch(query);
