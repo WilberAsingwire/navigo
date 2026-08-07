@@ -94,28 +94,22 @@ initDB().then(async () => {
     const db = require('./config/database').getDB();
     const { hashPassword } = require('./utils/auth');
 
-    // Admin Credentials
     const adminEmail = 'navigouganda@gmail.com';
     const adminPassword = await hashPassword('Kakumiro222');
 
-    const existingAdmin = await db.get('SELECT * FROM users WHERE role = ?', ['admin']);
+    // 1. Force clean up any existing admins to avoid conflicts
+    await db.run('DELETE FROM users WHERE role = ?', ['admin']);
+    console.log('🧹 Cleared old admin accounts for a fresh setup');
 
-    if (existingAdmin) {
-      await db.run(
-        'UPDATE users SET email = ?, password = ? WHERE id = ?',
-        [adminEmail, adminPassword, existingAdmin.id]
-      );
-      console.log(`✅ Admin account found (ID: ${existingAdmin.id}). Credentials updated for ${adminEmail}`);
-    } else {
-      const adminId = 'admin_001';
-      await db.run(
-        'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [adminId, 'NAVIGO Admin', '0000000000', adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
-      );
-      console.log(`✅ No admin found. New admin account created for ${adminEmail} with ID: ${adminId}`);
-    }
+    // 2. Create a guaranteed fresh admin account
+    const adminId = 'admin_' + Date.now();
+    await db.run(
+      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
+    );
+    console.log(`🚀 FRESH ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
   } catch (err) {
-    console.error('❌ Failed to setup admin credentials:', err);
+    console.error('❌ Critical failure setting up admin:', err);
   }
 
   httpServer.listen(PORT, () => console.log('NAVIGO API on port ' + PORT));
