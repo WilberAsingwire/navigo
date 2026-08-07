@@ -21,16 +21,21 @@ app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
 
-// Google OAuth Strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackURL: '/auth/google/callback'
-  },
-  (_accessToken: any, _refreshToken: any, profile: any, done: any) => {
-    return done(null, profile);
-  }
-));
+// Google OAuth Strategy - Now Optional to prevent crashing if IDs are missing
+if (process.env.GOOGLE_CLIENT_ID) {
+  passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      callbackURL: '/auth/google/callback'
+    },
+    (_accessToken: any, _refreshToken: any, profile: any, done: any) => {
+      return done(null, profile);
+    }
+  ));
+  console.log('✅ Google OAuth Strategy initialized');
+} else {
+  console.log('⚠️ Google Client ID missing. Google Login disabled.');
+}
 
 // Google OAuth Routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email', 'phone'] }));
