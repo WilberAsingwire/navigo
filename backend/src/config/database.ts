@@ -59,6 +59,16 @@ export const initDB = async () => {
           code TEXT,
           expires TIMESTAMP WITH TIME ZONE
         );
+
+        CREATE TABLE IF NOT EXISTS saved_places (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id),
+          label TEXT NOT NULL,
+          address TEXT NOT NULL,
+          lat DECIMAL NOT NULL,
+          lng DECIMAL NOT NULL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
       `);
       console.log('✅ Database tables initialized');
     } finally {

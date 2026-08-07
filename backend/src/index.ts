@@ -8,6 +8,7 @@ import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
 import rideRoutes from './routes/rides';
 import driverRoutes from './routes/drivers';
+import userRoutes from './routes/users';
 import { initDB } from './config/database';
 import { setupSocketHandlers } from './socket/socketHandler';
 
@@ -78,6 +79,7 @@ app.get('/auth/google/callback',
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/drivers', driverRoutes);
+app.use('/api/users', userRoutes);
 app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
 
 // Socket.io

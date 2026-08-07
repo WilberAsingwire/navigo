@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonButton, IonAvatar,
-  IonModal, IonInput, IonToggle, IonToast, IonBadge
+  IonModal, IonInput, IonToggle, IonToast, IonBadge, IonSpinner
 } from '@ionic/react';
 import {
   personOutline, phonePortraitOutline, mailOutline, logOutOutline,
@@ -13,6 +13,7 @@ import {
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import { useHistory } from 'react-router-dom';
+import axios from 'axios';
 
 const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
@@ -24,12 +25,28 @@ const Profile: React.FC = () => {
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSave = () => {
-    updateUser({ name: editName, email: editEmail });
-    setShowEdit(false);
-    setToastMsg('Profile updated successfully! ✅');
-    setShowToast(true);
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('navigo_token');
+      await axios.put(`${API_URL}/api/users/update`,
+        { name: editName, email: editEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      updateUser({ name: editName, email: editEmail });
+      setShowEdit(false);
+      setToastMsg('Profile updated successfully! ✅');
+      setShowToast(true);
+    } catch (err: any) {
+      setToastMsg(err.response?.data?.message || 'Failed to update profile');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -156,8 +173,8 @@ const Profile: React.FC = () => {
               <IonLabel position="stacked">Email</IonLabel>
               <IonInput value={editEmail} onIonInput={e => setEditEmail(e.detail.value!)} />
             </IonItem>
-            <IonButton expand="block" onClick={handleSave} style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700, marginTop: 16 } as any}>
-              <IonIcon icon={checkmarkCircleOutline} slot="start" /> Save Changes
+            <IonButton expand="block" onClick={handleSave} disabled={isLoading} style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700, marginTop: 16 } as any}>
+              {isLoading ? <IonSpinner name="crescent" /> : <><IonIcon icon={checkmarkCircleOutline} slot="start" /> Save Changes</>}
             </IonButton>
           </div>
         </IonModal>
