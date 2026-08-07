@@ -16,6 +16,7 @@ import './Auth.css';
 import './Login.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
 
 const Login: React.FC = () => {
   const history = useHistory();
@@ -148,7 +149,7 @@ const Login: React.FC = () => {
 
               {/* Google Login */}
               <IonButton expand="block" fill="outline" className="social-btn google-btn"
-                onClick={() => window.location.href = `${API_URL}/auth/google`}>
+                onClick={() => window.location.href = `${BASE_URL}/auth/google`}>
                 <IonIcon icon={logoGoogle} slot="start" /> Continue with Google
               </IonButton>
 

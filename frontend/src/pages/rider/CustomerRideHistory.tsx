@@ -31,8 +31,9 @@ const CustomerRideHistory: React.FC = () => {
       setIsLoading(true);
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
         const token = localStorage.getItem('navigo_token');
-        const res = await axios.get(`${API_URL}/api/rides/history/${user.id}`, {
+        const res = await axios.get(`${BASE_URL}/api/rides/history/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { status: statusFilter }
         });

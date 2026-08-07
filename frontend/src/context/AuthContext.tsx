@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import axios from 'axios';
 
-const API_URL = 'https://navigo-fzdo.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://navigo-fzdo.onrender.com/api';
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 interface User {
@@ -111,10 +111,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     throw new Error(message);
   };
 
-  const login = async (phone: string, password: string): Promise<any> => {
+  const login = async (identifier: string, password: string): Promise<any> => {
     try {
-      const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
-      const response = await axios.post(`${API_URL}/auth/login`, { phone: cleanPhone, password });
+      const response = await axios.post(`${API_URL}/auth/login`, { identifier: identifier.trim(), password });
       saveSession(response.data.user, response.data.token);
       return response.data;
     } catch (err: any) {

@@ -22,6 +22,7 @@ import socketService from '../../services/socketService';
 import './RideRequest.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
 interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
@@ -103,7 +104,7 @@ const RideRequest: React.FC = () => {
     if (!user?.id) return;
     try {
       const token = localStorage.getItem('navigo_token');
-      const res = await axios.get(`${API_URL}/api/users/saved-places/${user.id}`, {
+      const res = await axios.get(`${BASE_URL}/api/users/saved-places/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSavedPlaces(res.data);
@@ -287,7 +288,7 @@ const RideRequest: React.FC = () => {
     }
 
     try {
-      const res = await axios.post(`${API_URL}/api/rides/request`, {
+      const res = await axios.post(`${BASE_URL}/api/rides/request`, {
         pickup,
         destination,
         rideType: selectedRide.vehicleType,
