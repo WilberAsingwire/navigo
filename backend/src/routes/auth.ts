@@ -1,4 +1,7 @@
 import express, { Request, Response } from 'express';
+import { getDB } from '../config/database';
+import { hashPassword, comparePassword, generateToken } from '../utils/auth';
+import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -31,96 +34,74 @@ interface User {
   createdAt: Date;
 }
 
-// ─── In-Memory Store ────────────────────────────────
-const users: User[] = [
-  // Pre-seed an admin account
-  {
-    id: 'admin_001',
-    name: 'NAVIGO Admin',
-    phone: '0770000000',
-    email: 'admin@navigo.ug',
-    password: 'admin123',
-    role: 'admin',
-    phoneVerified: true,
-    verificationStatus: 'approved',
-    createdAt: new Date()
-  }
-];
-
 // ─── Helper ──────────────────────────────────────────
-const sanitizeUser = (user: User) => {
+const sanitizeUser = (user: any) => {
   const { password, ...clean } = user;
   return clean;
 };
-
-const generateToken = (userId: string) => 'navigo-token-' + userId;
 
 // ─── REGISTER ────────────────────────────────────────
 router.post('/register', async (req: Request, res: Response) => {
   try {
     const { name, phone, password, email, role } = req.body;
+    const db = getDB();
 
-    // Validate phone
     const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
     if (!cleanPhone.match(/^07\d{8}$/)) {
-      return res.status(400).json({ 
-        message: 'Invalid phone number. Format: 0772000000' 
+      return res.status(400).json({
+        message: 'Invalid phone number. Format: 0772000000'
       });
     }
 
-    // Validate name
     if (!name || name.trim().length < 2) {
       return res.status(400).json({ message: 'Name must be at least 2 characters' });
     }
 
-    // Validate password
     if (!password || password.length < 4) {
       return res.status(400).json({ message: 'Password must be at least 4 characters' });
     }
 
-    // Validate role
-    const validRoles = ['rider',  'driver', 'motorist'];
+    const validRoles = ['rider', 'driver', 'motorist'];
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role selected' });
     }
 
-    // Check if phone exists
-    const existingPhone = users.find(u => u.phone === cleanPhone);
+    const existingPhone = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
     if (existingPhone) {
       return res.status(400).json({ message: 'Phone already registered. Please login.' });
     }
 
-    // Check email if provided
     if (email) {
-      const existingEmail = users.find(u => u.email === email.toLowerCase().trim());
+      const existingEmail = await db.get('SELECT * FROM users WHERE email = ?', email.toLowerCase().trim());
       if (existingEmail) {
         return res.status(400).json({ message: 'Email already registered.' });
       }
     }
 
-    // Determine verification status
     const userRole = role || 'customer';
     const needsVerification = userRole === 'driver' || userRole === 'motorist';
-    
-    const newUser: User = {
-      id: 'user_' + Date.now(),
+    const hashedPassword = await hashPassword(password);
+
+    const userId = 'user_' + Date.now();
+    const newUser: any = {
+      id: userId,
       name: name.trim(),
       phone: cleanPhone,
-      email: email ? email.toLowerCase().trim() : undefined,
-      password,
+      email: email ? email.toLowerCase().trim() : null,
+      password: hashedPassword,
       role: userRole,
-      phoneVerified: true,
+      phoneVerified: 1,
       verificationStatus: needsVerification ? 'unverified' : 'approved',
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     };
 
-    users.push(newUser);
-    
-    console.log(`📝 New ${userRole}: ${newUser.name} | Phone: ${newUser.phone} | Status: ${newUser.verificationStatus}`);
+    await db.run(
+      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [newUser.id, newUser.name, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
+    );
 
-    const token = generateToken(newUser.id);
-    
-    const message = needsVerification 
+    const token = generateToken({ id: newUser.id, role: newUser.role });
+    const message = needsVerification
       ? `Welcome, ${newUser.name}! Please upload your documents for verification.`
       : `Welcome to NAVIGO, ${newUser.name}! 🚀`;
 
@@ -135,17 +116,15 @@ router.post('/register', async (req: Request, res: Response) => {
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { phone, password } = req.body;
+    const db = getDB();
     const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
 
-    const user = users.find(u => u.phone === cleanPhone && u.password === password);
-    if (!user) {
+    const user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    if (!user || !(await comparePassword(password, user.password))) {
       return res.status(401).json({ message: 'Invalid phone or password.' });
     }
 
-    console.log(`🔑 Login: ${user.name} (${user.role})`);
-
     let message = `Welcome back, ${user.name}!`;
-    
     if (user.verificationStatus === 'pending') {
       message += ' Your documents are under review.';
     } else if (user.verificationStatus === 'rejected') {
@@ -154,7 +133,7 @@ router.post('/login', async (req: Request, res: Response) => {
       message += ' Please upload your documents to start driving.';
     }
 
-    res.json({ message, user: sanitizeUser(user), token: generateToken(user.id) });
+    res.json({ message, user: sanitizeUser(user), token: generateToken({ id: user.id, role: user.role }) });
   } catch (error) {
     res.status(500).json({ message: 'Login failed.' });
   }
@@ -164,44 +143,50 @@ router.post('/login', async (req: Request, res: Response) => {
 router.post('/social-login', async (req: Request, res: Response) => {
   try {
     const { provider, socialId, name, email, phone } = req.body;
+    const db = getDB();
 
     if (!provider || !socialId) {
       return res.status(400).json({ message: 'Provider and socialId required.' });
     }
 
-    // Social login always creates CUSTOMER accounts (drivers must register manually)
-    let user = users.find(u => u.socialProvider === provider && u.socialId === socialId);
+    let user = await db.get('SELECT * FROM users WHERE socialProvider = ? AND socialId = ?', [provider, socialId]);
 
     if (!user && email) {
-      user = users.find(u => u.email === email.toLowerCase().trim());
+      user = await db.get('SELECT * FROM users WHERE email = ?', email.toLowerCase().trim());
       if (user) {
-        user.socialProvider = provider;
-        user.socialId = socialId;
+        await db.run('UPDATE users SET socialProvider = ?, socialId = ? WHERE id = ?', [provider, socialId, user.id]);
+        user = await db.get('SELECT * FROM users WHERE id = ?', user.id);
       }
     }
 
     if (!user) {
+      const userId = 'user_' + Date.now();
+      const cleanPhone = phone ? phone.replace(/\s+/g, '').replace('+256', '0') : '';
+
+      await db.run(
+        'INSERT INTO users (id, name, phone, email, role, phoneVerified, verificationStatus, socialProvider, socialId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, name || `${provider} User`, cleanPhone, email?.toLowerCase().trim(), 'customer', phone ? 1 : 0, phone ? 'approved' : 'unverified', provider, socialId, new Date().toISOString()]
+      );
+
       user = {
-        id: 'user_' + Date.now(),
+        id: userId,
         name: name || `${provider} User`,
-        phone: phone || '',
+        phone: cleanPhone,
         email: email?.toLowerCase().trim(),
-        role: 'customer', // Social login = customer only
+        role: 'customer',
         phoneVerified: !!phone,
         verificationStatus: phone ? 'approved' : 'unverified',
         socialProvider: provider,
         socialId,
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
       };
-      users.push(user);
     }
 
-    console.log(`🔗 Social login: ${user.name} via ${provider}`);
-    res.json({ 
-      message: `Welcome, ${user.name}!`, 
-      user: sanitizeUser(user), 
-      token: generateToken(user.id),
-      needsPhone: !user.phone 
+    res.json({
+      message: `Welcome, ${user.name}!`,
+      user: sanitizeUser(user),
+      token: generateToken({ id: user.id, role: user.role }),
+      needsPhone: !user.phone
     });
   } catch (error) {
     res.status(500).json({ message: 'Social login failed.' });
@@ -212,8 +197,9 @@ router.post('/social-login', async (req: Request, res: Response) => {
 router.post('/upload-documents', async (req: Request, res: Response) => {
   try {
     const { userId, nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle } = req.body;
+    const db = getDB();
 
-    const user = users.find(u => u.id === userId);
+    const user = await db.get('SELECT * FROM users WHERE id = ?', userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
@@ -222,7 +208,6 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Only drivers and motorists can upload documents.' });
     }
 
-    // Validate required documents
     if (!drivingLicense) {
       return res.status(400).json({ message: 'Driving license is required.' });
     }
@@ -230,7 +215,7 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Vehicle plate number is required.' });
     }
 
-    user.driverDocs = {
+    const driverDocs = JSON.stringify({
       nationalId,
       drivingLicense,
       vehiclePhoto,
@@ -238,14 +223,13 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       vehicleModel,
       vehicleColor,
       selfieWithVehicle
-    };
-    user.verificationStatus = 'pending';
+    });
 
-    console.log(`📄 Documents uploaded: ${user.name} | Plate: ${vehiclePlate} | Status: pending`);
+    await db.run('UPDATE users SET driverDocs = ?, verificationStatus = ? WHERE id = ?', [driverDocs, 'pending', userId]);
 
-    res.json({ 
+    res.json({
       message: 'Documents uploaded! Admin will review within 24-48 hours.',
-      user: sanitizeUser(user)
+      user: { ...user, driverDocs: JSON.parse(driverDocs), verificationStatus: 'pending' }
     });
   } catch (error) {
     res.status(500).json({ message: 'Upload failed.' });
@@ -253,31 +237,22 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
 });
 
 // ─── ADMIN: VERIFY DRIVER ────────────────────────────
-router.post('/admin/verify-driver', async (req: Request, res: Response) => {
+router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
-    const { adminId, driverId, action, reason } = req.body;
+    const { driverId, action, reason } = req.body;
+    const db = getDB();
 
-    // Check if admin
-    const admin = users.find(u => u.id === adminId && u.role === 'admin');
-    if (!admin) {
-      return res.status(403).json({ message: 'Admin access required.' });
-    }
-
-    const driver = users.find(u => u.id === driverId);
+    const driver = await db.get('SELECT * FROM users WHERE id = ?', driverId);
     if (!driver) {
       return res.status(404).json({ message: 'Driver not found.' });
     }
 
     if (action === 'approve') {
-      driver.verificationStatus = 'approved';
-      driver.rejectionReason = undefined;
-      console.log(`✅ Driver approved: ${driver.name}`);
+      await db.run('UPDATE users SET verificationStatus = ?, rejectionReason = NULL WHERE id = ?', ['approved', driverId]);
       res.json({ message: `${driver.name} has been approved!` });
     } else if (action === 'reject') {
-      driver.verificationStatus = 'rejected';
-      driver.rejectionReason = reason || 'Documents not satisfactory.';
-      console.log(`❌ Driver rejected: ${driver.name} - ${driver.rejectionReason}`);
-      res.json({ message: `${driver.name} has been rejected. Reason: ${driver.rejectionReason}` });
+      await db.run('UPDATE users SET verificationStatus = ?, rejectionReason = ? WHERE id = ?', ['rejected', reason || 'Documents not satisfactory.', driverId]);
+      res.json({ message: `${driver.name} has been rejected. Reason: ${reason || 'Documents not satisfactory.'}` });
     } else {
       res.status(400).json({ message: 'Action must be "approve" or "reject".' });
     }
@@ -287,91 +262,86 @@ router.post('/admin/verify-driver', async (req: Request, res: Response) => {
 });
 
 // ─── ADMIN: GET PENDING DRIVERS ──────────────────────
-router.get('/admin/pending-drivers', async (req: Request, res: Response) => {
-  const pending = users.filter(u => 
-    (u.role === 'driver' || u.role === 'motorist') && 
-    u.verificationStatus === 'pending'
-  );
-  res.json({ count: pending.length, drivers: pending.map(sanitizeUser) });
+router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const drivers = await db.all('SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ?', ['driver', 'motorist', 'pending']);
+    res.json({ count: drivers.length, drivers: drivers.map(sanitizeUser) });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch pending drivers.' });
+  }
 });
 
 router.post('/forgot-password', async (req: Request, res: Response) => {
   try {
     const { phone } = req.body;
+    const db = getDB();
     const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
 
-    const user = users.find(u => u.phone === cleanPhone);
+    const user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
     if (!user) {
       return res.json({ message: 'If registered, you will receive a reset code.' });
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    (user as any).resetCode = resetCode;
-    (user as any).resetCodeExpires = Date.now() + 10 * 60 * 1000;
+    await db.run('CREATE TABLE IF NOT EXISTS password_resets (phone TEXT PRIMARY KEY, code TEXT, expires DATETIME)');
+    await db.run('INSERT OR REPLACE INTO password_resets (phone, code, expires) VALUES (?, ?, ?)', [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]);
 
-    // 🔧 DEV: Show code in console (remove in production)
     console.log(`🔑 Reset code for ${cleanPhone}: ${resetCode}`);
 
-    // 📱 PRODUCTION: Send SMS via Africa's Talking
-    // Uncomment when you have API key:
-    // try {
-    //   const africastalking = require('africastalking')({
-    //     apiKey: process.env.AFRICAS_TALKING_API_KEY,
-    //     username: 'sandbox'
-    //   });
-    //   await africastalking.SMS.send({
-    //     to: cleanPhone,
-    //     message: `Your NAVIGO reset code is: ${resetCode}. Expires in 10 minutes.`
-    //   });
-    // } catch (smsError) {
-    //   console.error('SMS failed:', smsError);
-    // }
-
-    res.json({ 
+    res.json({
       message: 'If registered, you will receive a reset code.',
-      devCode: resetCode // Remove in production!
+      devCode: resetCode
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to process request.' });
   }
 });
 
-// ─── RESET PASSWORD ──────────────────────────────────
 router.post('/reset-password', async (req: Request, res: Response) => {
   try {
     const { phone, code, newPassword } = req.body;
+    const db = getDB();
     const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
 
-    const user = users.find(u => u.phone === cleanPhone);
-    if (!user) return res.status(400).json({ message: 'Invalid request.' });
-
-    const storedCode = (user as any).resetCode;
-    if (!storedCode || storedCode !== code) {
+    const reset = await db.get('SELECT * FROM password_resets WHERE phone = ?', cleanPhone);
+    if (!reset || reset.code !== code) {
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
-    if (Date.now() > (user as any).resetCodeExpires) {
+    if (new Date() > new Date(reset.expires)) {
       return res.status(400).json({ message: 'Reset code expired.' });
     }
 
-    user.password = newPassword;
-    delete (user as any).resetCode;
-    delete (user as any).resetCodeExpires;
+    const hashedPassword = await hashPassword(newPassword);
+    await db.run('UPDATE users SET password = ? WHERE phone = ?', [hashedPassword, cleanPhone]);
+    await db.run('DELETE FROM password_resets WHERE phone = ?', cleanPhone);
 
-    console.log(`🔑 Password reset: ${cleanPhone}`);
     res.json({ message: 'Password reset successful!' });
   } catch (error) {
     res.status(500).json({ message: 'Reset failed.' });
   }
 });
 
-// ─── DEV: LIST ALL USERS ─────────────────────────────
-router.get('/_dev/users', (_req: Request, res: Response) => {
-  res.json({ count: users.length, users: users.map(sanitizeUser) });
+router.get('/_dev/users', authenticate, authorize(['admin']), (_req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    db.all('SELECT * FROM users', [], (err, rows) => {
+      res.json({ count: rows?.length || 0, users: rows?.map(sanitizeUser) || [] });
+    });
+  } catch (e) {
+    res.status(500).json({ message: 'Dev users fetch failed.' });
+  }
 });
 
 export default router;
-router.get('/me', (req: any, res: any) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ message: 'Not authenticated' });
-  res.json({ user: { name: 'User', role: 'rider' } });
+
+router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const user = await db.get('SELECT * FROM users WHERE id = ?', req.user?.userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user: sanitizeUser(user) });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching profile' });
+  }
 });

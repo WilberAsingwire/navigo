@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
 import rideRoutes from './routes/rides';
+import { initDB } from './config/database';
 
 dotenv.config();
 
@@ -32,14 +33,14 @@ passport.use(new GoogleStrategy({
 // Google OAuth Routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email', 'phone'] }));
 
-app.get('/auth/google/callback', 
+app.get('/auth/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: '/login' }),
   (req: any, res) => {
     const user = req.user;
     const name = user?.displayName || 'Google User';
     const email = user?.emails?.[0]?.value || '';
     const googleId = user?.id || '';
-    
+
     // Redirect to frontend with user data
     const params = new URLSearchParams({
       name,
@@ -47,8 +48,9 @@ app.get('/auth/google/callback',
       socialId: googleId,
       provider: 'google'
     }).toString();
-    
-    res.redirect(`https://navigo-nu-eight.vercel.app/auth/callback?${params}`);
+
+    const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-nu-eight.vercel.app/auth/callback';
+    res.redirect(`${redirectUrl}?${params}`);
   }
 );
 
@@ -65,4 +67,10 @@ io.on('connection', (s: any) => {
 });
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => console.log('NAVIGO API on port ' + PORT));
+
+// Initialize DB before starting the server
+initDB().then(() => {
+  httpServer.listen(PORT, () => console.log('NAVIGO API on port ' + PORT));
+}).catch(err => {
+  console.error('Failed to initialize database, server not started:', err);
+});
