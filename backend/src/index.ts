@@ -105,14 +105,14 @@ initDB().then(async () => {
         'UPDATE users SET email = ?, password = ? WHERE id = ?',
         [adminEmail, adminPassword, existingAdmin.id]
       );
-      console.log('✅ Existing admin credentials updated');
+      console.log(`✅ Admin account found (ID: ${existingAdmin.id}). Credentials updated for ${adminEmail}`);
     } else {
       const adminId = 'admin_001';
       await db.run(
         'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [adminId, 'NAVIGO Admin', '0000000000', adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
       );
-      console.log('✅ New admin account created');
+      console.log(`✅ No admin found. New admin account created for ${adminEmail} with ID: ${adminId}`);
     }
   } catch (err) {
     console.error('❌ Failed to setup admin credentials:', err);
