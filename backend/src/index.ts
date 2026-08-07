@@ -11,6 +11,7 @@ import rideRoutes from './routes/rides';
 dotenv.config();
 
 const app = express();
+
 const httpServer = createServer(app);
 
 app.use(cors());

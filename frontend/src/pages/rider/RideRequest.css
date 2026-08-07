@@ -52,3 +52,48 @@
 .footer-content { display: flex; gap: 10px; padding: 10px 14px; align-items: center; }
 .guest-banner { background: rgba(255,107,53,0.1); padding: 10px 14px; display: flex; align-items: center; gap: 8px; color: #FF6B35; font-size: 13px; }
 .login-prompt-modal { padding: 30px; text-align: center; background: #111; color: #fff; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+/* ============================================ */
+/* BOOK RIDE PAGE FIXES                          */
+/* ============================================ */
+
+/* 1. Footer - Fixed to bottom */
+.booking-footer {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  z-index: 999 !important;
+  background: rgba(8, 12, 20, 0.95) !important;
+}
+
+/* 2. Info Strip Text - White */
+.map-preview p,
+.map-preview div[style*="color"] {
+  color: #FFFFFF !important;
+}
+.map-preview span {
+  color: #FF6B35 !important;
+}
+
+/* 3. Disabled button - Dark Gray */
+.next-btn[disabled] {
+  --background: rgba(255,255,255,0.08) !important;
+  --color: rgba(255,255,255,0.3) !important;
+  opacity: 0.5;
+}
+
+/* 4. Map Zoom Buttons - Dark */
+.leaflet-control-zoom a,
+.leaflet-bar a {
+  background: #2A2A2A !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+
+/* 5. Leaflet Attribution - Dim */
+.leaflet-control-attribution {
+  opacity: 0.3 !important;
+  font-size: 8px !important;
+  color: #555 !important;
+  background: transparent !important;
+}

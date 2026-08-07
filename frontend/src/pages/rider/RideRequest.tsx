@@ -174,7 +174,7 @@ const RideRequest: React.FC = () => {
             </div>
             {isSearching&&<div className="search-loading"><IonSpinner name="crescent"/> Searching places near you...</div>}
             {searchResults.length>0&&<IonList className="search-results">{searchResults.map((r,i)=><IonItem key={i} button onClick={()=>selectLocation(r)} className="search-item"><IonIcon icon={locationOutline} slot="start" color="warning"/><IonLabel className="search-label"><h3>{r.name||r.address.split(',')[0]}</h3><p>{r.address.split(',').slice(1,3).join(',')}</p></IonLabel></IonItem>)}</IonList>}
-            {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px"/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div>}</div>}
+            {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px" showControls={false}/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div>}</div>}
           </div>
         )}
 
