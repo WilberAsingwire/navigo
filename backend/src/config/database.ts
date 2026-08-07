@@ -43,6 +43,7 @@ export const initDB = async () => {
 
         CREATE TABLE IF NOT EXISTS rides (
           id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id),
           pickup TEXT NOT NULL,
           destination TEXT NOT NULL,
           rideType TEXT NOT NULL,
