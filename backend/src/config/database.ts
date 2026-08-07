@@ -1,79 +1,103 @@
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import path from 'path';
+import { Pool } from 'pg';
 
-export type Database = sqlite3 the database; // Fixed typo in original logic
+let pool: Pool | null = null;
 
-let db: any = null;
+const convertPlaceholders = (query: string) => {
+  let index = 1;
+  return query.replace(/\?/g, () => `$${index++}`);
+};
 
 export const initDB = async () => {
-  if (db) return db;
+  if (pool) return pool;
 
   try {
-    db = await open({
-      filename: path.join(__dirname, '../../database.sqlite'),
-      driver: sqlite3.Database
+    const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/navigo';
+
+    pool = new Pool({
+      connectionString,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     });
 
-    console.log('✅ SQLite database connected');
+    console.log('✅ PostgreSQL database connected');
 
-    // Create tables
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        phone TEXT UNIQUE NOT NULL,
-        email TEXT UNIQUE,
-        password TEXT,
-        role TEXT CHECK(role IN ('customer', 'driver', 'motorist', 'admin')) NOT NULL,
-        phoneVerified INTEGER DEFAULT 0,
-        verificationStatus TEXT CHECK(verificationStatus IN ('unverified', 'pending', 'approved', 'rejected')) DEFAULT 'unverified',
-        driverDocs TEXT,
-        rejectionReason TEXT,
-        socialProvider TEXT,
-        socialId TEXT,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
+    const client = await pool.connect();
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          phone TEXT UNIQUE NOT NULL,
+          email TEXT UNIQUE,
+          password TEXT,
+          role TEXT CHECK(role IN ('customer', 'driver', 'motorist', 'admin')) NOT NULL,
+          phoneVerified BOOLEAN DEFAULT FALSE,
+          verificationStatus TEXT CHECK(verificationStatus IN ('unverified', 'pending', 'approved', 'rejected')) DEFAULT 'unverified',
+          driverDocs TEXT,
+          rejectionReason TEXT,
+          socialProvider TEXT,
+          socialId TEXT,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          isOnline BOOLEAN DEFAULT FALSE,
+          isAvailable BOOLEAN DEFAULT FALSE
+        );
 
-      CREATE TABLE IF NOT EXISTS rides (
-        id TEXT PRIMARY KEY,
-        pickup TEXT NOT NULL,
-        destination TEXT NOT NULL,
-        rideType TEXT NOT NULL,
-        paymentMethod TEXT NOT NULL,
-        fare REAL,
-        status TEXT NOT NULL,
-        driverId TEXT,
-        requestedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        estimatedPickupTime TEXT,
-        FOREIGN KEY (driverId) REFERENCES users (id)
-      );
-    `);
+        CREATE TABLE IF NOT EXISTS rides (
+          id TEXT PRIMARY KEY,
+          pickup TEXT NOT NULL,
+          destination TEXT NOT NULL,
+          rideType TEXT NOT NULL,
+          paymentMethod TEXT NOT NULL,
+          fare DECIMAL,
+          status TEXT NOT NULL,
+          driverId TEXT REFERENCES users(id),
+          requestedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          estimatedPickupTime TEXT
+        );
 
-    // Add driver availability columns if they don't exist
-    const userColumns = await db.all('PRAGMA table_info(users)');
-    const columns = userColumns.map((c: any) => c.name);
-
-    if (!columns.includes('isOnline')) {
-      await db.run('ALTER TABLE users ADD COLUMN isOnline INTEGER DEFAULT 0');
-      console.log('✅ Added isOnline column to users');
+        CREATE TABLE IF NOT EXISTS password_resets (
+          phone TEXT PRIMARY KEY,
+          code TEXT,
+          expires TIMESTAMP WITH TIME ZONE
+        );
+      `);
+      console.log('✅ Database tables initialized');
+    } finally {
+      client.release();
     }
-    if (!columns.includes('isAvailable')) {
-      await db.run('ALTER TABLE users ADD COLUMN isAvailable INTEGER DEFAULT 0');
-      console.log('✅ Added isAvailable column to users');
-    }
 
-    console.log('✅ Database tables initialized');
-    return db;
+    return pool;
   } catch (error) {
-    console.error('❌ SQLite connection failed:', error);
+    console.error('❌ PostgreSQL connection failed:', error);
     process.exit(1);
   }
 };
 
 export const getDB = () => {
-  if (!db) {
+  if (!pool) {
     throw new Error('Database not initialized. Call initDB() first.');
   }
-  return db;
+
+  return {
+    get: async (query: string, params: any[] = []) => {
+      const convertedQuery = convertPlaceholders(query);
+      const res = await pool!.query(convertedQuery, params);
+      return res.rows[0];
+    },
+    all: async (query: string, params: any[] = []) => {
+      const convertedQuery = convertPlaceholders(query);
+      const res = await pool!.query(convertedQuery, params);
+      return res.rows;
+    },
+    run: async (query: string, params: any[] = []) => {
+      const convertedQuery = convertPlaceholders(query);
+      const res = await pool!.query(convertedQuery, params);
+      return res;
+    },
+    exec: async (query: string) => {
+      const statements = query.split(';').filter(s => s.trim());
+      for (const statement of statements) {
+        await pool!.query(statement);
+      }
+    }
+  };
 };

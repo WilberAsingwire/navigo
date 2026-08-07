@@ -25,6 +25,7 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth20": "^2.0.0",
     "passport-oauth2": "^1.8.0",
+    "pg": "^8.22.0",
     "socket.io": "^4.7.0",
     "socket.io-client": "^4.7.0",
     "sqlite": "^5.1.1",
@@ -45,6 +46,7 @@
     "@types/passport-github2": "^1.2.0",
     "@types/passport-google-oauth20": "^2.0.0",
     "@types/passport-oauth2": "^1.4.0",
+    "@types/pg": "^8.20.4",
     "@types/ws": "^8.0.0",
     "nodemon": "^3.1.0",
     "typescript": "^5.7.0"

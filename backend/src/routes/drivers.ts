@@ -15,7 +15,7 @@ router.post('/status/online', authenticate, async (req: any, res: Response) => {
       return res.status(400).json({ message: 'online must be a boolean' });
     }
 
-    await db.run('UPDATE users SET isOnline = ? WHERE id = ?', [online ? 1 : 0, userId]);
+    await db.run('UPDATE users SET isOnline = ? WHERE id = ?', [online, userId]);
 
     res.json({ message: `You are now ${online ? 'online' : 'offline'}`, isOnline: online });
   } catch (error) {
@@ -34,7 +34,7 @@ router.post('/status/available', authenticate, async (req: any, res: Response) =
       return res.status(400).json({ message: 'available must be a boolean' });
     }
 
-    await db.run('UPDATE users SET isAvailable = ? WHERE id = ?', [available ? 1 : 0, userId]);
+    await db.run('UPDATE users SET isAvailable = ? WHERE id = ?', [available, userId]);
 
     res.json({ message: `You are now ${available ? 'available' : 'unavailable'}`, isAvailable: available });
   } catch (error) {

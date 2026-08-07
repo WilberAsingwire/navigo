@@ -66,7 +66,7 @@ router.post('/request', async (req: Request, res: Response) => {
       try {
         // Find a random approved, online, and available driver
         const availableDrivers = await db.all(
-          'SELECT id, name FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = 1 AND isAvailable = 1 ORDER BY RANDOM() LIMIT 1',
+          'SELECT id, name FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = TRUE AND isAvailable = TRUE ORDER BY RANDOM() LIMIT 1',
           ['driver', 'motorist', 'approved']
         );
 
