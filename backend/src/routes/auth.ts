@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
+import { notificationService } from '../services/notificationService';
 
 const router = express.Router();
 
@@ -277,7 +278,7 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
   try {
     const { phone } = req.body;
     const db = getDB();
-    const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
+    const cleanPhone = normalizePhone(phone);
 
     const user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
     if (!user) {
@@ -288,11 +289,28 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     await db.run('CREATE TABLE IF NOT EXISTS password_resets (phone TEXT PRIMARY KEY, code TEXT, expires DATETIME)');
     await db.run('INSERT OR REPLACE INTO password_resets (phone, code, expires) VALUES (?, ?, ?)', [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]);
 
+    // Send via SMS
+    const smsResult = await notificationService.sendSMS(cleanPhone, `Your NAVIGO reset code is: ${resetCode}. Valid for 10 minutes.`);
+
+    // Send via Email if available
+    let emailResult = { success: false };
+    if (user.email) {
+      emailResult = await notificationService.sendEmail(
+        user.email,
+        'Your NAVIGO Password Reset Code',
+        `Your NAVIGO reset code is: ${resetCode}. Please enter this code to reset your password. Valid for 10 minutes.`
+      );
+    }
+
     console.log(`🔑 Reset code for ${cleanPhone}: ${resetCode}`);
 
     res.json({
       message: 'If registered, you will receive a reset code.',
-      devCode: resetCode
+      devCode: resetCode, // Kept for development ease
+      sentVia: {
+        sms: smsResult.success,
+        email: user.email ? emailResult.success : false
+      }
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to process request.' });
