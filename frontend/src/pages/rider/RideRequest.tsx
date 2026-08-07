@@ -205,15 +205,20 @@ const RideRequest: React.FC = () => {
 
       if (searchingPickup) {
         setPickup(loc);
-        setPickupSearch(shortName);
+        setPickupSearch(shortName || '');
       } else {
         setDestination(loc);
-        setDestSearch(shortName);
+        setDestSearch(shortName || '');
       }
     } catch {
       const loc: Location = { lat, lng, address: 'Unknown Location', name: '📍 Selected Point' };
-      if (searchingPickup) { setPickup(loc); setPickupSearch(loc.name); }
-      else { setDestination(loc); setDestSearch(loc.name); }
+      if (searchingPickup) {
+        setPickup(loc);
+        setPickupSearch(loc.name || '');
+      } else {
+        setDestination(loc);
+        setDestSearch(loc.name || '');
+      }
     }
   };
 
