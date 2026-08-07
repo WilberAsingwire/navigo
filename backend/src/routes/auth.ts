@@ -125,7 +125,22 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // ─── LOGIN ───────────────────────────────────────────
+router.get('/debug-admin', async (req: Request, res: Response) => {
+  try {
+    const db = getDB();
+    const admin = await db.get('SELECT id, email, role, verificationStatus FROM users WHERE role = ?', ['admin']);
+    res.json({
+      adminFound: !!admin,
+      adminDetails: admin,
+      message: admin ? 'Admin exists in database' : 'No admin found in database'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Debug failed', error });
+  }
+});
+
 router.post('/login', async (req: Request, res: Response) => {
+// ... existing login logic ...
   try {
     const { identifier, password } = req.body;
     const db = getDB();
