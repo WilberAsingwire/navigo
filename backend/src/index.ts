@@ -89,7 +89,24 @@ setupSocketHandlers(io);
 const PORT = process.env.PORT || 5000;
 
 // Initialize DB before starting the server
-initDB().then(() => {
+initDB().then(async () => {
+  try {
+    const db = require('./config/database').getDB();
+    const { hashPassword } = require('./utils/auth');
+
+    // Update Admin Credentials
+    const adminPassword = await hashPassword('Kakumiro222');
+    const adminEmail = 'navigouganda@gmail.com';
+
+    await db.run(
+      'UPDATE users SET email = ?, password = ? WHERE role = ?',
+      [adminEmail, adminPassword, 'admin']
+    );
+    console.log('✅ Admin credentials updated successfully');
+  } catch (err) {
+    console.error('❌ Failed to update admin credentials:', err);
+  }
+
   httpServer.listen(PORT, () => console.log('NAVIGO API on port ' + PORT));
 }).catch(err => {
   console.error('Failed to initialize database, server not started:', err);

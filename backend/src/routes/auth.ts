@@ -127,13 +127,21 @@ router.post('/register', async (req: Request, res: Response) => {
 // ─── LOGIN ───────────────────────────────────────────
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { phone, password } = req.body;
+    const { identifier, password } = req.body;
     const db = getDB();
-    const cleanPhone = normalizePhone(phone);
 
-    const user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    let user;
+    if (identifier.includes('@')) {
+      // Login with email
+      user = await db.get('SELECT * FROM users WHERE email = ?', identifier.toLowerCase().trim());
+    } else {
+      // Login with phone
+      const cleanPhone = normalizePhone(identifier);
+      user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    }
+
     if (!user || !(await comparePassword(password, user.password))) {
-      return res.status(401).json({ message: 'Invalid phone or password.' });
+      return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
     }
 
     let message = `Welcome back, ${user.name}!`;
