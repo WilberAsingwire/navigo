@@ -60,14 +60,30 @@ router.post('/request', async (req: Request, res: Response) => {
       ]
     );
 
-    // Simulate finding a driver after 3 seconds
+    // REAL MATCHING LOGIC
+    // Instead of a hardcoded driver, find an actual available driver in the DB
     setTimeout(async () => {
       try {
-        const driverId = 'driver_001'; // Mock driver ID for now
-        await db.run('UPDATE rides SET status = ?, driverId = ? WHERE id = ?', ['accepted', driverId, rideId]);
-        console.log(`🚗 Ride ${rideId} accepted by driver ${driverId}`);
+        // Find a random approved, online, and available driver
+        const availableDrivers = await db.all(
+          'SELECT id, name FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = 1 AND isAvailable = 1 ORDER BY RANDOM() LIMIT 1',
+          ['driver', 'motorist', 'approved']
+        );
+
+        if (availableDrivers && availableDrivers.length > 0) {
+          const matchedDriver = availableDrivers[0];
+          const driverId = matchedDriver.id;
+
+          await db.run('UPDATE rides SET status = ?, driverId = ? WHERE id = ?', ['accepted', driverId, rideId]);
+          // Mark driver as unavailable so they don't get multiple rides at once
+          await db.run('UPDATE users SET isAvailable = 0 WHERE id = ?', [driverId]);
+
+          console.log(`✅ REAL MATCH: Ride ${rideId} accepted by ${matchedDriver.name} (${driverId})`);
+        } else {
+          console.log(`❌ No available drivers found for ride ${rideId}. Ride remains in searching state.`);
+        }
       } catch (e) {
-        console.error('Error simulating driver match:', e);
+        console.error('Error in real matching logic:', e);
       }
     }, 3000);
 
@@ -108,7 +124,6 @@ router.get('/history', async (_req: Request, res: Response) => {
     const db = getDB();
     const rides = await db.all('SELECT * FROM rides WHERE status = ?', ['completed']);
 
-    // Parse JSON fields before returning
     const formattedRides = rides.map((r: any) => ({
       ...r,
       pickup: JSON.parse(r.pickup),

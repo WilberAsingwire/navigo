@@ -7,7 +7,9 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import authRoutes from './routes/auth';
 import rideRoutes from './routes/rides';
+import driverRoutes from './routes/drivers';
 import { initDB } from './config/database';
+import { setupSocketHandlers } from './socket/socketHandler';
 
 dotenv.config();
 
@@ -57,14 +59,12 @@ app.get('/auth/google/callback',
 // Regular routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
+app.use('/api/drivers', driverRoutes);
 app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
 
 // Socket.io
 const io = new Server(httpServer, { cors: { origin: '*' } });
-io.on('connection', (s: any) => {
-  s.on('join-chat', (d: any) => s.join(d.rideId));
-  s.on('send-message', (d: any) => { s.to(d.rideId).emit('new-message', d.message); });
-});
+setupSocketHandlers(io);
 
 const PORT = process.env.PORT || 5000;
 

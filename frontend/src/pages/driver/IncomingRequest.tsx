@@ -9,28 +9,57 @@ import {
   personOutline, mapOutline
 } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import socketService from '../../services/socketService';
+import axios from 'axios';
 import './IncomingRequest.css';
 
 const IncomingRequest: React.FC = () => {
   const history = useHistory();
-  const location = useLocation();
+  const { user } = useAuth();
   const [presentToast] = useIonToast();
   const [timeLeft, setTimeLeft] = useState(20);
   const [isAccepting, setIsAccepting] = useState(false);
-  const [pulseAnim, setPulseAnim] = useState(true);
+  const [requestData, setRequestData] = useState<any>(null);
 
-  const requestData = (location.state as any)?.request || {
-    id: 'ride_001',
-    pickup: 'Kampala Road, City Center',
-    destination: 'Acacia Mall, Kololo',
-    fare: 8500,
-    distance: '3.2 km',
-    estimatedTime: '12 min',
-    riderName: 'Alice Nakamya',
-    riderRating: 4.8,
-    riderTrips: 45,
-    rideType: 'NAVIGO Go',
-  };
+  useEffect(() => {
+    if (!user) {
+      history.replace('/login');
+      return;
+    }
+
+    const socket = socketService.connect(user.id);
+
+    socket.on('ride-requested', async (data: any) => {
+      console.log('🔔 New ride request received!', data);
+      // In a real app, we would fetch ride details from /api/rides/:id
+      try {
+        const res = await axios.get(`http://localhost:5000/api/rides/details/${data.rideId}`);
+        setRequestData({
+          ...res.data,
+          riderName: 'Rider', // Would be fetched from user table
+          riderRating: 4.8,
+          riderTrips: 10,
+        });
+      } catch {
+        // Fallback for demo if endpoint doesn't exist yet
+        setRequestData({
+          id: data.rideId,
+          pickup: 'Requested Location',
+          destination: 'Destination',
+          fare: 8500,
+          distance: '3.2 km',
+          estimatedTime: '12 min',
+          riderName: 'Rider',
+          riderRating: 4.8,
+          riderTrips: 10,
+          rideType: 'NAVIGO Go',
+        });
+      }
+    });
+
+    return () => socket.off('ride-requested');
+  }, [user]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -44,8 +73,15 @@ const IncomingRequest: React.FC = () => {
   const handleAccept = async () => {
     setIsAccepting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const socket = socketService.getSocket();
+      if (!socket) throw new Error('Socket not connected');
+
+      socket.emit('accept-ride', {
+        driverId: user?.id,
+        rideId: requestData?.id,
+        riderId: requestData?.riderId || 'unknown'
+      });
+
       presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
       setTimeout(() => history.push('/driver/active-ride'), 800);
     } catch (e: any) {
@@ -59,16 +95,27 @@ const IncomingRequest: React.FC = () => {
     history.replace('/driver/home');
   };
 
+  if (!requestData) {
+    return (
+      <IonPage>
+        <IonContent className="request-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ textAlign: 'center', color: '#fff' }}>
+            <IonSpinner name="crescent" />
+            <p>Waiting for ride requests...</p>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
   const progressPercent = (timeLeft / 20) * 100;
 
   return (
     <IonPage>
       <IonContent className="request-bg" scrollY={false}>
         <div className="request-container">
-          
-          {/* Timer Section */}
           <div className="timer-section">
-            <div className={`timer-circle ${pulseAnim ? 'pulse' : ''}`}>
+            <div className={`timer-circle pulse`}>
               <h1 className="sora-font" style={{ color: timeLeft <= 5 ? '#ff5252' : '#FF6B35' }}>{timeLeft}</h1>
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>sec</span>
             </div>
@@ -79,7 +126,6 @@ const IncomingRequest: React.FC = () => {
             </p>
           </div>
 
-          {/* Rider Info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 12, marginBottom: 14 }}>
             <IonAvatar style={{ width: 44, height: 44 }}>
               <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(requestData.riderName)}&background=FF6B35&color=fff&size=64`} alt={requestData.riderName} />
@@ -93,7 +139,6 @@ const IncomingRequest: React.FC = () => {
             <IonBadge color="warning" style={{ fontSize: 10 }}>{requestData.riderTrips} trips</IonBadge>
           </div>
 
-          {/* Route Card */}
           <div className="route-card">
             <div className="route-item">
               <IonIcon icon={locationOutline} style={{ color: '#2D6A4F', fontSize: 20 }} />
@@ -112,7 +157,6 @@ const IncomingRequest: React.FC = () => {
             </div>
           </div>
 
-          {/* Trip Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={mapOutline} style={{ color: '#4da6ff', fontSize: 16, marginBottom: 4 }} />
@@ -131,7 +175,6 @@ const IncomingRequest: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="action-grid">
             <IonButton expand="block" fill="outline" color="light" onClick={handleDecline} disabled={isAccepting}
               style={{ '--border-radius': 14, height: 50, fontSize: 15, fontWeight: 600 } as any}>

@@ -18,6 +18,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import BodaSafeScore from '../../components/BodaSafeBadges';
 import NavigoMap from '../../components/NavigoMap';
+import socketService from '../../services/socketService';
 import './RideRequest.css';
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
@@ -40,7 +41,7 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 
 const RideRequest: React.FC = () => {
   const history = useHistory();
-  const { isAuthenticated, isGuest } = useAuth();
+  const { isAuthenticated, isGuest, user } = useAuth();
   const [step, setStep] = useState<BookingStep>(BookingStep.LOCATION);
   const [pickup, setPickup] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
@@ -53,6 +54,7 @@ const RideRequest: React.FC = () => {
   const [fare, setFare] = useState<FareEstimate | null>(null);
   const [isMatching, setIsMatching] = useState(false);
   const [driverFound, setDriverFound] = useState(false);
+  const [matchedDriver, setMatchedDriver] = useState<any>(null);
   const [matchingProgress, setMatchingProgress] = useState(0);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -61,12 +63,33 @@ const RideRequest: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [womenOnly, setWomenOnly] = useState(false);
 
-  useEffect(() => { getCurrentLocation(); }, []);
+  useEffect(() => {
+    getCurrentLocation();
+
+    if (isAuthenticated && user) {
+      const socket = socketService.connect(user.id);
+      socket.on('ride-accepted', (data: any) => {
+        setDriverFound(true);
+        setIsMatching(false);
+        setMatchingProgress(100);
+        setMatchedDriver(data);
+      });
+
+      socket.on('no-drivers-found', (data: any) => {
+        setIsMatching(false);
+        setToastMsg(data.message);
+        setShowToast(true);
+        setStep(BookingStep.LOCATION);
+      });
+
+      return () => socket.off('ride-accepted');
+    }
+  }, [isAuthenticated, user]);
+
   useEffect(() => { if (pickup && destination) calculateFare(); }, [pickup, destination, selectedRide, discount]);
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
-      // Try to get cached position first for instant display
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const lat = pos.coords.latitude;
@@ -98,12 +121,12 @@ const RideRequest: React.FC = () => {
     if (query.length < 2) return [];
     try {
       const res = await axios.get('https://nominatim.openstreetmap.org/search', {
-        params: { 
-          format: 'json', 
-          q: query, 
-          limit: 10, 
+        params: {
+          format: 'json',
+          q: query,
+          limit: 10,
           countrycodes: 'ug',
-          addressdetails: 1, 
+          addressdetails: 1,
           namedetails: 1,
           extratags: 1,
           dedupe: 1
@@ -152,11 +175,35 @@ const RideRequest: React.FC = () => {
     setShowToast(true);
   };
 
-  const handleBookRide = () => {
+  const handleBookRide = async () => {
     if (isGuest || !isAuthenticated) { setShowLoginPrompt(true); return; }
-    setStep(BookingStep.MATCHING); setIsMatching(true); setMatchingProgress(0);
-    const interval = setInterval(() => { setMatchingProgress(p => { if (p >= 100) { clearInterval(interval); return 100; } return p + Math.random() * 15; }); }, 500);
-    setTimeout(() => { clearInterval(interval); setMatchingProgress(100); setIsMatching(false); setDriverFound(true); }, 4000);
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/rides/request', {
+        pickup,
+        destination,
+        rideType: selectedRide.vehicleType,
+        paymentMethod: 'cash',
+        fare: fare?.totalFare
+      });
+
+      const ride = res.data.ride;
+      setStep(BookingStep.MATCHING);
+      setIsMatching(true);
+      setMatchingProgress(0);
+
+      const socket = socketService.getSocket();
+      if (socket) {
+        socket.emit('request-ride', { userId: user?.id, rideId: ride.id });
+      }
+
+      const interval = setInterval(() => { setMatchingProgress(p => { if (p >= 100) { clearInterval(interval); return 100; } return p + Math.random() * 15; }); }, 500);
+      setTimeout(() => { clearInterval(interval); }, 15000);
+
+    } catch (e) {
+      setToastMsg('Failed to request ride. Please try again.');
+      setShowToast(true);
+    }
   };
 
   return (
@@ -165,7 +212,7 @@ const RideRequest: React.FC = () => {
       <IonContent className="ride-request-content">
         <div className="step-indicator">{['📍','🚗','💰','🔍'].map((icon,i)=><div key={i} className={`step-dot ${i<=step?'active':''} ${i<step?'completed':''}`}><span className="step-icon">{icon}</span></div>)}</div>
         {isGuest&&<div className="guest-banner"><IonIcon icon={informationCircleOutline}/><span>Guest mode. <b onClick={()=>history.push('/login')} style={{cursor:'pointer',textDecoration:'underline',color:'#FF6B35'}}>Sign in</b> to book.</span></div>}
-        
+
         {step===BookingStep.LOCATION&&(
           <div className="booking-step location-step">
             <div className="location-inputs">
@@ -174,19 +221,19 @@ const RideRequest: React.FC = () => {
             </div>
             {isSearching&&<div className="search-loading"><IonSpinner name="crescent"/> Searching places near you...</div>}
             {searchResults.length>0&&<IonList className="search-results">{searchResults.map((r,i)=><IonItem key={i} button onClick={()=>selectLocation(r)} className="search-item"><IonIcon icon={locationOutline} slot="start" color="warning"/><IonLabel className="search-label"><h3>{r.name||r.address.split(',')[0]}</h3><p>{r.address.split(',').slice(1,3).join(',')}</p></IonLabel></IonItem>)}</IonList>}
-            {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px" showControls={false}/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div>}</div>}
+            {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px" showControls={false}/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div></div>}
           </div>
         )}
 
         {step===BookingStep.RIDE_TYPE&&(
-          <div className="booking-step ride-type-step"><h3 style={{color:'#fff'}}>Choose Your Ride</h3><div className="ride-options">{RIDE_OPTIONS.map(opt=>{const est=fare?Math.round((opt.basePrice+fare.distance*opt.pricePerKm+fare.duration*opt.pricePerMinute)*opt.surgeMultiplier):null;return(<div key={opt.id} className={`ride-option-card ${selectedRide.id===opt.id?'selected':''}`} onClick={()=>setSelectedRide(opt)} style={{borderColor:selectedRide.id===opt.id?opt.color:'transparent'}}><div className="ride-option-header"><span className="ride-emoji">{opt.emoji}</span><div className="ride-info"><h4>{opt.name}</h4><p>{opt.description}</p></div>{est&&<div className="ride-price"><strong>UGX {est.toLocaleString()}</strong></div>}</div></div>)})}</div>
-            {selectedRide&&<div style={{background:'rgba(255,105,180,0.08)',borderRadius:12,padding:14,marginTop:14,border:womenOnly?'2px solid #FF69B4':'2px solid transparent'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><div style={{display:'flex',alignItems:'center',gap:10}}><span style={{fontSize:26}}>👩</span><div><strong style={{color:'#fff',fontSize:14}}>Women Preferred</strong><p style={{color:'rgba(255,248,240,0.6)',fontSize:11,margin:2}}>Match with female drivers only</p></div></div><div onClick={()=>setWomenOnly(!womenOnly)} style={{width:52,height:28,borderRadius:14,background:womenOnly?'#FF69B4':'rgba(255,255,255,0.2)',position:'relative',cursor:'pointer',transition:'0.3s',flexShrink:0}}><div style={{width:22,height:22,borderRadius:'50%',background:'#fff',position:'absolute',top:3,left:womenOnly?27:3,transition:'0.3s'}}/></div></div></div>}
+          <div className="booking-step ride-type-step"><h3 style={{color:'#fff'}}>Choose Your Ride</h3><div className="ride-options">{RIDE_OPTIONS.map(opt=>{const est=fare?Math.round((opt.basePrice+fare.distance*opt.pricePerKm+fare.duration*opt.pricePerMinute)*opt.surgeMultiplier):null;return(<div key={opt.id} className={`ride-option-card ${selectedRide.id===opt.id?'selected':''}`} onClick={()=>setSelectedRide(opt)} style={{borderColor:selectedRide.id===opt.id?opt.color:'transparent'}}><div className="ride-option-header"><span className="ride-emoji">{opt.emoji}</span><div className="ride-info"><h4>{opt.name}</h4><p>{opt.description}</p></div>{est&&<div className="ride-price"><strong>UGX {est.toLocaleString()}</strong></div></div></div>)})}</div>
+            {selectedRide&&<div style={{background:'rgba(255,105,180,0.08)',borderRadius:12,padding:14,marginTop:14,border:womenOnly?'2px solid #FF69B4':'2px solid transparent'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><div style={{display:'flex',alignItems:'center',gap:10}}<span style={{fontSize:26}}>👩</span><div><strong style={{color:'#fff',fontSize:14}}>Women Preferred</strong><p style={{color:'rgba(255,248,240,0.6)',fontSize:11,margin:2}}>Match with female drivers only</p></div></div><div onClick={()=>setWomenOnly(!womenOnly)} style={{width:52,height:28,borderRadius:14,background:womenOnly?'#FF69B4':'rgba(255,255,255,0.2)',position:'relative',cursor:'pointer',transition:'0.3s',flexShrink:0}}><div style={{width:22,height:22,borderRadius:'50%',background:'#fff',position:'absolute',top:3,left:womenOnly?27:3,transition:'0.3s'}}</div></div></div></div>}
           </div>
         )}
 
         {step===BookingStep.PAYMENT&&fare&&<div className="booking-step payment-step"><IonCard className="fare-card"><IonCardContent><h3 style={{color:'#FF6B35'}}>Fare Breakdown</h3><div className="fare-details"><div className="fare-row"><span>Base fare</span><span>UGX {fare.baseFare.toLocaleString()}</span></div><div className="fare-row"><span>Distance ({fare.distance} km)</span><span>UGX {fare.distanceFare.toLocaleString()}</span></div><div className="fare-row"><span>Time (~{fare.duration} min)</span><span>UGX {fare.timeFare.toLocaleString()}</span></div>{fare.surgeFare>0&&<div className="fare-row surge"><span>Peak pricing</span><span>UGX {fare.surgeFare.toLocaleString()}</span></div>}{discount>0&&<div className="fare-row discount"><span>Discount</span><span>-UGX {discount.toLocaleString()}</span></div>}<div className="fare-row total"><strong>Total</strong><strong style={{color:'#FF6B35',fontSize:18}}>{fare.formattedTotal}</strong></div></div></IonCardContent></IonCard><div className="promo-section"><IonSearchbar placeholder="Promo code (NAVIGO50)" value={promoCode} onIonInput={e=>setPromoCode(e.detail.value!)} className="promo-input"/><IonButton size="small" fill="clear" onClick={applyPromo} style={{color:'#FF6B35'}}>Apply</IonButton></div></div>}
 
-        {step===BookingStep.MATCHING&&<div className="booking-step matching-step">{!driverFound?<><div className="matching-animation"><div className="radar-pulse"/><IonIcon icon={carOutline} className="matching-car"/></div><h3 style={{color:'#fff'}}>Finding nearby drivers...</h3>{womenOnly&&<p style={{color:'#FF69B4',fontSize:13}}>👩 Female drivers only</p>}<div className="progress-bar"><div className="progress-fill" style={{width:`${Math.min(matchingProgress,100)}%`}}/></div><p className="matching-status">{matchingProgress<30?'Scanning...':matchingProgress<60?'Connecting...':matchingProgress<90?'Driver found!':'Almost there!'}</p></>:<div className="driver-confirmed"><IonIcon icon={checkmarkCircleOutline} className="success-icon"/><h3 style={{color:'#fff'}}>Driver Found!</h3><div className="driver-info-card"><IonAvatar><img src="https://ui-avatars.com/api/?name=Sarah+K&background=FF69B4&color=fff&size=128" alt="Driver"/></IonAvatar><div className="driver-details"><h4>{womenOnly?'Sarah K.':'John K.'}</h4><p><IonIcon icon={starOutline}/> 4.8 • Toyota Prius • UBA 123A</p><p className="eta">Arriving in 3 minutes</p></div></div><BodaSafeScore badges={['helmet','sanitized','idverified']} rating={4.8} totalRides={156}/><IonButton expand="block" className="confirm-btn" onClick={()=>history.push('/rider/active-ride')}>View Ride <IonIcon icon={arrowForwardOutline} slot="end"/></IonButton></div>}</div>}
+        {step===BookingStep.MATCHING&&<div className="booking-step matching-step">{!driverFound?<><div className="matching-animation"><div className="radar-pulse"/><IonIcon icon={carOutline} className="matching-car"/></div><h3 style={{color:'#fff'}}>Finding nearby drivers...</h3>{womenOnly&&<p style={{color:'#FF69B4',fontSize:13}}>👩 Female drivers only</p>}<div className="progress-bar"><div className="progress-fill" style={{width:`${Math.min(matchingProgress,100)}%`}}/></div><p className="matching-status">{matchingProgress<30?'Scanning...':matchingProgress<60?'Connecting...':matchingProgress<90?'Driver found!':'Almost there!'}</p></>:<div className="driver-confirmed"><IonIcon icon={checkmarkCircleOutline} className="success-icon"/><h3 style={{color:'#fff'}}>Driver Found!</h3><div className="driver-info-card"><IonAvatar><img src={`https://ui-avatars.com/api/?name=${matchedDriver?.name || 'Driver'}&background=FF6B35&color=fff&size=128`} alt="Driver"/></IonAvatar><div className="driver-details"><h4>{matchedDriver?.name || 'Driver'}</h4><p><IonIcon icon={starOutline}/> {matchedDriver?.rating || '4.8'} • {matchedDriver?.vehicle || 'Toyota Prius'} • {matchedDriver?.plate || 'UBA 123A'}</p><p className="eta">Arriving in 3 minutes</p></div></div><BodaSafeScore badges={['helmet','sanitized','idverified']} rating={matchedDriver?.rating || 4.8} totalRides={156}/><IonButton expand="block" className="confirm-btn" onClick={()=>history.push('/rider/active-ride')}>View Ride <IonIcon icon={arrowForwardOutline} slot="end"/></IonButton></div>}</div>}
 
         {step!==BookingStep.MATCHING&&<IonFooter className="booking-footer"><div className="footer-content">{step>0&&<IonButton fill="outline" onClick={()=>setStep(step-1)} style={{color:'#fff'}}>Back</IonButton>}<IonButton expand="block" className="next-btn" disabled={step===0&&(!pickup||!destination)} onClick={()=>{if(step===BookingStep.PAYMENT)handleBookRide();else setStep(step+1)}}>{step===0?'Choose Ride':step===1?'Review Payment':isGuest?'Sign In to Book':`Confirm${womenOnly?' 👩':''} & Request`}</IonButton></div></IonFooter>}
 
