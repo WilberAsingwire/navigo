@@ -94,17 +94,28 @@ initDB().then(async () => {
     const db = require('./config/database').getDB();
     const { hashPassword } = require('./utils/auth');
 
-    // Update Admin Credentials
-    const adminPassword = await hashPassword('Kakumiro222');
+    // Admin Credentials
     const adminEmail = 'navigouganda@gmail.com';
+    const adminPassword = await hashPassword('Kakumiro222');
 
-    await db.run(
-      'UPDATE users SET email = ?, password = ? WHERE role = ?',
-      [adminEmail, adminPassword, 'admin']
-    );
-    console.log('✅ Admin credentials updated successfully');
+    const existingAdmin = await db.get('SELECT * FROM users WHERE role = ?', ['admin']);
+
+    if (existingAdmin) {
+      await db.run(
+        'UPDATE users SET email = ?, password = ? WHERE id = ?',
+        [adminEmail, adminPassword, existingAdmin.id]
+      );
+      console.log('✅ Existing admin credentials updated');
+    } else {
+      const adminId = 'admin_001';
+      await db.run(
+        'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [adminId, 'NAVIGO Admin', '0000000000', adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
+      );
+      console.log('✅ New admin account created');
+    }
   } catch (err) {
-    console.error('❌ Failed to update admin credentials:', err);
+    console.error('❌ Failed to setup admin credentials:', err);
   }
 
   httpServer.listen(PORT, () => console.log('NAVIGO API on port ' + PORT));
