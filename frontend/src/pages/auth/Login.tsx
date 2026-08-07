@@ -21,7 +21,7 @@ const Login: React.FC = () => {
   const history = useHistory();
   const { login, continueAsGuest, error: authError, clearError } = useAuth();
 
-  const [phone, setPhone] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,25 +29,17 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [countryCode, setCountryCode] = useState('+256');
 
-  const formatPhone = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.startsWith('256')) return '0' + cleaned.slice(3);
-    return cleaned;
-  };
-
   const handleLogin = async () => {
     setError('');
     clearError();
-    const cleanPhone = formatPhone(phone);
-    
-    if (!cleanPhone) return setError('Please enter your phone number');
-    if (cleanPhone.length < 10) return setError('Please enter a valid phone number (10 digits)');
+
+    if (!identifier) return setError('Please enter your phone number or email');
     if (!password) return setError('Please enter your password');
     if (password.length < 4) return setError('Password must be at least 4 characters');
 
     setIsLoading(true);
     try {
-      await login(cleanPhone, password);
+      await login(identifier, password);
       if (rememberMe) localStorage.setItem('navigo_remember', 'true');
       const savedUser = localStorage.getItem('navigo_user');
       if (savedUser) {
@@ -89,25 +81,23 @@ const Login: React.FC = () => {
           <IonCard className="login-card">
             <IonCardContent>
 
-              {/* Phone Input with Country Code */}
+              {/* Identifier Input (Phone or Email) */}
               <div className="phone-input-group">
-                <div className="country-code">
+                <div className="country-code" style={{ display: identifier.includes('@') ? 'none' : 'flex' }}>
                   <IonIcon icon={globeOutline} />
                   <span>{countryCode}</span>
                 </div>
                 <IonItem className="auth-input phone-field" lines="none">
                   <IonInput
-                    type="tel"
-                    inputmode="numeric"
-                    value={phone}
-                    onIonInput={(e) => setPhone(formatPhone(e.detail.value!))}
-                    placeholder="700 000 000"
-                    maxlength={10}
+                    type="text"
+                    value={identifier}
+                    onIonInput={(e) => setIdentifier(e.detail.value!)}
+                    placeholder="Phone number or Email"
                     onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   />
                 </IonItem>
               </div>
-              <IonNote className="input-helper">Enter your registered phone number</IonNote>
+              <IonNote className="input-helper">Enter your registered phone number or email</IonNote>
 
               {/* Password Input */}
               <IonItem className="auth-input password-field">
