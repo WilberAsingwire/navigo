@@ -13,9 +13,16 @@ L.Icon.Default.mergeOptions({
 
 const createPulsingIcon = (color: string, emoji: string, size: number = 28) => {
   return L.divIcon({
-    html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;border:3px solid white;box-shadow:0 0 15px ${color};font-size:${size*0.5}px;text-align:center;line-height:${size}px">${emoji}</div>`,
-    iconSize: [size + 6, size + 6],
-    iconAnchor: [(size + 6) / 2, (size + 6) / 2],
+    html: `<div style="position:relative;width:${size}px;height:${size}px;">
+            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.6;"></div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:${size*0.5}px;z-index:1;">${emoji}</div>
+           </div>
+           <style>
+            @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2); opacity: 0; } }
+           </style>
+          `,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   });
 };
 
@@ -35,13 +42,23 @@ interface MapProps {
   showControls?: boolean;
   followUser?: boolean;
   onDistanceChange?: (distance: number, duration: number) => void;
+  onMapClick?: (latlng: [number, number]) => void;
 }
 
 const MapController: React.FC<{ center: [number, number]; follow: boolean }> = ({ center, follow }) => {
   const map = useMap();
   useEffect(() => {
-    if (follow) map.setView(center, 16, { animate: true, duration: 1 });
+    if (follow) map.flyTo(center, 16, { animate: true, duration: 1.5 });
   }, [center, follow, map]);
+  return null;
+};
+
+const MapClickHandler: React.FC<{ onMapClick?: (latlng: [number, number]) => void }> = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
+    },
+  });
   return null;
 };
 
@@ -137,9 +154,10 @@ const NavigoMap: React.FC<MapProps> = ({
           <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true} dragging={interactive} scrollWheelZoom={interactive} touchZoom={interactive} attributionControl={true}>
             <TileLayer url={tileUrls[mapStyle].url} attribution={tileUrls[mapStyle].attribution} />
             <MapController center={center} follow={followUser} />
+            <MapClickHandler onMapClick={onMapClick} />
             <LocateButton />
-            {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon}><Popup>📍 You</Popup></Marker><Circle center={[userLocation.lat, userLocation.lng]} radius={8} color="#2D6A4F" fillOpacity={0.1} /></>}
-            {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon}><Popup>🎯 Destination</Popup></Marker>}
+            {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon} draggable={interactive}><Popup>📍 You</Popup></Marker><Circle center={[userLocation.lat, userLocation.lng]} radius={8} color="#2D6A4F" fillOpacity={0.1} /></>}
+            {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon} draggable={interactive}><Popup>🎯 Destination</Popup></Marker>}
             {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverType === 'bike' ? bikeIcon : driverIcon}><Popup>{driverType === 'bike' ? '🏍️' : '🚗'} Driver</Popup></Marker>}
             {routePoints.length > 1 && <Polyline positions={routePoints} color="#FF6B35" weight={4} opacity={0.7} />}
           </MapContainer>

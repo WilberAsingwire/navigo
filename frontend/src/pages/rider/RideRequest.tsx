@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   IonPage, IonContent, IonHeader, IonToolbar, IonTitle,
@@ -98,9 +98,10 @@ const RideRequest: React.FC = () => {
           try {
             const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
             const addr = res.data.display_name || '';
-            const road = res.data.address?.road || '';
-            const suburb = res.data.address?.suburb || res.data.address?.neighbourhood || '';
-            const city = res.data.address?.city || res.data.address?.town || '';
+            const address = res.data.address || {};
+            const road = address.road || address.pedestrian || address.footway || '';
+            const suburb = address.suburb || address.neighbourhood || address.village || '';
+            const city = address.city || address.town || address.municipality || '';
             const shortName = road || suburb || city || addr.split(',')[0];
             setPickup({ lat, lng, address: addr, name: '📍 ' + shortName });
             setPickupSearch(road || shortName);
@@ -112,7 +113,7 @@ const RideRequest: React.FC = () => {
           console.log('GPS Error:', err.message);
           setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     }
   };
@@ -120,33 +121,47 @@ const RideRequest: React.FC = () => {
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     try {
-      const res = await axios.get('https://nominatim.openstreetmap.org/search', {
+      const res = await axios.get('https://photon.komoot.io/api/', {
         params: {
-          format: 'json',
           q: query,
           limit: 10,
-          countrycodes: 'ug',
-          addressdetails: 1,
-          namedetails: 1,
-          extratags: 1,
-          dedupe: 1
-        },
-        headers: { 'Accept-Language': 'en', 'User-Agent': 'NAVIGO-RideApp/1.0' }
+          lat: pickup?.lat,
+          lon: pickup?.lng,
+          reprioritize: 1
+        }
       });
-      return res.data.map((item: any) => ({
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-        address: item.display_name,
-        name: item.namedetails?.name || item.address?.road || item.address?.shop || item.address?.amenity || item.display_name.split(',')[0]
-      }));
+      return res.data.features.map((item: any) => {
+        const props = item.properties;
+        const geom = item.geometry.coordinates;
+        return {
+          lat: geom[1],
+          lng: geom[0],
+          address: props.name || props.city || props.street || props.state || 'Unknown Location',
+          name: props.name || props.city || props.street || 'Unknown Location'
+        };
+      });
     } catch { return []; }
   };
+
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = async (query: string, isPickup: boolean) => {
     if (isPickup) setPickupSearch(query); else setDestSearch(query);
     setSearchingPickup(isPickup);
-    if (query.length >= 2) { setIsSearching(true); setSearchResults(await searchLocation(query)); setIsSearching(false); }
-    else { setSearchResults([]); }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    if (query.length >= 2) {
+      setIsSearching(true);
+      searchTimeoutRef.current = setTimeout(async () => {
+        const results = await searchLocation(query);
+        setSearchResults(results);
+        setIsSearching(false);
+      }, 300);
+    }
+    else {
+      setSearchResults([]);
+    }
   };
 
   const selectLocation = (loc: Location) => {
@@ -173,6 +188,32 @@ const RideRequest: React.FC = () => {
     else if (promoCode.toUpperCase() === 'FIRSTRIDE') { setDiscount(selectedRide.basePrice); setToastMsg('🎉 First ride free!'); }
     else { setToastMsg('Invalid code. Try NAVIGO50'); }
     setShowToast(true);
+  };
+
+  const handleMapClick = async (latlng: [number, number]) => {
+    const [lat, lng] = latlng;
+    try {
+      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+      const addr = res.data.display_name || '';
+      const address = res.data.address || {};
+      const road = address.road || address.pedestrian || address.footway || '';
+      const suburb = address.suburb || address.neighbourhood || address.village || '';
+      const city = address.city || address.town || address.municipality || '';
+      const shortName = road || suburb || city || addr.split(',')[0];
+      const loc: Location = { lat, lng, address: addr, name: '📍 ' + shortName };
+
+      if (searchingPickup) {
+        setPickup(loc);
+        setPickupSearch(shortName);
+      } else {
+        setDestination(loc);
+        setDestSearch(shortName);
+      }
+    } catch {
+      const loc: Location = { lat, lng, address: 'Unknown Location', name: '📍 Selected Point' };
+      if (searchingPickup) { setPickup(loc); setPickupSearch(loc.name); }
+      else { setDestination(loc); setDestSearch(loc.name); }
+    }
   };
 
   const handleBookRide = async () => {
@@ -221,7 +262,7 @@ const RideRequest: React.FC = () => {
             </div>
             {isSearching&&<div className="search-loading"><IonSpinner name="crescent"/> Searching places near you...</div>}
             {searchResults.length>0&&<IonList className="search-results">{searchResults.map((r,i)=><IonItem key={i} button onClick={()=>selectLocation(r)} className="search-item"><IonIcon icon={locationOutline} slot="start" color="warning"/><IonLabel className="search-label"><h3>{r.name||r.address.split(',')[0]}</h3><p>{r.address.split(',').slice(1,3).join(',')}</p></IonLabel></IonItem>)}</IonList>}
-            {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px" showControls={false}/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div></div>}
+            {pickup&&destination&&<div style={{marginTop:16,borderRadius:16,overflow:'hidden'}}><NavigoMap userLocation={{lat:pickup.lat,lng:pickup.lng}} destination={{lat:destination.lat,lng:destination.lng}} height="280px" showControls={false} onMapClick={handleMapClick}/>{fare&&<div style={{textAlign:'center',padding:'10px',background:'rgba(0,0,0,0.8)',color:'#fff',fontWeight:600,fontSize:14}}>📍 {fare.distance} km &nbsp; 🕐 ~{fare.duration} min &nbsp; 💰 <span style={{color:'#FF6B35'}}>{fare.formattedTotal}</span></div></div>}
           </div>
         )}
 
