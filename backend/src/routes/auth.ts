@@ -272,6 +272,39 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
   }
 });
 
+// ─── EMERGENCY: WIPE ALL USERS ─────────────────────────
+router.post('/admin/wipe-all', async (req: Request, res: Response) => {
+  try {
+    const { secretKey } = req.body;
+    if (secretKey !== 'NAVIGO_SUPER_SECRET_RECOVERY_2026') {
+      return res.status(403).json({ message: 'Invalid recovery key.' });
+    }
+
+    const db = getDB();
+
+    // 1. Delete all users
+    await db.run('DELETE FROM users');
+    console.log('☢️ ALL USERS WIPED FROM DATABASE');
+
+    // 2. Create a guaranteed fresh admin
+    const hashed = await hashPassword('Kakumiro222');
+    const adminId = 'admin_' + Date.now();
+    await db.run(
+      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [adminId, 'NAVIGO Admin', 'admin_' + adminId, 'navigouganda@gmail.com', hashed, 'admin', 1, 'approved', new Date().toISOString()]
+    );
+
+    res.json({
+      message: 'Database wiped and fresh admin created!',
+      email: 'navigouganda@gmail.com',
+      password: 'Kakumiro222'
+    });
+  } catch (error) {
+    console.error('Wipe error:', error);
+    res.status(500).json({ message: 'Wipe failed.' });
+  }
+});
+
 // ─── EMERGENCY ADMIN RECOVERY ─────────────────────────
 router.post('/admin/force-setup', async (req: Request, res: Response) => {
   try {
