@@ -15,7 +15,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import './DriverDocuments.css';
 
-const API_URL = 'https://navigo-fzdo.onrender.com/api';
+const API_URL = 'https://navigo-1-z7ne.onrender.com/api';
 
 const DriverDocuments: React.FC = () => {
   const history = useHistory();

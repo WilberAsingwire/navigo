@@ -80,7 +80,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/users', userRoutes);
+
+// Fallback for requests missing the /api prefix if they hit the backend
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/api') && (req.url.includes('/auth') || req.url.includes('/rides'))) {
+    return res.redirect(301, `/api${req.url}`);
+  }
+  next();
+});
+
 app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
+
 
 // Socket.io
 const io = new Server(httpServer, { cors: { origin: '*' } });

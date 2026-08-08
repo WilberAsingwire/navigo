@@ -12,7 +12,7 @@ import {
 import { io, Socket } from 'socket.io-client';
 import './ChatBox.css';
 
-const SOCKET_URL = 'https://navigo-fzdo.onrender.com';
+const SOCKET_URL = 'https://navigo-1-z7ne.onrender.com';
 
 interface Message {
   id: string;
