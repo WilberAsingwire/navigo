@@ -7,7 +7,7 @@ import {
   peopleOutline, giftOutline, arrowForwardOutline, callOutline,
   cashOutline, lockClosedOutline, heartOutline, speedometerOutline,
   checkmarkCircleOutline, locationOutline, moonOutline, sunnyOutline,
-  notificationsOutline, shieldOutline, zapOutline, medalOutline
+  flashOutline
 } from 'ionicons/icons';
 import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
@@ -45,7 +45,7 @@ const Home: React.FC = () => {
         <section className="hero-section">
           <div className="hero-text">
             <div className="hero-badge">
-              <IonIcon icon={zapOutline} /> Uganda's #1 Ride-Hailing App
+              <IonIcon icon={flashOutline} /> Uganda's #1 Ride-Hailing App
             </div>
             <h1 className="hero-title">
               Move Smart.<br/>
@@ -162,7 +162,7 @@ const Home: React.FC = () => {
 
           <div className="safety-grid">
             <div className="safety-item">
-              <IonIcon icon={shieldOutline} className="safety-icon" />
+              <IonIcon icon={shieldCheckmarkOutline} className="safety-icon" />
               <h4>ID Verified</h4>
               <p>Every driver undergoes mandatory government ID verification.</p>
             </div>
