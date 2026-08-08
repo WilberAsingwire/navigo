@@ -81,15 +81,13 @@ app.use('/api/rides', rideRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/users', userRoutes);
 
-// Fallback for requests missing the /api prefix if they hit the backend
+app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
+
+// Request Logger - This tells us exactly what is hitting the server
 app.use((req, res, next) => {
-  if (!req.url.startsWith('/api') && (req.url.includes('/auth') || req.url.includes('/rides'))) {
-    return res.redirect(301, `/api${req.url}`);
-  }
+  console.log(`Incoming Request: ${req.method} ${req.url}`);
   next();
 });
-
-app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
 
 
 // Socket.io
