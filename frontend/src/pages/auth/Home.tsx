@@ -17,11 +17,66 @@ const Home: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const [activeRide, setActiveRide] = useState('boda');
 
-  const rideOptions = [
-    { id: 'boda', name: 'Boda Boda', emoji: '🏍️', price: '1,500', desc: 'Zip through traffic', features: ['Helmet included', 'Trained rider'] },
-    { id: 'go', name: 'NAVIGO Go', emoji: '🚗', price: '3,000', desc: 'Affordable car rides', features: ['4 seats', 'AC comfort'] },
-    { id: 'comfort', name: 'Comfort', emoji: '🚙', price: '5,000', desc: 'Premium cars', features: ['4.8+ rated', 'Professional'] },
-    { id: 'xl', name: 'NAVIGO XL', emoji: '🚐', price: '8,000', desc: 'Group travel', features: ['6 seats', 'Luggage space'] },
+const rideOptions = [
+    {
+      id: 'boda',
+      name: 'Boda Boda',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
+          <path d="M8 15h8M10 12h4M12 9v6" strokeLinecap="round" />
+          <path d="M12 15v3M9 18h6" />
+        </svg>
+      ),
+      price: '1,500',
+      desc: 'Zip through traffic',
+      features: ['Helmet included', 'Trained rider']
+    },
+    {
+      id: 'go',
+      name: 'NAVIGO Go',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="7" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          <circle cx="7" cy="18" r="2" />
+          <circle cx="17" cy="18" r="2" />
+        </svg>
+      ),
+      price: '3,000',
+      desc: 'Affordable car rides',
+      features: ['4 seats', 'AC comfort']
+    },
+    {
+      id: 'comfort',
+      name: 'Comfort',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="10" width="20" height="8" rx="3" />
+          <path d="M6 10V6a6 6 0 0 1 12 0v4" />
+          <circle cx="6" cy="18" r="2" />
+          <circle cx="18" cy="18" r="2" />
+        </svg>
+      ),
+      price: '5,000',
+      desc: 'Premium cars',
+      features: ['4.8+ rated', 'Professional']
+    },
+    {
+      id: 'xl',
+      name: 'NAVIGO XL',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="10" width="20" height="8" rx="2" />
+          <path d="M4 10V6a6 6 0 0 1 12 0v4" />
+          <circle cx="6" cy="18" r="2" />
+          <circle cx="18" cy="18" r="2" />
+        </svg>
+      ),
+      price: '8,000',
+      desc: 'Group travel',
+      features: ['6 seats', 'Luggage space']
+    },
   ];
 
   return (
@@ -91,7 +146,7 @@ const Home: React.FC = () => {
                     className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
                     onClick={() => setActiveRide(ride.id)}
                   >
-                    {ride.emoji} {ride.name}
+                    {ride.icon} {ride.name}
                   </div>
                 ))}
               </div>
@@ -113,7 +168,7 @@ const Home: React.FC = () => {
             {rideOptions.map((ride, idx) => (
               <div key={ride.id} className={`ride-card ${idx === 0 ? 'featured' : ''}`}>
                 {idx === 0 && <div className="ride-badge">Most Popular</div>}
-                <span className="ride-icon">{ride.emoji}</span>
+                <span className="ride-icon">{ride.icon}</span>
                 <h3>{ride.name}</h3>
                 <p>{ride.desc}</p>
                 <div className="ride-features">
