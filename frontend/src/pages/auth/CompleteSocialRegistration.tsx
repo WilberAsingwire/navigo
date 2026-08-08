@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonItem, IonLabel, IonInput, IonButton, IonSpinner, IonToast, IonIcon } from '@ionic/react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonItem, IonLabel, IonInput, IonButton, IonSpinner, IonToast, IonIcon, IonCard, IonCardContent } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
