@@ -454,10 +454,11 @@ export default router;
 router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
-    const user = await db.get('SELECT * FROM users WHERE id = ?', req.user?.userId);
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [req.user?.userId]);
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ user: sanitizeUser(user) });
   } catch (error) {
+    console.error('Error fetching profile:', error);
     res.status(500).json({ message: 'Error fetching profile' });
   }
 });
