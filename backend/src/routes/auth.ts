@@ -78,7 +78,7 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid role selected' });
     }
 
-    const existingPhone = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    const existingPhone = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
     if (existingPhone) {
       return res.status(400).json({ message: 'Phone already registered. Please login.' });
     }
@@ -197,7 +197,7 @@ router.post('/google-register', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid phone number. Format: 0772000000' });
     }
 
-    const existingPhone = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    const existingPhone = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
     if (existingPhone) {
       return res.status(400).json({ message: 'Phone already registered. Please login.' });
     }
