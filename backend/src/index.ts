@@ -15,6 +15,7 @@ import { setupSocketHandlers } from './socket/socketHandler';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Trust Render's proxy to ensure HTTPS is detected correctly
 
 const httpServer = createServer(app);
 
