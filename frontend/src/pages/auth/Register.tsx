@@ -77,8 +77,7 @@ const Register: React.FC = () => {
     setIsLoading(true);
     try {
       await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
-      const redirectPath = (role === 'driver' || role === 'motorist') ? '/driver/home' : '/rider/home';
-      history.push(redirectPath);
+      history.push('/login');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
     } finally {

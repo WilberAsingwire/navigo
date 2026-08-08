@@ -103,19 +103,21 @@ initDB().then(async () => {
     const { hashPassword } = require('./utils/auth');
 
     const adminEmail = 'navigouganda@gmail.com';
-    const adminPassword = await hashPassword('Kakumiro222');
 
-    // 1. Force clean up any existing admins to avoid conflicts
-    await db.run('DELETE FROM users WHERE role = ?', ['admin']);
-    console.log('🧹 Cleared old admin accounts for a fresh setup');
+    // Check if admin already exists
+    const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [adminEmail]);
 
-    // 2. Create a guaranteed fresh admin account
-    const adminId = 'admin_' + Date.now();
-    await db.run(
-      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
-    );
-    console.log(`🚀 FRESH ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
+    if (!existingAdmin) {
+      const adminPassword = await hashPassword('Kakumiro222');
+      const adminId = 'admin_' + Date.now();
+      await db.run(
+        'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
+      );
+      console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
+    } else {
+      console.log(`✅ Admin account already exists: ${adminEmail}`);
+    }
   } catch (err) {
     console.error('❌ Critical failure setting up admin:', err);
   }
