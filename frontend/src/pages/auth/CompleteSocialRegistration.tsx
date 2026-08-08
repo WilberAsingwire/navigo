@@ -30,11 +30,19 @@ const CompleteSocialRegistration: React.FC = () => {
         phone: phone
       });
 
-      localStorage.setItem('navigo_token', response.data.token);
-      localStorage.setItem('navigo_user', JSON.stringify(response.data.user));
+      // CLEAR any existing session first to prevent "Role Leaking" from old admin accounts
+      localStorage.removeItem('navigo_token');
+      localStorage.removeItem('navigo_user');
+
+      // Now save the new, fresh customer session
+      saveSession(response.data.user, response.data.token);
       localStorage.removeItem('temp_social_user');
 
-      history.push('/rider/home');
+      const role = response.data.user.role;
+      const redirectPath = (role === 'driver' || role === 'motorist') ? '/driver/home' :
+                           (role === 'admin') ? '/admin/dashboard' : '/rider/home';
+
+      history.push(redirectPath);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
