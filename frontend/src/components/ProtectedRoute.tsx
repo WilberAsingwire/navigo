@@ -44,11 +44,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           return <Redirect to="/login" />;
         }
 
-        const userRole = user.role || 'rider';
-        const normalizedRoles = allowedRoles.map(r => r === 'customer' ? 'rider' : r);
-        
-        if (!normalizedRoles.includes(userRole)) {
-          const redirectPath = userRole === 'admin' ? '/admin/dashboard' : 
+        const userRole = user.role || 'customer';
+
+        if (!allowedRoles.includes(userRole)) {
+          const redirectPath = userRole === 'admin' ? '/admin/dashboard' :
                               (userRole === 'driver' || userRole === 'motorist') ? '/driver/home' : '/rider/home';
           return <Redirect to={redirectPath} />;
         }

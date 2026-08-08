@@ -73,7 +73,7 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Password must be at least 4 characters' });
     }
 
-    const validRoles = ['rider', 'driver', 'motorist'];
+    const validRoles = ['customer', 'driver', 'motorist'];
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role selected' });
     }

@@ -9,7 +9,7 @@ interface User {
   name: string;
   phone: string;
   email?: string;
-  role: 'rider' | 'driver' | 'motorist' | 'admin';
+  role: 'customer' | 'driver' | 'motorist' | 'admin';
   phoneVerified: boolean;
   verificationStatus?: 'unverified' | 'pending' | 'approved' | 'rejected';
   socialProvider?: string;

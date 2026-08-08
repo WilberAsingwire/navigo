@@ -72,7 +72,7 @@ const HomeRedirect: React.FC = () => {
   if (savedUser) {
     try {
       const user = JSON.parse(savedUser);
-      const role = user.role || 'rider';
+      const role = user.role || 'customer';
       if (role === 'admin') return <Redirect to="/admin/dashboard" />;
       if (role === 'driver' || role === 'motorist') return <Redirect to="/driver/home" />;
       return <Redirect to="/rider/home" />;
