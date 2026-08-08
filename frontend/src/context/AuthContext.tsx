@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (name: string, phone: string, password: string, email?: string, role: string = 'rider') => {
+  const register = async (name: string, phone: string, password: string, email?: string, role: string = 'customer') => {
     try {
       const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
       const response = await axios.post(`${API_URL}/auth/register`, { 
