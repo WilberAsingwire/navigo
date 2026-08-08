@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import {
@@ -6,236 +6,254 @@ import {
   phonePortraitOutline, walletOutline, timeOutline, mapOutline,
   peopleOutline, giftOutline, arrowForwardOutline, callOutline,
   cashOutline, lockClosedOutline, heartOutline, speedometerOutline,
-  checkmarkCircleOutline, locationOutline, moonOutline, sunnyOutline
+  checkmarkCircleOutline, locationOutline, moonOutline, sunnyOutline,
+  notificationsOutline, shieldOutline, zapOutline, medalOutline
 } from 'ionicons/icons';
 import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
 
-
 const Home: React.FC = () => {
   const history = useHistory();
   const { theme, toggleTheme } = useTheme();
+  const [activeRide, setActiveRide] = useState('boda');
 
+  const rideOptions = [
+    { id: 'boda', name: 'Boda Boda', emoji: '🏍️', price: '1,500', desc: 'Zip through traffic', features: ['Helmet included', 'Trained rider'] },
+    { id: 'go', name: 'NAVIGO Go', emoji: '🚗', price: '3,000', desc: 'Affordable car rides', features: ['4 seats', 'AC comfort'] },
+    { id: 'comfort', name: 'Comfort', emoji: '🚙', price: '5,000', desc: 'Premium cars', features: ['4.8+ rated', 'Professional'] },
+    { id: 'xl', name: 'NAVIGO XL', emoji: '🚐', price: '8,000', desc: 'Group travel', features: ['6 seats', 'Luggage space'] },
+  ];
 
   return (
     <IonPage>
-      <IonContent className="home-content" style={{'--background': '#080c14'} as any}>
-        
-        {/* NAVBAR */}
-        <div className="home-nav">
-          <span className="nav-logo">🚀 NAVIGO</span>
+      <IonContent className="home-content">
+
+        {/* STICKY NAVBAR */}
+        <nav className="home-nav">
+          <div className="nav-logo">🚀 NAVIGO</div>
           <div className="nav-links">
+            <div className="nav-link-text" onClick={() => history.push('/explore')}>Explore</div>
+            <div className="nav-link-text" onClick={() => history.push('/login')}>Sign In</div>
             <div className="theme-toggle" onClick={toggleTheme}>
               <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
             </div>
-            <span onClick={() => history.push('/login')}>Sign In</span>
             <IonButton size="small" className="nav-signup-btn" onClick={() => history.push('/register')}>Sign Up</IonButton>
           </div>
-        </div>
+        </nav>
 
-        {/* HERO */}
-        <div className="hero-section">
-          <div className="hero-badge">🇺🇬 Uganda's #1 Ride-Hailing App</div>
-          <h1 className="hero-title">Move Smart.<br/>Pay Less.<br/><span className="highlight">Arrive Safe.</span></h1>
-          <p className="hero-desc">Uganda's smartest way to move. Boda Safe™ verified drivers • Women-preferred mode • Works offline. Ride with confidence.</p>
-          <div className="hero-buttons">
-            <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
-              Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
-            </IonButton>
-            <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => history.push('/explore')}>
-              <IonIcon icon={mapOutline} slot="start" /> See Prices Near You
-            </IonButton>
-            <IonButton expand="block" className="hero-btn ussd-btn" fill="clear" onClick={() => history.push('/ussd')}>
-              <IonIcon icon={phonePortraitOutline} slot="start" /> Book via USSD: *284*624#
-            </IonButton>
-          </div>
-          <div className="hero-stats">
-            <div><strong>15,000+</strong><span>Rides Daily</span></div>
-            <div><strong>5,000+</strong><span>Verified Drivers</span></div>
-            <div><strong>4.8★</strong><span>User Rating</span></div>
-            <div><strong>50+</strong><span>Cities</span></div>
-          </div>
-        </div>
-
-        {/* USSD OFFLINE */}
-        <div className="ussd-banner">
-          <IonIcon icon={phonePortraitOutline} />
-          <div>
-            <strong>No Smartphone? No Internet? No Problem!</strong>
-            <p>Dial <span className="ussd-code">*284*624#</span> to book a ride from ANY phone — even kabiriti!</p>
-          </div>
-        </div>
-
-        {/* RIDE OPTIONS */}
-        <div className="section">
-          <h2>🏍️ Choose Your Ride</h2>
-          <p className="section-sub">From quick boda trips to group rides — we've got you covered</p>
-          <div className="ride-cards">
-            <div className="ride-card featured">
-              <div className="ride-badge">Most Popular</div>
-              <span className="ride-emoji">🏍️</span>
-              <h3>Boda Boda</h3>
-              <p>Zip through traffic in minutes</p>
-              <div className="ride-features">
-                <span><IonIcon icon={checkmarkCircleOutline} /> Helmet included</span>
-                <span><IonIcon icon={checkmarkCircleOutline} /> Trained rider</span>
-              </div>
-              <span className="price">UGX 1,500<span>/km</span></span>
+        {/* HERO SECTION */}
+        <section className="hero-section">
+          <div className="hero-text">
+            <div className="hero-badge">
+              <IonIcon icon={zapOutline} /> Uganda's #1 Ride-Hailing App
             </div>
-            <div className="ride-card">
-              <span className="ride-emoji">🚗</span>
-              <h3>NAVIGO Go</h3>
-              <p>Affordable car rides</p>
-              <div className="ride-features">
-                <span><IonIcon icon={checkmarkCircleOutline} /> 4 seats</span>
-                <span><IonIcon icon={checkmarkCircleOutline} /> AC comfort</span>
-              </div>
-              <span className="price">UGX 3,000<span>/km</span></span>
-            </div>
-            <div className="ride-card">
-              <span className="ride-emoji">🚙</span>
-              <h3>Comfort</h3>
-              <p>Newer cars, top drivers</p>
-              <div className="ride-features">
-                <span><IonIcon icon={checkmarkCircleOutline} /> Premium cars</span>
-                <span><IonIcon icon={checkmarkCircleOutline} /> 4.8+ rated</span>
-              </div>
-              <span className="price">UGX 5,000<span>/km</span></span>
-            </div>
-            <div className="ride-card">
-              <span className="ride-emoji">🚐</span>
-              <h3>NAVIGO XL</h3>
-              <p>Groups up to 6 people</p>
-              <div className="ride-features">
-                <span><IonIcon icon={checkmarkCircleOutline} /> 6 seats</span>
-                <span><IonIcon icon={checkmarkCircleOutline} /> Luggage space</span>
-              </div>
-              <span className="price">UGX 8,000<span>/km</span></span>
+            <h1 className="hero-title">
+              Move Smart.<br/>
+              Pay Less.<br/>
+              <span className="highlight">Arrive Safe.</span>
+            </h1>
+            <p className="hero-desc">
+              Uganda's smartest way to move. Boda Safe™ verified drivers, women-preferred mode, and offline USSD booking. Ride with confidence across every corner of the city.
+            </p>
+            <div className="hero-buttons">
+              <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
+                Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
+              </IonButton>
+              <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => history.push('/explore')}>
+                <IonIcon icon={mapOutline} slot="start" /> See Prices Near You
+              </IonButton>
             </div>
           </div>
-        </div>
 
-        {/* WHY NAVIGO */}
-        <div className="section dark-section">
-          <h2>⭐ Why 2 Million+ Ugandans Choose NAVIGO</h2>
-          <IonGrid>
-            <IonRow>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={shieldCheckmarkOutline} /><h4>Boda Safe™ Certified</h4><p>Every driver verified, trained & rated</p></div></IonCol>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={walletOutline} /><h4>Lowest Prices</h4><p>Up to 30% cheaper than competitors</p></div></IonCol>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={speedometerOutline} /><h4>Fastest Pickup</h4><p>Average 3 min wait time</p></div></IonCol>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={phonePortraitOutline} /><h4>Works Offline</h4><p>Book via USSD on any phone</p></div></IonCol>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={heartOutline} /><h4>Women Preferred</h4><p>Available in-app after sign up</p></div></IonCol>
-              <IonCol size="6"><div className="feature-card"><IonIcon icon={lockClosedOutline} /><h4>Emergency SOS</h4><p>One-tap police & ambulance</p></div></IonCol>
-            </IonRow>
-          </IonGrid>
-        </div>
+          <div className="hero-ride-preview">
+            <div className="ride-preview-card">
+              <div className="preview-header">
+                <span className="preview-title">Where to?</span>
+                <IonIcon icon={locationOutline} className="preview-icon" />
+              </div>
 
-        {/* SAFETY */}
-        <div className="section safety-section">
-          <div className="safety-badge">🛡️ BODA SAFE CERTIFIED</div>
-          <h2>Your Safety Is Our #1 Priority</h2>
-          <p>Every driver undergoes background checks, helmet training, and vehicle inspection before they can accept rides.</p>
-          <div className="safety-features">
-            <div><IonIcon icon={shieldCheckmarkOutline} /> ID Verified</div>
-            <div><IonIcon icon={starOutline} /> 4.5+ Rating Required</div>
-            <div><IonIcon icon={locationOutline} /> Live GPS Tracking</div>
-            <div><IonIcon icon={callOutline} /> 24/7 Support</div>
+              <div className="preview-route">
+                <div className="route-stop">
+                  <div className="stop-dot"></div>
+                  <span className="stop-text">Current Location</span>
+                </div>
+                <div className="preview-route-line"></div>
+                <div className="route-stop">
+                  <div className="stop-dot destination"></div>
+                  <span className="stop-text">Kampala Central</span>
+                </div>
+              </div>
+
+              <div className="ride-selection-pills">
+                {rideOptions.map(ride => (
+                  <div
+                    key={ride.id}
+                    className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
+                    onClick={() => setActiveRide(ride.id)}
+                  >
+                    {ride.emoji} {ride.name}
+                  </div>
+                ))}
+              </div>
+
+              <div className="fare-preview">
+                <span className="fare-label">Estimated Fare</span>
+                <span className="fare-amount">UGX {rideOptions.find(r => r.id === activeRide)?.price}</span>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* WOMEN PREFERRED */}
-        <div className="section women-section">
-          <h2>👩 Women Preferred Mode</h2>
-          <p>Request female drivers only — because every woman deserves to feel safe while traveling.</p>
-         <IonButton expand="block" className="women-btn" onClick={() => history.push('/register')}>
-  Available In-App — Sign Up to Enable
-</IonButton>
-        </div>
+        {/* RIDE SELECTION CAROUSEL */}
+        <section className="section">
+          <h2 className="section-title">Choose Your Ride</h2>
+          <p className="section-sub">From quick boda trips to luxury group rides — we've got you covered</p>
 
-        {/* DRIVERS */}
-        <div className="section driver-section">
-          <h2>🤑 Earn With NAVIGO</h2>
-          <p className="section-sub">Join 5,000+ drivers earning daily. We take only 15% — you keep 85%.</p>
-          <div className="driver-stats">
-            <div><strong>UGX 50K-150K</strong><span>Daily Earnings</span></div>
-            <div><strong>85%</strong><span>You Keep</span></div>
-            <div><strong>Instant</strong><span>Cash Payouts</span></div>
+          <div className="ride-carousel">
+            {rideOptions.map((ride, idx) => (
+              <div key={ride.id} className={`ride-card ${idx === 0 ? 'featured' : ''}`}>
+                {idx === 0 && <div className="ride-badge">Most Popular</div>}
+                <span className="ride-icon">{ride.emoji}</span>
+                <h3>{ride.name}</h3>
+                <p>{ride.desc}</p>
+                <div className="ride-features">
+                  {ride.features.map((f, i) => (
+                    <div key={i} className="feature-item">
+                      <IonIcon icon={checkmarkCircleOutline} /> {f}
+                    </div>
+                  ))}
+                </div>
+                <span className="ride-rate">UGX {ride.price}<span className="per-km">/km</span></span>
+              </div>
+            ))}
           </div>
-          <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
-            Start Earning Today
-          </IonButton>
-        </div>
+        </section>
+
+        {/* HOW IT WORKS TIMELINE */}
+        <section className="section">
+          <div className="how-it-works">
+            <h2 className="section-title">How It Works</h2>
+            <p className="section-sub">Get where you're going in three simple steps</p>
+
+            <div className="timeline">
+              <div className="step">
+                <div className="step-number">1</div>
+                <h3>Request</h3>
+                <p>Set your destination and choose your ride preference.</p>
+              </div>
+              <div className="step">
+                <div className="step-number">2</div>
+                <h3>Match</h3>
+                <p>We connect you with the nearest Boda Safe™ verified driver.</p>
+              </div>
+              <div className="step">
+                <div className="step-number">3</div>
+                <h3>Arrive</h3>
+                <p>Enjoy a safe, affordable trip to your destination.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SAFETY SHOWCASE */}
+        <section className="section">
+          <h2 className="section-title">Safety First</h2>
+          <p className="section-sub">Your security is our non-negotiable priority</p>
+
+          <div className="safety-grid">
+            <div className="safety-item">
+              <IonIcon icon={shieldOutline} className="safety-icon" />
+              <h4>ID Verified</h4>
+              <p>Every driver undergoes mandatory government ID verification.</p>
+            </div>
+            <div className="safety-item">
+              <IonIcon icon={starOutline} className="safety-icon" />
+              <h4>4.5+ Rating</h4>
+              <p>Only the highest-rated drivers remain on our platform.</p>
+            </div>
+            <div className="safety-item">
+              <IonIcon icon={locationOutline} className="safety-icon" />
+              <h4>Live Tracking</h4>
+              <p>Share your ride progress in real-time with loved ones.</p>
+            </div>
+            <div className="safety-item">
+              <IonIcon icon={callOutline} className="safety-icon" />
+              <h4>24/7 Support</h4>
+              <p>Emergency SOS and support available every second of the day.</p>
+            </div>
+          </div>
+        </section>
 
         {/* ZAWADI REWARDS */}
-        <div className="section rewards-section">
-          <h2>🎁 Zawadi Rewards</h2>
-          <p>Earn points on every ride. Redeem for free rides, airtime, and more! 5 rides = Free Boda 🏍️</p>
-          <div className="reward-tiers">
-            <div className="tier tier-bronze"><span>🥉</span><strong>Bronze</strong><p>0-500 pts</p></div>
-            <div className="tier tier-silver"><span>🥈</span><strong>Silver</strong><p>500-1,000 pts</p></div>
-            <div className="tier tier-gold"><span>🥇</span><strong>Gold</strong><p>1,000-2,500 pts</p></div>
-            <div className="tier tier-platinum"><span>💎</span><strong>Platinum</strong><p>2,500+ pts</p></div>
-          </div>
-        </div>
+        <section className="section">
+          <h2 className="section-title">Zawadi Rewards</h2>
+          <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
 
-        {/* CTA */}
-        <div className="section cta-section">
-          <h2>Ready to Move?</h2>
-          <p>Join Uganda's fastest-growing ride-hailing app. Download or dial — it's your choice.</p>
-          <div className="cta-buttons">
-            <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
-              Sign Up Free <IonIcon icon={arrowForwardOutline} slot="end" />
-            </IonButton>
-            <div className="app-store-badges">
-              <div className="store-badge">🤖 Google Play</div>
-              <div className="store-badge">🍎 App Store</div>
+          <div className="rewards-grid">
+            <div className="tier-card">
+              <span className="tier-icon">🥉</span>
+              <h3>Bronze</h3>
+              <p>0 - 500 pts</p>
+              <div className="tier-benefit">Basic Rewards</div>
             </div>
-            <div className="ussd-box large">
-              <IonIcon icon={phonePortraitOutline} />
-              <div>
-                <strong>No internet? Dial *284*624#</strong>
-                <p>Works on ANY phone — MTN, Airtel, all networks</p>
-              </div>
+            <div className="tier-card">
+              <span className="tier-icon">🥈</span>
+              <h3>Silver</h3>
+              <p>500 - 1k pts</p>
+              <div className="tier-benefit">5% Discount</div>
+            </div>
+            <div className="tier-card">
+              <span className="tier-icon">🥇</span>
+              <h3>Gold</h3>
+              <p>1k - 2.5k pts</p>
+              <div className="tier-benefit">Priority Booking</div>
+            </div>
+            <div className="tier-card featured-tier">
+              <span className="tier-icon">💎</span>
+              <h3>Platinum</h3>
+              <p>2.5k+ pts</p>
+              <div className="tier-benefit">VIP Experience</div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* FOOTER */}
-        <div className="footer">
+        <footer className="footer">
           <div className="footer-grid">
-            <div>
+            <div className="footer-col">
               <h4>🚀 NAVIGO</h4>
-              <p>Uganda's smartest ride-hailing app. Safe, affordable, reliable.</p>
+              <p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone.</p>
             </div>
-            <div>
+            <div className="footer-col">
               <h4>Ride</h4>
-              <span onClick={() => history.push('/rider/book')}>Book a Ride</span>
-              <span onClick={() => history.push('/rider/history')}>Ride History</span>
-              <span onClick={() => history.push('/ussd')}>Offline Booking</span>
+              <span className="footer-link" onClick={() => history.push('/rider/book')}>Book a Ride</span>
+              <span className="footer-link" onClick={() => history.push('/rider/history')}>Ride History</span>
+              <span className="footer-link" onClick={() => history.push('/ussd')}>Offline Booking</span>
             </div>
-            <div>
+            <div className="footer-col">
               <h4>Drive</h4>
-              <span onClick={() => history.push('/register')}>Become a Driver</span>
-              <span onClick={() => history.push('/driver/earnings')}>Earnings Calculator</span>
+              <span className="footer-link" onClick={() => history.push('/register')}>Become a Driver</span>
+              <span className="footer-link" onClick={() => history.push('/driver/earnings')}>Earnings Calculator</span>
             </div>
-            <div>
-              <h4>Connect</h4>
-              <span>📘 Facebook</span>
-              <span>📷 Instagram</span>
-              <span>🐦 Twitter/X</span>
-              <span>🎵 TikTok</span>
-            </div>
-            <div>
+            <div className="footer-col">
               <h4>Company</h4>
-              <span>About Us</span>
-              <span onClick={() => history.push('/rider/support')}>Support</span>
-              <span>Privacy Policy</span>
-              <span>Terms of Service</span>
+              <span className="footer-link">About Us</span>
+              <span className="footer-link" onClick={() => history.push('/rider/support')}>Support</span>
+              <span className="footer-link">Privacy Policy</span>
+              <span className="footer-link">Terms of Service</span>
             </div>
           </div>
           <div className="footer-bottom">
             <p>© 2026 NAVIGO Technologies Uganda. All rights reserved.</p>
             <p>🇺🇬 Proudly Ugandan • Made in Kampala</p>
+          </div>
+        </footer>
+
+        {/* STICKY BOTTOM USSD BAR */}
+        <div className="sticky-bottom-bar">
+          <div className="ussd-pill" onClick={() => history.push('/ussd')}>
+            <IonIcon icon={phonePortraitOutline} />
+            <span>Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
           </div>
         </div>
 
