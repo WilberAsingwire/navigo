@@ -55,7 +55,7 @@ app.get('/auth/google/callback',
       [email.toLowerCase().trim(), 'google', googleId]
     );
 
-    const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-nu-eight.vercel.app/auth/callback';
+    const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-five.vercel.app/auth/callback';
 
     if (existingUser) {
       // User exists, redirect with status existing
