@@ -84,7 +84,7 @@ router.post('/register', async (req: Request, res: Response) => {
     }
 
     if (email) {
-      const existingEmail = await db.get('SELECT * FROM users WHERE email = ?', email.toLowerCase().trim());
+      const existingEmail = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
       if (existingEmail) {
         return res.status(400).json({ message: 'Email already registered.' });
       }
@@ -149,12 +149,12 @@ router.post('/login', async (req: Request, res: Response) => {
     console.log(`🔑 Login attempt for identifier: ${identifier}`);
     if (identifier.includes('@')) {
       // Login with email
-      user = await db.get('SELECT * FROM users WHERE email = ?', identifier.toLowerCase().trim());
+      user = await db.get('SELECT * FROM users WHERE email = ?', [identifier.toLowerCase().trim()]);
       console.log(`Searching by email. User found: ${!!user}`);
     } else {
       // Login with phone
       const cleanPhone = normalizePhone(identifier);
-      user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+      user = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
       console.log(`Searching by phone (${cleanPhone}). User found: ${!!user}`);
     }
 
