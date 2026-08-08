@@ -146,16 +146,27 @@ router.post('/login', async (req: Request, res: Response) => {
     const db = getDB();
 
     let user;
+    console.log(`🔑 Login attempt for identifier: ${identifier}`);
     if (identifier.includes('@')) {
       // Login with email
       user = await db.get('SELECT * FROM users WHERE email = ?', identifier.toLowerCase().trim());
+      console.log(`Searching by email. User found: ${!!user}`);
     } else {
       // Login with phone
       const cleanPhone = normalizePhone(identifier);
       user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+      console.log(`Searching by phone (${cleanPhone}). User found: ${!!user}`);
     }
 
-    if (!user || !(await comparePassword(password, user.password))) {
+    if (!user) {
+      console.log(`❌ Login failed: No user found with identifier ${identifier}`);
+      return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
+    }
+
+    const passwordMatch = await comparePassword(password, user.password);
+    console.log(`Password check for user ${user.id}: ${passwordMatch ? '✅ MATCH' : '❌ MISMATCH'}`);
+
+    if (!passwordMatch) {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
     }
 
@@ -258,6 +269,36 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Upload failed.' });
+  }
+});
+
+// ─── EMERGENCY ADMIN RECOVERY ─────────────────────────
+router.post('/admin/force-setup', async (req: Request, res: Response) => {
+  try {
+    const { secretKey, adminEmail, adminPassword } = req.body;
+
+    if (secretKey !== 'NAVIGO_SUPER_SECRET_RECOVERY_2026') {
+      return res.status(403).json({ message: 'Invalid recovery key.' });
+    }
+
+    const db = getDB();
+    const hashed = await hashPassword(adminPassword || 'Kakumiro222');
+    const adminId = 'admin_' + Date.now();
+
+    await db.run('DELETE FROM users WHERE role = ?', ['admin']);
+    await db.run(
+      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail || 'navigouganda@gmail.com', hashed, 'admin', 1, 'approved', new Date().toISOString()]
+    );
+
+    res.json({
+      message: 'Admin account successfully recovered!',
+      email: adminEmail || 'navigouganda@gmail.com',
+      password: adminPassword || 'Kakumiro222'
+    });
+  } catch (error) {
+    console.error('Recovery error:', error);
+    res.status(500).json({ message: 'Recovery failed.' });
   }
 });
 
