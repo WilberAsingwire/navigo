@@ -1,0 +1,3 @@
+- [design-system-enterprise](design-system-enterprise.md) — Core UI/UX tokens and standards
+- [auth-flow-redesign](auth-flow-redesign.md) — Completed redesign of Landing, Login, and Register pages
+- [ride-request-overhaul](ride-request-overhaul.md) — Plan for map-centric booking flow redesign
