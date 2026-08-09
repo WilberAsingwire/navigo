@@ -13,7 +13,7 @@
   background-color: var(--bg-dark);
   color: var(--text-bright);
   font-family: 'Inter', 'DM Sans', sans-serif;
-  padding-bottom: 80px;
+  padding-bottom: 112px;
 }
 
 /* --- NAVBAR --- */
@@ -262,6 +262,7 @@
   padding: 8px 4px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
 }
 
 .ride-selection-pills::-webkit-scrollbar {
@@ -281,6 +282,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  scroll-snap-align: start;
 }
 
 .ride-pill.active {
@@ -646,13 +648,13 @@
 /* --- STICKY BOTTOM BAR --- */
 .sticky-bottom-bar {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   justify-content: center;
   padding: 1.5rem;
-  z-index: 1000;
+  z-index: 50;
   pointer-events: none;
 }
 
@@ -669,7 +671,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -707,7 +709,11 @@
   .hero-section {
     grid-template-columns: 1fr;
     text-align: center;
-    padding-top: 2rem;
+    padding-top: 6rem;
+  }
+  .hero-desc {
+    text-align: left;
+    color: #CBD5E1;
   }
   .hero-title {
     font-size: 2.5rem;
