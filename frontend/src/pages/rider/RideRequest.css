@@ -216,7 +216,7 @@
 }
 
 .vehicle-desc {
-  color: #94A3B8;
+  color: #CBD5E1;
   font-size: 0.75rem;
 }
 
@@ -265,10 +265,12 @@
 }
 
 .btn-confirm-booking:disabled {
-  background: #334155;
-  opacity: 0.6;
+  background: #1E293B;
+  color: #64748B;
+  opacity: 0.8;
   cursor: not-allowed;
   box-shadow: none;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* Map Section */

@@ -124,28 +124,44 @@ const RideRequest: React.FC = () => {
           async (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
-            setPickup({ lat, lng, address: 'Getting address...', name: '📍 Your Location' });
+            setPickup({ lat, lng, address: 'Fetching precise location...', name: '📍 Your Location' });
             try {
               const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-              const addr = res.data.display_name || '';
-              const address = res.data.address || {};
+              const data = res.data;
+              const addr = data.display_name || '';
+              const address = data.address || {};
+
+              // Prioritize most accurate address parts: house number -> road -> suburb -> city
+              const houseNumber = address.house_number || '';
               const road = address.road || address.pedestrian || address.footway || '';
               const suburb = address.suburb || address.neighbourhood || address.village || '';
               const city = address.city || address.town || address.municipality || '';
-              const shortName = road || suburb || city || addr.split(',')[0];
-              setPickup({ lat, lng, address: addr, name: '📍 ' + shortName });
-              setPickupSearch(road || shortName);
+
+              let preciseName = '';
+              if (houseNumber && road) {
+                preciseName = `${houseNumber} ${road}`;
+              } else if (road) {
+                preciseName = road;
+              } else if (suburb) {
+                preciseName = suburb;
+              } else {
+                preciseName = city || addr.split(',')[0];
+              }
+
+              setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName });
+              setPickupSearch(preciseName);
             } catch {
               setPickup({ lat, lng, address: 'Your Location', name: '📍 Current Location' });
             }
             resolve();
           },
           (err) => {
-            console.log('GPS Error:', err.message);
+            console.error('GPS Error:', err.message);
+            // Fallback to Kampala center if GPS fails
             setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
             resolve();
           },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
       } else {
         setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
@@ -157,9 +173,19 @@ const RideRequest: React.FC = () => {
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     try {
+      // Added more specific parameters for better accuracy and results
       const res = await axios.get('https://photon.komoot.io/api/', {
-        params: { q: query, limit: 10, lat: pickup?.lat, lon: pickup?.lng, reprioritize: 1 }
+        params: {
+          q: query,
+          limit: 10,
+          lat: pickup?.lat || 0.3476,
+          lon: pickup?.lng || 32.5825,
+          reprioritize: 1
+        }
       });
+
+      if (!res.data || !res.data.features) return [];
+
       return res.data.features.map((item: any) => {
         const props = item.properties;
         const geom = item.geometry.coordinates;
@@ -170,7 +196,10 @@ const RideRequest: React.FC = () => {
           name: props.name || props.city || props.street || 'Unknown Location'
         };
       });
-    } catch { return []; }
+    } catch (err) {
+      console.error('Search error:', err);
+      return [];
+    }
   };
 
   const searchTimeoutRef = useRef<any>(null);
@@ -403,7 +432,7 @@ const RideRequest: React.FC = () => {
           {/* Vehicle Selection */}
           <div className="vehicle-selection-grid">
             {RIDE_OPTIONS.map(opt => {
-              const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : null;
+              const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
               return (
                 <div
                   key={opt.id}
@@ -419,7 +448,7 @@ const RideRequest: React.FC = () => {
                   </div>
                   <div className="vehicle-price">
                     <span className="price-value">{est ? `UGX ${est.toLocaleString()}` : '...'}</span>
-                    <span className="price-eta">3 mins away</span>
+                    <span className="price-eta">{fare ? '3 mins away' : 'Enter destination'}</span>
                   </div>
                 </div>
               );

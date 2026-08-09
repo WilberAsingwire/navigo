@@ -92,9 +92,15 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
     mapInstanceRef.current = map;
 
+    // Ensure map fills the container
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
     // Add Tile Layer
     L.tileLayer(tileUrls[mapStyle].url, {
       attribution: tileUrls[mapStyle].attribution,
+      maxZoom: 19,
     }).addTo(map);
 
     // Handle Map Clicks
