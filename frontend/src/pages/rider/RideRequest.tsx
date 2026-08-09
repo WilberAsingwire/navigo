@@ -62,6 +62,7 @@ const RideRequest: React.FC = () => {
   const [womenOnly, setWomenOnly] = useState(false);
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const init = async () => {

@@ -8,7 +8,10 @@ class SocketService {
   connect(userId: string) {
     if (this.socket) return this.socket;
 
-    this.socket = io(SOCKET_URL);
+    this.socket = io(SOCKET_URL, {
+      transports: ['websocket'],
+      upgrade: false
+    });
 
     this.socket.on('connect', () => {
       console.log('🔌 Connected to NAVIGO Socket Server');
