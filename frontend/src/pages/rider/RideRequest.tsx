@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
-  IonPage, IonContent, IonIcon, IonSpinner, IonToast, IonModal, IonAvatar
+  IonIcon, IonSpinner, IonToast, IonAvatar
 } from '@ionic/react';
 import {
-  locationOutline, carOutline, checkmarkCircleOutline, arrowForwardOutline,
-  informationCircleOutline
+  locationOutline, carOutline, checkmarkCircleOutline, arrowBackOutline,
+  bicycleOutline, globeOutline
 } from 'ionicons/icons';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -61,10 +61,20 @@ const RideRequest: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [womenOnly, setWomenOnly] = useState(false);
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-    getCurrentLocation();
-    fetchSavedPlaces();
+    const init = async () => {
+      try {
+        await getCurrentLocation();
+        await fetchSavedPlaces();
+      } catch (e) {
+        console.error('Init error:', e);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    init();
 
     if (isAuthenticated && user) {
       const socket = socketService.connect(user.id);
@@ -107,46 +117,47 @@ const RideRequest: React.FC = () => {
   };
 
   const getCurrentLocation = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          setPickup({ lat, lng, address: 'Getting address...', name: '📍 Your Location' });
-          try {
-            const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
-            const addr = res.data.display_name || '';
-            const address = res.data.address || {};
-            const road = address.road || address.pedestrian || address.footway || '';
-            const suburb = address.suburb || address.neighbourhood || address.village || '';
-            const city = address.city || address.town || address.municipality || '';
-            const shortName = road || suburb || city || addr.split(',')[0];
-            setPickup({ lat, lng, address: addr, name: '📍 ' + shortName });
-            setPickupSearch(road || shortName);
-          } catch {
-            setPickup({ lat, lng, address: 'Your Location', name: '📍 Current Location' });
-          }
-        },
-        (err) => {
-          console.log('GPS Error:', err.message);
-          setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    }
+    return new Promise<void>((resolve) => {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setPickup({ lat, lng, address: 'Getting address...', name: '📍 Your Location' });
+            try {
+              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+              const addr = res.data.display_name || '';
+              const address = res.data.address || {};
+              const road = address.road || address.pedestrian || address.footway || '';
+              const suburb = address.suburb || address.neighbourhood || address.village || '';
+              const city = address.city || address.town || address.municipality || '';
+              const shortName = road || suburb || city || addr.split(',')[0];
+              setPickup({ lat, lng, address: addr, name: '📍 ' + shortName });
+              setPickupSearch(road || shortName);
+            } catch {
+              setPickup({ lat, lng, address: 'Your Location', name: '📍 Current Location' });
+            }
+            resolve();
+          },
+          (err) => {
+            console.log('GPS Error:', err.message);
+            setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
+            resolve();
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      } else {
+        setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
+        resolve();
+      }
+    });
   };
 
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     try {
       const res = await axios.get('https://photon.komoot.io/api/', {
-        params: {
-          q: query,
-          limit: 10,
-          lat: pickup?.lat,
-          lon: pickup?.lng,
-          reprioritize: 1
-        }
+        params: { q: query, limit: 10, lat: pickup?.lat, lon: pickup?.lng, reprioritize: 1 }
       });
       return res.data.features.map((item: any) => {
         const props = item.properties;
@@ -316,21 +327,113 @@ const RideRequest: React.FC = () => {
     }
   };
 
-  const getSheetClass = () => {
-    switch (step) {
-      case BookingStep.LOCATION: return 'sheet-location';
-      case BookingStep.RIDE_TYPE: return 'sheet-ride-type';
-      case BookingStep.PAYMENT: return 'sheet-payment';
-      case BookingStep.MATCHING: return 'sheet-matching';
-      default: return 'sheet-location';
-    }
-  };
+  if (isInitializing) {
+    return (
+      <div className="loading-screen">
+        <IonSpinner name="crescent" color="warning" />
+        <p>Initializing Maps...</p>
+      </div>
+    );
+  }
 
   return (
-    <IonPage>
-      <IonContent className="ride-request-content">
-        {/* MAP BACKGROUND */}
-        <div className="map-background">
+    <div className="booking-page-wrapper">
+      {/* Header Bar */}
+      <div className="booking-header">
+        <button className="back-btn" onClick={() => history.push('/rider/home')}>
+          <IonIcon icon={arrowBackOutline} /> Back to Home
+        </button>
+        <h1 className="booking-title">Book Your Ride</h1>
+        <div style={{ width: 80 }} /> {/* Spacer for centering */}
+      </div>
+
+      <div className="booking-main-container">
+        {/* Left Side: Inputs & Selection */}
+        <div className="booking-form-section">
+
+          {/* Location Card */}
+          <div className="glass-input-card">
+            <div className="input-row">
+              <div className="input-wrapper">
+                <div className="input-icon-badge">
+                  <IonIcon icon={globeOutline} />
+                </div>
+                <input
+                  className="glass-input"
+                  placeholder="Pickup Location"
+                  value={pickupSearch}
+                  onChange={e => handleSearch(e.target.value, true)}
+                  onFocus={() => setSearchingPickup(true)}
+                />
+              </div>
+              <div className="input-divider" />
+              <div className="input-wrapper">
+                <div className="input-icon-badge">
+                  <IonIcon icon={locationOutline} />
+                </div>
+                <input
+                  className="glass-input"
+                  placeholder="Where to?"
+                  value={destSearch}
+                  onChange={e => handleSearch(e.target.value, false)}
+                  onFocus={() => setSearchingPickup(false)}
+                />
+              </div>
+            </div>
+
+            {searchResults.length > 0 && (
+              <div className="search-results-dropdown">
+                {searchResults.map((r, i) => (
+                  <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
+                    <IonIcon icon={locationOutline} />
+                    <div className="result-text">
+                      <div className="result-name">{r.name || r.address.split(',')[0]}</div>
+                      <div className="result-addr">{r.address}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Vehicle Selection */}
+          <div className="vehicle-selection-grid">
+            {RIDE_OPTIONS.map(opt => {
+              const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : null;
+              return (
+                <div
+                  key={opt.id}
+                  className={`vehicle-card ${selectedRide.id === opt.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedRide(opt)}
+                >
+                  <div className="vehicle-info">
+                    <span className="vehicle-emoji">{opt.emoji}</span>
+                    <div className="vehicle-text">
+                      <span className="vehicle-name">{opt.name}</span>
+                      <span className="vehicle-desc">{opt.description}</span>
+                    </div>
+                  </div>
+                  <div className="vehicle-price">
+                    <span className="price-value">{est ? `UGX ${est.toLocaleString()}` : '...'}</span>
+                    <span className="price-eta">3 mins away</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Confirm Booking Button */}
+          <button
+            className="btn-confirm-booking"
+            disabled={!pickup || !destination || isLoading}
+            onClick={handleBookRide}
+          >
+            {isLoading ? <IonSpinner name="crescent" /> : 'CONFIRM BOOKING'}
+          </button>
+        </div>
+
+        {/* Right Side: Map Visualization */}
+        <div className="booking-map-section">
           <NavigoMap
             userLocation={{lat: pickup?.lat || 0, lng: pickup?.lng || 0}}
             destination={destination}
@@ -339,299 +442,27 @@ const RideRequest: React.FC = () => {
             onMapClick={handleMapClick}
           />
         </div>
+      </div>
 
-        {/* FLOATING BOTTOM SHEET */}
-        <div className={`booking-sheet ${getSheetClass()}`}>
-          <div className="sheet-content">
+      {/* Modals & Toasts */}
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMsg}
+        duration={3000}
+        color="dark"
+        position="top"
+      />
 
-            {step === BookingStep.LOCATION && (
-              <div className="location-step">
-                <h3 style={{color: '#FFFFFF', marginBottom: 16, fontWeight: 600}}>Where to?</h3>
-                <div className="input-group">
-                  <div className="location-field">
-                    <div className="location-dot pickup-dot" />
-                    <input
-                      className="location-input"
-                      placeholder="Your pickup location"
-                      value={pickupSearch}
-                      onChange={e => handleSearch(e.target.value, true)}
-                      onFocus={() => setSearchingPickup(true)}
-                    />
-                  </div>
-                  <div className="location-field">
-                    <div className="location-dot destination-dot" />
-                    <input
-                      className="location-input"
-                      placeholder="Enter destination"
-                      value={destSearch}
-                      onChange={e => handleSearch(e.target.value, false)}
-                      onFocus={() => setSearchingPickup(false)}
-                    />
-                  </div>
-                </div>
-
-                {savedPlaces.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 8 }}>
-                    {savedPlaces.map(p => (
-                      <div
-                        key={p.id}
-                        onClick={() => useSavedPlace(p, searchingPickup)}
-                        style={{
-                          background: 'rgba(255,255,255,0.05)',
-                          padding: '6px 12px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          color: '#fff',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <IonIcon icon={locationOutline} style={{ marginRight: 4, color: '#FF5A1F' }} /> {p.label}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {isSearching && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 12 }}>
-                    <IonSpinner name="crescent" style={{ width: 14, height: 14 }} /> Searching...
-                  </div>
-                )}
-
-                {searchResults.length > 0 && (
-                  <div className="search-results">
-                    {searchResults.map((r, i) => (
-                      <div key={i} className="search-item" onClick={() => selectLocation(r)}>
-                        <IonIcon icon={locationOutline} style={{ color: '#FF5A1F' }} />
-                        <div className="search-label">
-                          <h3>{r.name || r.address.split(',')[0]}</h3>
-                          <p>{r.address.split(',').slice(1, 3).join(',')}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {step === BookingStep.RIDE_TYPE && (
-              <div className="ride-type-step">
-                <h3 style={{color: '#FFFFFF', marginBottom: 16, fontWeight: 600}}>Select Ride</h3>
-                <div className="ride-options-grid">
-                  {RIDE_OPTIONS.map(opt => {
-                    const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : null;
-                    return (
-                      <div
-                        key={opt.id}
-                        className={`ride-card ${selectedRide.id === opt.id ? 'selected' : ''}`}
-                        onClick={() => setSelectedRide(opt)}
-                      >
-                        <div className="ride-icon">{opt.emoji}</div>
-                        <div className="ride-details">
-                          <h4>{opt.name}</h4>
-                          <p>{opt.description}</p>
-                        </div>
-                        <div className="ride-price">
-                          <strong>{est ? `UGX ${est.toLocaleString()}` : '...'}</strong>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{
-                  background: 'rgba(255, 105, 180, 0.1)',
-                  border: womenOnly ? '1px solid #FF69B4' : '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 16,
-                  padding: 14,
-                  marginTop: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 22 }}>👩</span>
-                    <div>
-                      <div style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>Women Preferred</div>
-                      <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Match with female drivers only</div>
-                    </div>
-                  </div>
-                  <div
-                    onClick={() => setWomenOnly(!womenOnly)}
-                    style={{
-                      width: 44, height: 24, borderRadius: 12,
-                      background: womenOnly ? '#FF69B4' : 'rgba(255,255,255,0.2)',
-                      position: 'relative', cursor: 'pointer', transition: '0.3s'
-                    }}
-                  >
-                    <div style={{
-                      width: 18, height: 18, borderRadius: '50%', background: '#fff',
-                      position: 'absolute', top: 3, left: womenOnly ? 23 : 3, transition: '0.3s'
-                    }} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === BookingStep.PAYMENT && fare && (
-              <div className="payment-step">
-                <h3 style={{color: '#FFFFFF', marginBottom: 16, fontWeight: 600}}>Fare Review</h3>
-                <div className="fare-breakdown">
-                  <div className="fare-row">
-                    <span>Base Fare</span>
-                    <span>UGX {fare.baseFare.toLocaleString()}</span>
-                  </div>
-                  <div className="fare-row">
-                    <span>Distance ({fare.distance} km)</span>
-                    <span>UGX {fare.distanceFare.toLocaleString()}</span>
-                  </div>
-                  <div className="fare-row">
-                    <span>Time (~{fare.duration} min)</span>
-                    <span>UGX {fare.timeFare.toLocaleString()}</span>
-                  </div>
-                  {fare.surgeFare > 0 && (
-                    <div className="fare-row" style={{ color: '#E85D75' }}>
-                      <span>Peak Pricing</span>
-                      <span>UGX {fare.surgeFare.toLocaleString()}</span>
-                    </div>
-                  )}
-                  {discount > 0 && (
-                    <div className="fare-row" style={{ color: '#2D6A4F' }}>
-                      <span>Discount</span>
-                      <span>-UGX {discount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="fare-row total">
-                    <strong>Total</strong>
-                    <strong>{fare.formattedTotal}</strong>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <input
-                    className="location-input"
-                    placeholder="Promo code"
-                    value={promoCode}
-                    onChange={e => setPromoCode(e.target.value)}
-                    style={{ padding: 0 }}
-                  />
-                  <button
-                    className="btn-secondary"
-                    onClick={applyPromo}
-                    style={{ padding: '6px 12px', fontSize: 12 }}
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {step === BookingStep.MATCHING && (
-              <div className="matching-step">
-                {!driverFound ? (
-                  <div className="matching-container">
-                    <div className="matching-visual">
-                      <div className="radar-circle radar-1" />
-                      <div className="radar-circle radar-2" />
-                      <div className="radar-circle radar-3" />
-                      <div className="matching-car-icon">
-                        <IonIcon icon={carOutline} />
-                      </div>
-                    </div>
-                    <h3 style={{color: '#FFFFFF', marginBottom: 8, fontWeight: 600}}>Finding Your Driver</h3>
-                    {womenOnly && <p style={{color: '#FF69B4', fontSize: 13, marginBottom: 16}}>👩 Female drivers only</p>}
-                    <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 12 }}>
-                      <div style={{ width: `${matchingProgress}%`, height: '100%', background: '#FF5A1F', transition: 'width 0.3s linear' }} />
-                    </div>
-                    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
-                      {matchingProgress < 30 ? 'Scanning area...' : matchingProgress < 60 ? 'Requesting drivers...' : matchingProgress < 90 ? 'Driver found!' : 'Connecting...'}
-                    </p>
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-                      <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 48, color: '#2D6A4F' }} />
-                    </div>
-                    <h3 style={{color: '#FFFFFF', marginBottom: 20, fontWeight: 600}}>Driver Found!</h3>
-                    <div className="driver-card">
-                      <IonAvatar className="driver-avatar">
-                        <img
-                          src={`https://ui-avatars.com/api/?name=${matchedDriver?.name || 'Driver'}&background=FF5A1F&color=fff&size=128`}
-                          alt="Driver"
-                        />
-                      </IonAvatar>
-                      <div className="driver-meta">
-                        <h4>{matchedDriver?.name || 'Driver'}</h4>
-                        <p><IonIcon icon={locationOutline} style={{ fontSize: 12, marginRight: 4 }} /> {matchedDriver?.vehicle || 'Toyota Prius'} • {matchedDriver?.plate || 'UBA 123A'}</p>
-                        <div className="eta-badge">Arriving in 3 minutes</div>
-                      </div>
-                    </div>
-                    <BodaSafeScore
-                      badges={['helmet','sanitized','idverified']}
-                      rating={matchedDriver?.rating || 4.8}
-                      totalRides={156}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {step !== BookingStep.MATCHING && (
-            <div className="sheet-footer">
-              {step > 0 && (
-                <button className="btn-secondary" onClick={() => setStep(step - 1)}>
-                  Back
-                </button>
-              )}
-              <button
-                className="btn-primary"
-                disabled={step === 0 && (!pickup || !destination)}
-                onClick={() => {
-                  if (step === BookingStep.PAYMENT) handleBookRide();
-                  else setStep(step + 1);
-                }}
-              >
-                {step === 0 ? 'Choose Ride' : step === 1 ? 'Review Payment' : isGuest ? 'Sign In to Book' : `Confirm${womenOnly ? ' 👩' : ''} & Request`}
-              </button>
-            </div>
-          )}
+      <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
+        <div className="login-prompt-modal">
+          <h2>Ready to Ride?</h2>
+          <p>Sign in to book rides and earn rewards.</p>
+          <button className="btn-primary" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</button>
+          <button className="btn-secondary" onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</button>
         </div>
-
-        <IonToast
-          isOpen={showToast}
-          onDidDismiss={() => setShowToast(false)}
-          message={toastMsg}
-          duration={3000}
-          color="dark"
-        />
-
-        <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
-          <div style={{
-            background: '#0A0E17',
-            color: '#fff',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 30,
-            textAlign: 'center',
-            gap: 20
-          }}>
-            <h2 style={{ fontWeight: 700 }}>Ready to Ride?</h2>
-            <p style={{ color: 'rgba(255,255,255,0.6)' }}>Sign in to book rides and earn rewards.</p>
-            <button className="btn-primary" style={{ width: '100%', maxWidth: 300 }} onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>
-              Sign In
-            </button>
-            <button className="btn-secondary" style={{ width: '100%', maxWidth: 300 }} onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>
-              Create Account
-            </button>
-          </div>
-        </IonModal>
-      </IonContent>
-    </IonPage>
+      </IonModal>
+    </div>
   );
 };
 
