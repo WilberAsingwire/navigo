@@ -41,6 +41,7 @@
 .reg-tagline {
   color: #94A3B8;
   font-size: 0.875rem;
+  font-weight: 500;
 }
 
 /* Form Styling */
@@ -276,8 +277,8 @@
 .auth-footer {
   text-align: center;
   margin-top: 2rem;
-  color: #94A3B8;
-  font-size: 0.9rem;
+  color: #CBD5E1;
+  font-size: 0.85rem;
 }
 
 .auth-footer a {
