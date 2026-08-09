@@ -25,7 +25,7 @@ body.light {
 
 /* --- DARK THEME --- */
 body.dark {
-  --app-background: #080C14;
+  --app-background: #090D16;
   --app-text: #FFFFFF;
   --app-card-bg: #1A1A1A;
   --app-secondary-text: #D1D5DB;
@@ -35,6 +35,16 @@ body.dark {
   /* Ionic Header Overrides for Dark Mode */
   --ion-toolbar-background: #1A1A1A;
   --ion-toolbar-color: #FFFFFF;
+}
+
+/* Root Global Styles - Eliminate White Margins */
+html, body {
+  background-color: #090D16 !important;
+  color: #ffffff;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  width: 100%;
 }
 
 /* Global Header Fix - Using Variables */
