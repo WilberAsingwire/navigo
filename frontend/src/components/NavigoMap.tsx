@@ -165,14 +165,17 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           )}
         </div>
       )}
-      <div ref={mapRef} style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}>
+      <div
+        key={mapStyle}
+        ref={mapRef}
+        style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}
+      >
         {loading ? (
           <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14' }}>
             <IonSpinner name="crescent" color="warning" />
           </div>
         ) : (
           <MapContainer
-            key={mapStyle}
             center={center}
             zoom={15}
             style={{ height: '100%', width: '100%' }}
