@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
-  IonIcon, IonSpinner, IonToast, IonAvatar
+  IonIcon, IonSpinner, IonToast, IonAvatar, IonModal
 } from '@ionic/react';
 import {
   locationOutline, carOutline, checkmarkCircleOutline, arrowBackOutline,
