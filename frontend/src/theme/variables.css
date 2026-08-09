@@ -47,6 +47,11 @@ html, body {
   width: 100%;
 }
 
+ion-page {
+  --background: #090D16 !important;
+  background: #090D16 !important;
+}
+
 /* Global Header Fix - Using Variables */
 ion-header,
 ion-toolbar {
