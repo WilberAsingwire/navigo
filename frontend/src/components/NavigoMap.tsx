@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline, useMapEvents } from 'react-leaflet';
 import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -79,7 +79,7 @@ const LocateButton: React.FC = () => {
 const NavigoMap: React.FC<MapProps> = ({
   userLocation, destination, driverLocation, driverType = 'car',
   height = '350px', interactive = true, showRoute = true,
-  showControls = true, followUser = true, onDistanceChange
+  showControls = true, followUser = true, onDistanceChange, onMapClick
 }) => {
   const [loading, setLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<'standard' | 'dark' | 'satellite'>('dark');
