@@ -90,17 +90,9 @@ const NavigoMap: React.FC<MapProps> = ({
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
   useEffect(() => {
-    if (loading) return;
-
-    // Prevent Leaflet from initializing multiple times on the same container
-    // when React performs hot-reloads or rapid re-renders.
-    const container = mapRef.current;
-    if (container && container._leaflet_id) {
-      // Map is already initialized. We can't easily "un-initialize" it
-      // without destroying the map object, but we can ensure we don't
-      // try to create a new MapContainer on a container that already has one.
-    }
-  }, [loading]);
+    const t = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
     standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
