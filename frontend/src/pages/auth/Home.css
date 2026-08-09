@@ -256,10 +256,11 @@
 
 .ride-selection-pills {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  padding: 8px 4px;
+  padding: 8px 20px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;
@@ -709,7 +710,8 @@
   .hero-section {
     grid-template-columns: 1fr;
     text-align: center;
-    padding-top: 6rem;
+    padding-top: 8rem;
+    padding-bottom: 6rem;
   }
   .hero-desc {
     text-align: left;
