@@ -1,0 +1,264 @@
+/* LoyaltyCard.css - Enterprise Design System Implementation */
+
+.loyalty-card {
+  background: #121824;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.loyalty-content {
+  padding: 1.5rem;
+}
+
+.loyalty-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tier-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tier-emoji {
+  font-size: 1.5rem;
+}
+
+.tier-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.tier-name {
+  color: #FFFFFF;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tier-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.points-display {
+  text-align: right;
+}
+
+.points-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.points-label {
+  color: #94A3B8;
+  font-size: 0.75rem;
+  margin-left: 4px;
+}
+
+.loyalty-progress-container {
+  margin-bottom: 1.25rem;
+}
+
+.loyalty-progress-bar {
+  height: 6px !important;
+  border-radius: 3px !important;
+  margin-bottom: 6px !important;
+  --background: #1A2232 !important;
+  --progress-background: #FF5A1F !important;
+}
+
+.loyalty-progress-text {
+  color: #94A3B8;
+  font-size: 0.75rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* Tabs */
+.loyalty-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1.25rem;
+  background: rgba(15, 23, 42, 0.9);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.8);
+}
+
+.loyalty-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.loyalty-tab-inactive {
+  background: transparent;
+  color: #64748B;
+}
+
+.loyalty-tab-active {
+  background: #FF5A1F;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3);
+}
+
+/* Reward Tiles */
+.rewards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.reward-tile {
+  padding: 1rem;
+  border-radius: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.reward-tile-available {
+  background: #1A2232;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  color: #FFFFFF;
+}
+
+.reward-tile-available:hover {
+  border-color: rgba(255, 90, 31, 0.5);
+  transform: translateY(-2px);
+}
+
+.reward-tile-locked {
+  background: rgba(18, 24, 36, 0.6);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  color: #64748B;
+  opacity: 0.6;
+}
+
+.reward-emoji {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+
+.reward-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.reward-action {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.action-redeem {
+  color: #FF5A1F;
+}
+
+.action-locked {
+  color: #64748B;
+}
+
+/* Challenges */
+.challenges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.challenge-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1A2232;
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.challenge-emoji {
+  font-size: 1.25rem;
+}
+
+.challenge-name {
+  color: #FFFFFF;
+  font-size: 0.8125rem;
+  flex: 1;
+  margin: 0;
+}
+
+.challenge-points {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Refer */
+.refer-container {
+  text-align: center;
+}
+
+.refer-text {
+  color: #CBD5E1;
+  font-size: 0.8125rem;
+  margin-bottom: 1rem;
+}
+
+.refer-code-box {
+  background: #1A2232;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.refer-code {
+  color: #FF5A1F;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.btn-copy-code {
+  background: #FF5A1F;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-code:hover {
+  background: #FF4500;
+}
