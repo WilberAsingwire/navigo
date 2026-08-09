@@ -8,9 +8,18 @@
   --shadow-glow: 0 0 20px rgba(255, 90, 31, 0.4);
 }
 
+.home-content {
+  --background: var(--bg-dark);
+  background-color: var(--bg-dark);
+  color: var(--text-bright);
+  font-family: 'Inter', 'DM Sans', sans-serif;
+}
+
 .main-wrapper {
   padding-top: calc(4rem + 2vh);
   padding-bottom: 7rem;
+  background-color: var(--bg-dark);
+  min-height: 100vh;
 }
 
 /* --- NAVBAR --- */
