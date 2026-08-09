@@ -79,7 +79,7 @@ const Login: React.FC = () => {
                     <span>{countryCode}</span>
                   </div>
                   <input
-                    className="input-field"
+                    className="input-field phone-input"
                     type="text"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}

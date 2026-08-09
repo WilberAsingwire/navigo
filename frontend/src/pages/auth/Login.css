@@ -18,7 +18,7 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   width: 100%;
   max-width: 480px;
-  padding: 2.5rem;
+  padding: 2.5rem 2.5rem 3rem 2.5rem;
   position: relative;
   backdrop-filter: blur(10px);
 }
@@ -39,7 +39,7 @@
 }
 
 .reg-tagline {
-  color: #94A3B8;
+  color: #CBD5E1;
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -103,7 +103,7 @@
   gap: 8px;
   background: #1E293B;
   color: #E2E8F0;
-  padding: 0 12px;
+  padding: 0 14px;
   height: 46px;
   border-right: 1px solid rgba(51, 65, 85, 0.8);
   border-radius: 12px 0 0 12px;
@@ -165,8 +165,9 @@
 }
 
 .remember-text {
-  color: #94A3B8;
+  color: #CBD5E1;
   font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .forgot-link {
@@ -228,7 +229,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: 8px 0 1.5rem;
+  margin: 12px 0 1.5rem;
 }
 
 .ussd-action:hover {
