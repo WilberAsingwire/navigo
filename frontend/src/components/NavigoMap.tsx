@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline, useMapEvents } from 'react-leaflet';
-import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -45,49 +44,6 @@ interface MapProps {
   onMapClick?: (latlng: [number, number]) => void;
 }
 
-const MapCleanup: React.FC = () => {
-  const map = useMap();
-  useEffect(() => {
-    return () => {
-      if (map) {
-        map.remove();
-      }
-    };
-  }, [map]);
-  return null;
-};
-
-const MapController: React.FC<{ center: [number, number]; follow: boolean }> = ({ center, follow }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (follow) map.flyTo(center, 16, { animate: true, duration: 1.5 });
-  }, [center, follow, map]);
-  return null;
-};
-
-const MapClickHandler: React.FC<{ onMapClick?: (latlng: [number, number]) => void }> = ({ onMapClick }) => {
-  useMapEvents({
-    click(e) {
-      if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
-    },
-  });
-  return null;
-};
-
-const LocateButton: React.FC = () => {
-  const map = useMap();
-  return (
-    <div className="leaflet-top leaflet-right" style={{ marginTop: 80 }}>
-      <div className="leaflet-control leaflet-bar">
-        <a onClick={() => map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true })}
-          style={{ cursor: 'pointer', padding: '8px 12px', display: 'block', background: '#FF6B35', color: '#fff', fontWeight: 'bold', fontSize: 12, border: 'none', textDecoration: 'none', borderRadius: 4 }}>
-          📍 My Location
-        </a>
-      </div>
-    </div>
-  );
-};
-
 const NavigoMap: React.FC<MapProps> = React.memo(({
   userLocation, destination, driverLocation, driverType = 'car',
   height = '350px', interactive = true, showRoute = true,
@@ -95,16 +51,14 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 }) => {
   const [loading, setLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<'standard' | 'dark' | 'satellite'>('dark');
-  const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<{ [key: string]: L.Marker | L.Circle | L.Polyline }>({});
+
+  const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
     standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
@@ -113,47 +67,128 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   };
 
   useEffect(() => {
-    if (!userLocation || !destination || !showRoute) { setRoutePoints([]); return; }
-    const fetchRoute = async () => {
-      try {
-        const from = `${userLocation.lng},${userLocation.lat}`;
-        const to = `${destination.lng},${destination.lat}`;
-        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`);
-        const data = await res.json();
-        if (data.routes?.length > 0) {
-          const route = data.routes[0];
-          setRoutePoints(route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]));
-          const d = Math.round(route.distance / 100) / 10;
-          const t = Math.round(route.duration / 60);
-          setRouteDistance(d); setRouteDuration(t);
-          if (onDistanceChange) onDistanceChange(d, t);
-        }
-      } catch {
-        setRoutePoints([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]]);
+    const t = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Main Map Lifecycle
+  useEffect(() => {
+    if (!mapContainerRef.current || loading) return;
+
+    // Ensure any existing instance is destroyed before initializing a new one
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+    }
+
+    // Initialize Vanilla Leaflet Map
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: true,
+      dragging: interactive,
+      scrollWheelZoom: interactive,
+      touchZoom: interactive,
+      attributionControl: true,
+    }).setView(center, 15);
+
+    mapInstanceRef.current = map;
+
+    // Add Tile Layer
+    L.tileLayer(tileUrls[mapStyle].url, {
+      attribution: tileUrls[mapStyle].attribution,
+    }).addTo(map);
+
+    // Handle Map Clicks
+    map.on('click', (e) => {
+      if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
+    });
+
+    // Custom Locate Button
+    const locateControl = L.control({ position: 'topright' });
+    locateControl.onAdd = function() {
+      const btn = L.DomUtil.create('a', 'leaflet-control-locate');
+      btn.innerHTML = '📍 My Location';
+      btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#FF6B35; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
+      btn.onclick = () => {
+        map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+      };
+      return btn;
+    };
+    locateControl.addTo(map);
+
+    // THE FINAL FIX: Explicit cleanup on unmount
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
       }
     };
-    fetchRoute();
-  }, [userLocation?.lat, userLocation?.lng, destination?.lat, destination?.lng, showRoute]);
+  }, [loading, mapStyle, interactive]); // Re-init on style change or loading state
 
+  // Update Map View / Follow User
   useEffect(() => {
-    if (!userLocation || !driverLocation || !onDistanceChange) return;
-    const fetchDriverDist = async () => {
-      try {
-        const from = `${driverLocation.lng},${driverLocation.lat}`;
-        const to = `${userLocation.lng},${userLocation.lat}`;
-        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`);
-        const data = await res.json();
-        if (data.routes?.length > 0) {
-          const route = data.routes[0];
-          const d = Math.round(route.distance / 100) / 10;
-          const t = Math.round(route.duration / 60);
-          // We use a separate mechanism or the same onDistanceChange to report driver arrival
-          onDistanceChange(d, t);
+    const map = mapInstanceRef.current;
+    if (map && followUser && userLocation) {
+      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
+    }
+  }, [userLocation, followUser]);
+
+  // Manage Markers and Routing
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear old markers/layers
+    Object.values(markersRef.current).forEach(layer => map.removeLayer(layer));
+    markersRef.current = {};
+
+    // User Marker
+    if (userLocation) {
+      const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: pickIcon, draggable: interactive }).addTo(map).bindPopup('📍 You');
+      const userCircle = L.circle([userLocation.lat, userLocation.lng], { radius: 8, color: '#2D6A4F', fillOpacity: 0.1 }).addTo(map);
+      markersRef.current['user'] = userMarker;
+      markersRef.current['userCircle'] = userCircle;
+    }
+
+    // Destination Marker
+    if (destination) {
+      const destMarker = L.marker([destination.lat, destination.lng], { icon: destIcon, draggable: interactive }).addTo(map).bindPopup('🎯 Destination');
+      markersRef.current['dest'] = destMarker;
+    }
+
+    // Driver Marker
+    if (driverLocation) {
+      const dIcon = driverType === 'bike' ? bikeIcon : driverIcon;
+      const driverMarker = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType === 'bike' ? '🏍️' : '🚗'} Driver`);
+      markersRef.current['driver'] = driverMarker;
+    }
+
+    // Routing
+    if (showRoute && userLocation && destination) {
+      const fetchRoute = async () => {
+        try {
+          const from = `${userLocation.lng},${userLocation.lat}`;
+          const to = `${destination.lng},${destination.lat}`;
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`);
+          const data = await res.json();
+          if (data.routes?.length > 0) {
+            const route = data.routes[0];
+            const points = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
+            const polyline = L.polyline(points, { color: '#FF6B35', weight: 4, opacity: 0.7 }).addTo(map);
+            markersRef.current['route'] = polyline;
+
+            const d = Math.round(route.distance / 100) / 10;
+            const t = Math.round(route.duration / 60);
+            setRouteDistance(d); setRouteDuration(t);
+            if (onDistanceChange) onDistanceChange(d, t);
+          }
+        } catch {
+          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 4, opacity: 0.7 }).addTo(map);
+          markersRef.current['route'] = fallbackLine;
         }
-      } catch { }
-    };
-    fetchDriverDist();
-  }, [driverLocation?.lat, driverLocation?.lng, userLocation?.lat, userLocation?.lng, onDistanceChange]);
+      };
+      fetchRoute();
+    }
+  }, [userLocation, destination, driverLocation, driverType, showRoute, interactive]);
 
   const openInGoogleMaps = () => {
     if (userLocation && destination) window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination.lat},${destination.lng}`, '_blank');
@@ -178,35 +213,13 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
         </div>
       )}
       <div
-        key={mapStyle}
-        ref={mapRef}
+        ref={mapContainerRef}
         style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}
       >
-        {loading ? (
-          <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14' }}>
+        {loading && (
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14' }}>
             <IonSpinner name="crescent" color="warning" />
           </div>
-        ) : (
-          <MapContainer
-            center={center}
-            zoom={15}
-            style={{ height: '100%', width: '100%' }}
-            zoomControl={true}
-            dragging={interactive}
-            scrollWheelZoom={interactive}
-            touchZoom={interactive}
-            attributionControl={true}
-          >
-            <TileLayer url={tileUrls[mapStyle].url} attribution={tileUrls[mapStyle].attribution} />
-            <MapCleanup />
-            <MapController center={center} follow={followUser} />
-            <MapClickHandler onMapClick={onMapClick} />
-            <LocateButton />
-            {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon} draggable={interactive}><Popup>📍 You</Popup></Marker><Circle center={[userLocation.lat, userLocation.lng]} radius={8} color="#2D6A4F" fillOpacity={0.1} /></>}
-            {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon} draggable={interactive}><Popup>🎯 Destination</Popup></Marker>}
-            {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={driverType === 'bike' ? bikeIcon : driverIcon}><Popup>{driverType === 'bike' ? '🏍️' : '🚗'} Driver</Popup></Marker>}
-            {routePoints.length > 1 && <Polyline positions={routePoints} color="#FF6B35" weight={4} opacity={0.7} />}
-          </MapContainer>
         )}
       </div>
     </div>
