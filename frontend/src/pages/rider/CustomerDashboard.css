@@ -1,6 +1,7 @@
 /* CustomerDashboard.css - Enterprise Design System Implementation */
 
 .rider-page-container {
+  --background: #090D16;
   min-height: 100vh;
   width: 100%;
   background: #090D16;
