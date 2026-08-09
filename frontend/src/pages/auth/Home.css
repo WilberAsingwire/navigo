@@ -8,25 +8,25 @@
   --shadow-glow: 0 0 20px rgba(255, 90, 31, 0.4);
 }
 
-.home-content {
-  --background: var(--bg-dark);
-  background-color: var(--bg-dark);
-  color: var(--text-bright);
-  font-family: 'Inter', 'DM Sans', sans-serif;
-  padding-bottom: 112px;
+.main-wrapper {
+  padding-top: calc(4rem + 2vh);
+  padding-bottom: 7rem;
 }
 
 /* --- NAVBAR --- */
 .home-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
+  height: 4rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
+  padding: 0 1.5rem;
   backdrop-filter: blur(12px);
-  background: rgba(11, 15, 23, 0.7);
+  background: rgba(9, 13, 22, 0.8);
   border-bottom: 1px solid var(--border-glass);
 }
 
@@ -130,12 +130,12 @@
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
   line-height: 1.1;
   font-weight: 800;
   letter-spacing: -2px;
   margin-bottom: 1.5rem;
-  color: #FFFFFF;
+  color: #F1F5F9;
 }
 
 .hero-title .highlight {
@@ -655,8 +655,10 @@
   display: flex;
   justify-content: center;
   padding: 1.5rem;
-  z-index: 50;
+  z-index: 40;
   pointer-events: none;
+  width: 100%;
+  max-width: 90vw;
 }
 
 .ussd-pill {
