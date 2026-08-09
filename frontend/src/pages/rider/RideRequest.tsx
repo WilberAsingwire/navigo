@@ -291,6 +291,7 @@ const RideRequest: React.FC = () => {
       return;
     }
 
+    setIsLoading(true);
     try {
       const res = await axios.post(`${BASE_URL}/api/rides/request`, {
         pickup,
@@ -324,6 +325,8 @@ const RideRequest: React.FC = () => {
     } catch (e) {
       setToastMsg('Failed to request ride. Please try again.');
       setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
