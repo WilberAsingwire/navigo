@@ -7,7 +7,7 @@ import {
   peopleOutline, giftOutline, arrowForwardOutline, callOutline,
   cashOutline, lockClosedOutline, heartOutline, speedometerOutline,
   checkmarkCircleOutline, locationOutline, moonOutline, sunnyOutline,
-  flashOutline
+  flashOutline, menuOutline, closeOutline
 } from 'ionicons/icons';
 import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +16,7 @@ const Home: React.FC = () => {
   const history = useHistory();
   const { theme, toggleTheme } = useTheme();
   const [activeRide, setActiveRide] = useState('boda');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 const rideOptions = [
     {
@@ -86,13 +87,19 @@ const rideOptions = [
         {/* STICKY NAVBAR */}
         <nav className="home-nav">
           <div className="nav-logo">🚀 NAVIGO</div>
-          <div className="nav-links">
-            <div className="nav-link-text" onClick={() => history.push('/explore')}>Explore</div>
-            <div className="nav-link-text" onClick={() => history.push('/login')}>Sign In</div>
-            <div className="theme-toggle" onClick={toggleTheme}>
-              <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
+          <div className="nav-right">
+            <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+              <div className="nav-link-text" onClick={() => { history.push('/explore'); setIsMenuOpen(false); }}>Explore</div>
+              <div className="nav-link-text" onClick={() => { history.push('/login'); setIsMenuOpen(false); }}>Sign In</div>
+              <div className="theme-toggle" onClick={toggleTheme}>
+                <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
+              </div>
+              <IonButton size="small" className="nav-signup-btn" onClick={() => { history.push('/register'); setIsMenuOpen(false); }}>Sign Up</IonButton>
             </div>
-            <IonButton size="small" className="nav-signup-btn" onClick={() => history.push('/register')}>Sign Up</IonButton>
+
+            <div className="mobile-menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <IonIcon icon={isMenuOpen ? closeOutline : menuOutline} />
+            </div>
           </div>
         </nav>
 
@@ -245,26 +252,34 @@ const rideOptions = [
           <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
 
           <div className="rewards-grid">
-            <div className="tier-card">
-              <span className="tier-icon">🥉</span>
+            <div className="tier-card bronze">
+              <div className="tier-icon-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
+              </div>
               <h3>Bronze</h3>
               <p>0 - 500 pts</p>
               <div className="tier-benefit">Basic Rewards</div>
             </div>
-            <div className="tier-card">
-              <span className="tier-icon">🥈</span>
+            <div className="tier-card silver">
+              <div className="tier-icon-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
+              </div>
               <h3>Silver</h3>
               <p>500 - 1k pts</p>
               <div className="tier-benefit">5% Discount</div>
             </div>
-            <div className="tier-card">
-              <span className="tier-icon">🥇</span>
+            <div className="tier-card gold">
+              <div className="tier-icon-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
+              </div>
               <h3>Gold</h3>
               <p>1k - 2.5k pts</p>
               <div className="tier-benefit">Priority Booking</div>
             </div>
-            <div className="tier-card featured-tier">
-              <span className="tier-icon">💎</span>
+            <div className="tier-card platinum">
+              <div className="tier-icon-container">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
+              </div>
               <h3>Platinum</h3>
               <p>2.5k+ pts</p>
               <div className="tier-benefit">VIP Experience</div>
@@ -308,7 +323,7 @@ const rideOptions = [
         <div className="sticky-bottom-bar">
           <div className="ussd-pill" onClick={() => history.push('/ussd')}>
             <IonIcon icon={phonePortraitOutline} />
-            <span>Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
+            <span className="ussd-text">Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
           </div>
         </div>
 
