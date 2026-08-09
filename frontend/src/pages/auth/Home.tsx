@@ -332,35 +332,4 @@ const rideOptions = [
   );
 };
 
-export default Home; onClick={() => history.push('/register')}>Become a Driver</span>
-              <span className="footer-link" onClick={() => history.push('/driver/earnings')}>Earnings Calculator</span>
-            </div>
-            <div className="footer-col">
-              <h4>Company</h4>
-              <span className="footer-link">About Us</span>
-              <span className="footer-link" onClick={() => history.push('/rider/support')}>Support</span>
-              <span className="footer-link">Privacy Policy</span>
-              <span className="footer-link">Terms of Service</span>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>© 2026 NAVIGO Technologies Uganda. All rights reserved.</p>
-            <p>🇺🇬 Proudly Ugandan • Made in Kampala</p>
-          </div>
-        </footer>
-
-        {/* STICKY BOTTOM USSD BAR */}
-        <div className="sticky-bottom-bar">
-          <div className="ussd-pill" onClick={() => history.push('/ussd')}>
-            <IonIcon icon={phonePortraitOutline} />
-            <span className="ussd-text">Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
-          </div>
-        </div>
-
-      </IonContent>
-    </IonPage>
-  );
-};
-
 export default Home;
-// Trigger build
