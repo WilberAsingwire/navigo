@@ -90,7 +90,7 @@
   transform: translateX(-50%);
   width: 100%;
   height: 600px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(255, 90, 31, 0.15) 0%, rgba(11, 15, 23, 0) 100%);
+  background: radial-gradient(100% 50% at 50% 0%, rgba(255, 90, 31, 0.15) 0%, rgba(11, 15, 23, 0) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -120,7 +120,7 @@
   font-weight: 800;
   letter-spacing: -2px;
   margin-bottom: 1.5rem;
-  color: var(--text-bright);
+  color: #FFFFFF;
 }
 
 .hero-title .highlight {
@@ -244,7 +244,12 @@
   gap: 8px;
   margin-bottom: 1.5rem;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding: 8px 4px;
+  scrollbar-width: none;
+}
+
+.ride-selection-pills::-webkit-scrollbar {
+  display: none;
 }
 
 .ride-pill {
@@ -598,7 +603,7 @@
 
 .ussd-pill {
   pointer-events: auto;
-  background: rgba(18, 24, 38, 0.9);
+  background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 90, 31, 0.3);
   color: #FB923C;
