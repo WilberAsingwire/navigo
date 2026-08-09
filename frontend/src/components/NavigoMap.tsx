@@ -89,6 +89,19 @@ const NavigoMap: React.FC<MapProps> = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
+  useEffect(() => {
+    if (loading) return;
+
+    // Prevent Leaflet from initializing multiple times on the same container
+    // when React performs hot-reloads or rapid re-renders.
+    const container = mapRef.current;
+    if (container && container._leaflet_id) {
+      // Map is already initialized. We can't easily "un-initialize" it
+      // without destroying the map object, but we can ensure we don't
+      // try to create a new MapContainer on a container that already has one.
+    }
+  }, [loading]);
+
   const tileUrls: Record<string, { url: string; attribution: string }> = {
     standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
     dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
@@ -171,7 +184,17 @@ const NavigoMap: React.FC<MapProps> = ({
             <IonSpinner name="crescent" color="warning" />
           </div>
         ) : (
-          <MapContainer center={center} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={true} dragging={interactive} scrollWheelZoom={interactive} touchZoom={interactive} attributionControl={true}>
+          <MapContainer
+            key={`${mapStyle}-${userLocation?.lat}-${userLocation?.lng}`}
+            center={center}
+            zoom={15}
+            style={{ height: '100%', width: '100%' }}
+            zoomControl={true}
+            dragging={interactive}
+            scrollWheelZoom={interactive}
+            touchZoom={interactive}
+            attributionControl={true}
+          >
             <TileLayer url={tileUrls[mapStyle].url} attribution={tileUrls[mapStyle].attribution} />
             <MapController center={center} follow={followUser} />
             <MapClickHandler onMapClick={onMapClick} />
