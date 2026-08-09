@@ -32,17 +32,19 @@ const RiderDashboard: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14'}}>
-          <div className="rider-header">
-            <div>
-              <h2 className="welcome-text">Hello, {userData.name.split(' ')[0]} 👋</h2>
-              <p className="welcome-subtitle">Ready for your next ride?</p>
+          <div style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
+            <div className="rider-header">
+              <div>
+                <h2 className="welcome-text">Hello, {userData.name.split(' ')[0]} 👋</h2>
+                <p className="welcome-subtitle">Ready for your next ride?</p>
+              </div>
+              <IonAvatar
+                className="profile-avatar"
+                onClick={() => history.push('/rider/profile')}
+              >
+                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Rider')}&background=FF6B35&color=fff&size=64`} alt="profile" />
+              </IonAvatar>
             </div>
-            <IonAvatar
-              className="profile-avatar"
-              onClick={() => history.push('/rider/profile')}
-            >
-              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Rider')}&background=FF6B35&color=fff&size=64`} alt="profile" />
-            </IonAvatar>
           </div>
         </IonToolbar>
       </IonHeader>

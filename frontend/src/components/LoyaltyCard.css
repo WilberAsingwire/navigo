@@ -153,7 +153,7 @@
 .reward-tile-locked {
   background: rgba(18, 24, 36, 0.8);
   border: 1px solid rgba(30, 41, 59, 0.8);
-  color: #64748B;
+  color: #CBD5E1;
   opacity: 1;
 }
 
@@ -182,11 +182,16 @@
 .reward-name-locked {
   color: #CBD5E1;
   font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 4px;
 }
 
 .action-locked {
   color: #FB923C;
   font-weight: 700;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Challenges */
