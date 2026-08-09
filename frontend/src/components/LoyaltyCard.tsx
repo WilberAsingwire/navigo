@@ -105,9 +105,13 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({ points, tier, referralCode = 
                 >
                   <span className="reward-emoji">{reward.emoji}</span>
                   <p className={`reward-name ${canAfford ? '' : 'reward-name-locked'}`}>{reward.name}</p>
-                  <span className={`reward-action ${canAfford ? 'action-redeem' : 'action-locked'}`}>
-                    {canAfford ? 'Redeem' : `${reward.points} pts`}
-                  </span>
+                  {canAfford ? (
+                    <span className="reward-action action-redeem">Redeem</span>
+                  ) : (
+                    <span className="reward-action action-locked">
+                      🔒 {reward.points} pts
+                    </span>
+                  )}
                 </div>
               );
             })}
