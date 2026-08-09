@@ -45,6 +45,18 @@ interface MapProps {
   onMapClick?: (latlng: [number, number]) => void;
 }
 
+const MapCleanup: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    return () => {
+      if (map) {
+        map.remove();
+      }
+    };
+  }, [map]);
+  return null;
+};
+
 const MapController: React.FC<{ center: [number, number]; follow: boolean }> = ({ center, follow }) => {
   const map = useMap();
   useEffect(() => {
@@ -166,6 +178,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
         </div>
       )}
       <div
+        key={mapStyle}
         ref={mapRef}
         style={{ height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}
       >
@@ -175,7 +188,6 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           </div>
         ) : (
           <MapContainer
-            key={mapStyle}
             center={center}
             zoom={15}
             style={{ height: '100%', width: '100%' }}
@@ -186,6 +198,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             attributionControl={true}
           >
             <TileLayer url={tileUrls[mapStyle].url} attribution={tileUrls[mapStyle].attribution} />
+            <MapCleanup />
             <MapController center={center} follow={followUser} />
             <MapClickHandler onMapClick={onMapClick} />
             <LocateButton />
