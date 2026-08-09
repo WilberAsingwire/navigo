@@ -161,14 +161,13 @@ const Login: React.FC = () => {
             <div className="auth-footer">
               <p>Don't have an account? <Link to="/register">Create Account</Link></p>
             </div>
-          </div>
 
-          {/* Guest Mode */}
-          <div className="guest-section">
-            <button className="btn-guest" onClick={handleGuest}>
-              Continue as Guest <IonIcon icon={arrowForwardOutline} slot="end" />
-            </button>
-            <span className="guest-note">Browse fares & routes without an account</span>
+            <div className="divider">Just browsing?</div>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <button className="guest-link" onClick={handleGuest}>
+                Continue as Guest <IonIcon icon={arrowForwardOutline} slot="end" />
+              </button>
+            </div>
           </div>
 
           <IonToast isOpen={!!error} onDidDismiss={() => setError('')} message={error} duration={4000} color="danger" position="top" />

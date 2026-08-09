@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at top, rgba(255, 90, 31, 0.15) 0%, #0A0E17 50%, #0A0E17 100%);
+  background: #090D16;
+  background-image: radial-gradient(100% 50% at 50% 0%, rgba(255, 90, 31, 0.12) 0%, rgba(9, 13, 22, 0) 100%);
   padding: 2rem 1rem;
   font-family: 'Inter', 'DM Sans', sans-serif;
 }
@@ -57,9 +58,11 @@
 
 .input-label {
   color: #E2E8F0;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   margin-left: 4px;
+  text-transform: uppercase;
 }
 
 .input-wrapper {
@@ -70,8 +73,8 @@
 
 .input-field {
   width: 100%;
-  background: #1A2232;
-  border: 1px solid rgba(51, 65, 85, 0.6);
+  background: #121824;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 12px 16px;
   color: #FFFFFF;
@@ -82,7 +85,7 @@
 .input-field:focus {
   outline: none;
   border-color: #FF5A1F;
-  box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 90, 31, 0.2);
 }
 
 .input-field::placeholder {
@@ -91,22 +94,24 @@
 
 .phone-prefix {
   position: absolute;
-  left: 12px;
+  left: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #0F172A;
-  color: #94A3B8;
-  padding: 4px 8px;
-  border-radius: 8px;
+  gap: 8px;
+  background: rgba(30, 41, 59, 0.8);
+  color: #E2E8F0;
+  padding: 0 14px;
+  height: 46px;
+  border-right: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 12px 0 0 12px;
   font-size: 0.85rem;
   font-weight: 600;
-  border: 1px solid rgba(51, 65, 85, 0.5);
   pointer-events: none;
+  z-index: 2;
 }
 
 .phone-input {
-  padding-left: 80px !important;
+  padding-left: 90px !important;
 }
 
 .password-wrapper {
@@ -205,14 +210,15 @@
   opacity: 0.7;
 }
 
-/* Secondary Actions */
+/* USSD Offline Pill */
 .ussd-action {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #CBD5E1;
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 0.9rem;
+  background: rgba(255, 90, 31, 0.1);
+  color: #FB923C;
+  border: 1px solid rgba(255, 90, 31, 0.2);
+  border-radius: 9999px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -223,15 +229,15 @@
 }
 
 .ussd-action:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 90, 31, 0.15);
+  border-color: rgba(255, 90, 31, 0.3);
 }
 
 .divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 1.5rem;
+  margin: 1.5rem 0;
   color: #64748B;
   font-size: 0.8rem;
 }
@@ -284,35 +290,18 @@
   text-decoration: underline;
 }
 
-.guest-section {
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.btn-guest {
-  background: transparent;
-  color: #94A3B own-white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-}
-
-.btn-guest:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.guest-note {
-  font-size: 0.75rem;
-  color: #64748B;
-  margin-top: 8px;
+.guest-link {
   display: block;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.guest-link:hover {
+  color: #FFFFFF;
 }
 
 .error-msg {
