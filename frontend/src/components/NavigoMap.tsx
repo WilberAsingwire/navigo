@@ -76,7 +76,7 @@ const LocateButton: React.FC = () => {
   );
 };
 
-const NavigoMap: React.FC<MapProps> = ({
+const NavigoMap: React.FC<MapProps> = React.memo(({
   userLocation, destination, driverLocation, driverType = 'car',
   height = '350px', interactive = true, showRoute = true,
   showControls = true, followUser = true, onDistanceChange, onMapClick
@@ -121,7 +121,7 @@ const NavigoMap: React.FC<MapProps> = ({
       }
     };
     fetchRoute();
-  }, [userLocation, destination, showRoute]);
+  }, [userLocation?.lat, userLocation?.lng, destination?.lat, destination?.lng, showRoute]);
 
   useEffect(() => {
     if (!userLocation || !driverLocation || !onDistanceChange) return;
@@ -141,12 +141,7 @@ const NavigoMap: React.FC<MapProps> = ({
       } catch { }
     };
     fetchDriverDist();
-  }, [driverLocation, userLocation]);
-
-  useEffect(() => { 
-    const t = setTimeout(() => setLoading(false), 600); 
-    return () => clearTimeout(t); 
-  }, []);
+  }, [driverLocation?.lat, driverLocation?.lng, userLocation?.lat, userLocation?.lng, onDistanceChange]);
 
   const openInGoogleMaps = () => {
     if (userLocation && destination) window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination.lat},${destination.lng}`, '_blank');
@@ -177,7 +172,7 @@ const NavigoMap: React.FC<MapProps> = ({
           </div>
         ) : (
           <MapContainer
-            key={`${mapStyle}-${userLocation?.lat}-${userLocation?.lng}`}
+            key={mapStyle}
             center={center}
             zoom={15}
             style={{ height: '100%', width: '100%' }}
@@ -200,6 +195,6 @@ const NavigoMap: React.FC<MapProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default NavigoMap;
