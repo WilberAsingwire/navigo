@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import {
-  IonPage, IonContent, IonHeader, IonToolbar, IonTitle,
-  IonItem, IonLabel, IonInput, IonButton, IonIcon,
-  IonSpinner, IonToast, IonText, IonNote, IonCheckbox,
-  IonCard, IonCardContent
+  IonPage, IonContent, IonIcon,
+  IonSpinner, IonToast,
 } from '@ionic/react';
 import {
-  phonePortraitOutline, lockClosedOutline, eyeOutline,
+  lockClosedOutline, eyeOutline,
   eyeOffOutline, logInOutline, logoGoogle,
   arrowForwardOutline, callOutline, globeOutline
 } from 'ionicons/icons';
@@ -28,7 +26,7 @@ const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [countryCode, setCountryCode] = useState('+256');
+  const [countryCode] = useState('+256');
 
   const handleLogin = async () => {
     setError('');
@@ -63,114 +61,118 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
-  <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-    <IonTitle style={{color: '#fff'}}>Welcome Back</IonTitle>
-  </IonToolbar>
-</IonHeader>
-
       <IonContent className="auth-content">
-        <div className="auth-container">
-          
-          {/* Logo */}
-          <div className="auth-logo">
-            <h1 className="logo-main">🚀 NAVIGO</h1>
-            <p className="logo-tagline">Navigate Your World</p>
-          </div>
+        <div className="reg-page-container">
+          <div className="reg-card">
+            <div className="reg-header">
+              <h1 className="reg-logo">🚀 NAVIGO</h1>
+              <p className="reg-tagline">Navigate Your World</p>
+            </div>
 
-          {/* Login Card */}
-          <IonCard className="login-card">
-            <IonCardContent>
-
-              {/* Identifier Input (Phone or Email) */}
-              <div className="phone-input-group">
-                <div className="country-code" style={{ display: identifier.includes('@') ? 'none' : 'flex' }}>
-                  <IonIcon icon={globeOutline} />
-                  <span>{countryCode}</span>
-                </div>
-                <IonItem className="auth-input phone-field" lines="none">
-                  <IonInput
+            <div className="reg-form">
+              {/* Identifier Input */}
+              <div className="input-group">
+                <label className="input-label">Email or Phone *</label>
+                <div className="input-wrapper">
+                  <div className="phone-prefix" style={{ display: identifier.includes('@') ? 'none' : 'flex' }}>
+                    <IonIcon icon={globeOutline} />
+                    <span>{countryCode}</span>
+                  </div>
+                  <input
+                    className="input-field"
                     type="text"
                     value={identifier}
-                    onIonInput={(e) => setIdentifier(e.detail.value!)}
+                    onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="Phone number or Email"
                     onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   />
-                </IonItem>
+                </div>
               </div>
-              <IonNote className="input-helper">Enter your registered phone number or email</IonNote>
 
               {/* Password Input */}
-              <IonItem className="auth-input password-field">
-                <IonIcon icon={lockClosedOutline} slot="start" />
-                <IonLabel position="stacked">Password</IonLabel>
-                <IonInput
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onIonInput={(e) => setPassword(e.detail.value!)}
-                  placeholder="Enter your password"
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                />
-                <IonButton slot="end" fill="clear" onClick={() => setShowPassword(!showPassword)} className="eye-btn">
-                  <IonIcon icon={showPassword ? eyeOffOutline : eyeOutline} />
-                </IonButton>
-              </IonItem>
-
-              {/* Remember Me & Forgot Password */}
-              <div className="login-options-row">
-                <div className="remember-me-wrap">
-                  <IonCheckbox checked={rememberMe} onIonChange={e => setRememberMe(e.detail.checked)} className="custom-checkbox" />
-                  <span>Remember me</span>
+              <div className="input-group">
+                <label className="input-label">Password *</label>
+                <div className="input-wrapper password-wrapper">
+                  <input
+                    className="input-field"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <IonIcon icon={showPassword ? eyeOffOutline : eyeOutline} />
+                  </button>
                 </div>
+              </div>
+
+              {/* Options Row */}
+              <div className="options-row">
+                <label className="remember-wrap">
+                  <input
+                    type="checkbox"
+                    className="remember-checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <span className="remember-text">Remember me</span>
+                </label>
                 <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
               </div>
 
-              {/* Error */}
-              {(error || authError) && (
-                <div className="auth-error">
-                  <IonIcon icon={callOutline} style={{ marginRight: 6 }} />
-                  {error || authError}
-                </div>
-              )}
+              {error && <div className="error-msg">{error || authError}</div>}
 
               {/* Login Button */}
-              <IonButton expand="block" className="auth-button login-btn" onClick={handleLogin} disabled={isLoading}>
-                {isLoading ? <IonSpinner name="crescent" /> : (<>Sign In <IonIcon icon={logInOutline} slot="end" /></>)}
-              </IonButton>
+              <button
+                className="btn-primary"
+                onClick={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? <IonSpinner name="crescent" /> : (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    Sign In <IonIcon icon={logInOutline} />
+                  </span>
+                )}
+              </button>
 
               {/* USSD Offline */}
-              <IonButton expand="block" fill="clear" className="ussd-link" onClick={() => history.push('/ussd')}>
-                <IonIcon icon={callOutline} slot="start" />
+              <button className="ussd-action" onClick={() => history.push('/ussd')}>
+                <IonIcon icon={callOutline} />
                 📱 No internet? Dial *284*624#
-              </IonButton>
+              </button>
 
-              {/* Divider */}
-              <div className="auth-divider"><IonText color="medium">or continue with</IonText></div>
+              <div className="divider">or continue with</div>
 
               {/* Google Login */}
-              <IonButton expand="block" fill="outline" className="social-btn google-btn"
-                onClick={() => window.location.href = `${BASE_URL}/auth/google`}>
-                <IonIcon icon={logoGoogle} slot="start" /> Continue with Google
-              </IonButton>
+              <button
+                className="social-btn"
+                onClick={() => window.location.href = `${BASE_URL}/auth/google`}
+              >
+                <IonIcon icon={logoGoogle} /> Continue with Google
+              </button>
+            </div>
 
-            </IonCardContent>
-          </IonCard>
-
-          {/* Register Link */}
-          <div className="auth-switch">
-            <p>Don't have an account? <Link to="/register" className="create-account-link">Create Account</Link></p>
+            {/* Register Link */}
+            <div className="auth-footer">
+              <p>Don't have an account? <Link to="/register">Create Account</Link></p>
+            </div>
           </div>
 
           {/* Guest Mode */}
-          <div className="guest-mode">
-            <IonButton expand="block" fill="clear" className="guest-btn" onClick={handleGuest}>
+          <div className="guest-section">
+            <button className="btn-guest" onClick={handleGuest}>
               Continue as Guest <IonIcon icon={arrowForwardOutline} slot="end" />
-            </IonButton>
-            <IonNote color="medium" className="guest-note">Browse fares & routes without an account</IonNote>
+            </button>
+            <span className="guest-note">Browse fares & routes without an account</span>
           </div>
-        </div>
 
-        <IonToast isOpen={!!error} onDidDismiss={() => setError('')} message={error} duration={4000} color="danger" position="top" />
+          <IonToast isOpen={!!error} onDidDismiss={() => setError('')} message={error} duration={4000} color="danger" position="top" />
+        </div>
       </IonContent>
     </IonPage>
   );

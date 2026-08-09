@@ -1,204 +1,303 @@
-/* NAVIGO Register Page Styles */
+/* NAVIGO Enterprise-Grade Registration Styles */
 
-.logo-main { font-size: 32px !important; margin-bottom: 2px !important; }
-.logo-tagline { font-size: 14px !important; }
+.reg-page-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at top, rgba(255, 90, 31, 0.15) 0%, #0A0E17 50%, #0A0E17 100%);
+  padding: 2rem 1rem;
+  font-family: 'Inter', 'DM Sans', sans-serif;
+}
+
+.reg-card {
+  background: #121824;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 480px;
+  padding: 2.5rem;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.reg-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.reg-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  background: linear-gradient(45deg, #fff, #FF5A1F);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+
+.reg-tagline {
+  color: #94A3B8;
+  font-size: 1rem;
+}
 
 /* Role Selector */
-.role-segment {
-  margin-bottom: 14px;
-  --background: rgba(255,255,255,0.04);
+.role-selector {
+  background: rgba(15, 23, 42, 0.8);
+  padding: 4px;
   border-radius: 14px;
-  padding: 3px;
+  display: flex;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 1.5rem;
 }
-.role-btn {
-  --color: rgba(255,255,255,0.35) !important;
-  --color-checked: #FF6B35 !important;
-  --indicator-color: rgba(255,107,53,0.15) !important;
+
+.role-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94A3B8;
+  border: none;
+  background: transparent;
 }
-.role-btn ion-label {
-  font-size: 14px !important;
-  font-weight: 700 !important;
+
+.role-option.active {
+  background: #FF5A1F;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3);
+}
+
+.role-option ion-icon {
+  font-size: 1.2rem;
+}
+
+/* Role Info */
+.role-info {
+  background: rgba(255, 90, 31, 0.05);
+  border: 1px solid rgba(255, 90, 31, 0.1);
+  border-left: 4px solid #FF5A1F;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 1.5rem;
+  color: #CBD5E1;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Form Styling */
+.reg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-label {
+  color: #E2E8F0;
+  font-size: 0.875rem;
+  font-weight: 500;
   margin-left: 4px;
-  color: inherit;
-}
-.role-btn ion-icon {
-  font-size: 18px;
-  color: inherit;
 }
 
-/* Role Info Card */
-.role-info-card {
-  background: rgba(255,255,255,0.05);
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
+.input-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-left: 3px solid;
-}
-.role-info-card p {
-  color: rgba(255,255,255,0.8);
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.4;
 }
 
-/* Verification Notice */
-.verification-notice {
-  background: rgba(255,107,53,0.06);
-  border: 1px solid rgba(255,107,53,0.15);
+.input-field {
+  width: 100%;
+  background: #1A2232;
+  border: 1px solid rgba(51, 65, 85, 0.6);
   border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.verification-notice ion-icon { color: #FF6B35; font-size: 20px; flex-shrink: 0; }
-.verification-notice p { color: rgba(255,255,255,0.7); font-size: 13px; margin: 0; }
-
-/* Register Card */
-.register-card {
-  background: rgba(255,255,255,0.04) !important;
-  border-radius: 16px !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  margin: 0 0 8px !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-  padding-bottom: 8px !important;
+  padding: 12px 16px;
+  color: #FFFFFF;
+  font-size: 1rem;
+  transition: all 0.2s ease;
 }
 
-/* Phone Input with Country Code */
-.phone-input-group {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  margin-bottom: 4px;
+.input-field:focus {
+  outline: none;
+  border-color: #FF5A1F;
+  box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.2);
 }
-.country-code {
+
+.input-field::placeholder {
+  color: #64748B;
+}
+
+.phone-prefix {
+  position: absolute;
+  left: 12px;
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 12px 0 0 12px;
-  padding: 0 12px;
-  color: #fff;
-  font-size: 14px;
+  background: #0F172A;
+  color: #94A3B8;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.85rem;
   font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-right: none;
-}
-.country-code ion-icon { color: #FF6B35; font-size: 16px; }
-.phone-field {
-  --background: rgba(255,255,255,0.05);
-  border-radius: 0 12px 12px 0 !important;
-  flex: 1;
-  margin-bottom: 0 !important;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-left: none;
-}
-.input-helper { 
-  font-size: 12px; 
-  color: rgba(255,255,255,0.45); 
-  padding-left: 4px; 
-  margin-bottom: 10px; 
-  display: block; 
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  pointer-events: none;
 }
 
-/* Password Strength */
-.password-strength { padding: 0 4px; margin-bottom: 8px; }
-
-/* Eye Button */
-.eye-btn { --color: #888; }
-
-/* Register Button — SOLID ORANGE */
-.register-btn {
-  --background: #FF6B35 !important;
-  --background-activated: #e55a2a !important;
-  --border-radius: 14px !important;
-  font-weight: 700 !important;
-  height: 50px !important;
-  font-size: 15px !important;
-  margin-top: 8px !important;
-  box-shadow: 0 4px 15px rgba(255,107,53,0.25) !important;
+.phone-input {
+  padding-left: 80px !important;
 }
 
-/* Terms — below button with proper spacing */
-.terms-wrap {
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #64748B;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 18px;
-  margin-bottom: 6px;
-  color: rgba(255,255,255,0.55);
-  font-size: 12px;
-}
-.terms-wrap a { color: #FF6B35; text-decoration: none; font-weight: 600; }
-.custom-checkbox {
-  --size: 18px;
-  --border-radius: 4px;
-  --border-color: rgba(255,255,255,0.2);
-  --background-checked: #FF6B35;
-  --border-color-checked: #FF6B35;
-}
-
-/* Auth Inputs — orange focus border */
-.auth-input {
-  --background: rgba(255,255,255,0.05);
-  border-radius: 12px;
-  margin-bottom: 10px;
-  border: 1px solid rgba(255,255,255,0.08);
-  --highlight-color-focused: #FF6B35;
-}
-.auth-input.item-has-focus {
-  border-color: #FF6B35 !important;
-}
-.auth-input ion-icon[slot="start"] { color: #FF6B35; font-size: 18px; }
-.auth-input ion-label { color: rgba(255,255,255,0.55) !important; font-size: 11px; }
-.auth-input ion-input { --placeholder-color: #9CA3AF; }
-
-/* Register Link — OUTSIDE card */
-.auth-switch {
-  text-align: center;
-  margin-top: 16px;
-  font-size: 14px;
-  color: rgba(255,255,255,0.6);
-  padding: 4px 0 20px;
-}
-.create-account-link { color: #FF6B35; font-weight: 700; font-size: 15px; }
-
-/* Page centering */
-.auth-container {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 24px 20px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
+  padding: 0;
+  z-index: 10;
 }
 
-/* Fix blue outline on focused inputs */
-.auth-input.item-has-focus {
-  border-color: #FF6B35 !important;
-  --highlight-color-focused: #FF6B35;
+.password-toggle:hover {
+  color: #E2E8F0;
 }
 
-/* Phone helper text bigger */
-.input-helper {
-  font-size: 12px !important;
-  margin-top: 4px !important;
-  color: rgba(255,255,255,0.5) !important;
+/* Strength Meter */
+.strength-container {
+  margin-top: -8px;
+  margin-bottom: 8px;
 }
 
-/* Checkbox spacing */
-.terms-wrap {
-  margin-top: 18px !important;
-  margin-bottom: 8px !important;
+.strength-bar {
+  height: 4px;
+  background: #1E293B;
+  border-radius: 2px;
+  overflow: hidden;
 }
 
-/* Auth switch spacing */
-.auth-switch {
-  margin-top: 20px !important;
-  padding-bottom: 24px !important;
+.strength-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-label {
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: block;
+  text-align: right;
+}
+
+/* Terms & CTA */
+.terms-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.terms-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #FF5A1F;
+  cursor: pointer;
+}
+
+.terms-text {
+  color: #94A3B8;
+  font-size: 0.85rem;
+}
+
+.terms-text a {
+  color: #E2E8F0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.terms-text a:hover {
+  text-decoration: underline;
+  color: #FF5A1F;
+}
+
+.btn-primary {
+  background: #FF5A1F;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(255, 90, 31, 0.3);
+}
+
+.btn-primary:hover {
+  background: #FF4500;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(255, 90, 31, 0.4);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  background: #334155;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 2rem;
+  color: #94A3B8;
+  font-size: 0.9rem;
+}
+
+.auth-footer a {
+  color: #FF5A1F;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.auth-footer a:hover {
+  color: #FF4500;
+  text-decoration: underline;
+}
+
+.error-msg {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-bottom: 1rem;
 }
