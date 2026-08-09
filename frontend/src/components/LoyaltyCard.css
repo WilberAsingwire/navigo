@@ -111,7 +111,7 @@
 
 .loyalty-tab-inactive {
   background: transparent;
-  color: #64748B;
+  color: #CBD5E1;
 }
 
 .loyalty-tab-active {
@@ -151,10 +151,10 @@
 }
 
 .reward-tile-locked {
-  background: rgba(18, 24, 36, 0.6);
+  background: rgba(18, 24, 36, 0.8);
   border: 1px solid rgba(30, 41, 59, 0.8);
   color: #64748B;
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .reward-emoji {
@@ -179,8 +179,14 @@
   color: #FF5A1F;
 }
 
+.reward-name-locked {
+  color: #CBD5E1;
+  font-weight: 600;
+}
+
 .action-locked {
-  color: #64748B;
+  color: #FB923C;
+  font-weight: 700;
 }
 
 /* Challenges */
