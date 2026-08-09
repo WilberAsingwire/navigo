@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonItem, IonLabel, IonInput, IonButton, IonSpinner, IonToast, IonIcon, IonCard, IonCardContent } from '@ionic/react';
+import { IonPage, IonContent, IonSpinner, IonToast, IonIcon } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { checkmarkCircleOutline } from 'ionicons/icons';
+import { checkmarkCircleOutline, globeOutline } from 'ionicons/icons';
 import './Auth.css';
+import './CompleteSocialRegistration.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const CompleteSocialRegistration: React.FC = () => {
   const history = useHistory();
-  const { saveSession } = useAuth() as any; // Cast to any to access internal saveSession if needed, or use socialLogin logic
+  const { saveSession } = useAuth() as any;
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,44 +53,55 @@ const CompleteSocialRegistration: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-          <IonTitle>Complete Your Profile</IonTitle>
-        </IonToolbar>
-      </IonHeader>
       <IonContent className="auth-content">
-        <div className="auth-container">
-          <div className="auth-logo">
-            <h1 className="logo-main">🚀 NAVIGO</h1>
-            <p className="logo-tagline">One last step!</p>
+        <div className="social-reg-page-container">
+          <div className="social-reg-card">
+
+            <div className="icon-badge">
+              <IonIcon icon={checkmarkCircleOutline} />
+            </div>
+
+            <span className="step-badge">Final Step</span>
+            <h1 className="social-reg-title">Almost there, {socialData.name || 'User'}!</h1>
+            <p className="social-reg-subtitle">
+              We just need your phone number to secure your account and notify you about your rides.
+            </p>
+
+            <div className="phone-input-wrapper">
+              <div className="country-badge">
+                <IonIcon icon={globeOutline} />
+                <span>+256</span>
+              </div>
+              <input
+                className="phone-field"
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="700 000 000"
+                maxlength={10}
+                onKeyDown={(e) => e.key === 'Enter' && handleCompleteRegistration()}
+              />
+            </div>
+
+            {error && <div className="auth-error">{error}</div>}
+
+            <button
+              className="btn-primary"
+              onClick={handleCompleteRegistration}
+              disabled={isLoading}
+            >
+              {isLoading ? <IonSpinner name="crescent" /> : 'Finish Registration'}
+            </button>
           </div>
 
-          <IonCard className="login-card">
-            <IonCardContent>
-              <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 48, color: '#FF6B35' }} />
-                <h3 style={{ color: '#fff', marginTop: 10 }}>Almost there, {socialData.name}!</h3>
-                <p style={{ color: '#aaa', fontSize: 12 }}>We just need your phone number to secure your account and notify you about your rides.</p>
-              </div>
-
-              <IonItem className="auth-input" lines="none">
-                <IonLabel position="stacked">Phone Number</IonLabel>
-                <IonInput
-                  type="tel"
-                  value={phone}
-                  onIonInput={e => setPhone(e.detail.value!)}
-                  placeholder="07... (e.g. 0772000000)"
-                  maxlength={10}
-                />
-              </IonItem>
-
-              {error && <div className="auth-error" style={{ color: '#ff5252', fontSize: 12, marginBottom: 10, textAlign: 'center' }}>{error}</div>}
-
-              <IonButton expand="block" className="auth-button login-btn" onClick={handleCompleteRegistration} disabled={isLoading}>
-                {isLoading ? <IonSpinner name="crescent" /> : 'Finish Registration'}
-              </IonButton>
-            </IonCardContent>
-          </IonCard>
+          <IonToast
+            isOpen={!!error}
+            onDidDismiss={() => setError('')}
+            message={error}
+            duration={4000}
+            color="danger"
+            position="top"
+          />
         </div>
       </IonContent>
     </IonPage>
