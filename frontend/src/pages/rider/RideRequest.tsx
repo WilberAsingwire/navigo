@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
-  IonIcon, IonSpinner, IonToast, IonAvatar, IonModal
+  IonIcon, IonSpinner, IonToast, IonModal, IonAvatar
 } from '@ionic/react';
 import {
-  locationOutline, carOutline, checkmarkCircleOutline, arrowBackOutline,
-  bicycleOutline, globeOutline
+  locationOutline, carOutline, arrowBackOutline,
+  globeOutline, checkmarkCircleOutline
 } from 'ionicons/icons';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import BodaSafeScore from '../../components/BodaSafeBadges';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
 import './RideRequest.css';
@@ -59,8 +58,6 @@ const RideRequest: React.FC = () => {
   const [promoCode, setPromoCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [womenOnly, setWomenOnly] = useState(false);
-  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,7 +65,6 @@ const RideRequest: React.FC = () => {
     const init = async () => {
       try {
         await getCurrentLocation();
-        await fetchSavedPlaces();
       } catch (e) {
         console.error('Init error:', e);
       } finally {
@@ -85,14 +81,12 @@ const RideRequest: React.FC = () => {
         setMatchingProgress(100);
         setMatchedDriver(data);
       });
-
       socket.on('no-drivers-found', (data: any) => {
         setIsMatching(false);
         setToastMsg(data.message);
         setShowToast(true);
         setStep(BookingStep.LOCATION);
       });
-
       return () => {
         socket.off('ride-accepted');
         socket.off('no-drivers-found');
@@ -103,19 +97,6 @@ const RideRequest: React.FC = () => {
   useEffect(() => {
     if (pickup && destination) calculateFare();
   }, [pickup, destination, selectedRide, discount]);
-
-  const fetchSavedPlaces = async () => {
-    if (!user?.id) return;
-    try {
-      const token = localStorage.getItem('navigo_token');
-      const res = await axios.get(`${BASE_URL}/api/users/saved-places/${user.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSavedPlaces(res.data);
-    } catch (err) {
-      console.error('Error fetching saved places:', err);
-    }
-  };
 
   const getCurrentLocation = () => {
     return new Promise<void>((resolve) => {
@@ -130,24 +111,15 @@ const RideRequest: React.FC = () => {
               const data = res.data;
               const addr = data.display_name || '';
               const address = data.address || {};
-
-              // Prioritize most accurate address parts: house number -> road -> suburb -> city
               const houseNumber = address.house_number || '';
               const road = address.road || address.pedestrian || address.footway || '';
               const suburb = address.suburb || address.neighbourhood || address.village || '';
               const city = address.city || address.town || address.municipality || '';
-
               let preciseName = '';
-              if (houseNumber && road) {
-                preciseName = `${houseNumber} ${road}`;
-              } else if (road) {
-                preciseName = road;
-              } else if (suburb) {
-                preciseName = suburb;
-              } else {
-                preciseName = city || addr.split(',')[0];
-              }
-
+              if (houseNumber && road) preciseName = `${houseNumber} ${road}`;
+              else if (road) preciseName = road;
+              else if (suburb) preciseName = suburb;
+              else preciseName = city || addr.split(',')[0];
               setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName });
               setPickupSearch(preciseName);
             } catch {
@@ -157,7 +129,6 @@ const RideRequest: React.FC = () => {
           },
           (err) => {
             console.error('GPS Error:', err.message);
-            // Fallback to Kampala center if GPS fails
             setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
             resolve();
           },
@@ -173,19 +144,10 @@ const RideRequest: React.FC = () => {
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     try {
-      // Added more specific parameters for better accuracy and results
       const res = await axios.get('https://photon.komoot.io/api/', {
-        params: {
-          q: query,
-          limit: 10,
-          lat: pickup?.lat || 0.3476,
-          lon: pickup?.lng || 32.5825,
-          reprioritize: 1
-        }
+        params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 }
       });
-
       if (!res.data || !res.data.features) return [];
-
       return res.data.features.map((item: any) => {
         const props = item.properties;
         const geom = item.geometry.coordinates;
@@ -196,10 +158,7 @@ const RideRequest: React.FC = () => {
           name: props.name || props.city || props.street || 'Unknown Location'
         };
       });
-    } catch (err) {
-      console.error('Search error:', err);
-      return [];
-    }
+    } catch { return []; }
   };
 
   const searchTimeoutRef = useRef<any>(null);
@@ -207,9 +166,7 @@ const RideRequest: React.FC = () => {
   const handleSearch = async (query: string, isPickup: boolean) => {
     if (isPickup) setPickupSearch(query); else setDestSearch(query);
     setSearchingPickup(isPickup);
-
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-
     if (query.length >= 2) {
       setIsSearching(true);
       searchTimeoutRef.current = setTimeout(async () => {
@@ -231,22 +188,6 @@ const RideRequest: React.FC = () => {
       setDestSearch(loc.name || loc.address.split(',')[0]);
     }
     setSearchResults([]);
-  };
-
-  const useSavedPlace = (place: any, isPickup: boolean) => {
-    const loc: Location = {
-      lat: Number(place.lat),
-      lng: Number(place.lng),
-      address: place.address,
-      name: place.label
-    };
-    if (isPickup) {
-      setPickup(loc);
-      setPickupSearch(place.label);
-    } else {
-      setDestination(loc);
-      setDestSearch(place.label);
-    }
   };
 
   const calculateFare = () => {
@@ -295,7 +236,6 @@ const RideRequest: React.FC = () => {
       const city = address.city || address.town || address.municipality || '';
       const shortName = road || suburb || city || addr.split(',')[0];
       const loc: Location = { lat, lng, address: addr, name: '📍 ' + shortName };
-
       if (searchingPickup) {
         setPickup(loc);
         setPickupSearch(shortName || '');
@@ -320,38 +260,24 @@ const RideRequest: React.FC = () => {
       setShowLoginPrompt(true);
       return;
     }
-
     setIsLoading(true);
     try {
       const res = await axios.post(`${BASE_URL}/api/rides/request`, {
-        pickup,
-        destination,
-        rideType: selectedRide.vehicleType,
-        paymentMethod: 'cash',
-        fare: fare?.totalFare
+        pickup, destination, rideType: selectedRide.vehicleType, paymentMethod: 'cash', fare: fare?.totalFare
       });
-
       const ride = res.data.ride;
       setStep(BookingStep.MATCHING);
       setIsMatching(true);
       setMatchingProgress(0);
-
       const socket = socketService.getSocket();
-      if (socket) {
-        socket.emit('request-ride', { userId: user?.id, rideId: ride.id });
-      }
-
+      if (socket) socket.emit('request-ride', { userId: user?.id, rideId: ride.id });
       const interval = setInterval(() => {
         setMatchingProgress(p => {
-          if (p >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
+          if (p >= 100) { clearInterval(interval); return 100; }
           return p + Math.random() * 15;
         });
       }, 500);
       setTimeout(() => { clearInterval(interval); }, 15000);
-
     } catch (e) {
       setToastMsg('Failed to request ride. Please try again.');
       setShowToast(true);
@@ -364,56 +290,48 @@ const RideRequest: React.FC = () => {
     return (
       <div className="loading-screen">
         <IonSpinner name="crescent" color="warning" />
-        <p>Initializing Maps...</p>
+        <p>Initializing Experience...</p>
       </div>
     );
   }
 
   return (
     <div className="booking-page-wrapper">
-      {/* Header Bar */}
       <div className="booking-header">
         <button className="back-btn" onClick={() => history.push('/rider/home')}>
-          <IonIcon icon={arrowBackOutline} /> Back to Home
+          <IonIcon icon={arrowBackOutline} /> Back
         </button>
         <h1 className="booking-title">Book Your Ride</h1>
-        <div style={{ width: 80 }} /> {/* Spacer for centering */}
+        <div style={{ width: 40 }} />
       </div>
 
-      <div className="booking-main-container">
-        {/* Left Side: Inputs & Selection */}
-        <div className="booking-form-section">
+      <div className="booking-map-section">
+        <NavigoMap
+          userLocation={pickup}
+          destination={destination}
+          height="100%"
+          showControls={false}
+          onMapClick={handleMapClick}
+        />
+      </div>
 
-          {/* Location Card */}
-          <div className="glass-input-card">
+      <div className="booking-bottom-sheet">
+        <div className="sheet-drag-handle" />
+
+        {step === BookingStep.LOCATION && (
+          <div className="step-container">
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Where to?</h2>
             <div className="input-row">
               <div className="input-wrapper">
-                <div className="input-icon-badge">
-                  <IonIcon icon={globeOutline} />
-                </div>
-                <input
-                  className="glass-input"
-                  placeholder="Pickup Location"
-                  value={pickupSearch}
-                  onChange={e => handleSearch(e.target.value, true)}
-                  onFocus={() => setSearchingPickup(true)}
-                />
+                <div className="input-icon-badge"><IonIcon icon={globeOutline} /></div>
+                <input className="glass-input" placeholder="Pickup Location" value={pickupSearch} onChange={e => handleSearch(e.target.value, true)} onFocus={() => setSearchingPickup(true)} />
               </div>
               <div className="input-divider" />
               <div className="input-wrapper">
-                <div className="input-icon-badge">
-                  <IonIcon icon={locationOutline} />
-                </div>
-                <input
-                  className="glass-input"
-                  placeholder="Where to?"
-                  value={destSearch}
-                  onChange={e => handleSearch(e.target.value, false)}
-                  onFocus={() => setSearchingPickup(false)}
-                />
+                <div className="input-icon-badge"><IonIcon icon={locationOutline} /></div>
+                <input className="glass-input" placeholder="Destination" value={destSearch} onChange={e => handleSearch(e.target.value, false)} onFocus={() => setSearchingPickup(false)} />
               </div>
             </div>
-
             {searchResults.length > 0 && (
               <div className="search-results-dropdown">
                 {searchResults.map((r, i) => (
@@ -427,72 +345,90 @@ const RideRequest: React.FC = () => {
                 ))}
               </div>
             )}
+            <button className="btn-confirm-booking" disabled={!pickup || !destination} onClick={() => setStep(BookingStep.RIDE_TYPE)}>
+              CONTINUE
+            </button>
           </div>
+        )}
 
-          {/* Vehicle Selection */}
-          <div className="vehicle-selection-grid">
-            {RIDE_OPTIONS.map(opt => {
-              const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
-              return (
-                <div
-                  key={opt.id}
-                  className={`vehicle-card ${selectedRide.id === opt.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedRide(opt)}
-                >
-                  <div className="vehicle-info">
-                    <span className="vehicle-emoji">{opt.emoji}</span>
-                    <div className="vehicle-text">
-                      <span className="vehicle-name">{opt.name}</span>
-                      <span className="vehicle-desc">{opt.description}</span>
+        {step === BookingStep.RIDE_TYPE && (
+          <div className="step-container">
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Select Ride</h2>
+            <div className="vehicle-selection-grid">
+              {RIDE_OPTIONS.map(opt => {
+                const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
+                return (
+                  <div key={opt.id} className={`vehicle-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)}>
+                    <div className="vehicle-info">
+                      <span className="vehicle-emoji">{opt.emoji}</span>
+                      <div className="vehicle-text">
+                        <span className="vehicle-name">{opt.name}</span>
+                        <span className="vehicle-desc">{opt.description}</span>
+                      </div>
+                    </div>
+                    <div className="vehicle-price">
+                      <span className="price-value">{`UGX ${est.toLocaleString()}`}</span>
+                      <span className="price-eta">3 mins away</span>
                     </div>
                   </div>
-                  <div className="vehicle-price">
-                    <span className="price-value">{est ? `UGX ${est.toLocaleString()}` : '...'}</span>
-                    <span className="price-eta">{fare ? '3 mins away' : 'Enter destination'}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            <button className="btn-confirm-booking" onClick={() => setStep(BookingStep.PAYMENT)}>
+              REVIEW RIDE
+            </button>
+            <button className="back-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setStep(BookingStep.LOCATION)}>
+              Change Location
+            </button>
           </div>
+        )}
 
-          {/* Confirm Booking Button */}
-          <button
-            className="btn-confirm-booking"
-            disabled={!pickup || !destination || isLoading}
-            onClick={handleBookRide}
-          >
-            {isLoading ? <IonSpinner name="crescent" /> : 'CONFIRM BOOKING'}
-          </button>
-        </div>
+        {step === BookingStep.PAYMENT && (
+          <div className="step-container">
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Fare Summary</h2>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem' }}>
+                <span>Distance: {fare?.distance} km</span>
+                <span>{fare?.formattedTotal}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#94A3B8' }}>
+                <span>Ride Type: {selectedRide.name}</span>
+                <span>Cash Payment</span>
+              </div>
+            </div>
+            <div className="input-wrapper" style={{ marginBottom: '20px' }}>
+              <div className="input-icon-badge"><IonIcon icon={checkmarkCircleOutline} /></div>
+              <input className="glass-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
+              <button className="back-btn" style={{ fontWeight: 'bold', color: '#FF5A1F' }} onClick={applyPromo}>Apply</button>
+            </div>
+            <button className="btn-confirm-booking" disabled={isLoading} onClick={handleBookRide}>
+              {isLoading ? <IonSpinner name="crescent" /> : 'CONFIRM BOOKING'}
+            </button>
+            <button className="back-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setStep(BookingStep.RIDE_TYPE)}>
+              Change Ride Type
+            </button>
+          </div>
+        )}
 
-        {/* Right Side: Map Visualization */}
-        <div className="booking-map-section">
-          <NavigoMap
-            userLocation={{lat: pickup?.lat || 0, lng: pickup?.lng || 0}}
-            destination={destination}
-            height="100%"
-            showControls={false}
-            onMapClick={handleMapClick}
-          />
-        </div>
+        {step === BookingStep.MATCHING && (
+          <div className="matching-container">
+            <div className="matching-spinner">🚕</div>
+            <h2 className="matching-status">Finding your driver...</h2>
+            <p className="matching-subtitle">Please wait while we match you with the nearest driver.</p>
+            <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '6px', borderRadius: '3px', marginTop: '30px', overflow: 'hidden' }}>
+              <div style={{ width: `${matchingProgress}%`, background: '#FF5A1F', height: '100%', transition: 'width 0.5s ease' }} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modals & Toasts */}
-      <IonToast
-        isOpen={showToast}
-        onDidDismiss={() => setShowToast(false)}
-        message={toastMsg}
-        duration={3000}
-        color="dark"
-        position="top"
-      />
-
+      <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} color="dark" position="top" />
       <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
         <div className="login-prompt-modal">
-          <h2>Ready to Ride?</h2>
-          <p>Sign in to book rides and earn rewards.</p>
-          <button className="btn-primary" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</button>
-          <button className="btn-secondary" onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</button>
+          <h2 style={{ color: '#fff' }}>Ready to Ride?</h2>
+          <p style={{ color: '#94A3B8' }}>Sign in to book rides and earn rewards.</p>
+          <button className="btn-confirm-booking" style={{ width: 'auto', padding: '12px 30px' }} onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</button>
+          <button className="back-btn" style={{ color: '#fff' }} onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</button>
         </div>
       </IonModal>
     </div>
