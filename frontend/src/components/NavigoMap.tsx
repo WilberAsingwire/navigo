@@ -71,17 +71,14 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     return () => clearTimeout(t);
   }, []);
 
-  // Main Map Lifecycle
   useEffect(() => {
     if (!mapContainerRef.current || loading) return;
 
-    // Ensure any existing instance is destroyed before initializing a new one
     if (mapInstanceRef.current) {
       mapInstanceRef.current.remove();
       mapInstanceRef.current = null;
     }
 
-    // Initialize Vanilla Leaflet Map
     const map = L.map(mapContainerRef.current, {
       zoomControl: true,
       dragging: interactive,
@@ -92,30 +89,24 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
     mapInstanceRef.current = map;
 
-    // Ensure map fills the container
     setTimeout(() => {
       map.invalidateSize();
     }, 200);
 
-    // Additional check for grid layout shifts
     const resizeObserver = new ResizeObserver(() => {
       map.invalidateSize();
     });
     resizeObserver.observe(mapContainerRef.current!);
 
-    // Add Tile Layer
     L.tileLayer(tileUrls[mapStyle].url, {
-
       attribution: tileUrls[mapStyle].attribution,
       maxZoom: 19,
     }).addTo(map);
 
-    // Handle Map Clicks
     map.on('click', (e) => {
       if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
     });
 
-    // Custom Locate Button
     const locateControl = L.control({ position: 'topright' });
     locateControl.onAdd = function() {
       const btn = L.DomUtil.create('a', 'leaflet-control-locate');
@@ -128,16 +119,14 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     };
     locateControl.addTo(map);
 
-    // THE FINAL FIX: Explicit cleanup on unmount
     return () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
     };
-  }, [loading, mapStyle, interactive]); // Re-init on style change or loading state
+  }, [loading, mapStyle, interactive]);
 
-  // Update Map View / Follow User
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (map && followUser && userLocation) {
@@ -145,16 +134,13 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     }
   }, [userLocation, followUser]);
 
-  // Manage Markers and Routing
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clear old markers/layers
     Object.values(markersRef.current).forEach(layer => map.removeLayer(layer));
     markersRef.current = {};
 
-    // User Marker
     if (userLocation) {
       const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: pickIcon, draggable: interactive }).addTo(map).bindPopup('📍 You');
       const userCircle = L.circle([userLocation.lat, userLocation.lng], { radius: 8, color: '#2D6A4F', fillOpacity: 0.1 }).addTo(map);
@@ -162,20 +148,17 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       markersRef.current['userCircle'] = userCircle;
     }
 
-    // Destination Marker
     if (destination) {
       const destMarker = L.marker([destination.lat, destination.lng], { icon: destIcon, draggable: interactive }).addTo(map).bindPopup('🎯 Destination');
       markersRef.current['dest'] = destMarker;
     }
 
-    // Driver Marker
     if (driverLocation) {
       const dIcon = driverType === 'bike' ? bikeIcon : driverIcon;
       const driverMarker = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType === 'bike' ? '🏍️' : '🚗'} Driver`);
       markersRef.current['driver'] = driverMarker;
     }
 
-    // Routing
     if (showRoute && userLocation && destination) {
       const fetchRoute = async () => {
         try {
@@ -234,7 +217,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           overflow: 'hidden',
           position: 'relative',
           border: '2px solid rgba(255,255,255,0.08)',
-          filter: mapStyle === 'dark' ? 'brightness(1.2) contrast(1.1)' : 'none'
+          filter: mapStyle === 'dark' ? 'brightness(1.6) contrast(1.1) saturate(1.3)' : 'none'
         }}
       >
         {loading && (
