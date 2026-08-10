@@ -217,7 +217,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           overflow: 'hidden',
           position: 'relative',
           border: '2px solid rgba(255,255,255,0.08)',
-          filter: mapStyle === 'dark' ? 'brightness(1.6) contrast(1.1) saturate(1.3)' : 'none'
+          filter: mapStyle === 'dark' ? 'brightness(2) contrast(1.1) saturate(1.3)' : 'none'
         }}
       >
         {loading && (
