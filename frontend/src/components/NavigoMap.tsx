@@ -227,7 +227,15 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       )}
       <div
         ref={mapContainerRef}
-        style={{ height: height === '100%' ? '100%' : height, width: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative', border: '2px solid rgba(255,255,255,0.08)' }}
+        style={{
+          height: height === '100%' ? '100%' : height,
+          width: '100%',
+          borderRadius: 16,
+          overflow: 'hidden',
+          position: 'relative',
+          border: '2px solid rgba(255,255,255,0.08)',
+          filter: mapStyle === 'dark' ? 'brightness(0.6) invert(1) contrast(3) hue-rotate(200deg)' : 'none'
+        }}
       >
         {loading && (
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14' }}>
