@@ -124,7 +124,7 @@
 .location-input {
   background: transparent;
   border: none;
-  color: #FFFFFF;
+  color: #FFFFFF !important;
   font-weight: 500;
   font-size: 14px;
   width: 100%;
@@ -132,8 +132,8 @@
 }
 
 .location-input::placeholder {
-  color: #94A3B8;
-  opacity: 0.8;
+  color: #94A3B8 !important;
+  opacity: 1;
 }
 
 .search-results-list {
@@ -239,8 +239,8 @@
 }
 
 .btn-continue {
-  background: #FF5A1F;
-  color: #FFFFFF;
+  background: #FF5A1F !important;
+  color: #FFFFFF !important;
   font-weight: 800;
   font-size: 16px;
   letter-spacing: 0.05em;
@@ -251,14 +251,15 @@
   width: 100%;
   cursor: pointer;
   text-transform: uppercase;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 16px;
   display: block;
   text-align: center;
+  z-index: 10;
 }
 
 .btn-continue:hover:not(:disabled) {
-  background: #FF4500;
+  background: #FF4500 !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 30px rgba(255, 90, 31, 0.6);
 }
@@ -268,8 +269,8 @@
 }
 
 .btn-continue:disabled {
-  background: #1E293B;
-  color: #94A3B8;
+  background: #1E293B !important;
+  color: #64748B !important;
   cursor: not-allowed;
   box-shadow: none;
   opacity: 0.6;
