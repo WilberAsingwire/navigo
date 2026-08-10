@@ -95,10 +95,17 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     // Ensure map fills the container
     setTimeout(() => {
       map.invalidateSize();
-    }, 100);
+    }, 200);
+
+    // Additional check for grid layout shifts
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+    resizeObserver.observe(mapContainerRef.current!);
 
     // Add Tile Layer
     L.tileLayer(tileUrls[mapStyle].url, {
+
       attribution: tileUrls[mapStyle].attribution,
       maxZoom: 19,
     }).addTo(map);
