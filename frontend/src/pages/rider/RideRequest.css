@@ -137,6 +137,11 @@
 }
 
 .search-results-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   background: #0B111B;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -144,6 +149,7 @@
   max-height: 200px;
   overflow-y: auto;
   box-shadow: 0 10px 15px rgba(0,0,0,0.4);
+  margin-top: 4px;
 }
 
 .search-result-item {

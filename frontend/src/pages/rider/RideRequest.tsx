@@ -312,41 +312,42 @@ const RideRequest: React.FC = () => {
             <div className="space-y-6">
               <div className="location-input-group">
                 <h2 className="section-label" style={{ textAlign: 'center', fontSize: '18px', color: '#fff', textTransform: 'none', marginBottom: '15px' }}>Where to?</h2>
-                <div className="location-input-wrapper">
-                  <div className="input-icon"><IonIcon icon={globeOutline} /></div>
-                  <input
-                    className="location-input"
-                    placeholder="Pickup Location"
-                    value={pickupSearch}
-                    onChange={e => handleSearch(e.target.value, true)}
-                    onFocus={() => setSearchingPickup(true)}
-                  />
-                </div>
-                <div className="location-input-wrapper">
-                  <div className="input-icon"><IonIcon icon={locationOutline} /></div>
-                  <input
-                    className="location-input"
-                    placeholder="Destination"
-                    value={destSearch}
-                    onChange={e => handleSearch(e.target.value, false)}
-                    onFocus={() => setSearchingPickup(false)}
-                  />
+                <div className="relative space-y-3">
+                  <div className="location-input-wrapper">
+                    <div className="input-icon"><IonIcon icon={globeOutline} /></div>
+                    <input
+                      className="location-input"
+                      placeholder="Pickup Location"
+                      value={pickupSearch}
+                      onChange={e => handleSearch(e.target.value, true)}
+                      onFocus={() => setSearchingPickup(true)}
+                    />
+                  </div>
+                  <div className="location-input-wrapper">
+                    <div className="input-icon"><IonIcon icon={locationOutline} /></div>
+                    <input
+                      className="location-input"
+                      placeholder="Destination"
+                      value={destSearch}
+                      onChange={e => handleSearch(e.target.value, false)}
+                      onFocus={() => setSearchingPickup(false)}
+                    />
+                  </div>
+                  {searchResults.length > 0 && (
+                    <div className="search-results-list">
+                      {searchResults.map((r, i) => (
+                        <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
+                          <IonIcon icon={locationOutline} style={{ color: '#FF5A1F' }} />
+                          <div className="result-info">
+                            <span className="result-name">{r.name || r.address.split(',')[0]}</span>
+                            <span className="result-addr">{r.address}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {searchResults.length > 0 && (
-                <div className="search-results-list">
-                  {searchResults.map((r, i) => (
-                    <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
-                      <IonIcon icon={locationOutline} style={{ color: '#FF5A1F' }} />
-                      <div className="result-info">
-                        <span className="result-name">{r.name || r.address.split(',')[0]}</span>
-                        <span className="result-addr">{r.address}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
 
               <div className="vehicle-options-grid">
                 <h3 className="section-label">Select Vehicle</h3>
