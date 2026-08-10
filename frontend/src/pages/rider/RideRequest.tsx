@@ -312,7 +312,7 @@ const RideRequest: React.FC = () => {
             <div className="space-y-6">
               <div className="location-input-group">
                 <h2 className="section-label" style={{ textAlign: 'center', fontSize: '18px', color: '#fff', textTransform: 'none', marginBottom: '15px' }}>Where to?</h2>
-                <div className="relative space-y-3">
+                <div className="location-search-container">
                   <div className="location-input-wrapper">
                     <div className="input-icon"><IonIcon icon={globeOutline} /></div>
                     <input

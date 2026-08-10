@@ -100,6 +100,13 @@
   gap: 12px;
 }
 
+.location-search-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .location-input-wrapper {
   display: flex;
   align-items: center;
