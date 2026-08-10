@@ -445,7 +445,7 @@ const RideRequest: React.FC = () => {
           userLocation={pickup}
           destination={destination}
           height="100%"
-          showControls={false}
+          showControls={true}
           onMapClick={handleMapClick}
         />
       </div>
