@@ -50,7 +50,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   showControls = true, followUser = true, onDistanceChange, onMapClick
 }) => {
   const [loading, setLoading] = useState(true);
-  const [mapStyle, setMapStyle] = useState<'standard' | 'dark' | 'satellite'>('dark');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'dark' | 'satellite'>('standard');
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
 
