@@ -250,7 +250,7 @@ const RideRequest: React.FC = () => {
         setPickupSearch(loc.name || '');
       } else {
         setDestination(loc);
-        setDestSearch(loc.name || '');
+        setDestSearch(shortName || '');
       }
     }
   };
@@ -296,16 +296,161 @@ const RideRequest: React.FC = () => {
   }
 
   return (
-    <div className="booking-page-wrapper">
-      <div className="booking-header">
-        <button className="back-btn" onClick={() => history.push('/rider/home')}>
+    <div className="min-h-screen w-full bg-[#090D16] text-white p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto">
+      {/* Left Column: Booking Form & Cards */}
+      <div className="lg:col-span-5 flex flex-col gap-4">
+        <button
+          className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium text-sm mb-2 transition-colors"
+          onClick={() => history.push('/rider/home')}
+        >
           <IonIcon icon={arrowBackOutline} /> Back
         </button>
-        <h1 className="booking-title">Book Your Ride</h1>
-        <div style={{ width: 40 }} />
+
+        <div className="bg-[#121824] border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+          <h1 className="text-2xl font-bold mb-4">Book Your Ride</h1>
+
+          {step === BookingStep.LOCATION && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold text-center mb-4">Where to?</h2>
+                <div className="flex flex-col gap-3">
+                  <div className="relative flex items-center gap-3 bg-[#1A2232] border border-slate-700/80 rounded-xl p-3.5 focus-within:border-[#FF5A1F] focus-within:ring-1 focus-within:ring-[#FF5A1F] transition-all">
+                    <div className="text-slate-400"><IonIcon icon={globeOutline} /></div>
+                    <input
+                      className="bg-transparent border-none text-white font-medium text-sm w-full outline-none placeholder:text-slate-400"
+                      placeholder="Pickup Location"
+                      value={pickupSearch}
+                      onChange={e => handleSearch(e.target.value, true)}
+                      onFocus={() => setSearchingPickup(true)}
+                    />
+                  </div>
+                  <div className="relative flex items-center gap-3 bg-[#1A2232] border border-slate-700/80 rounded-xl p-3.5 focus-within:border-[#FF5A1F] focus-within:ring-1 focus-within:ring-[#FF5A1F] transition-all">
+                    <div className="text-slate-400"><IonIcon icon={locationOutline} /></div>
+                    <input
+                      className="bg-transparent border-none text-white font-medium text-sm w-full outline-none placeholder:text-slate-400"
+                      placeholder="Destination"
+                      value={destSearch}
+                      onChange={e => handleSearch(e.target.value, false)}
+                      onFocus={() => setSearchingPickup(false)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {searchResults.length > 0 && (
+                <div className="bg-[#0B111B] border border-white/10 rounded-xl overflow-hidden shadow-lg max-h-48 overflow-y-auto">
+                  {searchResults.map((r, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer transition-colors border-b border-white/5 last:border-none" onClick={() => selectLocation(r)}>
+                      <IonIcon icon={locationOutline} className="text-[#FF5A1F]" />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{r.name || r.address.split(',')[0]}</span>
+                        <span className="text-xs text-slate-400">{r.address}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider">Select Vehicle</h3>
+                <div className="grid grid-cols-1 gap-3">
+                  {RIDE_OPTIONS.map(opt => {
+                    const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
+                    return (
+                      <div
+                        key={opt.id}
+                        className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${selectedRide.id === opt.id ? 'bg-[#FF5A1F]/10 border-[#FF5A1F] shadow-[0_0_15px_rgba(255,90,31,0.1)]' : 'bg-[#1A2232] border-slate-700/80 hover:border-slate-500'}`}
+                        onClick={() => setSelectedRide(opt)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{opt.emoji}</span>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-sm">{opt.name}</span>
+                            <span className="text-xs text-slate-400">{opt.description}</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-sm">UGX {est.toLocaleString()}</div>
+                          <div className="text-[10px] text-[#FF5A1F] font-semibold">3 mins away</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                className="bg-[#FF5A1F] hover:bg-[#FF4500] text-white font-extrabold text-base tracking-wider py-4 rounded-xl shadow-[0_4px_25px_rgba(255,90,31,0.4)] w-full transition-all text-center uppercase cursor-pointer mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!pickup || !destination}
+                onClick={() => setStep(BookingStep.PAYMENT)}
+              >
+                CONTINUE
+              </button>
+            </div>
+          )}
+
+          {step === BookingStep.PAYMENT && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-bold text-center">Fare Summary</h2>
+              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex justify-between items-center">
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-400 uppercase tracking-tight">Distance</span>
+                  <span className="font-medium">{fare?.distance} km</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xl font-bold text-[#FF5A1F]">{fare?.formattedTotal}</span>
+                </div>
+              </div>
+              <div className="flex justify-between text-sm text-slate-400 px-1">
+                <span>Ride Type: {selectedRide.name}</span>
+                <span>Cash Payment</span>
+              </div>
+              <div className="relative flex items-center gap-3 bg-[#1A2232] border border-slate-700/80 rounded-xl p-3.5 focus-within:border-[#FF5A1F] transition-all">
+                <div className="text-slate-400"><IonIcon icon={checkmarkCircleOutline} /></div>
+                <input
+                  className="bg-transparent border-none text-white font-medium text-sm w-full outline-none placeholder:text-slate-400"
+                  placeholder="Promo Code"
+                  value={promoCode}
+                  onChange={e => setPromoCode(e.target.value)}
+                />
+                <button className="text-[#FF5A1F] font-bold text-sm hover:text-white transition-colors" onClick={applyPromo}>Apply</button>
+              </div>
+              <button
+                className="bg-[#FF5A1F] hover:bg-[#FF4500] text-white font-extrabold text-base tracking-wider py-4 rounded-xl shadow-[0_4px_25px_rgba(255,90,31,0.4)] w-full transition-all text-center uppercase cursor-pointer disabled:opacity-50"
+                disabled={isLoading}
+                onClick={handleBookRide}
+              >
+                {isLoading ? <IonSpinner name="crescent" /> : 'CONFIRM BOOKING'}
+              </button>
+              <button
+                className="text-slate-400 hover:text-white text-sm font-medium w-full text-center transition-colors"
+                onClick={() => setStep(BookingStep.LOCATION)}
+              >
+                Change Ride Details
+              </button>
+            </div>
+          )}
+
+          {step === BookingStep.MATCHING && (
+            <div className="flex flex-col items-center justify-center text-center py-12 space-y-6">
+              <div className="text-6xl animate-bounce">🚕</div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Finding your driver...</h2>
+                <p className="text-slate-400 text-sm">Please wait while we match you with the nearest driver.</p>
+              </div>
+              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-[#FF5A1F] h-full transition-all duration-500"
+                  style={{ width: `${matchingProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="booking-map-section">
+      {/* Right Column: Interactive Map */}
+      <div className="lg:col-span-7 h-[500px] lg:h-[calc(100vh-2rem)] rounded-2xl overflow-hidden border border-white/10 relative z-0 sticky top-4 shadow-2xl">
         <NavigoMap
           userLocation={pickup}
           destination={destination}
@@ -315,120 +460,13 @@ const RideRequest: React.FC = () => {
         />
       </div>
 
-      <div className="booking-bottom-sheet">
-        <div className="sheet-drag-handle" />
-
-        {step === BookingStep.LOCATION && (
-          <div className="step-container">
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Where to?</h2>
-            <div className="input-row">
-              <div className="input-wrapper">
-                <div className="input-icon-badge"><IonIcon icon={globeOutline} /></div>
-                <input className="glass-input" placeholder="Pickup Location" value={pickupSearch} onChange={e => handleSearch(e.target.value, true)} onFocus={() => setSearchingPickup(true)} />
-              </div>
-              <div className="input-divider" />
-              <div className="input-wrapper">
-                <div className="input-icon-badge"><IonIcon icon={locationOutline} /></div>
-                <input className="glass-input" placeholder="Destination" value={destSearch} onChange={e => handleSearch(e.target.value, false)} onFocus={() => setSearchingPickup(false)} />
-              </div>
-            </div>
-            {searchResults.length > 0 && (
-              <div className="search-results-dropdown">
-                {searchResults.map((r, i) => (
-                  <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
-                    <IonIcon icon={locationOutline} />
-                    <div className="result-text">
-                      <div className="result-name">{r.name || r.address.split(',')[0]}</div>
-                      <div className="result-addr">{r.address}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            <button className="btn-confirm-booking" disabled={!pickup || !destination} onClick={() => setStep(BookingStep.RIDE_TYPE)}>
-              CONTINUE
-            </button>
-          </div>
-        )}
-
-        {step === BookingStep.RIDE_TYPE && (
-          <div className="step-container">
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Select Ride</h2>
-            <div className="vehicle-selection-grid">
-              {RIDE_OPTIONS.map(opt => {
-                const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
-                return (
-                  <div key={opt.id} className={`vehicle-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)}>
-                    <div className="vehicle-info">
-                      <span className="vehicle-emoji">{opt.emoji}</span>
-                      <div className="vehicle-text">
-                        <span className="vehicle-name">{opt.name}</span>
-                        <span className="vehicle-desc">{opt.description}</span>
-                      </div>
-                    </div>
-                    <div className="vehicle-price">
-                      <span className="price-value">{`UGX ${est.toLocaleString()}`}</span>
-                      <span className="price-eta">3 mins away</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <button className="btn-confirm-booking" onClick={() => setStep(BookingStep.PAYMENT)}>
-              REVIEW RIDE
-            </button>
-            <button className="back-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setStep(BookingStep.LOCATION)}>
-              Change Location
-            </button>
-          </div>
-        )}
-
-        {step === BookingStep.PAYMENT && (
-          <div className="step-container">
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', textAlign: 'center' }}>Fare Summary</h2>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.9rem' }}>
-                <span>Distance: {fare?.distance} km</span>
-                <span>{fare?.formattedTotal}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#94A3B8' }}>
-                <span>Ride Type: {selectedRide.name}</span>
-                <span>Cash Payment</span>
-              </div>
-            </div>
-            <div className="input-wrapper" style={{ marginBottom: '20px' }}>
-              <div className="input-icon-badge"><IonIcon icon={checkmarkCircleOutline} /></div>
-              <input className="glass-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
-              <button className="back-btn" style={{ fontWeight: 'bold', color: '#FF5A1F' }} onClick={applyPromo}>Apply</button>
-            </div>
-            <button className="btn-confirm-booking" disabled={isLoading} onClick={handleBookRide}>
-              {isLoading ? <IonSpinner name="crescent" /> : 'CONFIRM BOOKING'}
-            </button>
-            <button className="back-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setStep(BookingStep.RIDE_TYPE)}>
-              Change Ride Type
-            </button>
-          </div>
-        )}
-
-        {step === BookingStep.MATCHING && (
-          <div className="matching-container">
-            <div className="matching-spinner">🚕</div>
-            <h2 className="matching-status">Finding your driver...</h2>
-            <p className="matching-subtitle">Please wait while we match you with the nearest driver.</p>
-            <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '6px', borderRadius: '3px', marginTop: '30px', overflow: 'hidden' }}>
-              <div style={{ width: `${matchingProgress}%`, background: '#FF5A1F', height: '100%', transition: 'width 0.5s ease' }} />
-            </div>
-          </div>
-        )}
-      </div>
-
       <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} color="dark" position="top" />
       <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
-        <div className="login-prompt-modal">
-          <h2 style={{ color: '#fff' }}>Ready to Ride?</h2>
-          <p style={{ color: '#94A3B8' }}>Sign in to book rides and earn rewards.</p>
-          <button className="btn-confirm-booking" style={{ width: 'auto', padding: '12px 30px' }} onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</button>
-          <button className="back-btn" style={{ color: '#fff' }} onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</button>
+        <div className="bg-[#090D16] p-8 rounded-2xl text-center space-y-6 max-w-md mx-auto mt-20 border border-white/10">
+          <h2 className="text-2xl font-bold text-white">Ready to Ride?</h2>
+          <p className="text-slate-400">Sign in to book rides and earn rewards.</p>
+          <button className="bg-[#FF5A1F] hover:bg-[#FF4500] text-white font-bold py-3 px-8 rounded-xl w-full transition-all" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</button>
+          <button className="text-white hover:underline text-sm transition-colors" onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</button>
         </div>
       </IonModal>
     </div>
