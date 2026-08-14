@@ -167,7 +167,7 @@ const RideRequest: React.FC = () => {
       console.log('📡 Attempting Nominatim Search (Primary)...');
       const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
-          q: query,
+          q: `${query}, Uganda`, // Augment query to force Uganda context
           format: 'json',
           addressdetails: 1,
           limit: 10,
