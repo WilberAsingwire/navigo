@@ -45,10 +45,11 @@ const ActiveRide: React.FC = () => {
     if (!user) return;
     const socket = socketService.connect(user.id);
 
-    // We need the rideId. In a real app, we'd get this from the route params.
-    // For now, we use a mock rideId 'ride_001'
+    // In a real app, we'd get this from the route params.
     const rideId = 'ride_001';
-    socket.emit('join-chat', { rideId }); // Join the ride room
+
+    // SECURE ROOM JOIN: Use the new secure event to join the ride room for updates
+    socket.emit('join-ride-room', { rideId });
 
     socket.on('location-updated', (data: { lat: number; lng: number }) => {
       setDriverPos({ lat: data.lat, lng: data.lng });

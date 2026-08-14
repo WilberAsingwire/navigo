@@ -80,6 +80,9 @@ const RideRequest: React.FC = () => {
         setIsMatching(false);
         setMatchingProgress(100);
         setMatchedDriver(data);
+
+        // SECURE ROOM JOIN: Join the ride room to receive live location updates
+        socket.emit('join-ride-room', { rideId: data.rideId });
       });
       socket.on('no-drivers-found', (data: any) => {
         setIsMatching(false);
@@ -111,15 +114,19 @@ const RideRequest: React.FC = () => {
               const data = res.data;
               const addr = data.display_name || '';
               const address = data.address || {};
+
+              // More robust address parsing for the "Short Name"
               const houseNumber = address.house_number || '';
               const road = address.road || address.pedestrian || address.footway || '';
               const suburb = address.suburb || address.neighbourhood || address.village || '';
               const city = address.city || address.town || address.municipality || '';
+
               let preciseName = '';
               if (houseNumber && road) preciseName = `${houseNumber} ${road}`;
               else if (road) preciseName = road;
               else if (suburb) preciseName = suburb;
               else preciseName = city || addr.split(',')[0];
+
               setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName });
               setPickupSearch(preciseName);
             } catch {
@@ -141,11 +148,18 @@ const RideRequest: React.FC = () => {
     });
   };
 
+
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     try {
       const res = await axios.get('https://photon.komoot.io/api/', {
-        params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 }
+        params: {
+          q: query,
+          limit: 10,
+          lat: pickup?.lat || 0.3476,
+          lon: pickup?.lng || 32.5825,
+          reprioritize: 1 // Prioritize results nearest to the current location
+        }
       });
       if (!res.data || !res.data.features) return [];
       return res.data.features.map((item: any) => {

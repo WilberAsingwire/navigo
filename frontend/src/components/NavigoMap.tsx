@@ -56,7 +56,8 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<{ [key: string]: L.Marker | L.Circle | L.Polyline }>({});
+  const markersRef = useRef<{ [key: string]: L.Marker | L.Polyline | L.Circle }>({});
+  const animationRef = useRef<number | null>(null);
 
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
@@ -64,6 +65,34 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     standard: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
     dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
     satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
+  };
+
+  // --- Smooth Movement Logic ---
+  const animateMarker = (marker: L.Marker, startPos: [number, number], endPos: [number, number], duration = 1000) => {
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+
+    const startTime = performance.now();
+
+    const step = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Cubic Ease-In-Out
+      const ease = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      const currentLat = startPos[0] + (endPos[0] - startPos[0]) * ease;
+      const currentLng = startPos[1] + (endPos[1] - startPos[1]) * ease;
+
+      marker.setLatLng([currentLat, currentLng]);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(step);
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(step);
   };
 
   useEffect(() => {
@@ -134,31 +163,61 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     }
   }, [userLocation, followUser]);
 
+  // --- Marker & Route Sync ---
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    Object.values(markersRef.current).forEach(layer => map.removeLayer(layer));
-    markersRef.current = {};
-
+    // 1. User Location Marker
     if (userLocation) {
-      const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: pickIcon, draggable: interactive }).addTo(map).bindPopup('📍 You');
-      const userCircle = L.circle([userLocation.lat, userLocation.lng], { radius: 8, color: '#2D6A4F', fillOpacity: 0.1 }).addTo(map);
-      markersRef.current['user'] = userMarker;
-      markersRef.current['userCircle'] = userCircle;
+      if (!markersRef.current['user']) {
+        markersRef.current['user'] = L.marker([userLocation.lat, userLocation.lng], { icon: pickIcon, draggable: interactive }).addTo(map).bindPopup('📍 You');
+        markersRef.current['userCircle'] = L.circle([userLocation.lat, userLocation.lng], { radius: 8, color: '#2D6A4F', fillOpacity: 0.1 }).addTo(map);
+      } else {
+        const marker = markersRef.current['user'] as L.Marker;
+        const circle = markersRef.current['userCircle'] as L.Circle;
+
+        // Smoothly move user marker if it's a significant jump
+        const oldPos = marker.getLatLng();
+        if (Math.abs(oldPos.lat - userLocation.lat) > 0.0001 || Math.abs(oldPos.lng - userLocation.lng) > 0.0001) {
+          animateMarker(marker, [oldPos.lat, oldPos.lng], [userLocation.lat, userLocation.lng], 800);
+        }
+        circle.setLatLng([userLocation.lat, userLocation.lng]);
+      }
     }
 
+    // 2. Destination Marker
     if (destination) {
-      const destMarker = L.marker([destination.lat, destination.lng], { icon: destIcon, draggable: interactive }).addTo(map).bindPopup('🎯 Destination');
-      markersRef.current['dest'] = destMarker;
+      if (!markersRef.current['dest']) {
+        markersRef.current['dest'] = L.marker([destination.lat, destination.lng], { icon: destIcon, draggable: interactive }).addTo(map).bindPopup('🎯 Destination');
+      } else {
+        const marker = markersRef.current['dest'] as L.Marker;
+        marker.setLatLng([destination.lat, destination.lng]);
+      }
+    } else if (markersRef.current['dest']) {
+      map.removeLayer(markersRef.current['dest']);
+      delete markersRef.current['dest'];
     }
 
+    // 3. Driver Marker (with Smooth Motion)
     if (driverLocation) {
       const dIcon = driverType === 'bike' ? bikeIcon : driverIcon;
-      const driverMarker = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType === 'bike' ? '🏍️' : '🚗'} Driver`);
-      markersRef.current['driver'] = driverMarker;
+      if (!markersRef.current['driver']) {
+        markersRef.current['driver'] = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType === 'bike' ? '🏍️' : '🚗'} Driver`);
+      } else {
+        const marker = markersRef.current['driver'] as L.Marker;
+        const oldPos = marker.getLatLng();
+
+        if (oldPos.lat !== driverLocation.lat || oldPos.lng !== driverLocation.lng) {
+          animateMarker(marker, [oldPos.lat, oldPos.lng], [driverLocation.lat, driverLocation.lng], 1200);
+        }
+      }
+    } else if (markersRef.current['driver']) {
+      map.removeLayer(markersRef.current['driver']);
+      delete markersRef.current['driver'];
     }
 
+    // 4. Route Visualization & FitBounds
     if (showRoute && userLocation && destination) {
       const fetchRoute = async () => {
         try {
@@ -169,8 +228,16 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           if (data.routes?.length > 0) {
             const route = data.routes[0];
             const points = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
-            const polyline = L.polyline(points, { color: '#FF6B35', weight: 4, opacity: 0.7 }).addTo(map);
-            markersRef.current['route'] = polyline;
+
+            if (!markersRef.current['route']) {
+              markersRef.current['route'] = L.polyline(points, { color: '#FF6B35', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
+            } else {
+              (markersRef.current['route'] as L.Polyline).setLatLngs(points);
+            }
+
+            // FIT BOUNDS: Ensure both points and route are visible
+            const bounds = L.latLngBounds(points);
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16, animate: true });
 
             const d = Math.round(route.distance / 100) / 10;
             const t = Math.round(route.duration / 60);
@@ -178,11 +245,14 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             if (onDistanceChange) onDistanceChange(d, t);
           }
         } catch {
-          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 4, opacity: 0.7 }).addTo(map);
+          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 5, opacity: 0.8 }).addTo(map);
           markersRef.current['route'] = fallbackLine;
         }
       };
       fetchRoute();
+    } else if (markersRef.current['route']) {
+      map.removeLayer(markersRef.current['route']);
+      delete markersRef.current['route'];
     }
   }, [userLocation, destination, driverLocation, driverType, showRoute, interactive]);
 
