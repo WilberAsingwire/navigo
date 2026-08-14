@@ -50,6 +50,8 @@ const RideRequest: React.FC = () => {
   const [selectedRide, setSelectedRide] = useState(RIDE_OPTIONS[1]);
   const [fare, setFare] = useState<FareEstimate | null>(null);
   const [isMatching, setIsMatching] = useState(false);
+  const [actualRouteDist, setActualRouteDist] = useState(0);
+  const [actualRouteDur, setActualRouteDur] = useState(0);
   const [driverFound, setDriverFound] = useState(false);
   const [matchedDriver, setMatchedDriver] = useState<any>(null);
   const [matchingProgress, setMatchingProgress] = useState(0);
@@ -99,7 +101,7 @@ const RideRequest: React.FC = () => {
 
   useEffect(() => {
     if (pickup && destination) calculateFare();
-  }, [pickup, destination, selectedRide, discount]);
+  }, [pickup, destination, selectedRide, discount, actualRouteDist, actualRouteDur]);
 
   const getCurrentLocation = () => {
     return new Promise<void>((resolve) => {
@@ -229,11 +231,12 @@ const RideRequest: React.FC = () => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     if (query.length >= 2) {
       setIsSearching(true);
+      // Reduced debounce from 300ms to 150ms for a more "instant" feel
       searchTimeoutRef.current = setTimeout(async () => {
         const results = await searchLocation(query);
         setSearchResults(results);
         setIsSearching(false);
-      }, 300);
+      }, 150);
     } else {
       setSearchResults([]);
     }
@@ -252,14 +255,18 @@ const RideRequest: React.FC = () => {
 
   const calculateFare = () => {
     if (!pickup || !destination) return;
-    const dist = calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
+
+    // Use actual road distance from OSRM if available, otherwise fallback to straight-line (Haversine)
+    const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
     const speed = selectedRide.vehicleType === 'boda' ? 28 : 22;
-    const dur = (dist / speed) * 60;
+    const dur = actualRouteDur > 0 ? actualRouteDur : (dist / speed) * 60;
+
     const base = selectedRide.basePrice;
     const distFare = Math.round(dist * selectedRide.pricePerKm);
     const timeFare = Math.round(dur * selectedRide.pricePerMinute);
     const surge = Math.round((base + distFare + timeFare) * (selectedRide.surgeMultiplier - 1));
     const total = Math.max(base + distFare + timeFare + surge - discount, base);
+
     setFare({
       distance: Math.round(dist * 10) / 10,
       duration: Math.round(dur),
@@ -534,6 +541,10 @@ const RideRequest: React.FC = () => {
           height="100%"
           showControls={true}
           onMapClick={handleMapClick}
+          onDistanceChange={(d, t) => {
+            setActualRouteDist(d);
+            setActualRouteDur(t);
+          }}
         />
       </div>
 

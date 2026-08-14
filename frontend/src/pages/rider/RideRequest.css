@@ -1,82 +1,98 @@
-/* RideRequest.css - Professional Split-Screen Booking System */
+/* RideRequest.css - Final Map-Centric Experience */
 
 .booking-page-container {
-  min-height: 100vh;
-  width: 100%;
+  position: relative;
+  height: 100vh;
+  width: 100vw;
   background-color: #090D16;
   color: #FFFFFF;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.booking-map-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.booking-form-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   padding: 24px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  max-width: 1280px;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 600px;
   margin: 0 auto;
   box-sizing: border-box;
 }
 
 @media (min-width: 1024px) {
-  .booking-page-container {
-    grid-template-columns: repeat(12, 1fr);
-  }
-}
-
-.booking-form-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-@media (min-width: 1024px) {
   .booking-form-panel {
-    grid-column: span 5;
-  }
-}
-
-.booking-map-panel {
-  height: 500px;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-  z-index: 0;
-}
-
-@media (min-width: 1024px) {
-  .booking-map-panel {
-    grid-column: span 7;
-    height: calc(100vh - 48px);
-    position: sticky;
-    top: 24px;
+    left: 24px;
+    right: auto;
+    width: 450px;
+    bottom: 24px;
+    border-radius: 24px;
+    background: rgba(18, 24, 36, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
   }
 }
 
 .back-nav-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 20;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #CBD5E1;
-  font-weight: 500;
+  color: #FFFFFF;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  background: transparent;
-  border: none;
-  transition: color 0.2s;
-  margin-bottom: 8px;
+  background: rgba(18, 24, 36, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 16px;
+  border-radius: 50px;
+  transition: all 0.2s;
 }
 
 .back-nav-btn:hover {
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: #090D16;
 }
 
 .glass-booking-card {
   background: #121824;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 24px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .glass-booking-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
 }
 
 .card-title {
@@ -145,7 +161,7 @@
 
 .search-results-list {
   position: absolute;
-  top: 100%;
+  bottom: 100%; /* Show results ABOVE the input on mobile */
   left: 0;
   right: 0;
   z-index: 1000;
@@ -153,10 +169,20 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   overflow: hidden;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
-  box-shadow: 0 10px 15px rgba(0,0,0,0.4);
-  margin-top: 4px;
+  box-shadow: 0 -10px 15px rgba(0,0,0,0.4);
+  margin-bottom: 8px;
+}
+
+@media (min-width: 1024px) {
+  .search-results-list {
+    bottom: auto;
+    top: 100%;
+    margin-top: 4px;
+    margin-bottom: 0;
+    box-shadow: 0 10px 15px rgba(0,0,0,0.4);
+  }
 }
 
 .search-result-item {
@@ -290,7 +316,6 @@
   transform: none;
 }
 
-/* Fare Summary Styles */
 .fare-summary-box {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -323,7 +348,6 @@
   color: #FF5A1F;
 }
 
-/* Matching Section */
 .matching-state {
   display: flex;
   flex-direction: column;
