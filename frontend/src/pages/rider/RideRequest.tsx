@@ -151,18 +151,30 @@ const RideRequest: React.FC = () => {
 
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
+    console.log(`🔍 Searching for: "${query}"`);
+
+    // UGANDA BOUNDING BOX (approximate)
+    const UGANDA_BBOX = {
+      minLat: -1.5,
+      maxLat: 4.2,
+      minLon: 29.5,
+      maxLon: 35.0
+    };
+
     try {
-      const res = await axios.get('https://photon.komoot.io/api/', {
+      // PROVIDER 1: Photon (Fast, Autocomplete optimized)
+      console.log('📡 Attempting Photon Search...');
+      const photonRes = await axios.get('https://photon.komoot.io/api/', {
         params: {
           q: query,
           limit: 10,
           lat: pickup?.lat || 0.3476,
           lon: pickup?.lng || 32.5825,
-          reprioritize: 1 // Prioritize results nearest to the current location
+          reprioritize: 1
         }
       });
-      if (!res.data || !res.data.features) return [];
-      return res.data.features.map((item: any) => {
+
+      let results = photonRes.data?.features?.map((item: any) => {
         const props = item.properties;
         const geom = item.geometry.coordinates;
         return {
@@ -171,8 +183,44 @@ const RideRequest: React.FC = () => {
           address: props.name || props.city || props.street || props.state || 'Unknown Location',
           name: props.name || props.city || props.street || 'Unknown Location'
         };
-      });
-    } catch { return []; }
+      }) || [];
+
+      // FILTER: Ensure results are actually within Uganda's general area to remove global noise
+      results = results.filter((r: any) =>
+        r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat &&
+        r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon
+      );
+
+      console.log(`✅ Photon found ${results.length} Ugandan matches`);
+
+      // FALLBACK: If Photon found nothing, try Nominatim (Slower, but more comprehensive)
+      if (results.length === 0) {
+        console.log('⚠️ Photon failed. Attempting Nominatim Fallback...');
+        const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
+          params: {
+            q: query,
+            format: 'json',
+            addressdetails: 1,
+            limit: 10,
+            viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
+            bounded: 1 // Force results to be within the viewbox (Uganda)
+          }
+        });
+
+        results = nomRes.data.map((item: any) => ({
+          lat: parseFloat(item.lat),
+          lng: parseFloat(item.lon),
+          address: item.display_name,
+          name: item.display_name.split(',')[0]
+        }));
+        console.log(`✅ Nominatim found ${results.length} Ugandan matches`);
+      }
+
+      return results;
+    } catch (e: any) {
+      console.error('❌ Search Error:', e.response?.data || e.message);
+      return [];
+    }
   };
 
   const searchTimeoutRef = useRef<any>(null);
