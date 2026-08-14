@@ -29,6 +29,11 @@ const pickIcon = createPulsingIcon('#2D6A4F', '📍', 30);
 const destIcon = createPulsingIcon('#E85D75', '🎯', 32);
 const driverIcon = createPulsingIcon('#FF6B35', '🚗', 34);
 const bikeIcon = createPulsingIcon('#ffab40', '🏍️', 34);
+const poiIcon = (emoji: string) => L.divIcon({
+  html: `<div style="background:#121824; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${emoji}</div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
 
 interface MapProps {
   userLocation: { lat: number; lng: number } | null;
@@ -57,7 +62,9 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker | L.Polyline | L.Circle }>({});
+  const poiMarkersRef = useRef<{ [key: string]: L.Marker }>({});
   const animationRef = useRef<number | null>(null);
+  const poiFetchTimeoutRef = useRef<any>(null);
 
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
@@ -77,7 +84,6 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Cubic Ease-In-Out
       const ease = progress < 0.5
         ? 4 * progress * progress * progress
         : 1 - Math.pow(-2 * progress + 2, 3) / 2;
@@ -95,6 +101,56 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     animationRef.current = requestAnimationFrame(step);
   };
 
+  const fetchNearbyPOIs = async (map: L.Map) => {
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+
+    // Dynamic radius based on zoom level (closer zoom = smaller area)
+    const radius = zoom > 15 ? 500 : zoom > 13 ? 2000 : 5000;
+
+    console.log(`📡 Fetching POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)...`);
+
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
+        way["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
+        relation["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
+      );
+      out center;
+    `;
+
+    try {
+      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+      const data = await res.json();
+
+      // Clear old POIs
+      Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
+      poiMarkersRef.current = {};
+
+      const poiEmojiMap: Record<string, string> = {
+        restaurant: '🍴', cafe: '☕', police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊', school: '🎓'
+      };
+
+      data.elements.forEach((element: any) => {
+        const amenity = element.tags.amenity;
+        const lat = element.lat || element.center.lat;
+        const lon = element.lon || element.center.lon;
+        const name = element.tags.name || 'Unnamed Spot';
+        const emoji = poiEmojiMap[amenity] || '📍';
+
+        const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
+          .addTo(map)
+          .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
+
+        poiMarkersRef.current[element.id] = marker;
+      });
+      console.log(`✅ Loaded ${data.elements.length} nearby POIs`);
+    } catch (e) {
+      console.error('❌ POI Fetch Error:', e);
+    }
+  };
+
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 600);
     return () => clearTimeout(t);
@@ -103,34 +159,51 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   useEffect(() => {
     if (!mapContainerRef.current || loading) return;
 
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
+    // ONLY initialize the map if it doesn't exist
+    if (!mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        zoomControl: false, // We'll add it manually to control position
+        dragging: interactive,
+        scrollWheelZoom: interactive,
+        touchZoom: interactive,
+        attributionControl: true,
+      }).setView(center, 15);
+
+      mapInstanceRef.current = map;
+
+      // MOVE ZOOM CONTROL TO BOTTOM RIGHT
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 200);
+
+      const resizeObserver = new ResizeObserver(() => {
+        map.invalidateSize();
+      });
+      resizeObserver.observe(mapContainerRef.current!);
     }
 
-    const map = L.map(mapContainerRef.current, {
-      zoomControl: true,
-      dragging: interactive,
-      scrollWheelZoom: interactive,
-      touchZoom: interactive,
-      attributionControl: true,
-    }).setView(center, 15);
+    const map = mapInstanceRef.current;
 
-    mapInstanceRef.current = map;
-
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
-
-    const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize();
+    // UPDATE TILE LAYER WITHOUT RECREATING MAP
+    // Remove existing tile layers first
+    map.eachLayer(layer => {
+      if (layer instanceof L.TileLayer) {
+        map.removeLayer(layer);
+      }
     });
-    resizeObserver.observe(mapContainerRef.current!);
 
     L.tileLayer(tileUrls[mapStyle].url, {
       attribution: tileUrls[mapStyle].attribution,
       maxZoom: 19,
     }).addTo(map);
+
+    // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
+    map.on('moveend', () => {
+      if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
+      poiFetchTimeoutRef.current = setTimeout(() => fetchNearbyPOIs(map), 500);
+    });
 
     map.on('click', (e) => {
       if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
@@ -149,10 +222,8 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     locateControl.addTo(map);
 
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      // Do NOT remove the map here if we want it to persist across style changes
+      // The map is cleaned up when the component finally unmounts
     };
   }, [loading, mapStyle, interactive]);
 
