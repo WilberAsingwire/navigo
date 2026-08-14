@@ -153,7 +153,6 @@ const RideRequest: React.FC = () => {
     if (query.length < 2) return [];
     console.log(`🔍 Searching for: "${query}"`);
 
-    // UGANDA BOUNDING BOX (approximate)
     const UGANDA_BBOX = {
       minLat: -1.5,
       maxLat: 4.2,
@@ -162,58 +161,57 @@ const RideRequest: React.FC = () => {
     };
 
     try {
-      // PROVIDER 1: Photon (Fast, Autocomplete optimized)
-      console.log('📡 Attempting Photon Search...');
-      const photonRes = await axios.get('https://photon.komoot.io/api/', {
+      // TRY NOMINATIM FIRST - It's generally more reliable for Ugandan regional searches
+      console.log('📡 Attempting Nominatim Search (Primary)...');
+      const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
           q: query,
+          format: 'json',
+          addressdetails: 1,
           limit: 10,
-          lat: pickup?.lat || 0.3476,
-          lon: pickup?.lng || 32.5825,
-          reprioritize: 1
+          viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
+          bounded: 1
         }
       });
 
-      let results = photonRes.data?.features?.map((item: any) => {
-        const props = item.properties;
-        const geom = item.geometry.coordinates;
-        return {
-          lat: geom[1],
-          lng: geom[0],
-          address: props.name || props.city || props.street || props.state || 'Unknown Location',
-          name: props.name || props.city || props.street || 'Unknown Location'
-        };
-      }) || [];
+      let results = nomRes.data.map((item: any) => ({
+        lat: parseFloat(item.lat),
+        lng: parseFloat(item.lon),
+        address: item.display_name,
+        name: item.display_name.split(',')[0]
+      }));
 
-      // FILTER: Ensure results are actually within Uganda's general area to remove global noise
-      results = results.filter((r: any) =>
-        r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat &&
-        r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon
-      );
+      console.log(`✅ Nominatim found ${results.length} matches`);
 
-      console.log(`✅ Photon found ${results.length} Ugandan matches`);
-
-      // FALLBACK: If Photon found nothing, try Nominatim (Slower, but more comprehensive)
+      // FALLBACK TO PHOTON
       if (results.length === 0) {
-        console.log('⚠️ Photon failed. Attempting Nominatim Fallback...');
-        const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
+        console.log('⚠️ Nominatim found nothing. Attempting Photon Fallback...');
+        const photonRes = await axios.get('https://photon.komoot.io/api/', {
           params: {
             q: query,
-            format: 'json',
-            addressdetails: 1,
             limit: 10,
-            viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
-            bounded: 1 // Force results to be within the viewbox (Uganda)
+            lat: pickup?.lat || 0.3476,
+            lon: pickup?.lng || 32.5825,
+            reprioritize: 1
           }
         });
 
-        results = nomRes.data.map((item: any) => ({
-          lat: parseFloat(item.lat),
-          lng: parseFloat(item.lon),
-          address: item.display_name,
-          name: item.display_name.split(',')[0]
-        }));
-        console.log(`✅ Nominatim found ${results.length} Ugandan matches`);
+        let photonResults = photonRes.data?.features?.map((item: any) => {
+          const props = item.properties;
+          const geom = item.geometry.coordinates;
+          return {
+            lat: geom[1],
+            lng: geom[0],
+            address: props.name || props.city || props.street || props.state || 'Unknown Location',
+            name: props.name || props.city || props.street || 'Unknown Location'
+          };
+        }) || [];
+
+        results = photonResults.filter((r: any) =>
+          r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat &&
+          r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon
+        );
+        console.log(`✅ Photon found ${results.length} matches`);
       }
 
       return results;
@@ -375,27 +373,48 @@ const RideRequest: React.FC = () => {
               <div className="location-input-group">
                 <h2 className="section-label" style={{ textAlign: 'center', fontSize: '18px', color: '#fff', textTransform: 'none', marginBottom: '15px' }}>Where to?</h2>
                 <div className="location-search-container">
-                  <div className="location-input-wrapper">
-                    <div className="input-icon"><IonIcon icon={globeOutline} /></div>
-                    <input
-                      className="location-input"
-                      placeholder="Pickup Location"
-                      value={pickupSearch}
-                      onChange={e => handleSearch(e.target.value, true)}
-                      onFocus={() => setSearchingPickup(true)}
-                    />
+                  <div className="location-input-group-relative" style={{ position: 'relative' }}>
+                    <div className="location-input-wrapper">
+                      <div className="input-icon"><IonIcon icon={globeOutline} /></div>
+                      <input
+                        className="location-input"
+                        placeholder="Pickup Location"
+                        value={pickupSearch}
+                        onChange={e => handleSearch(e.target.value, true)}
+                        onFocus={() => setSearchingPickup(true)}
+                      />
+                    </div>
+                    {searchingPickup && isSearching && (
+                      <div className="search-results-list" style={{ justifyContent: 'center', alignItems: 'center', padding: '20px', textAlign: 'center', display: 'flex' }}>
+                        <IonSpinner name="crescent" color="warning" />
+                        <span style={{ marginLeft: '10px', fontSize: '12px', color: '#94A3B8' }}>Searching Uganda...</span>
+                      </div>
+                    )}
+                    {!searchingPickup || (!isSearching && searchingPickup && searchResults.length > 0) ? null : null}
+                    {/* This logic is getting complex, let's just handle the rendering below */}
                   </div>
-                  <div className="location-input-wrapper">
-                    <div className="input-icon"><IonIcon icon={locationOutline} /></div>
-                    <input
-                      className="location-input"
-                      placeholder="Destination"
-                      value={destSearch}
-                      onChange={e => handleSearch(e.target.value, false)}
-                      onFocus={() => setSearchingPickup(false)}
-                    />
+
+                  <div className="location-input-group-relative" style={{ position: 'relative' }}>
+                    <div className="location-input-wrapper">
+                      <div className="input-icon"><IonIcon icon={locationOutline} /></div>
+                      <input
+                        className="location-input"
+                        placeholder="Destination"
+                        value={destSearch}
+                        onChange={e => handleSearch(e.target.value, false)}
+                        onFocus={() => setSearchingPickup(false)}
+                      />
+                    </div>
                   </div>
-                  {searchResults.length > 0 && (
+
+                  {/* Shared results list - positioned at bottom of container */}
+                  {isSearching && (
+                    <div className="search-results-list" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', textAlign: 'center' }}>
+                      <IonSpinner name="crescent" color="warning" />
+                      <span style={{ marginLeft: '10px', fontSize: '12px', color: '#94A3B8' }}>Searching Uganda...</span>
+                    </div>
+                  )}
+                  {!isSearching && searchResults.length > 0 && (
                     <div className="search-results-list">
                       {searchResults.map((r, i) => (
                         <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
@@ -406,6 +425,11 @@ const RideRequest: React.FC = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {!isSearching && searchResults.length === 0 && (pickupSearch.length >= 2 || destSearch.length >= 2) && (
+                    <div className="search-results-list" style={{ padding: '15px', textAlign: 'center', color: '#94A3B8', fontSize: '12px' }}>
+                      No locations found in Uganda. Try a different keyword.
                     </div>
                   )}
                 </div>
