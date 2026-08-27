@@ -120,7 +120,7 @@ const RideRequest: React.FC = () => {
 
   const fetchWalletBalance = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/wallet`);
+      const res = await axios.get(`${BASE_URL}/api/wallet/balance`);
       if (res.data.ok) setWalletBalance(res.data.balance);
     } catch (e) {
       console.error('Wallet fetch error:', e);
