@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle,
   IonGrid, IonRow, IonCol, IonIcon, IonText, IonButton, IonToggle,
-  IonAvatar, IonBadge, IonCard, IonCardContent, IonRefresher, IonRefresherContent
+  IonAvatar, IonBadge, IonCard, IonCardContent, IonRefresher, IonRefresherContent, useIonRouter
 } from '@ionic/react';
 import {
   carOutline, starOutline, leafOutline, timeOutline, walletOutline,
@@ -10,23 +10,22 @@ import {
   chevronDownCircleOutline, settingsOutline, personOutline,
   checkmarkCircleOutline, cashOutline
 } from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import BodaSafeScore from '../../components/BodaSafeBadges';
 import LoyaltyCard from '../../components/LoyaltyCard';
 import './DriverHome.css';
 
 const DriverHome: React.FC = () => {
-  const history = useHistory();
+  const ionRouter = useIonRouter();
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
     const status = user?.verificationStatus || 'unverified';
     if (status === 'unverified' || status === 'rejected') {
-      history.replace('/driver/documents');
+      ionRouter.replace('/driver/documents');
     }
-  }, [user, history]);
+  }, [user, ionRouter]);
 
   const [stats] = useState({
     earnings: 85000,
@@ -59,7 +58,7 @@ const DriverHome: React.FC = () => {
         <IonToolbar className="driver-toolbar">
           <div className="header-content">
             <div className="user-profile-group">
-              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => history.push('/driver/profile')}>
+              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => ionRouter.push('/driver/profile')}>
                 <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Driver')}&background=FF6B35&color=fff&size=64`} alt="profile" />
               </IonAvatar>
               <div>
@@ -115,7 +114,7 @@ const DriverHome: React.FC = () => {
               { label: 'Documents', icon: documentTextOutline, path: '/driver/documents', color: '#b47fff' },
               { label: 'Live Map', icon: mapOutline, path: '/admin/map', color: '#FF6B35' },
             ].map(action => (
-              <div key={action.label} onClick={() => history.push(action.path)} className="action-card">
+              <div key={action.label} onClick={() => ionRouter.push(action.path)} className="action-card">
                 <IonIcon icon={action.icon} style={{ color: action.color }} />
                 <p>{action.label}</p>
               </div>
