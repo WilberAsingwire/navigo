@@ -21,11 +21,11 @@ interface DriverDocs {
 
 interface User {
   id: string;
-  name: string;
+  fullName: string;
   phone: string;
   email?: string;
   password?: string;
-  role: 'customer' | 'driver' | 'motorist' | 'admin';
+  role: 'rider' | 'driver' | 'admin';
   phoneVerified: boolean;
   verificationStatus: VerificationStatus;
   driverDocs?: DriverDocs;
@@ -55,7 +55,7 @@ const normalizePhone = (phone: string) => {
 // ─── REGISTER ────────────────────────────────────────
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { name, phone, password, email, role } = req.body;
+    const { fullName, phone, password, email, role } = req.body;
     const db = getDB();
 
     const cleanPhone = normalizePhone(phone);
@@ -65,7 +65,7 @@ router.post('/register', async (req: Request, res: Response) => {
       });
     }
 
-    if (!name || name.trim().length < 2) {
+    if (!fullName || fullName.trim().length < 2) {
       return res.status(400).json({ message: 'Name must be at least 2 characters' });
     }
 
@@ -73,7 +73,7 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Password must be at least 4 characters' });
     }
 
-    const validRoles = ['customer', 'driver', 'motorist'];
+    const validRoles = ['rider', 'driver'];
     if (role && !validRoles.includes(role)) {
       return res.status(400).json({ message: 'Invalid role selected' });
     }
@@ -90,14 +90,14 @@ router.post('/register', async (req: Request, res: Response) => {
       }
     }
 
-    const userRole = role || 'customer';
-    const needsVerification = userRole === 'driver' || userRole === 'motorist';
+    const userRole = role || 'rider';
+    const needsVerification = userRole === 'driver';
     const hashedPassword = await hashPassword(password);
 
     const userId = 'user_' + Date.now();
     const newUser: any = {
       id: userId,
-      name: name.trim(),
+      fullName: fullName.trim(),
       phone: cleanPhone,
       email: email ? email.toLowerCase().trim() : null,
       password: hashedPassword,
@@ -108,14 +108,14 @@ router.post('/register', async (req: Request, res: Response) => {
     };
 
     await db.run(
-      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [newUser.id, newUser.name, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
+      'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
     );
 
     const token = generateToken({ id: newUser.id, role: newUser.role });
     const message = needsVerification
-      ? `Welcome, ${newUser.name}! Please upload your documents for verification.`
-      : `Welcome to NAVIGO, ${newUser.name}! 🚀`;
+      ? `Welcome, ${newUser.fullName}! Please upload your documents for verification.`
+      : `Welcome to NAVIGO, ${newUser.fullName}! 🚀`;
 
     res.status(201).json({ message, user: sanitizeUser(newUser), token });
   } catch (error) {
@@ -170,12 +170,12 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
     }
 
-    let message = `Welcome back, ${user.name}!`;
+    let message = `Welcome back, ${user.fullName}!`;
     if (user.verificationStatus === 'pending') {
       message += ' Your documents are under review.';
     } else if (user.verificationStatus === 'rejected') {
       message += ` Verification rejected: ${user.rejectionReason || 'Please re-upload documents.'}`;
-    } else if (user.verificationStatus === 'unverified' && (user.role === 'driver' || user.role === 'motorist')) {
+    } else if (user.verificationStatus === 'unverified' && user.role === 'driver') {
       message += ' Please upload your documents to start driving.';
     }
 
@@ -188,7 +188,7 @@ router.post('/login', async (req: Request, res: Response) => {
 // ─── SOCIAL REGISTRATION ──────────────────────────
 router.post('/google-register', async (req: Request, res: Response) => {
   try {
-    const { name, email, phone, socialId, provider } = req.body;
+    const { fullName, email, phone, socialId, provider } = req.body;
     const db = getDB();
 
     if (!phone) return res.status(400).json({ message: 'Phone number is required for registration.' });
@@ -205,10 +205,10 @@ router.post('/google-register', async (req: Request, res: Response) => {
     const userId = 'user_' + Date.now();
     const newUser: any = {
       id: userId,
-      name: name.trim(),
+      fullName: fullName.trim(),
       phone: cleanPhone,
       email: email ? email.toLowerCase().trim() : null,
-      role: 'customer',
+      role: 'rider',
       phoneVerified: 1,
       verificationStatus: 'approved',
       socialProvider: provider,
@@ -217,8 +217,8 @@ router.post('/google-register', async (req: Request, res: Response) => {
     };
 
     await db.run(
-      'INSERT INTO users (id, name, phone, email, role, phoneVerified, verificationStatus, socialProvider, socialId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [newUser.id, newUser.name, newUser.phone, newUser.email, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.socialProvider, newUser.socialId, newUser.createdAt]
+      'INSERT INTO users (id, fullName, phone, email, role, phoneVerified, verificationStatus, socialProvider, socialId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.socialProvider, newUser.socialId, newUser.createdAt]
     );
 
     const token = generateToken({ id: newUser.id, role: newUser.role });
@@ -290,7 +290,7 @@ router.post('/admin/wipe-all', async (req: Request, res: Response) => {
     const hashed = await hashPassword('Kakumiro222');
     const adminId = 'admin_' + Date.now();
     await db.run(
-      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [adminId, 'NAVIGO Admin', 'admin_' + adminId, 'navigouganda@gmail.com', hashed, 'admin', 1, 'approved', new Date().toISOString()]
     );
 
@@ -320,7 +320,7 @@ router.post('/admin/force-setup', async (req: Request, res: Response) => {
 
     await db.run('DELETE FROM users WHERE role = ?', ['admin']);
     await db.run(
-      'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail || 'navigouganda@gmail.com', hashed, 'admin', 1, 'approved', new Date().toISOString()]
     );
 
@@ -348,10 +348,10 @@ router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (r
 
     if (action === 'approve') {
       await db.run('UPDATE users SET verificationStatus = ?, rejectionReason = NULL WHERE id = ?', ['approved', driverId]);
-      res.json({ message: `${driver.name} has been approved!` });
+      res.json({ message: `${driver.fullName} has been approved!` });
     } else if (action === 'reject') {
       await db.run('UPDATE users SET verificationStatus = ?, rejectionReason = ? WHERE id = ?', ['rejected', reason || 'Documents not satisfactory.', driverId]);
-      res.json({ message: `${driver.name} has been rejected. Reason: ${reason || 'Documents not satisfactory.'}` });
+      res.json({ message: `${driver.fullName} has been rejected. Reason: ${reason || 'Documents not satisfactory.'}` });
     } else {
       res.status(400).json({ message: 'Action must be "approve" or "reject".' });
     }

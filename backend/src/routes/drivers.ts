@@ -15,10 +15,13 @@ router.post('/status/online', authenticate, async (req: any, res: Response) => {
       return res.status(400).json({ message: 'online must be a boolean' });
     }
 
+    // Update both users and driver_profiles for consistency
     await db.run('UPDATE users SET isOnline = ? WHERE id = ?', [online, userId]);
+    await db.run('UPDATE driver_profiles SET online = ? WHERE userId = ?', [online, userId]);
 
     res.json({ message: `You are now ${online ? 'online' : 'offline'}`, isOnline: online });
   } catch (error) {
+    console.error('Online status error:', error);
     res.status(500).json({ message: 'Error updating online status' });
   }
 });
@@ -38,6 +41,7 @@ router.post('/status/available', authenticate, async (req: any, res: Response) =
 
     res.json({ message: `You are now ${available ? 'available' : 'unavailable'}`, isAvailable: available });
   } catch (error) {
+    console.error('Availability error:', error);
     res.status(500).json({ message: 'Error updating availability status' });
   }
 });
@@ -47,12 +51,18 @@ router.get('/profile', authenticate, async (req: any, res: Response) => {
   try {
     const userId = req.user?.userId;
     const db = getDB();
-    const user = await db.get('SELECT id, name, phone, role, isOnline, isAvailable, verificationStatus FROM users WHERE id = ?', userId);
+
+    const user = await db.get('SELECT id, fullName, phone, role, isOnline, isAvailable, verificationStatus FROM users WHERE id = ?', [userId]);
+    const profile = await db.get('SELECT * FROM driver_profiles WHERE userId = ?', [userId]);
 
     if (!user) return res.status(404).json({ message: 'Driver not found' });
 
-    res.json({ user });
+    res.json({
+      user,
+      profile: profile || { rating: 5, totalTrips: 0, online: false }
+    });
   } catch (error) {
+    console.error('Profile error:', error);
     res.status(500).json({ message: 'Error fetching driver profile' });
   }
 });

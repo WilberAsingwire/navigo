@@ -7,11 +7,11 @@ const router = express.Router();
 // ─── Profile Update ────────────────────────────────────
 router.put('/update', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, email } = req.body;
+    const { fullName, email } = req.body;
     const userId = req.user?.userId;
     const db = getDB();
 
-    if (!name || name.trim().length < 2) {
+    if (!fullName || fullName.trim().length < 2) {
       return res.status(400).json({ message: 'Name must be at least 2 characters' });
     }
 
@@ -23,8 +23,8 @@ router.put('/update', authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     await db.run(
-      'UPDATE users SET name = ?, email = ? WHERE id = ?',
-      [name.trim(), email ? email.toLowerCase().trim() : null, userId]
+      'UPDATE users SET fullName = ?, email = ? WHERE id = ?',
+      [fullName.trim(), email ? email.toLowerCase().trim() : null, userId]
     );
 
     const updatedUser = await db.get('SELECT * FROM users WHERE id = ?', userId);

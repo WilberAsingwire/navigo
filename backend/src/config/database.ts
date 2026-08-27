@@ -25,11 +25,14 @@ export const initDB = async () => {
       await client.query(`
         CREATE TABLE IF NOT EXISTS users (
           id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          phone TEXT UNIQUE NOT NULL,
+          fullName TEXT NOT NULL,
           email TEXT UNIQUE,
+          phone TEXT UNIQUE NOT NULL,
           password TEXT,
-          role TEXT CHECK(role IN ('customer', 'driver', 'motorist', 'admin')) NOT NULL,
+          role TEXT CHECK(role IN ('rider', 'driver', 'admin')) NOT NULL DEFAULT 'rider',
+          city TEXT DEFAULT 'Kampala',
+          vehicleType TEXT,
+          isBot BOOLEAN DEFAULT FALSE,
           phoneVerified BOOLEAN DEFAULT FALSE,
           verificationStatus TEXT CHECK(verificationStatus IN ('unverified', 'pending', 'approved', 'rejected')) DEFAULT 'unverified',
           driverDocs TEXT,
@@ -41,18 +44,96 @@ export const initDB = async () => {
           isAvailable BOOLEAN DEFAULT FALSE
         );
 
+        CREATE TABLE IF NOT EXISTS sessions (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          token TEXT UNIQUE NOT NULL,
+          expiresAt TIMESTAMP WITH TIME ZONE NOT NULL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS driver_profiles (
+          userId TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+          vehicleType TEXT DEFAULT 'boda',
+          plate TEXT,
+          rating DECIMAL DEFAULT 5,
+          ratingCount INTEGER DEFAULT 0,
+          totalTrips INTEGER DEFAULT 0,
+          online BOOLEAN DEFAULT FALSE,
+          lat DECIMAL,
+          lng DECIMAL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS wallets (
+          userId TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+          balance INTEGER DEFAULT 0,
+          updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS wallet_transactions (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL, -- topup | ride_payment | payout | tip
+          amount INTEGER NOT NULL,
+          reference TEXT,
+          note TEXT,
+          rideId TEXT,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE TABLE IF NOT EXISTS rides (
           id TEXT PRIMARY KEY,
-          userId TEXT REFERENCES users(id),
-          pickup TEXT NOT NULL,
-          destination TEXT NOT NULL,
-          rideType TEXT NOT NULL,
-          paymentMethod TEXT NOT NULL,
-          fare DECIMAL,
-          status TEXT NOT NULL,
-          driverId TEXT REFERENCES users(id),
-          requestedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-          estimatedPickupTime TEXT
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          driverId TEXT REFERENCES users(id) ON DELETE SET NULL,
+
+          serviceType TEXT NOT NULL DEFAULT 'ride' CHECK(serviceType IN ('ride', 'delivery')),
+          vehicleType TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'requested' CHECK(status IN ('requested', 'accepted', 'arrived', 'ongoing', 'completed', 'cancelled')),
+          paymentMethod TEXT NOT NULL DEFAULT 'cash' CHECK(paymentMethod IN ('cash', 'wallet')),
+
+          pickupName TEXT NOT NULL,
+          pickupLat DECIMAL NOT NULL,
+          pickupLng DECIMAL NOT NULL,
+          dropName TEXT NOT NULL,
+          dropLat DECIMAL NOT NULL,
+          dropLng DECIMAL NOT NULL,
+
+          distanceKm DECIMAL NOT NULL,
+          durationMin DECIMAL NOT NULL,
+
+          fareRecommended INTEGER NOT NULL,
+          fareOffered INTEGER NOT NULL,
+          fareFinal INTEGER NOT NULL,
+
+          -- Delivery specific fields
+          packageDetails TEXT,
+          receiverName TEXT,
+          receiverPhone TEXT,
+
+          geometry JSONB,
+          driverStartLat DECIMAL,
+          driverStartLng DECIMAL,
+
+          acceptedAt TIMESTAMP WITH TIME ZONE,
+          arrivedAt TIMESTAMP WITH TIME ZONE,
+          startedAt TIMESTAMP WITH TIME ZONE,
+          completedAt TIMESTAMP WITH TIME ZONE,
+          cancelledAt TIMESTAMP WITH TIME ZONE,
+
+          etaAccepted TIMESTAMP WITH TIME ZONE,
+          etaArrive TIMESTAMP WITH TIME ZONE,
+          etaStart TIMESTAMP WITH TIME ZONE,
+          etaComplete TIMESTAMP WITH TIME ZONE,
+
+          expiresAt TIMESTAMP WITH TIME ZONE,
+          settled BOOLEAN DEFAULT FALSE,
+
+          riderRating INTEGER,
+          riderTags JSONB,
+          tip INTEGER DEFAULT 0,
+
+          requestedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS password_resets (
@@ -73,6 +154,7 @@ export const initDB = async () => {
       `);
       console.log('✅ Database tables initialized');
     } finally {
+
       client.release();
     }
 

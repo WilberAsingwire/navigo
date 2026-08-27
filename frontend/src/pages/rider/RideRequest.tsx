@@ -40,6 +40,7 @@ const RideRequest: React.FC = () => {
   const history = useHistory();
   const { isAuthenticated, isGuest, user } = useAuth();
   const [step, setStep] = useState<BookingStep>(BookingStep.LOCATION);
+  const [serviceType, setServiceType] = useState<'ride' | 'delivery'>('ride');
   const [pickup, setPickup] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
   const [pickupSearch, setPickupSearch] = useState('');
@@ -62,6 +63,11 @@ const RideRequest: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Delivery specific state
+  const [packageDetails, setPackageDetails] = useState('');
+  const [receiverName, setReceiverName] = useState('');
+  const [receiverPhone, setReceiverPhone] = useState('');
 
   useEffect(() => {
     const init = async () => {
@@ -330,7 +336,16 @@ const RideRequest: React.FC = () => {
     setIsLoading(true);
     try {
       const res = await axios.post(`${BASE_URL}/api/rides/request`, {
-        pickup, destination, rideType: selectedRide.vehicleType, paymentMethod: 'cash', fare: fare?.totalFare
+        serviceType,
+        pickup,
+        destination,
+        rideType: selectedRide.vehicleType,
+        paymentMethod: 'cash',
+        distanceKm: actualRouteDist > 0 ? actualRouteDist : fare?.distance,
+        durationMin: actualRouteDur > 0 ? actualRouteDur : fare?.duration,
+        packageDetails: serviceType === 'delivery' ? packageDetails : null,
+        receiverName: serviceType === 'delivery' ? receiverName : null,
+        receiverPhone: serviceType === 'delivery' ? receiverPhone : null,
       });
       const ride = res.data.ride;
       setStep(BookingStep.MATCHING);
@@ -346,7 +361,7 @@ const RideRequest: React.FC = () => {
       }, 500);
       setTimeout(() => { clearInterval(interval); }, 15000);
     } catch (e) {
-      setToastMsg('Failed to request ride. Please try again.');
+      setToastMsg('Failed to request booking. Please try again.');
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -374,6 +389,29 @@ const RideRequest: React.FC = () => {
 
         <div className="glass-booking-card">
           <h1 className="card-title">Book Your Ride</h1>
+
+          <div className="service-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 20 }}>
+            <button
+              onClick={() => setServiceType('ride')}
+              style={{
+                flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: serviceType === 'ride' ? '#FF6B35' : 'transparent',
+                color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s'
+              }}
+            >
+              🚗 Ride
+            </button>
+            <button
+              onClick={() => setServiceType('delivery')}
+              style={{
+                flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: serviceType === 'delivery' ? '#FF6B35' : 'transparent',
+                color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s'
+              }}
+            >
+              📦 Delivery
+            </button>
+          </div>
 
           {step === BookingStep.LOCATION && (
             <div className="space-y-6">
@@ -477,7 +515,37 @@ const RideRequest: React.FC = () => {
 
           {step === BookingStep.PAYMENT && (
             <div className="space-y-6">
-              <h2 className="card-title" style={{ textAlign: 'center', fontSize: '20px' }}>Fare Summary</h2>
+              <h2 className="card-title" style={{ textAlign: 'center', fontSize: '20px' }}>{serviceType === 'ride' ? 'Fare Summary' : 'Delivery Details'}</h2>
+
+              {serviceType === 'delivery' && (
+                <div className="space-y-3" style={{ marginBottom: 20 }}>
+                  <div className="location-input-wrapper">
+                    <input
+                      className="location-input"
+                      placeholder="What are we delivering?"
+                      value={packageDetails}
+                      onChange={e => setPackageDetails(e.target.value)}
+                    />
+                  </div>
+                  <div className="location-input-wrapper">
+                    <input
+                      className="location-input"
+                      placeholder="Receiver's Name"
+                      value={receiverName}
+                      onChange={e => setReceiverName(e.target.value)}
+                    />
+                  </div>
+                  <div className="location-input-wrapper">
+                    <input
+                      className="location-input"
+                      placeholder="Receiver's Phone"
+                      value={receiverPhone}
+                      onChange={e => setReceiverPhone(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="fare-summary-box">
                 <div className="fare-detail">
                   <span className="fare-label">Distance</span>
@@ -486,7 +554,7 @@ const RideRequest: React.FC = () => {
                 <div className="fare-total">{fare?.formattedTotal}</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#94A3B8', padding: '0 4px' }}>
-                <span>Ride Type: {selectedRide.name}</span>
+                <span style={{ textTransform: 'capitalize' }}>{serviceType} Type: {selectedRide.name}</span>
                 <span>Cash Payment</span>
               </div>
               <div className="location-input-wrapper">
@@ -501,17 +569,17 @@ const RideRequest: React.FC = () => {
               </div>
               <button
                 className="btn-continue"
-                disabled={isLoading}
+                disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))}
                 onClick={handleBookRide}
               >
-                {isLoading ? <IonSpinner name="crescent" /> : 'CONFIRM BOOKING'}
+                {isLoading ? <IonSpinner name="crescent" /> : serviceType === 'ride' ? 'CONFIRM BOOKING' : 'CONFIRM DELIVERY'}
               </button>
               <button
                 className="back-nav-btn"
                 style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }}
                 onClick={() => setStep(BookingStep.LOCATION)}
               >
-                Change Ride Details
+                Change Details
               </button>
             </div>
           )}
