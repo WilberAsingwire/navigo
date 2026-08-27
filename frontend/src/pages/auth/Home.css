@@ -12,29 +12,22 @@
   --shadow-glow: 0 0 25px rgba(255, 90, 31, 0.3);
 }
 
-@keyframes float {
+@keyframes home-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-20px); }
 }
 
-@keyframes pulse-glow {
-  0% { box-shadow: 0 0 5px rgba(255, 90, 31, 0.4); }
+@keyframes home-pulse-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 90, 31, 0.4); }
   50% { box-shadow: 0 0 20px rgba(255, 90, 31, 0.7); }
-  100% { box-shadow: 0 0 5px rgba(255, 90, 31, 0.4); }
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes home-fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes gradientShift {
+@keyframes home-gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
@@ -56,7 +49,6 @@
   overflow-x: hidden;
 }
 
-/* Dynamic Animated Background */
 .main-wrapper::before {
   content: '';
   position: absolute;
@@ -64,16 +56,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(255, 90, 31, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(45, 106, 79, 0.08) 0%, transparent 40%);
+  background: radial-gradient(circle at 20% 20%, rgba(255, 90, 31, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 80%, rgba(45, 106, 79, 0.08) 0%, transparent 40%);
   z-index: 0;
   pointer-events: none;
-  animation: gradientShift 15s ease infinite;
+  animation: home-gradientShift 15s ease infinite;
   background-size: 200% 200%;
 }
 
-/* --- NAVBAR --- */
 .home-nav {
   position: fixed;
   top: 0;
@@ -144,7 +133,6 @@
   color: var(--brand-orange);
 }
 
-/* --- HERO SECTION --- */
 .hero-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -155,7 +143,7 @@
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  animation: fadeInUp 1s ease-out;
+  animation: home-fadeInUp 1s ease-out;
 }
 
 .hero-badge {
@@ -234,7 +222,6 @@
   transform: translateY(-3px);
 }
 
-/* Glass Ride Preview with Floating Animation */
 .hero-ride-preview {
   display: flex;
   justify-content: center;
@@ -251,7 +238,7 @@
   width: 100%;
   max-width: 420px;
   transition: transform 0.3s ease;
-  animation: float 6s ease-in-out infinite;
+  animation: home-float 6s ease-in-out infinite;
 }
 
 .ride-preview-card:hover {
@@ -367,14 +354,13 @@
   letter-spacing: -1px;
 }
 
-/* --- SECTIONS --- */
 .section {
   padding: 6rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  animation: fadeInUp 1.2s ease-out both;
+  animation: home-fadeInUp 1.2s ease-out both;
 }
 
 .section:nth-child(2) { animation-delay: 0.2s; }
@@ -398,7 +384,6 @@
   font-size: 1.1rem;
 }
 
-/* Ride Carousel */
 .ride-carousel {
   display: flex;
   overflow-x: auto;
@@ -435,7 +420,7 @@
   padding: 6px 14px;
   border-radius: 100px;
   box-shadow: 0 4px 10px rgba(255, 90, 31, 0.4);
-  animation: pulse-glow 3s infinite;
+  animation: home-pulse-glow 3s infinite;
 }
 
 .ride-icon {
@@ -487,7 +472,6 @@
   color: var(--text-muted);
 }
 
-/* --- HOW IT WORKS --- */
 .how-it-works {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
@@ -536,7 +520,6 @@
   font-size: 1.05rem;
 }
 
-/* --- SAFETY SHOWCASE --- */
 .safety-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -583,7 +566,6 @@
   line-height: 1.6;
 }
 
-/* --- REWARDS --- */
 .rewards-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -666,7 +648,6 @@
   border: 1px solid rgba(255, 90, 31, 0.2);
 }
 
-/* --- FOOTER --- */
 .footer {
   background: #05070D;
   padding: 0 2rem 4rem;
@@ -729,7 +710,6 @@
   padding-bottom: 2rem;
 }
 
-/* --- STICKY BOTTOM BAR --- */
 .sticky-bottom-bar {
   position: fixed;
   bottom: 1.5rem;
@@ -768,7 +748,6 @@
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 90, 31, 0.3);
 }
 
-/* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
   .nav-links {
     display: none;
