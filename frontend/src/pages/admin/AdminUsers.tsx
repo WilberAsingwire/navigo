@@ -110,9 +110,9 @@ const AdminUsers: React.FC = () => {
 
         <div style={{padding: 14, maxWidth: 700, margin: '0 auto'}}>
           {/* Stats */}
-          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 6, marginBottom: 14}}>
+          <div className="stats-grid">
             {[{label: 'Total', value: stats.total}, {label: 'Riders', value: stats.riders}, {label: 'Drivers', value: stats.drivers + stats.motorists}, {label: 'Suspended', value: stats.suspended}, {label: 'Banned', value: stats.banned}].map(s => (
-              <div key={s.label} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 10, textAlign: 'center'}}>
+              <div key={s.label} className="stat-card">
                 <div style={{fontSize: 16, fontWeight: 700, color: '#FF6B35'}}>{s.value}</div>
                 <div style={{fontSize: 9, color: '#D1D5DB'}}>{s.label}</div>
               </div>

@@ -9,7 +9,14 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git reset *)",
+      "Bash(git checkout *)",
+      "Bash(gh *)",
+      "Bash(git merge *)",
+      "Bash(npm *)",
+      "Bash(mkdir -p C:\\\\Users\\\\WILBER\\\\.claude\\\\plans)",
+      "Bash(echo \"Design Plan: Ride Lifecycle, Wallet Settlement, and UI Polish\")"
     ]
   }
 }

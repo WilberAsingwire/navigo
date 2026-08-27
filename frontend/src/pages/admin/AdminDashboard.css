@@ -19,7 +19,12 @@
 .admin-kpi-label { font-size: 14px !important; color: #D1D5DB !important; font-weight: 500; }
 
 /* Quick Actions */
-.admin-quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.admin-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
 .admin-quick-action-card { 
   background: rgba(255, 255, 255, 0.05); 
   border-radius: 14px; 

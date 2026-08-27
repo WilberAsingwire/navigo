@@ -47,3 +47,16 @@ ion-badge[color="warning"] {
   border: 1px solid #F59E0B !important;
   color: #F59E0B !important;
 }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}

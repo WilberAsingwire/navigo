@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { getDB } from '../config/database';
+import { settleRidePayment } from '../utils/settlement';
 
 export const setupSocketHandlers = (io: Server) => {
   io.on('connection', (socket: Socket) => {
@@ -99,6 +100,17 @@ export const setupSocketHandlers = (io: Server) => {
       const db = getDB();
 
       await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
+
+      // If ride is completed, trigger payment settlement
+      if (status === 'completed') {
+        console.log(`🏁 Ride ${rideId} marked as completed. Triggering settlement...`);
+        const settlement = await settleRidePayment(rideId);
+        if (settlement.success) {
+          console.log(`💰 Settlement successful for ride ${rideId}`);
+        } else {
+          console.error(`❌ Settlement failed for ride ${rideId}: ${settlement.message}`);
+        }
+      }
 
       // Notify rider of status change
       io.to(riderId).emit('status-changed', { rideId, status });

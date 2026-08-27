@@ -101,7 +101,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* Quick Actions */}
           <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Quick Actions</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 24 }}>
+          <div className="admin-quick-actions-grid">
             {quickActions.map((action, i) => (
               <div key={i} onClick={() => history.push(action.path)}
                 style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, textAlign: 'center', cursor: 'pointer', position: 'relative', border: '1px solid rgba(255,255,255,0.06)', transition: 'all 0.2s' }}>

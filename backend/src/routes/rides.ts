@@ -32,6 +32,14 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
     // Professional Fare Calculation
     const fareRecommended = fareQuote(rideType, distanceKm || 0);
 
+    // Server-side balance validation for wallet payments
+    if (paymentMethod === 'wallet') {
+      const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
+      if (!wallet || wallet.balance < fareRecommended) {
+        return res.status(400).json({ message: 'Insufficient wallet balance for this ride.' });
+      }
+    }
+
     const rideId = 'ride_' + Date.now();
 
     await db.run(
@@ -76,6 +84,38 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
   } catch (error) {
     console.error('Request error:', error);
     res.status(500).json({ message: 'Failed to request booking.' });
+  }
+});
+
+// ─── Get Recent Trips (for Home Screen) ────────────────────────────────
+router.get('/recent', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    const recentRides = await db.all(
+      'SELECT * FROM rides WHERE userId = ? AND status = ? ORDER BY requestedAt DESC LIMIT 3',
+      [userId, 'completed']
+    );
+
+    const formatted = recentRides.map(ride => ({
+      ...ride,
+      pickup: {
+        address: ride.pickupName,
+        lat: ride.pickupLat,
+        lng: ride.pickupLng
+      },
+      destination: {
+        address: ride.dropName,
+        lat: ride.dropLat,
+        lng: ride.dropLng
+      }
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Recent rides error:', error);
+    res.status(500).json({ message: 'Error fetching recent trips.' });
   }
 });
 
