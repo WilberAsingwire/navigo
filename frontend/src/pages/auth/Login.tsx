@@ -5,13 +5,12 @@ import {
   IonSpinner, IonToast,
 } from '@ionic/react';
 import {
-  lockClosedOutline, eyeOutline,
-  eyeOffOutline, logInOutline, logoGoogle,
-  arrowForwardOutline, callOutline, globeOutline
+  eyeOutline, eyeOffOutline, logInOutline, logoGoogle,
+  arrowForwardOutline, callOutline, globeOutline,
+  shieldCheckOutline, zapOutline, badgeCheckOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
-import './Auth.css';
-import './Login.css';
+import './AuthStyles.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
@@ -20,6 +19,7 @@ const Login: React.FC = () => {
   const history = useHistory();
   const { login, continueAsGuest, error: authError, clearError } = useAuth();
 
+  const [method, setMethod] = useState<'phone' | 'email'>('phone');
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +32,7 @@ const Login: React.FC = () => {
     setError('');
     clearError();
 
-    if (!identifier) return setError('Please enter your phone number or email');
+    if (!identifier) return setError('Please enter your credentials');
     if (!password) return setError('Please enter your password');
     if (password.length < 4) return setError('Password must be at least 4 characters');
 
@@ -61,38 +61,64 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent className="auth-content">
-        <div className="reg-page-container">
-          <div className="reg-card">
-            <div className="reg-header">
-              <h1 className="reg-logo">🚀 NAVIGO</h1>
-              <p className="reg-tagline">Navigate Your World</p>
+      <IonContent style={{ '--background': '#0a0a0a' }}>
+        <div className="auth-container">
+          <div className="glow-top"></div>
+          <div className="glow-bottom"></div>
+
+          <div className="auth-card">
+            <div className="auth-header">
+              <span className="auth-eyebrow">Sign in</span>
+              <h1 className="auth-title">Welcome Back</h1>
+              <p className="auth-copy">
+                New to Navigo? <Link to="/register" style={{ color: 'var(--navigo-ember)', fontWeight: 600 }}>Create your account</Link> in under a minute.
+              </p>
             </div>
 
-            <div className="reg-form">
-              {/* Identifier Input */}
+            <div className="method-toggle">
+              <button
+                className={`method-btn ${method === 'phone' ? 'active' : ''}`}
+                onClick={() => setMethod('phone')}
+              >
+                Phone number
+              </button>
+              <button
+                className={`method-btn ${method === 'email' ? 'active' : ''}`}
+                onClick={() => setMethod('email')}
+              >
+                Email
+              </button>
+            </div>
+
+            <div className="reg-form" style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="input-group">
-                <label className="input-label">Email or Phone *</label>
-                <div className="input-wrapper">
-                  <div className="phone-prefix" style={{ display: identifier.includes('@') ? 'none' : 'flex' }}>
-                    <IonIcon icon={globeOutline} />
-                    <span>{countryCode}</span>
-                  </div>
+                <label className="input-label">{method === 'phone' ? 'Ugandan phone number' : 'Email address'}</label>
+                <div style={{ position: 'relative' }}>
+                  {method === 'phone' && (
+                    <div style={{
+                      position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                      display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--navigo-zinc-400)',
+                      fontSize: '14px', zIndex: 1, pointerEvents: 'none'
+                    }}>
+                      <IonIcon icon={globeOutline} />
+                      <span>{countryCode}</span>
+                    </div>
+                  )}
                   <input
-                    className="input-field phone-input"
-                    type="text"
+                    className="input-field"
+                    style={{ paddingLeft: method === 'phone' ? '85px' : '16px' }}
+                    type={method === 'phone' ? 'text' : 'email'}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="Phone number or Email"
+                    placeholder={method === 'phone' ? '07... (e.g. 0772000000)' : 'you@example.com'}
                     onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   />
                 </div>
               </div>
 
-              {/* Password Input */}
               <div className="input-group">
-                <label className="input-label">Password *</label>
-                <div className="input-wrapper password-wrapper">
+                <label className="input-label">Password</label>
+                <div style={{ position: 'relative' }}>
                   <input
                     className="input-field"
                     type={showPassword ? 'text' : 'password'}
@@ -103,7 +129,10 @@ const Login: React.FC = () => {
                   />
                   <button
                     type="button"
-                    className="password-toggle"
+                    style={{
+                      position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', color: 'var(--navigo-zinc-400)', cursor: 'pointer'
+                    }}
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     <IonIcon icon={showPassword ? eyeOffOutline : eyeOutline} />
@@ -111,60 +140,102 @@ const Login: React.FC = () => {
                 </div>
               </div>
 
-              {/* Options Row */}
-              <div className="options-row">
-                <label className="remember-wrap">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', fontSize: '13px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--navigo-zinc-400)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
-                    className="remember-checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
+                    style={{ accentColor: 'var(--navigo-ember)' }}
                   />
-                  <span className="remember-text">Remember me</span>
+                  Remember me
                 </label>
-                <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
+                <Link to="/forgot-password" style={{ color: 'var(--navigo-ember)', textDecoration: 'none', fontWeight: 500 }}>Forgot Password?</Link>
               </div>
 
-              {error && <div className="error-msg">{error || authError}</div>}
+              {error && (
+                <div className="error-message">
+                  <IonIcon icon={shieldCheckOutline} /> {error || authError}
+                </div>
+              )}
 
-              {/* Login Button */}
               <button
                 className="btn-primary"
                 onClick={handleLogin}
                 disabled={isLoading}
               >
-                {isLoading ? <IonSpinner name="crescent" /> : (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    Sign In <IonIcon icon={logInOutline} />
+                {isLoading ? <IonSpinner name="crescent" color="dark" /> : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    Continue <IonIcon icon={logInOutline} />
                   </span>
                 )}
               </button>
 
-              {/* USSD Offline */}
-              <button className="ussd-action" onClick={() => history.push('/ussd')}>
-                <IonIcon icon={callOutline} />
-                📱 No internet? Dial *284*624#
+              <button
+                style={{
+                  background: 'none', border: 'none', color: 'var(--navigo-zinc-400)',
+                  fontSize: '13px', marginTop: '20px', cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', gap: '8px'
+                }}
+                onClick={() => history.push('/ussd')}
+              >
+                <IonIcon icon={callOutline} /> 📱 No internet? Dial *284*624#
               </button>
 
-              <div className="divider">or continue with</div>
+              <div style={{ margin: '24px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ flex: 1, height: '1px', background: 'var(--navigo-white-10)' }}></div>
+                <span style={{ fontSize: '11px', color: 'var(--navigo-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>or continue with</span>
+                <div style={{ flex: 1, height: '1px', background: 'var(--navigo-white-10)' }}></div>
+              </div>
 
-              {/* Google Login */}
               <button
-                className="social-btn"
+                style={{
+                  width: '100%', height: '48px', borderRadius: '12px', border: '1px solid var(--navigo-white-10)',
+                  background: 'var(--navigo-white-5)', color: 'white', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '14px'
+                }}
                 onClick={() => window.location.href = `${BASE_URL}/auth/google`}
               >
                 <IonIcon icon={logoGoogle} /> Continue with Google
               </button>
+
+              <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '14px', color: 'var(--navigo-zinc-400)' }}>
+                Don't have an account? <Link to="/register" style={{ color: 'var(--navigo-ember)', fontWeight: 600, textDecoration: 'none' }}>Create Account</Link>
+              </div>
+
+              <div style={{ marginTop: '24px', textAlign: 'center' }}>
+                <button
+                  style={{ background: 'none', border: 'none', color: 'var(--navigo-zinc-500)', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', margin: '0 auto' }}
+                  onClick={handleGuest}
+                >
+                  Continue as Guest <IonIcon icon={arrowForwardOutline} />
+                </button>
+              </div>
             </div>
 
-            {/* Register Link */}
-            <div className="auth-footer">
-              <p>Don't have an account? <Link to="/register">Create Account</Link></p>
+            <div className="trust-row">
+              <div className="trust-item">
+                <div className="trust-icon"><IonIcon icon={shieldCheckOutline} /></div>
+                <span className="trust-label">Verified captains</span>
+              </div>
+              <div className="trust-item">
+                <div className="trust-icon"><IonIcon icon={zapOutline} /></div>
+                <span className="trust-label">4-min pickups</span>
+              </div>
+              <div className="trust-item">
+                <div className="trust-icon"><IonIcon icon={badgeCheckOutline} /></div>
+                <span className="trust-label">Fares from UGX 1,500</span>
+              </div>
             </div>
+          </div>
+        </div>
+      </IonContent>
+    </IonPage>
+  );
+};
 
-            <div className="divider">Just browsing?</div>
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <button className="guest-link" onClick={handleGuest}>
+export default Login;
+Guest}>
                 Continue as Guest <IonIcon icon={arrowForwardOutline} slot="end" />
               </button>
             </div>
