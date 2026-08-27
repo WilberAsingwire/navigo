@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useHistory } from 'react-router-dom';
+import { useIonRouter } from '@ionic/react';
 import {
   IonIcon, IonSpinner, IonToast, IonModal, IonAvatar
 } from '@ionic/react';
@@ -45,7 +45,7 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 }
 
 const RideRequest: React.FC = () => {
-  const history = useHistory();
+  const ionRouter = useIonRouter();
   const { isAuthenticated, isGuest, user } = useAuth();
   const [step, setStep] = useState<BookingStep>(BookingStep.HOME);
   const [serviceType, setServiceType] = useState<'ride' | 'delivery'>('ride');
@@ -357,7 +357,7 @@ const RideRequest: React.FC = () => {
   return (
     <div className="booking-page-container">
       <div className="booking-form-panel">
-        <button className="back-nav-btn" onClick={() => history.push('/rider/home')}>
+        <button className="back-nav-btn" onClick={() => ionRouter.push('/rider/home')}>
           <IonIcon icon={arrowBackOutline} /> Back
         </button>
 
@@ -573,8 +573,8 @@ const RideRequest: React.FC = () => {
         <div className="glass-booking-card" style={{ maxWidth: '400px', margin: '100px auto', textAlign: 'center' }}>
           <h2 className="card-title">Ready to Ride?</h2>
           <p style={{ color: '#94A3B8', marginBottom: '24px' }}>Sign in to book rides and earn rewards.</p>
-          <button className="btn-continue" onClick={() => { setShowLoginPrompt(false); history.push('/login'); }}>Sign In</button>
-          <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '16px' }} onClick={() => { setShowLoginPrompt(false); history.push('/register'); }}>Create Account</button>
+          <button className="btn-continue" onClick={() => { setShowLoginPrompt(false); ionRouter.push('/login'); }}>Sign In</button>
+          <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '16px' }} onClick={() => { setShowLoginPrompt(false); ionRouter.push('/register'); }}>Create Account</button>
         </div>
       </IonModal>
     </div>

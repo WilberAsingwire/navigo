@@ -93,7 +93,7 @@ const Home: React.FC = () => {
                 <div className="theme-toggle" onClick={toggleTheme}>
                   <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
                 </div>
-                <IonButton size="small" className="nav-signup-btn" onClick={() => { ionRouter.push('/register'); setIsMenuOpen(false); }}>Sign Up</IonButton>
+                <IonButton size="small" className="nav-signup-btn" routerLink="/register" onClick={() => setIsMenuOpen(false)}>Sign Up</IonButton>
               </div>
 
               <div className="mobile-menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -117,10 +117,10 @@ const Home: React.FC = () => {
                 Uganda's smartest way to move. Boda Safe™ verified drivers, women-preferred mode, and offline USSD booking. Ride with confidence across every corner of the city.
               </p>
               <div className="hero-buttons">
-                <IonButton expand="block" className="hero-btn primary" onClick={() => ionRouter.push('/register')}>
+                <IonButton expand="block" className="hero-btn primary" routerLink="/register">
                   Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
                 </IonButton>
-                <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => ionRouter.push('/explore')}>
+                <IonButton expand="block" className="hero-btn secondary" fill="outline" routerLink="/explore">
                   <IonIcon icon={mapOutline} slot="start" /> See Prices Near You
                 </IonButton>
               </div>
