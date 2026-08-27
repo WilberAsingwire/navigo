@@ -9,6 +9,7 @@ import {
   timeOutline, chevronForwardOutline
 } from 'ionicons/icons';
 import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
@@ -122,7 +123,7 @@ const RideRequest: React.FC = () => {
 
   const fetchWalletBalance = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/wallet/balance`);
+      const res = await api.get(`/wallet/balance`);
       if (res.data.ok) setWalletBalance(res.data.balance);
     } catch (e) {
       console.error('Wallet fetch error:', e);
@@ -131,7 +132,7 @@ const RideRequest: React.FC = () => {
 
   const fetchRecentRides = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/rides/recent`);
+      const res = await api.get(`/rides/recent`);
       if (res.data) setRecentRides(res.data);
     } catch (e) {
       console.error('Recent rides fetch error:', e);
@@ -311,7 +312,7 @@ const RideRequest: React.FC = () => {
     setIsLoading(true);
     try {
       const finalFare = userOffer ?? fare?.totalFare;
-      const res = await axios.post(`${BASE_URL}/api/rides/request`, {
+      const res = await api.post(`/rides/request`, {
         serviceType,
         pickup,
         destination,

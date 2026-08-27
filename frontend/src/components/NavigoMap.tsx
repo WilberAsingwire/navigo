@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
+import api from '../services/api';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -69,7 +70,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
-    standard: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
+    standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
     dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
     satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
   };
@@ -121,8 +122,10 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     `;
 
     try {
-      const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-      const data = await res.json();
+      const res = await api.get(`/poi/search`, {
+        params: { lat: center.lat, lng: center.lng, radius: radius }
+      });
+      const data = res.data;
 
       // Clear old POIs
       Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));

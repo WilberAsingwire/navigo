@@ -10,6 +10,7 @@ import rideRoutes from './routes/rides';
 import driverRoutes from './routes/drivers';
 import userRoutes from './routes/users';
 import walletRoutes from './routes/wallet';
+import poiRoutes from './routes/poi';
 import { initDB } from './config/database';
 import { setupSocketHandlers } from './socket/socketHandler';
 
@@ -83,6 +84,7 @@ app.use('/api/rides', rideRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/poi', poiRoutes);
 
 app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
 
