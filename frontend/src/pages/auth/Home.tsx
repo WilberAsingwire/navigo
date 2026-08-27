@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol, useIonRouter } from '@ionic/react';
 import {
-  carOutline, bicycleOutline, shieldCheckmark outline, starOutline,
+  carOutline, bicycleOutline, shieldCheckmarkOutline, starOutline,
   phonePortraitOutline, walletOutline, timeOutline, mapOutline,
   peopleOutline, giftOutline, arrowForwardOutline, callOutline,
   cashOutline, lockClosedOutline, heartOutline, speedometerOutline,
