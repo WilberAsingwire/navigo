@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useIonRouter } from '@ionic/react';
 import {
-  IonIcon, IonSpinner, IonToast, IonModal, IonAvatar
+  IonIcon, IonSpinner, IonToast, IonModal, IonAvatar, IonPage, IonContent
 } from '@ionic/react';
 import {
   locationOutline, carOutline, arrowBackOutline,
@@ -355,11 +355,13 @@ const RideRequest: React.FC = () => {
   }
 
   return (
-    <div className="booking-page-container">
-      <div className="booking-form-panel">
-        <button className="back-nav-btn" onClick={() => ionRouter.push('/rider/home')}>
-          <IonIcon icon={arrowBackOutline} /> Back
-        </button>
+    <IonPage>
+      <IonContent>
+        <div className="booking-page-container">
+          <div className="booking-form-panel">
+            <button className="back-nav-btn" onClick={() => ionRouter.push('/rider/home')}>
+              <IonIcon icon={arrowBackOutline} /> Back
+            </button>
 
         <div className="glass-booking-card">
           {step === BookingStep.HOME && (
@@ -578,6 +580,8 @@ const RideRequest: React.FC = () => {
         </div>
       </IonModal>
     </div>
+      </IonContent>
+    </IonPage>
   );
 };
 
