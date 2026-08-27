@@ -235,6 +235,36 @@ const Login: React.FC = () => {
 };
 
 export default Login;
+var(--navigo-zinc-500)', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', margin: '0 auto' }}
+                  onClick={handleGuest}
+                >
+                  Continue as Guest <IonIcon icon={arrowForwardOutline} />
+                </button>
+              </div>
+            </div>
+
+            <div className="trust-row">
+              <div className="trust-item">
+                <div className="trust-icon"><IonIcon icon={shieldCheckOutline} /></div>
+                <span className="trust-label">Verified captains</span>
+              </div>
+              <div className="trust-item">
+                <div className="trust-icon"><IonIcon icon={zapOutline} /></div>
+                <span className="trust-label">4-min pickups</span>
+              </div>
+              <div className="trust-item">
+                <div className="trust-icon"><IonIcon icon={badgeCheckOutline} /></div>
+                <span className="trust-label">Fares from UGX 1,500</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </IonContent>
+    </IonPage>
+  );
+};
+
+export default Login;
 Guest}>
                 Continue as Guest <IonIcon icon={arrowForwardOutline} slot="end" />
               </button>
