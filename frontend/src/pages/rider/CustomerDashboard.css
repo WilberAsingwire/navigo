@@ -1,11 +1,14 @@
-/* CustomerDashboard.css - Enterprise Design System Implementation */
+/* CustomerDashboard.css - Premium Glassmorphism Design */
 
 .rider-page-container {
   --background: #090D16;
   min-height: 100vh;
   width: 100%;
   background: #090D16;
-  background-image: radial-gradient(100% 50% at 50% 0%, rgba(255, 90, 31, 0.12) 0%, rgba(9, 13, 22, 0) 100%);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+    linear-gradient(180deg, #090D16 0%, #05070b 100%);
   padding: 0 12px;
   font-family: 'Inter', 'DM Sans', sans-serif;
   color: #FFFFFF;
@@ -21,13 +24,14 @@
 
 .welcome-text {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #FFFFFF;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .welcome-subtitle {
-  color: #CBD5E1;
+  color: #94A3B8;
   font-size: 0.875rem;
   font-weight: 500;
   margin: 4px 0 0 0;
@@ -37,34 +41,48 @@
   width: 44px;
   height: 44px;
   border: 2px solid #FF5A1F;
-  box-shadow: 0 0 12px rgba(255, 90, 31, 0.4);
+  box-shadow: 0 0 15px rgba(255, 90, 31, 0.3);
   border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-avatar:hover {
-  transform: scale(1.05);
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 0 20px rgba(255, 90, 31, 0.5);
 }
 
 /* Primary Ride CTA */
 .ride-cta-card {
-  background: #121824;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 2rem 1.5rem;
+  background: rgba(18, 24, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  padding: 2.5rem 1.5rem;
   text-align: center;
   margin-bottom: 1.5rem;
-  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(24px);
+  position: relative;
+  overflow: hidden;
+}
+
+.ride-cta-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 90, 31, 0.05) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .btn-request-ride {
-  background: #FF5A1F;
+  background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%);
   color: #FFFFFF;
   border: none;
-  border-radius: 16px;
-  padding: 1rem 1.5rem;
+  border-radius: 20px;
+  padding: 1.2rem 1.5rem;
   font-size: 1.125rem;
   font-weight: 800;
   cursor: pointer;
@@ -73,55 +91,61 @@
   justify-content: center;
   gap: 12px;
   width: 100%;
-  box-shadow: 0 4px 25px rgba(255, 90, 31, 0.4);
-  transition: all 0.2s ease;
+  box-shadow: 0 10px 20px rgba(255, 90, 31, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .btn-request-ride:hover {
-  background: #FF4500;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 30px rgba(255, 90, 31, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px rgba(255, 90, 31, 0.5);
+  filter: brightness(1.1);
 }
 
 .btn-request-ride:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .ride-cta-subtitle {
-  color: #94A3B8;
+  color: #64748B;
   font-size: 0.75rem;
-  margin-top: 8px;
+  margin-top: 12px;
   display: block;
+  font-weight: 500;
 }
 
 /* Rider Stats Strip */
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 1.5rem;
+  gap: 16px;
+  margin-bottom: 2rem;
 }
 
 .stat-pill {
-  background: #121824;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 1.2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: #FFFFFF;
-  transition: border-color 0.2s ease;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .stat-pill:hover {
-  border-color: rgba(255, 90, 31, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 90, 31, 0.3);
+  transform: translateY(-2px);
 }
 
 .stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   margin: 0;
 }
 
@@ -129,13 +153,15 @@
   color: #94A3B8;
   font-size: 0.75rem;
   margin: 0;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .stat-icon {
   color: #FF5A1F;
-  font-size: 1.25rem;
-  margin-bottom: 4px;
+  font-size: 1.5rem;
+  margin-bottom: 6px;
 }
 
 /* Quick Actions Grid */
@@ -143,50 +169,54 @@
   color: #FFFFFF;
   font-size: 1rem;
   font-weight: 700;
-  margin: 1.5rem 0 1rem;
+  margin: 2rem 0 1rem;
+  letter-spacing: -0.01em;
 }
 
 .quick-actions-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .action-btn {
-  background: #121824;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 1rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 1.2rem 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
 }
 
 .action-btn:hover {
-  border-color: rgba(255, 90, 31, 0.5);
-  background: #1A2232;
-  transform: translateY(-2px);
+  border-color: rgba(255, 90, 31, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
 
 .action-icon {
   color: #FF5A1F;
-  font-size: 1.5rem;
-  transition: transform 0.2s ease;
+  font-size: 1.75rem;
+  transition: transform 0.3s ease;
 }
 
 .action-btn:hover .action-icon {
-  transform: scale(1.1);
+  transform: scale(1.15) rotate(-5deg);
 }
 
 .action-label {
-  color: #E2E8F0;
-  font-size: 0.75rem;
+  color: #CBD5E1;
+  font-size: 0.7rem;
   font-weight: 600;
+  text-align: center;
 }
 
 /* Drivers Around You */
@@ -194,79 +224,84 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 .drivers-title {
   color: #FFFFFF;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .view-map-link {
   color: #FF5A1F;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
 .view-map-link:hover {
   opacity: 0.8;
-  text-decoration: underline;
+  transform: translateX(2px);
 }
 
 .driver-row {
-  background: #121824;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
   cursor: pointer;
+  backdrop-filter: blur(10px);
 }
 
 .driver-row:hover {
-  border-color: rgba(51, 65, 85, 1);
-  background: #1A2232;
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 90, 31, 0.3);
+  transform: scale(1.02);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
 
 .driver-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .driver-name {
   color: #FFFFFF;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 700;
   margin: 0;
 }
 
 .driver-vehicle {
-  color: #CBD5E1;
+  color: #94A3B8;
   font-size: 0.75rem;
   font-weight: 500;
   margin: 2px 0 0 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .distance-badge {
-  background: rgba(255, 90, 31, 0.1);
+  background: rgba(255, 90, 31, 0.15);
   color: #FF5A1F;
-  border: 1px solid rgba(255, 90, 31, 0.2);
-  padding: 4px 10px;
-  border-radius: 9999px;
+  border: 1px solid rgba(255, 90, 31, 0.3);
+  padding: 6px 12px;
+  border-radius: 12px;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
+  backdrop-filter: blur(5px);
 }

@@ -73,6 +73,7 @@ const RideRequest: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [recentRides, setRecentRides] = useState<any[]>([]);
 
   // Delivery specific state
   const [packageDetails, setPackageDetails] = useState('');
@@ -84,6 +85,7 @@ const RideRequest: React.FC = () => {
       try {
         await getCurrentLocation();
         await fetchWalletBalance();
+        await fetchRecentRides();
       } catch (e) {
         console.error('Init error:', e);
       } finally {
@@ -124,6 +126,15 @@ const RideRequest: React.FC = () => {
       if (res.data.ok) setWalletBalance(res.data.balance);
     } catch (e) {
       console.error('Wallet fetch error:', e);
+    }
+  };
+
+  const fetchRecentRides = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/rides/recent`);
+      if (res.data) setRecentRides(res.data);
+    } catch (e) {
+      console.error('Recent rides fetch error:', e);
     }
   };
 
@@ -378,14 +389,35 @@ const RideRequest: React.FC = () => {
               <div className="space-y-3">
                 <p className="section-label">Recent Trips</p>
                 <div className="space-y-2">
-                  <div className="recent-trip-item" onClick={() => { setDestination({ name: 'Previous Destination', lat: 0.3136, lng: 32.5811, address: 'Kampala' }); setStep(BookingStep.LOCATION); }}>
-                    <div className="recent-trip-icon"><IonIcon icon={timeOutline} /></div>
-                    <div className="flex-1 truncate">
-                      <span className="block text-[13px] font-medium text-white">Kampala City Center</span>
-                      <span className="block text-[11px] text-zinc-500">Last visited 2 days ago</span>
+                  {recentRides.length > 0 ? (
+                    recentRides.map((ride) => (
+                      <div
+                        key={ride.id}
+                        className="recent-trip-item"
+                        onClick={() => {
+                          setDestination({
+                            name: ride.dropName,
+                            lat: ride.dropLat,
+                            lng: ride.dropLng,
+                            address: ride.dropName
+                          });
+                          setDestSearch(ride.dropName);
+                          setStep(BookingStep.LOCATION);
+                        }}
+                      >
+                        <div className="recent-trip-icon"><IonIcon icon={timeOutline} /></div>
+                        <div className="flex-1 truncate">
+                          <span className="block text-[13px] font-medium text-white">{ride.dropName}</span>
+                          <span className="block text-[11px] text-zinc-500">Visited {new Date(ride.requestedAt).toLocaleDateString()}</span>
+                        </div>
+                        <span className="text-[12px] font-bold text-ember">UGX {ride.fareFinal?.toLocaleString()}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ padding: '12px', textAlign: 'center', fontSize: '12px', color: '#64748B', background: 'rgba(255,255,255,0.03)', borderRadius: '16px' }}>
+                      No recent trips yet
                     </div>
-                    <span className="text-[12px] font-bold text-ember">UGX 4,500</span>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
