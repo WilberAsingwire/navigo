@@ -382,3 +382,142 @@
   height: 100%;
   transition: width 0.5s ease;
 }
+
+/* New Premium Styles */
+.welcome-header {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.welcome-eyebrow {
+  color: #FF5A1F;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.welcome-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.quick-action-btn {
+  width: 100%;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  color: #CBD5E1;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.quick-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 90, 31, 0.4);
+}
+
+.quick-action-icon {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 90, 31, 0.15);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FF5A1F;
+}
+
+.popular-places-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.place-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #CBD5E1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.place-chip:hover {
+  border-color: #FF5A1F;
+  color: #FFFFFF;
+}
+
+.recent-trip-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.recent-trip-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.recent-trip-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748B;
+}
+
+.fare-bid-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.bid-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bid-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #FF5A1F;
+}
+
+.bid-amount {
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+}

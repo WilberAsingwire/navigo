@@ -5,7 +5,8 @@ import {
 } from '@ionic/react';
 import {
   locationOutline, carOutline, arrowBackOutline,
-  globeOutline, checkmarkCircleOutline
+  globeOutline, checkmarkCircleOutline, searchOutline,
+  timeOutline, chevronForwardOutline
 } from 'ionicons/icons';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
@@ -19,7 +20,14 @@ const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
 interface Location { lat: number; lng: number; address: string; name?: string; }
 interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
-enum BookingStep { LOCATION = 0, RIDE_TYPE = 1, PAYMENT = 2, MATCHING = 3 }
+enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
+
+const POPULAR_PLACES: Location[] = [
+  { name: 'Kampala City Square', lat: 0.3136, lng: 32.5811, address: 'Kampala Central' },
+  { name: 'Entebbe Airport', lat: 0.0437, lng: 32.4369, address: 'Entebbe' },
+  { name: ' Acacia Mall', lat: 0.3348, lng: 32.5873, address: 'Kololo, Kampala' },
+  { name: 'Makerere University', lat: 0.3361, lng: 32.5711, address: 'Kampala' },
+];
 
 const RIDE_OPTIONS: RideOption[] = [
   { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
@@ -39,7 +47,7 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 const RideRequest: React.FC = () => {
   const history = useHistory();
   const { isAuthenticated, isGuest, user } = useAuth();
-  const [step, setStep] = useState<BookingStep>(BookingStep.LOCATION);
+  const [step, setStep] = useState<BookingStep>(BookingStep.HOME);
   const [serviceType, setServiceType] = useState<'ride' | 'delivery'>('ride');
   const [pickup, setPickup] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
@@ -50,6 +58,7 @@ const RideRequest: React.FC = () => {
   const [searchingPickup, setSearchingPickup] = useState(true);
   const [selectedRide, setSelectedRide] = useState(RIDE_OPTIONS[1]);
   const [fare, setFare] = useState<FareEstimate | null>(null);
+  const [userOffer, setUserOffer] = useState<number | null>(null);
   const [isMatching, setIsMatching] = useState(false);
   const [actualRouteDist, setActualRouteDist] = useState(0);
   const [actualRouteDur, setActualRouteDur] = useState(0);
@@ -63,6 +72,7 @@ const RideRequest: React.FC = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   // Delivery specific state
   const [packageDetails, setPackageDetails] = useState('');
@@ -73,6 +83,7 @@ const RideRequest: React.FC = () => {
     const init = async () => {
       try {
         await getCurrentLocation();
+        await fetchWalletBalance();
       } catch (e) {
         console.error('Init error:', e);
       } finally {
@@ -88,8 +99,6 @@ const RideRequest: React.FC = () => {
         setIsMatching(false);
         setMatchingProgress(100);
         setMatchedDriver(data);
-
-        // SECURE ROOM JOIN: Join the ride room to receive live location updates
         socket.emit('join-ride-room', { rideId: data.rideId });
       });
       socket.on('no-drivers-found', (data: any) => {
@@ -109,6 +118,15 @@ const RideRequest: React.FC = () => {
     if (pickup && destination) calculateFare();
   }, [pickup, destination, selectedRide, discount, actualRouteDist, actualRouteDur]);
 
+  const fetchWalletBalance = async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/wallet`);
+      if (res.data.ok) setWalletBalance(res.data.balance);
+    } catch (e) {
+      console.error('Wallet fetch error:', e);
+    }
+  };
+
   const getCurrentLocation = () => {
     return new Promise<void>((resolve) => {
       if ('geolocation' in navigator) {
@@ -122,19 +140,15 @@ const RideRequest: React.FC = () => {
               const data = res.data;
               const addr = data.display_name || '';
               const address = data.address || {};
-
-              // More robust address parsing for the "Short Name"
               const houseNumber = address.house_number || '';
               const road = address.road || address.pedestrian || address.footway || '';
               const suburb = address.suburb || address.neighbourhood || address.village || '';
               const city = address.city || address.town || address.municipality || '';
-
               let preciseName = '';
               if (houseNumber && road) preciseName = `${houseNumber} ${road}`;
               else if (road) preciseName = road;
               else if (suburb) preciseName = suburb;
               else preciseName = city || addr.split(',')[0];
-
               setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName });
               setPickupSearch(preciseName);
             } catch {
@@ -156,24 +170,13 @@ const RideRequest: React.FC = () => {
     });
   };
 
-
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
-    console.log(`🔍 Searching for: "${query}"`);
-
-    const UGANDA_BBOX = {
-      minLat: -1.5,
-      maxLat: 4.2,
-      minLon: 29.5,
-      maxLon: 35.0
-    };
-
+    const UGANDA_BBOX = { minLat: -1.5, maxLat: 4.2, minLon: 29.5, maxLon: 35.0 };
     try {
-      // TRY NOMINATIM FIRST - It's generally more reliable for Ugandan regional searches
-      console.log('📡 Attempting Nominatim Search (Primary)...');
       const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
-          q: `${query}, Uganda`, // Augment query to force Uganda context
+          q: `${query}, Uganda`,
           format: 'json',
           addressdetails: 1,
           limit: 10,
@@ -181,47 +184,23 @@ const RideRequest: React.FC = () => {
           bounded: 1
         }
       });
-
       let results = nomRes.data.map((item: any) => ({
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
         address: item.display_name,
         name: item.display_name.split(',')[0]
       }));
-
-      console.log(`✅ Nominatim found ${results.length} matches`);
-
-      // FALLBACK TO PHOTON
       if (results.length === 0) {
-        console.log('⚠️ Nominatim found nothing. Attempting Photon Fallback...');
         const photonRes = await axios.get('https://photon.komoot.io/api/', {
-          params: {
-            q: query,
-            limit: 10,
-            lat: pickup?.lat || 0.3476,
-            lon: pickup?.lng || 32.5825,
-            reprioritize: 1
-          }
+          params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 }
         });
-
         let photonResults = photonRes.data?.features?.map((item: any) => {
           const props = item.properties;
           const geom = item.geometry.coordinates;
-          return {
-            lat: geom[1],
-            lng: geom[0],
-            address: props.name || props.city || props.street || props.state || 'Unknown Location',
-            name: props.name || props.city || props.street || 'Unknown Location'
-          };
+          return { lat: geom[1], lng: geom[0], address: props.name || props.city || props.street || props.state || 'Unknown Location', name: props.name || props.city || props.street || 'Unknown Location' };
         }) || [];
-
-        results = photonResults.filter((r: any) =>
-          r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat &&
-          r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon
-        );
-        console.log(`✅ Photon found ${results.length} matches`);
+        results = photonResults.filter((r: any) => r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat && r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon);
       }
-
       return results;
     } catch (e: any) {
       console.error('❌ Search Error:', e.response?.data || e.message);
@@ -230,14 +209,12 @@ const RideRequest: React.FC = () => {
   };
 
   const searchTimeoutRef = useRef<any>(null);
-
   const handleSearch = async (query: string, isPickup: boolean) => {
     if (isPickup) setPickupSearch(query); else setDestSearch(query);
     setSearchingPickup(isPickup);
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     if (query.length >= 2) {
       setIsSearching(true);
-      // Reduced debounce from 300ms to 150ms for a more "instant" feel
       searchTimeoutRef.current = setTimeout(async () => {
         const results = await searchLocation(query);
         setSearchResults(results);
@@ -261,28 +238,15 @@ const RideRequest: React.FC = () => {
 
   const calculateFare = () => {
     if (!pickup || !destination) return;
-
-    // Use actual road distance from OSRM if available, otherwise fallback to straight-line (Haversine)
     const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
     const speed = selectedRide.vehicleType === 'boda' ? 28 : 22;
     const dur = actualRouteDur > 0 ? actualRouteDur : (dist / speed) * 60;
-
     const base = selectedRide.basePrice;
     const distFare = Math.round(dist * selectedRide.pricePerKm);
     const timeFare = Math.round(dur * selectedRide.pricePerMinute);
     const surge = Math.round((base + distFare + timeFare) * (selectedRide.surgeMultiplier - 1));
     const total = Math.max(base + distFare + timeFare + surge - discount, base);
-
-    setFare({
-      distance: Math.round(dist * 10) / 10,
-      duration: Math.round(dur),
-      baseFare: base,
-      distanceFare: distFare,
-      timeFare,
-      surgeFare: surge,
-      totalFare: total,
-      formattedTotal: 'UGX ' + total.toLocaleString()
-    });
+    setFare({ distance: Math.round(dist * 10) / 10, duration: Math.round(dur), baseFare: base, distanceFare: distFare, timeFare, surgeFare: surge, totalFare: total, formattedTotal: 'UGX ' + total.toLocaleString() });
   };
 
   const applyPromo = () => {
@@ -323,7 +287,7 @@ const RideRequest: React.FC = () => {
         setPickupSearch(loc.name || '');
       } else {
         setDestination(loc);
-        setDestSearch(shortName || '');
+        setDestSearch('Selected Point');
       }
     }
   };
@@ -335,6 +299,7 @@ const RideRequest: React.FC = () => {
     }
     setIsLoading(true);
     try {
+      const finalFare = userOffer ?? fare?.totalFare;
       const res = await axios.post(`${BASE_URL}/api/rides/request`, {
         serviceType,
         pickup,
@@ -346,6 +311,7 @@ const RideRequest: React.FC = () => {
         packageDetails: serviceType === 'delivery' ? packageDetails : null,
         receiverName: serviceType === 'delivery' ? receiverName : null,
         receiverPhone: serviceType === 'delivery' ? receiverPhone : null,
+        fareOffered: finalFare,
       });
       const ride = res.data.ride;
       setStep(BookingStep.MATCHING);
@@ -380,79 +346,76 @@ const RideRequest: React.FC = () => {
   return (
     <div className="booking-page-container">
       <div className="booking-form-panel">
-        <button
-          className="back-nav-btn"
-          onClick={() => history.push('/rider/home')}
-        >
+        <button className="back-nav-btn" onClick={() => history.push('/rider/home')}>
           <IonIcon icon={arrowBackOutline} /> Back
         </button>
 
         <div className="glass-booking-card">
-          <h1 className="card-title">Book Your Ride</h1>
+          {step === BookingStep.HOME && (
+            <div className="space-y-6">
+              <div className="welcome-header">
+                <span className="welcome-eyebrow">Welcome Back</span>
+                <h1 className="welcome-title">Hello, {user?.fullName || 'Guest'}!</h1>
+                <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>Where would you like to go today?</p>
+              </div>
 
-          <div className="service-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 20 }}>
-            <button
-              onClick={() => setServiceType('ride')}
-              style={{
-                flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: serviceType === 'ride' ? '#FF6B35' : 'transparent',
-                color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s'
-              }}
-            >
-              🚗 Ride
-            </button>
-            <button
-              onClick={() => setServiceType('delivery')}
-              style={{
-                flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: serviceType === 'delivery' ? '#FF6B35' : 'transparent',
-                color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s'
-              }}
-            >
-              📦 Delivery
-            </button>
-          </div>
+              <button className="quick-action-btn" onClick={() => { setStep(BookingStep.LOCATION); setSearchingPickup(false); }}>
+                <div className="quick-action-icon"><IonIcon icon={searchOutline} /></div>
+                <span>Enter destination...</span>
+              </button>
+
+              <div className="space-y-3">
+                <p className="section-label">Popular Destinations</p>
+                <div className="popular-places-grid">
+                  {POPULAR_PLACES.map(p => (
+                    <div key={p.name} className="place-chip" onClick={() => { setDestination(p); setDestSearch(p.name); setStep(BookingStep.LOCATION); }}>
+                      {p.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="section-label">Recent Trips</p>
+                <div className="space-y-2">
+                  <div className="recent-trip-item" onClick={() => { setDestination({ name: 'Previous Destination', lat: 0.3136, lng: 32.5811, address: 'Kampala' }); setStep(BookingStep.LOCATION); }}>
+                    <div className="recent-trip-icon"><IonIcon icon={timeOutline} /></div>
+                    <div className="flex-1 truncate">
+                      <span className="block text-[13px] font-medium text-white">Kampala City Center</span>
+                      <span className="block text-[11px] text-zinc-500">Last visited 2 days ago</span>
+                    </div>
+                    <span className="text-[12px] font-bold text-ember">UGX 4,500</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {step === BookingStep.LOCATION && (
             <div className="space-y-6">
+              <h1 className="card-title" style={{ textAlign: 'center' }}>Book Your Ride</h1>
+              <div className="service-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 20 }}>
+                <button onClick={() => setServiceType('ride')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: serviceType === 'ride' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>🚗 Ride</button>
+                <button onClick={() => setServiceType('delivery')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: serviceType === 'delivery' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>📦 Delivery</button>
+              </div>
+
               <div className="location-input-group">
                 <h2 className="section-label" style={{ textAlign: 'center', fontSize: '18px', color: '#fff', textTransform: 'none', marginBottom: '15px' }}>Where to?</h2>
                 <div className="location-search-container">
                   <div className="location-input-group-relative" style={{ position: 'relative' }}>
                     <div className="location-input-wrapper">
                       <div className="input-icon"><IonIcon icon={globeOutline} /></div>
-                      <input
-                        className="location-input"
-                        placeholder="Pickup Location"
-                        value={pickupSearch}
-                        onChange={e => handleSearch(e.target.value, true)}
-                        onFocus={() => setSearchingPickup(true)}
-                      />
+                      <input className="location-input" placeholder="Pickup Location" value={pickupSearch} onChange={e => handleSearch(e.target.value, true)} onFocus={() => setSearchingPickup(true)} />
                     </div>
-                    {searchingPickup && isSearching && (
-                      <div className="search-results-list" style={{ justifyContent: 'center', alignItems: 'center', padding: '20px', textAlign: 'center', display: 'flex' }}>
-                        <IonSpinner name="crescent" color="warning" />
-                        <span style={{ marginLeft: '10px', fontSize: '12px', color: '#94A3B8' }}>Searching Uganda...</span>
-                      </div>
-                    )}
-                    {!searchingPickup || (!isSearching && searchingPickup && searchResults.length > 0) ? null : null}
-                    {/* This logic is getting complex, let's just handle the rendering below */}
                   </div>
 
                   <div className="location-input-group-relative" style={{ position: 'relative' }}>
                     <div className="location-input-wrapper">
                       <div className="input-icon"><IonIcon icon={locationOutline} /></div>
-                      <input
-                        className="location-input"
-                        placeholder="Destination"
-                        value={destSearch}
-                        onChange={e => handleSearch(e.target.value, false)}
-                        onFocus={() => setSearchingPickup(false)}
-                      />
+                      <input className="location-input" placeholder="Destination" value={destSearch} onChange={e => handleSearch(e.target.value, false)} onFocus={() => setSearchingPickup(false)} />
                     </div>
                   </div>
 
-                  {/* Shared results list - positioned at bottom of container */}
                   {isSearching && (
                     <div className="search-results-list" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', textAlign: 'center' }}>
                       <IonSpinner name="crescent" color="warning" />
@@ -472,11 +435,6 @@ const RideRequest: React.FC = () => {
                       ))}
                     </div>
                   )}
-                  {!isSearching && searchResults.length === 0 && (pickupSearch.length >= 2 || destSearch.length >= 2) && (
-                    <div className="search-results-list" style={{ padding: '15px', textAlign: 'center', color: '#94A3B8', fontSize: '12px' }}>
-                      No locations found in Uganda. Try a different keyword.
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -485,11 +443,7 @@ const RideRequest: React.FC = () => {
                 {RIDE_OPTIONS.map(opt => {
                   const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
                   return (
-                    <div
-                      key={opt.id}
-                      className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedRide(opt)}
-                    >
+                    <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)}>
                       <div className="vehicle-main-info">
                         <span className="vehicle-emoji">{opt.emoji}</span>
                         <div className="vehicle-details">
@@ -503,13 +457,7 @@ const RideRequest: React.FC = () => {
                 })}
               </div>
 
-              <button
-                className="btn-continue"
-                disabled={!pickup || !destination}
-                onClick={() => setStep(BookingStep.PAYMENT)}
-              >
-                CONTINUE
-              </button>
+              <button className="btn-continue" disabled={!pickup || !destination} onClick={() => setStep(BookingStep.PAYMENT)}>CONTINUE</button>
             </div>
           )}
 
@@ -520,28 +468,13 @@ const RideRequest: React.FC = () => {
               {serviceType === 'delivery' && (
                 <div className="space-y-3" style={{ marginBottom: 20 }}>
                   <div className="location-input-wrapper">
-                    <input
-                      className="location-input"
-                      placeholder="What are we delivering?"
-                      value={packageDetails}
-                      onChange={e => setPackageDetails(e.target.value)}
-                    />
+                    <input className="location-input" placeholder="What are we delivering?" value={packageDetails} onChange={e => setPackageDetails(e.target.value)} />
                   </div>
                   <div className="location-input-wrapper">
-                    <input
-                      className="location-input"
-                      placeholder="Receiver's Name"
-                      value={receiverName}
-                      onChange={e => setReceiverName(e.target.value)}
-                    />
+                    <input className="location-input" placeholder="Receiver's Name" value={receiverName} onChange={e => setReceiverName(e.target.value)} />
                   </div>
                   <div className="location-input-wrapper">
-                    <input
-                      className="location-input"
-                      placeholder="Receiver's Phone"
-                      value={receiverPhone}
-                      onChange={e => setReceiverPhone(e.target.value)}
-                    />
+                    <input className="location-input" placeholder="Receiver's Phone" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)} />
                   </div>
                 </div>
               )}
@@ -553,34 +486,34 @@ const RideRequest: React.FC = () => {
                 </div>
                 <div className="fare-total">{fare?.formattedTotal}</div>
               </div>
+
+              {fare && (
+                <div className="fare-bid-container" style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p className="section-label" style={{ marginBottom: '8px' }}>Adjust Your Offer</p>
+                  <div className="fare-bid-controls">
+                    <button className="bid-btn" onClick={() => setUserOffer((userOffer ?? fare.totalFare) - 500)}>−</button>
+                    <span className="bid-amount">UGX {(userOffer ?? fare.totalFare).toLocaleString()}</span>
+                    <button className="bid-btn" onClick={() => setUserOffer((userOffer ?? fare.totalFare) + 500)}>+</button>
+                  </div>
+                  <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px' }}>Higher offers get picked up faster</p>
+                </div>
+              )}
+
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#94A3B8', padding: '0 4px' }}>
                 <span style={{ textTransform: 'capitalize' }}>{serviceType} Type: {selectedRide.name}</span>
-                <span>Cash Payment</span>
+                <span style={{ color: 'white', fontWeight: 600 }}>Balance: UGX {walletBalance.toLocaleString()}</span>
               </div>
+
               <div className="location-input-wrapper">
                 <div className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
-                <input
-                  className="location-input"
-                  placeholder="Promo Code"
-                  value={promoCode}
-                  onChange={e => setPromoCode(e.target.value)}
-                />
-                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF5A1F', marginBottom: 0 }} onClick={applyPromo}>Apply</button>
+                <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
+                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF5A1F', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
               </div>
-              <button
-                className="btn-continue"
-                disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))}
-                onClick={handleBookRide}
-              >
+
+              <button className="btn-continue" disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
                 {isLoading ? <IonSpinner name="crescent" /> : serviceType === 'ride' ? 'CONFIRM BOOKING' : 'CONFIRM DELIVERY'}
               </button>
-              <button
-                className="back-nav-btn"
-                style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }}
-                onClick={() => setStep(BookingStep.LOCATION)}
-              >
-                Change Details
-              </button>
+              <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setStep(BookingStep.LOCATION)}>Change Details</button>
             </div>
           )}
 
@@ -592,10 +525,7 @@ const RideRequest: React.FC = () => {
                 <p style={{ color: '#94A3B8', fontSize: '14px' }}>Please wait while we match you with the nearest driver.</p>
               </div>
               <div className="progress-bar-container">
-                <div
-                  className="progress-bar-fill"
-                  style={{ width: `${matchingProgress}%` }}
-                />
+                <div className="progress-bar-fill" style={{ width: `${matchingProgress}%` }} />
               </div>
             </div>
           )}
@@ -603,17 +533,7 @@ const RideRequest: React.FC = () => {
       </div>
 
       <div className="booking-map-panel">
-        <NavigoMap
-          userLocation={pickup}
-          destination={destination}
-          height="100%"
-          showControls={true}
-          onMapClick={handleMapClick}
-          onDistanceChange={(d, t) => {
-            setActualRouteDist(d);
-            setActualRouteDur(t);
-          }}
-        />
+        <NavigoMap userLocation={pickup} destination={destination} height="100%" showControls={true} onMapClick={handleMapClick} onDistanceChange={(d, t) => { setActualRouteDist(d); setActualRouteDur(t); }} />
       </div>
 
       <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} color="dark" position="top" />
