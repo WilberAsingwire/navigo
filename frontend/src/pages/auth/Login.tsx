@@ -7,7 +7,7 @@ import {
 import {
   eyeOutline, eyeOffOutline, logInOutline, logoGoogle,
   arrowForwardOutline, callOutline, globeOutline,
-  shieldCheckOutline, zapOutline, badgeCheckOutline
+  shieldCheckOutline, flashOutline, badgeCheckOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import './AuthStyles.css';
@@ -219,7 +219,7 @@ const Login: React.FC = () => {
                 <span className="trust-label">Verified captains</span>
               </div>
               <div className="trust-item">
-                <div className="trust-icon"><IonIcon icon={zapOutline} /></div>
+                <div className="trust-icon"><IonIcon icon={flashOutline} /></div>
                 <span className="trust-label">4-min pickups</span>
               </div>
               <div className="trust-item">
