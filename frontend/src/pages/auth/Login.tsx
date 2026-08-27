@@ -7,7 +7,7 @@ import {
 import {
   eyeOutline, eyeOffOutline, logInOutline, logoGoogle,
   arrowForwardOutline, callOutline, globeOutline,
-  shieldCheckOutline, flashOutline, badgeCheckOutline
+  checkmarkCircleOutline, flashOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import './AuthStyles.css';
@@ -155,7 +155,7 @@ const Login: React.FC = () => {
 
               {error && (
                 <div className="error-message">
-                  <IonIcon icon={shieldCheckOutline} /> {error || authError}
+                  <IonIcon icon={checkmarkCircleOutline} /> {error || authError}
                 </div>
               )}
 
@@ -215,7 +215,7 @@ const Login: React.FC = () => {
 
             <div className="trust-row">
               <div className="trust-item">
-                <div className="trust-icon"><IonIcon icon={shieldCheckOutline} /></div>
+                <div className="trust-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
                 <span className="trust-label">Verified captains</span>
               </div>
               <div className="trust-item">
@@ -223,7 +223,7 @@ const Login: React.FC = () => {
                 <span className="trust-label">4-min pickups</span>
               </div>
               <div className="trust-item">
-                <div className="trust-icon"><IonIcon icon={badgeCheckOutline} /></div>
+                <div className="trust-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
                 <span className="trust-label">Fares from UGX 1,500</span>
               </div>
             </div>
