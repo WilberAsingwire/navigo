@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol } from '@ionic/react';
-import { useHistory } from 'react-router-dom';
+import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol, useIonRouter } from '@ionic/react';
 import {
-  carOutline, bicycleOutline, shieldCheckmarkOutline, starOutline,
+  carOutline, bicycleOutline, shieldCheckmark outline, starOutline,
   phonePortraitOutline, walletOutline, timeOutline, mapOutline,
   peopleOutline, giftOutline, arrowForwardOutline, callOutline,
   cashOutline, lockClosedOutline, heartOutline, speedometerOutline,
@@ -13,12 +12,12 @@ import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
 
 const Home: React.FC = () => {
-  const history = useHistory();
+  const ionRouter = useIonRouter();
   const { theme, toggleTheme } = useTheme();
   const [activeRide, setActiveRide] = useState('boda');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-const rideOptions = [
+  const rideOptions = [
     {
       id: 'boda',
       name: 'Boda Boda',
@@ -89,12 +88,12 @@ const rideOptions = [
             <div className="nav-logo">🚀 NAVIGO</div>
             <div className="nav-right">
               <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
-                <div className="nav-link-text" onClick={() => { history.push('/explore'); setIsMenuOpen(false); }}>Explore</div>
-                <div className="nav-link-text" onClick={() => { history.push('/login'); setIsMenuOpen(false); }}>Sign In</div>
+                <div className="nav-link-text" onClick={() => { ionRouter.push('/explore'); setIsMenuOpen(false); }}>Explore</div>
+                <div className="nav-link-text" onClick={() => { ionRouter.push('/login'); setIsMenuOpen(false); }}>Sign In</div>
                 <div className="theme-toggle" onClick={toggleTheme}>
                   <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
                 </div>
-                <IonButton size="small" className="nav-signup-btn" onClick={() => { history.push('/register'); setIsMenuOpen(false); }}>Sign Up</IonButton>
+                <IonButton size="small" className="nav-signup-btn" onClick={() => { ionRouter.push('/register'); setIsMenuOpen(false); }}>Sign Up</IonButton>
               </div>
 
               <div className="mobile-menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -118,10 +117,10 @@ const rideOptions = [
                 Uganda's smartest way to move. Boda Safe™ verified drivers, women-preferred mode, and offline USSD booking. Ride with confidence across every corner of the city.
               </p>
               <div className="hero-buttons">
-                <IonButton expand="block" className="hero-btn primary" onClick={() => history.push('/register')}>
+                <IonButton expand="block" className="hero-btn primary" onClick={() => ionRouter.push('/register')}>
                   Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
                 </IonButton>
-                <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => history.push('/explore')}>
+                <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => ionRouter.push('/explore')}>
                   <IonIcon icon={mapOutline} slot="start" /> See Prices Near You
                 </IonButton>
               </div>
@@ -176,8 +175,8 @@ const rideOptions = [
                 <div key={ride.id} className={`ride-card ${idx === 0 ? 'featured' : ''}`}>
                   {idx === 0 && <div className="ride-badge">Most Popular</div>}
                   <span className="ride-icon">{ride.icon}</span>
-                  <h3>{ride.name}</h3>
-                  <p>{ride.desc}</p>
+                  <h3 className="card-title">{ride.name}</h3>
+                  <p className="card-desc">{ride.desc}</p>
                   <div className="ride-features">
                     {ride.features.map((f, i) => (
                       <div key={i} className="feature-item">
@@ -200,18 +199,18 @@ const rideOptions = [
               <div className="timeline">
                 <div className="step">
                   <div className="step-number">1</div>
-                  <h3>Request</h3>
-                  <p>Set your destination and choose your ride preference.</p>
+                  <h3 className="step-title">Request</h3>
+                  <p className="step-text">Set your destination and choose your ride preference.</p>
                 </div>
                 <div className="step">
                   <div className="step-number">2</div>
-                  <h3>Match</h3>
-                  <p>We connect you with the nearest Boda Safe™ verified driver.</p>
+                  <h3 className="step-title">Match</h3>
+                  <p className="step-text">We connect you with the nearest Boda Safe™ verified driver.</p>
                 </div>
                 <div className="step">
                   <div className="step-number">3</div>
-                  <h3>Arrive</h3>
-                  <p>Enjoy a safe, affordable trip to your destination.</p>
+                  <h3 className="step-title">Arrive</h3>
+                  <p className="step-text">Enjoy a safe, affordable trip to your destination.</p>
                 </div>
               </div>
             </div>
@@ -225,23 +224,23 @@ const rideOptions = [
             <div className="safety-grid">
               <div className="safety-item">
                 <IonIcon icon={shieldCheckmarkOutline} className="safety-icon" />
-                <h4>ID Verified</h4>
-                <p>Every driver undergoes mandatory government ID verification.</p>
+                <h4 className="safety-title">ID Verified</h4>
+                <p className="safety-desc">Every driver undergoes mandatory government ID verification.</p>
               </div>
               <div className="safety-item">
                 <IonIcon icon={starOutline} className="safety-icon" />
-                <h4>4.5+ Rating</h4>
-                <p>Only the highest-rated drivers remain on our platform.</p>
+                <h4 className="safety-title">4.5+ Rating</h4>
+                <p className="safety-desc">Only the highest-rated drivers remain on our platform.</p>
               </div>
               <div className="safety-item">
                 <IonIcon icon={locationOutline} className="safety-icon" />
-                <h4>Live Tracking</h4>
-                <p>Share your ride progress in real-time with loved ones.</p>
+                <h4 className="safety-title">Live Tracking</h4>
+                <p className="safety-desc">Share your ride progress in real-time with loved ones.</p>
               </div>
               <div className="safety-item">
                 <IonIcon icon={callOutline} className="safety-icon" />
-                <h4>24/7 Support</h4>
-                <p>Emergency SOS and support available every second of the day.</p>
+                <h4 className="safety-title">24/7 Support</h4>
+                <p className="safety-desc">Emergency SOS and support available every second of the day.</p>
               </div>
             </div>
           </section>
@@ -256,32 +255,32 @@ const rideOptions = [
                 <div className="tier-icon-container">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
                 </div>
-                <h3>Bronze</h3>
-                <p>0 - 500 pts</p>
+                <h3 className="tier-title">Bronze</h3>
+                <p className="tier-pts">0 - 500 pts</p>
                 <div className="tier-benefit">Basic Rewards</div>
               </div>
               <div className="tier-card silver">
                 <div className="tier-icon-container">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
                 </div>
-                <h3>Silver</h3>
-                <p>500 - 1k pts</p>
+                <h3 className="tier-title">Silver</h3>
+                <p className="tier-pts">500 - 1k pts</p>
                 <div className="tier-benefit">5% Discount</div>
               </div>
               <div className="tier-card gold">
                 <div className="tier-icon-container">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
                 </div>
-                <h3>Gold</h3>
-                <p>1k - 2.5k pts</p>
+                <h3 className="tier-title">Gold</h3>
+                <p className="tier-pts">1k - 2.5k pts</p>
                 <div className="tier-benefit">Priority Booking</div>
               </div>
               <div className="tier-card platinum">
                 <div className="tier-icon-container">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg>
                 </div>
-                <h3>Platinum</h3>
-                <p>2.5k+ pts</p>
+                <h3 className="tier-title">Platinum</h3>
+                <p className="tier-pts">2.5k+ pts</p>
                 <div className="tier-benefit">VIP Experience</div>
               </div>
             </div>
@@ -291,24 +290,24 @@ const rideOptions = [
           <footer className="footer">
             <div className="footer-grid">
               <div className="footer-col">
-                <h4>🚀 NAVIGO</h4>
+                <h4 className="footer-logo">🚀 NAVIGO</h4>
                 <p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone.</p>
               </div>
               <div className="footer-col">
-                <h4>Ride</h4>
-                <span className="footer-link" onClick={() => history.push('/rider/book')}>Book a Ride</span>
-                <span className="footer-link" onClick={() => history.push('/rider/history')}>Ride History</span>
-                <span className="footer-link" onClick={() => history.push('/ussd')}>Offline Booking</span>
+                <h4 className="footer-col-title">Ride</h4>
+                <span className="footer-link" onClick={() => ionRouter.push('/rider/book')}>Book a Ride</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/rider/history')}>Ride History</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/ussd')}>Offline Booking</span>
               </div>
               <div className="footer-col">
-                <h4>Drive</h4>
-                <span className="footer-link" onClick={() => history.push('/register')}>Become a Driver</span>
-                <span className="footer-link" onClick={() => history.push('/driver/earnings')}>Earnings Calculator</span>
+                <h4 className="footer-col-title">Drive</h4>
+                <span className="footer-link" onClick={() => ionRouter.push('/register')}>Become a Driver</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/driver/earnings')}>Earnings Calculator</span>
               </div>
               <div className="footer-col">
-                <h4>Company</h4>
+                <h4 className="footer-col-title">Company</h4>
                 <span className="footer-link">About Us</span>
-                <span className="footer-link" onClick={() => history.push('/rider/support')}>Support</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/rider/support')}>Support</span>
                 <span className="footer-link">Privacy Policy</span>
                 <span className="footer-link">Terms of Service</span>
               </div>
@@ -321,7 +320,7 @@ const rideOptions = [
 
           {/* STICKY BOTTOM USSD BAR */}
           <div className="sticky-bottom-bar">
-            <div className="ussd-pill" onClick={() => history.push('/ussd')}>
+            <div className="ussd-pill" onClick={() => ionRouter.push('/ussd')}>
               <IonIcon icon={phonePortraitOutline} />
               <span className="ussd-text">Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
             </div>
