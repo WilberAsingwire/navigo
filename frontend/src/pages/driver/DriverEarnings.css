@@ -1,16 +1,264 @@
-.earnings-bg { --background: #080c14; }
-.earnings-toolbar { --background: #080c14; }
-.sora-font { font-family: 'Sora', sans-serif; }
-.balance-card { background: linear-gradient(135deg, #1B4965, #0d2137); border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); margin: 0 0 16px; }
-.payout-btn { --background: #FF6B35; --border-radius: 14px; font-weight: 700; height: 44px; margin-top: 8px; }
-.section-title { color: #fff; font-size: 15px; margin-bottom: 10px; }
-.earnings-list { background: transparent; }
-.earning-item { background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
-.item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.passenger-info { display: flex; align-items: center; gap: 8px; }
-.passenger-info h4 { color: #fff; margin: 0; font-size: 13px; }
-.passenger-info p { color: rgba(255,255,255,0.4); font-size: 10px; margin: 1px; }
-.receipt-icon { color: #FF6B35; font-size: 18px; }
-.item-details { margin-top: 4px; }
-.detail-row { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.5); padding: 2px 0; }
-.commission { color: rgba(232,93,117,0.6); }
+/* ============================================ */
+/* NAVIGO DRIVER EARNINGS - PREMIUM GLASS        */
+/* ============================================ */
+
+.driver-earnings-container {
+  --background: #080c14;
+  background: #080c14;
+  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+}
+
+/* Balance Card */
+.earnings-balance-card {
+  background: linear-gradient(135deg, rgba(27, 73, 101, 0.4), rgba(13, 33, 55, 0.6));
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.balance-icon {
+  font-size: 32px;
+  color: #FF6B35;
+  margin-bottom: 8px;
+}
+
+.balance-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.balance-amount {
+  color: #fff;
+  font-size: 36px;
+  font-weight: 800;
+  margin: 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.payout-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.payout-btn {
+  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --color: #fff !important;
+  --border-radius: 16px !important;
+  font-weight: 700 !important;
+  height: 52px !important;
+  box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3);
+}
+
+/* Quick Stats */
+.earnings-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.earnings-stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.earnings-stat-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 90, 31, 0.3);
+}
+
+.stat-icon {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 2px 0;
+}
+
+.stat-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+}
+
+/* Chart Card */
+.earnings-chart-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+.chart-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.chart-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 100px;
+}
+
+.chart-bar-wrapper {
+  flex: 1;
+  text-align: center;
+}
+
+.chart-bar {
+  background: linear-gradient(180deg, #FF6B35, #E85D75);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+
+.chart-day-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 9px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* History Card */
+.earnings-history-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.earnings-history-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 90, 31, 0.3);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.history-rider-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-rider-name {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.history-ride-meta {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  margin: 1px 0 0;
+}
+
+.history-amount {
+  color: #00e676;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.history-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.history-net-earning {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Payout Card */
+.earnings-payout-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.payout-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(45, 106, 79, 0.15);
+  color: #2D6A4F;
+}
+
+.payout-info h4 {
+  color: #fff;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.payout-info p {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  margin: 2px 0 0;
+}
+
+/* Overview Card */
+.earnings-overview-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 16px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.overview-icon {
+  color: #FF6B35;
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.overview-value {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 2px 0;
+}
+
+.overview-label {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+}

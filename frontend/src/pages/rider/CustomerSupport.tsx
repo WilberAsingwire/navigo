@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { 
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, 
-  IonBackButton, IonSegment, IonSegmentButton, IonLabel, IonList, 
+import {
+  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
+  IonBackButton, IonSegment, IonSegmentButton, IonLabel, IonList,
   IonItem, IonIcon, IonText, IonAccordion, IonAccordionGroup,
-  IonTextarea, IonButton, IonSelect, IonSelectOption, useIonToast, 
+  IonTextarea, IonButton, IonSelect, IonSelectOption, useIonToast,
   IonBadge, IonCard, IonCardContent
 } from '@ionic/react';
-import { 
-  helpCircleOutline, logoWhatsapp, mailOutline, callOutline, 
+import {
+  helpCircleOutline, logoWhatsapp, mailOutline, callOutline,
   alertCircleOutline, chatbubbleEllipsesOutline, locationOutline,
   checkmarkCircleOutline, documentTextOutline, starOutline,
   shieldCheckmarkOutline, timeOutline, cardOutline
@@ -44,38 +44,38 @@ const RiderSupport: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
-          <IonTitle>Support Center</IonTitle>
+      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
+        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
+          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" style={{color: '#fff'}} /></IonButtons>
+          <IonTitle style={{color: '#fff'}}>Support Center</IonTitle>
         </IonToolbar>
-        <IonToolbar>
+        <IonToolbar style={{'--background': '#080c14'} as any}>
           <IonSegment value={segment} onIonChange={e => setSegment(e.detail.value as any)}>
-            <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11 }}>📖 FAQs</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11 }}>🚨 Report</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11 }}>📞 Contact</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📖 FAQs</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>🚨 Report</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📞 Contact</IonLabel></IonSegmentButton>
           </IonSegment>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent className="support-container">
         <div style={{ padding: 14, maxWidth: 600, margin: '0 auto' }}>
 
           {segment === 'faq' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, background: 'rgba(255,107,53,0.06)', borderRadius: 12, padding: 12 }}>
+              <div className="support-info-banner">
                 <IonIcon icon={helpCircleOutline} style={{ color: '#FF6B35', fontSize: 22 }} />
-                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, margin: 0 }}>Can't find what you're looking for? <span onClick={() => setSegment('report')} style={{ color: '#FF6B35', cursor: 'pointer', textDecoration: 'underline' }}>Open a ticket</span> or <span onClick={() => setSegment('contact')} style={{ color: '#FF6B35', cursor: 'pointer', textDecoration: 'underline' }}>contact us</span>.</p>
+                <p className="support-info-text">Can't find what you're looking for? <span className="support-info-link" onClick={() => setSegment('report')}>Open a ticket</span> or <span className="support-info-link" onClick={() => setSegment('contact')}>contact us</span>.</p>
               </div>
 
               <IonAccordionGroup>
                 {faqs.map(faq => (
-                  <IonAccordion key={faq.id} value={faq.id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, marginBottom: 6 }}>
-                    <IonItem slot="header" style={{ '--background': 'transparent', color: '#fff', fontSize: 13, fontWeight: 500 } as any}>
+                  <IonAccordion key={faq.id} value={faq.id} className="support-accordion">
+                    <IonItem slot="header">
                       <IonIcon icon={helpCircleOutline} slot="start" style={{ color: '#FF6B35', fontSize: 16 }} />
                       <IonLabel>{faq.question}</IonLabel>
                     </IonItem>
-                    <div className="ion-padding" slot="content" style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, lineHeight: 1.6 }}>
+                    <div className="support-accordion-content" slot="content">
                       {faq.answer}
                     </div>
                   </IonAccordion>
@@ -85,11 +85,11 @@ const RiderSupport: React.FC = () => {
           )}
 
           {segment === 'report' && (
-            <div>
-              <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 4 }}>🚨 Report an Issue</h3>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 16 }}>We'll get back to you within 2 hours</p>
+            <div className="report-form">
+              <h3 className="report-title">🚨 Report an Issue</h3>
+              <p className="report-subtitle">We'll get back to you within 2 hours</p>
 
-              <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 12, color: '#fff' } as any}>
+              <IonItem className="support-input-field">
                 <IonSelect placeholder="Select issue type" value={reportType} onIonChange={e => setReportType(e.detail.value)}>
                   <IonSelectOption value="billing">💰 Billing / Payment Issue</IonSelectOption>
                   <IonSelectOption value="lost">🎒 Lost Item in Vehicle</IonSelectOption>
@@ -105,51 +105,50 @@ const RiderSupport: React.FC = () => {
                 value={reportDescription}
                 onIonInput={e => setReportDescription(e.detail.value!)}
                 rows={5}
-                style={{ '--background': 'rgba(255,255,255,0.04)', '--color': '#fff', borderRadius: 12, padding: 12, marginBottom: 16 } as any}
+                className="support-textarea"
               />
 
-              <IonButton expand="block" onClick={handleReportSubmit}
-                style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700, height: 46 } as any}>
+              <IonButton expand="block" onClick={handleReportSubmit} className="support-submit-btn">
                 <IonIcon icon={alertCircleOutline} slot="start" /> Submit Ticket
               </IonButton>
             </div>
           )}
 
           {segment === 'contact' && (
-            <div>
-              <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 14 }}>📞 Contact Us</h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            <div className="contact-section">
+              <h3 className="report-title" style={{ marginBottom: 16 }}>📞 Contact Us</h3>
+
+              <div className="support-contact-grid">
                 <div onClick={() => window.open('https://wa.me/256800100200', '_blank')}
-                  style={{ background: 'rgba(37,211,102,0.08)', borderRadius: 16, padding: 20, textAlign: 'center', cursor: 'pointer', border: '1px solid rgba(37,211,102,0.15)' }}>
-                  <IonIcon icon={logoWhatsapp} style={{ fontSize: 32, color: '#25D366', marginBottom: 8 }} />
-                  <h4 style={{ color: '#fff', margin: '4px 0', fontSize: 13 }}>WhatsApp</h4>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, margin: 0 }}>Chat with us instantly</p>
+                  className="support-contact-card theme-whatsapp">
+                  <IonIcon icon={logoWhatsapp} className="support-contact-icon" />
+                  <h4 className="support-contact-title">WhatsApp</h4>
+                  <p className="support-contact-desc">Chat with us instantly</p>
                 </div>
                 <div onClick={() => window.open('tel:+256800100200', '_system')}
-                  style={{ background: 'rgba(255,107,53,0.08)', borderRadius: 16, padding: 20, textAlign: 'center', cursor: 'pointer', border: '1px solid rgba(255,107,53,0.15)' }}>
-                  <IonIcon icon={callOutline} style={{ fontSize: 32, color: '#FF6B35', marginBottom: 8 }} />
-                  <h4 style={{ color: '#fff', margin: '4px 0', fontSize: 13 }}>24/7 Hotline</h4>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, margin: 0 }}>0800-100-200</p>
+                  className="support-contact-card theme-phone">
+                  <IonIcon icon={callOutline} className="support-contact-icon" />
+                  <h4 className="support-contact-title">24/7 Hotline</h4>
+                  <p className="support-contact-desc">0800-100-200</p>
                 </div>
                 <div onClick={() => window.location.href = 'mailto:support@navigo.ug'}
-                  style={{ background: 'rgba(77,166,255,0.08)', borderRadius: 16, padding: 20, textAlign: 'center', cursor: 'pointer', border: '1px solid rgba(77,166,255,0.15)' }}>
-                  <IonIcon icon={mailOutline} style={{ fontSize: 32, color: '#4da6ff', marginBottom: 8 }} />
-                  <h4 style={{ color: '#fff', margin: '4px 0', fontSize: 13 }}>Email</h4>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, margin: 0 }}>support@navigo.ug</p>
+                  className="support-contact-card theme-email">
+                  <IonIcon icon={mailOutline} className="support-contact-icon" />
+                  <h4 className="support-contact-title">Email</h4>
+                  <p className="support-contact-desc">support@navigo.ug</p>
                 </div>
                 <div onClick={() => history.push('/rider/book')}
-                  style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 20, textAlign: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <IonIcon icon={locationOutline} style={{ fontSize: 32, color: '#fff', marginBottom: 8 }} />
-                  <h4 style={{ color: '#fff', margin: '4px 0', fontSize: 13 }}>Visit Us</h4>
-                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, margin: 0 }}>Kampala Office</p>
+                  className="support-contact-card theme-office">
+                  <IonIcon icon={locationOutline} className="support-contact-icon" />
+                  <h4 className="support-contact-title">Visit Us</h4>
+                  <p className="support-contact-desc">Kampala Office</p>
                 </div>
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 14, textAlign: 'center' }}>
-                <IonIcon icon={timeOutline} style={{ color: '#FFC107', fontSize: 20, marginBottom: 6 }} />
-                <p style={{ color: '#fff', fontSize: 13, margin: 0 }}>Response Time: Under 2 Hours</p>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: '4px 0 0' }}>Our team is available 24/7, 365 days a year</p>
+              <div className="support-response-card">
+                <IonIcon icon={timeOutline} className="support-response-icon" />
+                <p className="support-response-title">Response Time: Under 2 Hours</p>
+                <p className="support-response-desc">Our team is available 24/7, 365 days a year</p>
               </div>
             </div>
           )}

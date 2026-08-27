@@ -1,18 +1,174 @@
-.docs-content { --background: #080c14; --color: #fff8f0; }
-.docs-container { max-width: 500px; margin: 0 auto; padding: 16px; }
-.status-card { background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 24px; }
-.status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.status-header h3 { color: #fff; margin: 0; font-size: 15px; }
-.status-card p { color: rgba(255,255,255,0.5); font-size: 13px; margin: 0; }
-.docs-container h3 { color: #fff; margin-bottom: 14px; font-size: 16px; }
-.docs-form { background: transparent; }
-.docs-input { --background: rgba(255,255,255,0.05); --color: #fff; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.06); }
-.docs-input ion-icon[slot="start"] { color: #FF6B35; }
-.docs-input ion-label { color: rgba(255,255,255,0.5) !important; font-size: 11px; }
-.photo-uploads { display: flex; gap: 10px; margin: 18px 0; }
-.photo-upload-box { flex: 1; background: rgba(255,255,255,0.03); border: 2px dashed rgba(255,255,255,0.1); border-radius: 14px; padding: 20px 10px; text-align: center; cursor: pointer; transition: 0.2s; }
-.photo-upload-box:hover { border-color: #FF6B35; background: rgba(255,107,53,0.05); }
-.photo-upload-box ion-icon { font-size: 28px; color: rgba(255,255,255,0.2); margin-bottom: 6px; }
-.photo-upload-box p { color: #fff; font-size: 12px; margin: 4px 0; }
-.docs-error { background: rgba(232,93,117,0.1); color: #E85D75; padding: 12px; border-radius: 10px; margin-bottom: 14px; font-size: 12px; }
-.submit-btn { --background: linear-gradient(135deg, #FF6B35, #E85D75); --border-radius: 12px; font-weight: 600; height: 46px; margin-top: 6px; }
+/* ============================================ */
+/* NAVIGO DRIVER DOCUMENTS - PREMIUM GLASS       */
+/* ============================================ */
+
+.driver-docs-container {
+  --background: #080c14;
+  background: #080c14;
+  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+}
+
+/* Status Card */
+.status-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.status-header h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.status-card p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form Styles */
+.docs-form-title {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.docs-input {
+  --background: rgba(255, 255, 255, 0.05) !important;
+  --color: #fff !important;
+  --placeholder-color: #64748B !important;
+  border-radius: 16px !important;
+  margin-bottom: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.2s ease;
+}
+
+.docs-input ion-icon[slot="start"] {
+  color: #FF6B35 !important;
+}
+
+.docs-input ion-label {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+/* Female Driver Toggle */
+.female-driver-toggle {
+  background: rgba(255, 105, 180, 0.06);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid rgba(255, 105, 180, 0.15);
+  transition: all 0.3s ease;
+}
+
+.female-driver-toggle.active {
+  border-color: #FF69B4;
+  background: rgba(255, 105, 180, 0.12);
+}
+
+.female-driver-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.female-driver-title {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.female-driver-desc {
+  color: rgba(255, 248, 240, 0.6);
+  font-size: 11px;
+  margin: 2px 0 0;
+}
+
+/* Photo Uploads */
+.photo-uploads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.photo-upload-box {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border: 2px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 20px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.photo-upload-box:hover {
+  border-color: #FF6B35;
+  background: rgba(255, 107, 53, 0.05);
+  transform: translateY(-2px);
+}
+
+.photo-upload-box ion-icon {
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.2);
+  margin-bottom: 8px;
+}
+
+.photo-upload-box p {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 4px 0;
+}
+
+.photo-upload-box .hint {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
+}
+
+/* Submit Button */
+.submit-btn {
+  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --color: #fff !important;
+  --border-radius: 16px !important;
+  font-weight: 700 !important;
+  height: 52px !important;
+  box-shadow: 0 8px 16px rgba(255, 90, 31, 0.3);
+  margin-top: 12px;
+}
+
+.docs-error {
+  background: rgba(232, 93, 117, 0.1);
+  backdrop-filter: blur(10px);
+  color: #E85D75;
+  padding: 12px;
+  border-radius: 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
+  border: 1px solid rgba(232, 93, 117, 0.2);
+  text-align: center;
+}

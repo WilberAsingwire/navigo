@@ -69,29 +69,29 @@ const CustomerRideHistory: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
-          <IonTitle>Ride History</IonTitle>
+      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
+        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
+          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" style={{color: '#fff'}} /></IonButtons>
+          <IonTitle style={{color: '#fff'}}>Ride History</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent className="ride-history-container">
         <div style={{ padding: 14, maxWidth: 600, margin: '0 auto' }}>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
-            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
-              <p style={{ color: '#fff', fontSize: 18, fontWeight: 700, margin: 0 }}>{stats.total}</p>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>Total Rides</span>
+          <div className="history-stats-grid">
+            <div className="history-stat-card">
+              <p className="history-stat-value">{stats.total}</p>
+              <span className="history-stat-label">Total Rides</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
-              <p style={{ color: '#00e676', fontSize: 18, fontWeight: 700, margin: 0 }}>{stats.completed}</p>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>Completed</span>
+            <div className="history-stat-card">
+              <p className="history-stat-value completed">{stats.completed}</p>
+              <span className="history-stat-label">Completed</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
-              <p style={{ color: '#FF6B35', fontSize: 18, fontWeight: 700, margin: 0 }}>UGX {stats.totalSpent.toLocaleString()}</p>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9 }}>Total Spent</span>
+            <div className="history-stat-card">
+              <p className="history-stat-value spent">UGX {stats.totalSpent.toLocaleString()}</p>
+              <span className="history-stat-label">Total Spent</span>
             </div>
           </div>
 
@@ -100,9 +100,9 @@ const CustomerRideHistory: React.FC = () => {
             style={{ '--background': 'rgba(255,255,255,0.05)', '--color': '#fff', borderRadius: 12, marginBottom: 10 } as any} debounce={300} />
 
           <IonSegment value={statusFilter} onIonChange={e => setStatusFilter(e.detail.value as any)} style={{ marginBottom: 14 }}>
-            <IonSegmentButton value="all"><IonLabel style={{ fontSize: 11 }}>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="completed"><IonLabel style={{ fontSize: 11 }}>Completed</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="cancelled"><IonLabel style={{ fontSize: 11 }}>Cancelled</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="all"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>All</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="completed"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>Completed</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="cancelled"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>Cancelled</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* Ride List */}
@@ -119,22 +119,22 @@ const CustomerRideHistory: React.FC = () => {
           ) : (
             filteredRides.map(ride => (
               <div key={ride.id} onClick={() => { setSelectedRide(ride); setShowDetail(true); }}
-                style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 14, marginBottom: 8, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.04)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <IonIcon icon={ride.rideType === 'boda' ? bicycleOutline : carOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
+                className="history-ride-card">
+                <div className="ride-header">
+                  <div className="ride-info-main">
+                    <IonIcon icon={ride.rideType === 'boda' ? bicycleOutline : carOutline} className="ride-type-icon" />
                     <div>
-                      <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>{ride.pickup?.address || 'Unknown'} → {ride.destination?.address || 'Unknown'}</span>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>
+                      <span className="ride-route">{ride.pickup?.address || 'Unknown'} → {ride.destination?.address || 'Unknown'}</span>
+                      <p className="ride-time">
                         {ride.requestedAt ? new Date(ride.requestedAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'N/A'} at {ride.requestedAt ? new Date(ride.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
                       </p>
                     </div>
                   </div>
                   <IonBadge color={ride.status === 'completed' || ride.status === 'Completed' ? 'success' : 'danger'} style={{ fontSize: 9 }}>{ride.status}</IonBadge>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>🚗 {ride.paymentMethod}</span>
-                  <span style={{ color: '#FF6B35', fontWeight: 700, fontSize: 14 }}>UGX {(Number(ride.fare) || 0).toLocaleString()}</span>
+                <div className="ride-footer">
+                  <span className="ride-meta">🚗 {ride.paymentMethod}</span>
+                  <span className="ride-fare">UGX {(Number(ride.fare) || 0).toLocaleString()}</span>
                 </div>
               </div>
             ))
@@ -144,42 +144,54 @@ const CustomerRideHistory: React.FC = () => {
         {/* Detail Modal */}
         <IonModal isOpen={showDetail} onDidDismiss={() => setShowDetail(false)}>
           {selectedRide && (
-            <div style={{ padding: 20, background: '#0d1117', color: '#fff', height: '100%', overflow: 'auto' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ margin: 0, fontSize: 18 }}>Trip Details</h2>
+            <div className="history-detail-modal">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Trip Details</h2>
                 <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
               </div>
 
-              <IonBadge color={selectedRide.status === 'completed' || selectedRide.status === 'Completed' ? 'success' : 'danger'} style={{ marginBottom: 14, fontSize: 11 }}>
+              <IonBadge color={selectedRide.status === 'completed' || selectedRide.status === 'Completed' ? 'success' : 'danger'} style={{ marginBottom: 16, fontSize: 11 }}>
                 {selectedRide.status}
               </IonBadge>
 
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <div className="detail-glass-card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <IonIcon icon={locationOutline} style={{ color: '#2D6A4F' }} />
-                  <span style={{ color: '#fff', fontSize: 13 }}>{selectedRide.pickup?.address || 'Unknown'}</span>
+                  <span style={{ color: '#fff', fontSize: 14 }}>{selectedRide.pickup?.address || 'Unknown'}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <IonIcon icon={locationOutline} style={{ color: '#E85D75' }} />
-                  <span style={{ color: '#fff', fontSize: 13 }}>{selectedRide.destination?.address || 'Unknown'}</span>
+                  <span style={{ color: '#fff', fontSize: 14 }}>{selectedRide.destination?.address || 'Unknown'}</span>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
-                <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Date & Time</span><p style={{ color: '#fff', margin: 2, fontSize: 12 }}>{selectedRide.requestedAt ? new Date(selectedRide.requestedAt).toLocaleString() : 'N/A'}</p></div>
-                <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Distance</span><p style={{ color: '#fff', margin: 2, fontSize: 12 }}>N/A</p></div>
-                <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Ride Type</span><p style={{ color: '#fff', margin: 2, fontSize: 12 }}>{selectedRide.rideType === 'boda' ? '🏍️ Boda' : selectedRide.rideType === 'comfort' ? '🚙 Comfort' : '🚗 Economy'}</p></div>
-                <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Payment</span><p style={{ color: '#fff', margin: 2, fontSize: 12 }}>{selectedRide.paymentMethod}</p></div>
+              <div className="detail-grid">
+                <div className="detail-glass-card">
+                  <span className="detail-item-label">Date & Time</span>
+                  <p className="detail-item-value">{selectedRide.requestedAt ? new Date(selectedRide.requestedAt).toLocaleString() : 'N/A'}</p>
+                </div>
+                <div className="detail-glass-card">
+                  <span className="detail-item-label">Distance</span>
+                  <p className="detail-item-value">N/A</p>
+                </div>
+                <div className="detail-glass-card">
+                  <span className="detail-item-label">Ride Type</span>
+                  <p className="detail-item-value">{selectedRide.rideType === 'boda' ? '🏍️ Boda' : selectedRide.rideType === 'comfort' ? '🚙 Comfort' : '🚗 Economy'}</p>
+                </div>
+                <div className="detail-glass-card">
+                  <span className="detail-item-label">Payment</span>
+                  <p className="detail-item-value">{selectedRide.paymentMethod}</p>
+                </div>
               </div>
 
-              <div style={{ background: 'rgba(255,107,53,0.08)', borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 14 }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Total Fare</span>
-                <h2 style={{ color: '#FF6B35', margin: '4px 0', fontSize: 28 }}>UGX {(Number(selectedRide.fare) || 0).toLocaleString()}</h2>
+              <div className="fare-highlight-card">
+                <span className="fare-highlight-label">Total Fare</span>
+                <h2 className="fare-highlight-value">UGX {(Number(selectedRide.fare) || 0).toLocaleString()}</h2>
               </div>
 
               {(selectedRide.status === 'completed' || selectedRide.status === 'Completed') && (
-                <IonButton expand="block" onClick={() => { setShowDetail(false); history.push('/rider/book'); }}
-                  style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700 } as any}>
+                <IonButton expand="block" className="book-similar-btn" onClick={() => { setShowDetail(false); history.push('/rider/book'); }}
+                  style={{ '--color': '#fff' } as any}>
                   <IonIcon icon={refreshOutline} slot="start" /> Book Similar Ride
                 </IonButton>
               )}

@@ -1,15 +1,217 @@
-.payments-bg { --background: #080c14; }
-.payments-toolbar { --background: #080c14; }
-.sora-font { font-family: 'Sora', sans-serif; }
-.wallet-card { background: linear-gradient(135deg, #1B4965, #0d2137); border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); }
-.wallet-info { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.wallet-icon { font-size: 28px; color: #FF6B35; }
-.balance-text p { color: rgba(255,255,255,0.6); font-size: 11px; margin: 0; }
-.balance-text h1 { color: #fff; font-size: 32px; margin: 4px 0; }
-.topup-btn { --background: #FF6B35; --border-radius: 10px; font-weight: 600; margin-top: 8px; }
-.payment-list { background: transparent; }
-.payment-item { --background: rgba(255,255,255,0.03); margin-bottom: 6px; border-radius: 12px; }
-.method-icon-box { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
-.method-icon-box.warning { background: rgba(255,193,7,0.15); color: #FFC107; }
-.method-icon-box.light { background: rgba(255,255,255,0.08); color: #fff; }
-.main-btn { --background: #FF6B35; --border-radius: 12px; font-weight: 700; margin-top: 16px; }
+/* ============================================ */
+/* NAVIGO PAYMENTS - PREMIUM GLASS               */
+/* ============================================ */
+
+.payments-container {
+  --background: #080c14;
+  background: #080c14;
+  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+}
+
+/* Wallet Balance Card */
+.wallet-balance-card {
+  background: linear-gradient(135deg, rgba(27, 73, 101, 0.4), rgba(13, 33, 55, 0.6));
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.wallet-icon {
+  font-size: 32px;
+  color: #FF6B35;
+  margin-bottom: 8px;
+}
+
+.wallet-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.wallet-amount {
+  color: #fff;
+  font-size: 36px;
+  font-weight: 800;
+  margin: 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.topup-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.topup-btn {
+  --border-radius: 14px !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  height: 44px !important;
+}
+
+.btn-orange {
+  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --color: #fff !important;
+}
+
+.btn-green {
+  --background: linear-gradient(135deg, #2D6A4F 0%, #1B4965 100%) !important;
+  --color: #fff !important;
+}
+
+/* Payment Method Card */
+.payment-method-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.payment-method-card.default {
+  background: rgba(45, 106, 79, 0.08);
+  border-color: rgba(45, 106, 79, 0.3);
+}
+
+.payment-method-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 90, 31, 0.3);
+  transform: translateX(4px);
+}
+
+.method-icon {
+  font-size: 24px;
+}
+
+.method-details h4 {
+  color: #fff;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.method-details p {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  margin: 2px 0 0;
+}
+
+/* Transaction Card */
+.transaction-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.transaction-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-credit { background: rgba(45, 106, 79, 0.15); color: #2D6A4F; }
+.icon-debit { background: rgba(232, 93, 117, 0.1); color: #E85D75; }
+
+.transaction-info h4 {
+  color: #fff;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.transaction-info p {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  margin: 2px 0 0;
+}
+
+.transaction-amount {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.amount-credit { color: #00e676; }
+.amount-debit { color: #ff5252; }
+
+/* Modals */
+.glass-modal {
+  padding: 30px 20px;
+  background: rgba(8, 12, 20, 0.8) !important;
+  backdrop-filter: blur(30px);
+  color: #fff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.modal-subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.modal-input-item {
+  --background: rgba(255, 255, 255, 0.05) !important;
+  --color: #fff !important;
+  border-radius: 16px !important;
+  margin-bottom: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.payment-add-btn {
+  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --color: #fff !important;
+  --border-radius: 16px !important;
+  font-weight: 700 !important;
+  height: 52px !important;
+  margin-top: 20px;
+}
+
+/* Security Banner */
+.security-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.security-banner p {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  margin: 0;
+  line-height: 1.4;
+}

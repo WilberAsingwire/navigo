@@ -101,11 +101,15 @@ const status = await checkPaymentStatus(result.transactionId!, paymentMethod as 
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border"><IonToolbar><IonTitle>Active Ride</IonTitle></IonToolbar></IonHeader>
+      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
+        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
+          <IonTitle>Active Ride</IonTitle>
+        </IonToolbar>
+      </IonHeader>
       <IonContent className="active-ride-content">
         <NavigoMap userLocation={{ lat: 0.3476, lng: 32.5825 }} driverLocation={driverPos} destination={{ lat: 0.3550, lng: 32.5850 }} height="280px" showRoute={true} driverType="car" onDistanceChange={(d, t) => { setRemainingDist(d); setRemainingTime(t); }} />
-        {remainingDist > 0 && <div style={{ textAlign: 'center', color: '#4da6ff', fontSize: 13, padding: '6px 0' }}>📍 {remainingDist} km remaining • 🕐 ~{remainingTime} min</div>}
-        
+        {remainingDist > 0 && <div className="ride-distance-info">📍 {remainingDist} km remaining • 🕐 ~{remainingTime} min</div>}
+
         <div className="driver-info-section">
           <div className="driver-card">
             <IonAvatar><img src={MOCK_DRIVER.photo} alt={MOCK_DRIVER.name} /></IonAvatar>
@@ -115,6 +119,7 @@ const status = await checkPaymentStatus(result.transactionId!, paymentMethod as 
               <IonButton fill="clear" size="small" onClick={() => setShowChat(true)}><IonIcon icon={chatbubbleOutline} slot="icon-only" /></IonButton>
             </div>
           </div>
+        </div>
         </div>
 
         <div className="fare-display"><div className="fare-card"><IonIcon icon={cashOutline} /><div><IonLabel>Total Fare</IonLabel><h2>UGX {fare.toLocaleString()}</h2></div><IonBadge color={paymentMethod === 'cash' ? 'warning' : 'primary'}>{paymentMethod === 'cash' ? '💵 Cash' : paymentMethod === 'mtn' ? '📱 MTN' : paymentMethod === 'airtel' ? '📱 Airtel' : '💳 Card'}</IonBadge></div></div>
@@ -129,22 +134,22 @@ const status = await checkPaymentStatus(result.transactionId!, paymentMethod as 
         <IonModal isOpen={showChat} onDidDismiss={() => setShowChat(false)}><ChatBox rideId="ride_001" currentUser={{ id: 'rider_001', name: 'You', role: 'rider' }} otherUser={{ id: 'driver_001', name: MOCK_DRIVER.name, role: 'driver', photo: MOCK_DRIVER.photo }} onClose={() => setShowChat(false)} /></IonModal>
 
         <IonModal isOpen={showRating} onDidDismiss={() => setShowRating(false)}>
-          <div className="rating-modal"><h2>⭐ Rate Your Driver</h2><p>How was your ride?</p><div className="star-rating">{[1,2,3,4,5].map(s => <IonIcon key={s} icon={starOutline} className={`star-icon ${s<=rating?'active':''}`} onClick={()=>setRating(s)} />)}</div><IonButton expand="block" onClick={handleSubmitRating} disabled={rating===0}>Submit</IonButton></div>
+          <div className="glass-modal rating-modal"><h2>⭐ Rate Your Driver</h2><p>How was your ride?</p><div className="star-rating">{[1,2,3,4,5].map(s => <IonIcon key={s} icon={starOutline} className={`star-icon ${s<=rating?'active':''}`} onClick={()=>setRating(s)} />)}</div><IonButton expand="block" className="rate-btn" onClick={handleSubmitRating} disabled={rating===0}>Submit</IonButton></div>
         </IonModal>
 
         <IonModal isOpen={showPaymentModal} onDidDismiss={() => setShowPaymentModal(false)}>
-          <div className="payment-modal"><h2>💳 Payment</h2><h1>UGX {fare.toLocaleString()}</h1>
+          <div className="glass-modal payment-modal"><h2>💳 Payment</h2><h1>UGX {fare.toLocaleString()}</h1>
             <IonRadioGroup value={paymentMethod} onIonChange={e=>setPaymentMethod(e.detail.value)}>
-              <IonItem lines="none" button onClick={()=>setPaymentMethod('cash')}><IonIcon icon={cashOutline} slot="start"/><IonLabel>Cash</IonLabel><IonRadio slot="end" value="cash"/></IonItem>
-              <IonItem lines="none" button onClick={()=>setPaymentMethod('mtn')}><IonIcon icon={phonePortraitOutline} slot="start"/><IonLabel>MTN Money</IonLabel><IonRadio slot="end" value="mtn"/></IonItem>
-              <IonItem lines="none" button onClick={()=>setPaymentMethod('airtel')}><IonIcon icon={phonePortraitOutline} slot="start"/><IonLabel>Airtel Money</IonLabel><IonRadio slot="end" value="airtel"/></IonItem>
+              <IonItem lines="none" className="payment-radio-item" button onClick={()=>setPaymentMethod('cash')}><IonIcon icon={cashOutline} slot="start"/><IonLabel>Cash</IonLabel><IonRadio slot="end" value="cash"/></IonItem>
+              <IonItem lines="none" className="payment-radio-item" button onClick={()=>setPaymentMethod('mtn')}><IonIcon icon={phonePortraitOutline} slot="start"/><IonLabel>MTN Money</IonLabel><IonRadio slot="end" value="mtn"/></IonItem>
+              <IonItem lines="none" className="payment-radio-item" button onClick={()=>setPaymentMethod('airtel')}><IonIcon icon={phonePortraitOutline} slot="start"/><IonLabel>Airtel Money</IonLabel><IonRadio slot="end" value="airtel"/></IonItem>
             </IonRadioGroup>
             {paymentMethod==='cash'&&<div className="cash-confirmation"><IonItem lines="none" button onClick={()=>setCashReceived(!cashReceived)}><IonIcon icon={cashReceived?checkmarkCircleOutline:walletOutline} slot="start" color={cashReceived?'success':'medium'}/><IonLabel>I have paid</IonLabel></IonItem></div>}
-            <IonButton expand="block" onClick={handlePaymentComplete} disabled={isProcessing}>{isProcessing?'Processing...':'Confirm Payment'}</IonButton>
+            <IonButton expand="block" className="complete-btn" onClick={handlePaymentComplete} disabled={isProcessing}>{isProcessing?'Processing...':'Confirm Payment'}</IonButton>
           </div>
         </IonModal>
 
-        <IonModal isOpen={showCancelModal} onDidDismiss={()=>setShowCancelModal(false)}><div className="cancel-modal"><h2>Cancel?</h2><IonButton expand="block" color="danger" onClick={handleCancel}>Yes</IonButton></div></IonModal>
+        <IonModal isOpen={showCancelModal} onDidDismiss={()=>setShowCancelModal(false)}><div className="glass-modal cancel-modal"><h2>Cancel?</h2><IonButton expand="block" color="danger" onClick={handleCancel}>Yes</IonButton></div></IonModal>
         <IonToast isOpen={showToast} onDidDismiss={()=>setShowToast(false)} message={toastMsg} duration={3000} position="top"/>
       </IonContent>
     </IonPage>

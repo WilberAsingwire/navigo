@@ -1,3 +1,69 @@
+/* ============================================ */
+/* NAVIGO ACTIVE RIDE - PREMIUM GLASS            */
+/* ============================================ */
+
+.active-ride-content {
+  --background: #080c14;
+  background: #080c14;
+  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+}
+
+.ride-distance-info {
+  text-align: center;
+  color: #4da6ff;
+  font-size: 13px;
+  padding: 10px 0;
+  font-weight: 500;
+}
+
+/* Driver Info Section */
+.driver-info-section {
+  padding: 0 16px;
+  margin-top: 16px;
+}
+
+.driver-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.driver-details h3 {
+  color: #fff;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.driver-details p {
+  color: #94A3B8;
+  font-size: 13px;
+  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.driver-details .plate {
+  font-weight: 600;
+  color: #fff;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.driver-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
 /* Fare Display */
 .fare-display {
   padding: 0 16px;
@@ -5,13 +71,15 @@
 }
 
 .fare-card {
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.15), rgba(232, 93, 117, 0.1));
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid rgba(255, 107, 53, 0.2);
+  border: 1px solid rgba(255, 90, 31, 0.2);
+  background-image: linear-gradient(135deg, rgba(255, 107, 53, 0.1), transparent);
 }
 
 .fare-card ion-icon {
@@ -20,129 +88,108 @@
 }
 
 .fare-card ion-label {
-  color: rgba(255, 248, 240, 0.5) !important;
+  color: #94A3B8 !important;
   font-size: 11px;
 }
 
 .fare-card h2 {
-  color: #fff8f0;
+  color: #fff;
   margin: 2px 0 0;
   font-size: 22px;
+  font-weight: 700;
 }
 
 .fare-card ion-badge {
   margin-left: auto;
   font-size: 12px;
   padding: 6px 12px;
+  --background: rgba(255, 255, 255, 0.1);
+  --color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Payment Modal */
-.payment-modal {
-  padding: 30px 20px;
-  background: #111;
-  color: #fff8f0;
-  height: 100%;
-}
-
-.payment-modal h2 {
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.payment-fare-display {
-  text-align: center;
-  margin: 20px 0;
-}
-
-.payment-fare-display h1 {
-  color: #FF6B35;
-  font-size: 36px;
-  margin: 0;
-}
-
-.payment-fare-display ion-note {
-  font-size: 13px;
-}
-
-.payment-modal h4 {
-  color: rgba(255, 248, 240, 0.7);
-  margin: 20px 0 12px;
-}
-
-.payment-radio-item {
-  --background: rgba(255, 255, 255, 0.05);
-  --color: #fff8f0;
-  border-radius: 12px;
-  margin-bottom: 8px;
-}
-
-.pay-icon {
-  font-size: 22px;
-}
-
-.cash-icon { color: #2D6A4F; }
-.mtn-icon { color: #FFC107; }
-.airtel-icon { color: #E85D75; }
-
-/* Cash Confirmation */
-.cash-confirmation {
-  margin-top: 16px;
-}
-
-.cash-notice {
+/* Ride Actions */
+.ride-actions {
+  padding: 20px 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 193, 7, 0.1);
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.cash-notice ion-icon {
-  font-size: 24px;
-  color: #FFC107;
+.start-btn, .complete-btn, .rate-btn {
+  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --color: #fff !important;
+  --border-radius: 16px !important;
+  font-weight: 700 !important;
+  height: 52px !important;
+  box-shadow: 0 8px 16px rgba(255, 90, 31, 0.3);
 }
 
-.cash-notice p {
-  color: rgba(255, 248, 240, 0.8);
-  font-size: 13px;
-  margin: 0;
+.complete-btn {
+  --background: linear-gradient(135deg, #2D6A4F 0%, #1B4965 100%) !important;
 }
 
-.cash-checkbox-item {
-  --background: rgba(45, 106, 79, 0.1);
-  --color: #fff8f0;
-  border-radius: 10px;
-  border: 1px solid rgba(45, 106, 79, 0.3);
-}
-
-.confirm-payment-btn {
-  --background: linear-gradient(135deg, #2D6A4F, #1B4965);
-  --border-radius: 12px;
-  font-weight: 600;
-  height: 48px;
-  margin-top: 20px;
-}
-
-/* Rating Modal */
-.rating-modal {
-  padding: 40px 20px;
-  background: #111;
-  color: #fff8f0;
+/* Modals - Glassmorphism */
+.glass-modal {
+  padding: 30px 20px;
+  background: rgba(8, 12, 20, 0.8) !important;
+  backdrop-filter: blur(30px);
+  color: #fff;
   height: 100%;
-  text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  text-align: center;
+}
+
+.payment-modal {
+  /* Inherits from .glass-modal */
+}
+
+.payment-modal h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.payment-modal h1 {
+  color: #FF6B35;
+  font-size: 36px;
+  margin: 10px 0 24px;
+  font-weight: 800;
+}
+
+.payment-radio-item {
+  --background: rgba(255, 255, 255, 0.05) !important;
+  --color: #fff !important;
+  border-radius: 16px !important;
+  margin-bottom: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cash-confirmation {
+  margin: 20px 0;
+}
+
+.cash-confirmation ion-item {
+  --background: rgba(255, 255, 255, 0.03) !important;
+  --color: #fff !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rating-modal {
+  /* Inherits from .glass-modal */
 }
 
 .rating-modal h2 {
+  font-size: 24px;
+  font-weight: 700;
   margin-bottom: 8px;
 }
 
 .rating-modal p {
-  color: rgba(255, 248, 240, 0.6);
+  color: #94A3B8;
   margin-bottom: 24px;
 }
 
@@ -155,17 +202,22 @@
 
 .star-icon {
   font-size: 44px;
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .star-icon.active {
   color: #FFC107;
-  transform: scale(1.1);
+  transform: scale(1.2);
 }
 
-.star-icon:hover {
-  color: #FFC107;
-  transform: scale(1.15);
+.cancel-modal {
+  /* Inherits from .glass-modal */
+}
+
+.cancel-modal h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
 }

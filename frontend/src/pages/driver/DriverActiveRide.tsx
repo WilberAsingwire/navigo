@@ -93,9 +93,9 @@ const DriverActiveRide: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
-          <IonTitle style={{ color: '#fff' }}>
+      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
+        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
+          <IonTitle style={{color: '#fff'}}>
             {rideStatus === 'heading' ? 'Heading to Pickup' : rideStatus === 'arrived' ? 'Trip in Progress' : 'Completed'}
           </IonTitle>
           <IonBadge slot="end" color={rideStatus === 'heading' ? 'warning' : rideStatus === 'arrived' ? 'primary' : 'success'} style={{ marginRight: 10 }}>
@@ -104,7 +104,7 @@ const DriverActiveRide: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent className="driver-active-container">
         {/* Map */}
         <div style={{ height: '40vh', width: '100%', position: 'relative' }}>
           <MapContainer center={pos} zoom={15} style={{ height: '100%', width: '100%' }}>
@@ -114,7 +114,7 @@ const DriverActiveRide: React.FC = () => {
             <Marker position={rideData.destinationPos} icon={riderPinIcon}><Popup>📍 {rideData.riderName}</Popup></Marker>
             <Polyline positions={[pos, rideData.destinationPos]} color="#FF6B35" weight={3} opacity={0.6} dashArray="8, 6" />
           </MapContainer>
-          
+
           {/* Floating Navigate Button */}
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 1000 }}>
             <IonButton color="light" size="small" onClick={openNavigation}>
@@ -126,17 +126,15 @@ const DriverActiveRide: React.FC = () => {
         {/* Trip Info */}
         <div style={{ padding: 14 }}>
           {/* Rider Card */}
-          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="rider-info-card">
             <IonAvatar style={{ width: 48, height: 48 }}>
               <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(rideData.riderName)}&background=FF6B35&color=fff&size=64`} alt={rideData.riderName} />
             </IonAvatar>
-            <div style={{ flex: 1 }}>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>{rideData.riderName}</h3>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>
-                <IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {rideData.riderRating} • {rideData.rideType}
-              </p>
+            <div className="rider-details">
+              <h3>{rideData.riderName}</h3>
+              <p><IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {rideData.riderRating} • {rideData.rideType}</p>
             </div>
-            <div style={{ display: 'flex', gap: 4 }}>
+            <div className="rider-actions">
               <IonButton fill="clear" size="small" onClick={() => window.open(`tel:${rideData.riderPhone}`, '_system')}>
                 <IonIcon icon={callOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
               </IonButton>
@@ -147,58 +145,60 @@ const DriverActiveRide: React.FC = () => {
           </div>
 
           {/* Route Details */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 12, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div className="route-info-card">
+            <div className="route-point">
               <IonIcon icon={locationOutline} style={{ color: '#2D6A4F', fontSize: 16 }} />
-              <span style={{ color: '#fff', fontSize: 13 }}>Pickup: {rideData.pickup}</span>
+              <span>Pickup: {rideData.pickup}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="route-point">
               <IonIcon icon={flagOutline} style={{ color: '#E85D75', fontSize: 16 }} />
-              <span style={{ color: '#fff', fontSize: 13 }}>Destination: {rideData.destination}</span>
+              <span>Destination: {rideData.destination}</span>
             </div>
           </div>
 
           {/* Trip Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
-              <IonIcon icon={mapOutline} style={{ color: '#4da6ff', fontSize: 18 }} />
-              <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: '4px 0' }}>{rideData.distance}</p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Distance</span>
+          <div className="trip-stats-grid">
+            <div className="trip-stat-card">
+              <IonIcon icon={mapOutline} className="trip-stat-icon" style={{ color: '#4da6ff' }} />
+              <p className="trip-stat-value">{rideData.distance}</p>
+              <span className="trip-stat-label">Distance</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
-              <IonIcon icon={timeOutline} style={{ color: '#FFC107', fontSize: 18 }} />
-              <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: '4px 0' }}>{rideData.estimatedTime}</p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>ETA</span>
+            <div className="trip-stat-card">
+              <IonIcon icon={timeOutline} className="trip-stat-icon" style={{ color: '#FFC107' }} />
+              <p className="trip-stat-value">{rideData.estimatedTime}</p>
+              <span className="trip-stat-label">ETA</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
-              <IonIcon icon={cashOutline} style={{ color: '#00e676', fontSize: 18 }} />
-              <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, margin: '4px 0' }}>{rideData.fare}</p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Fare</span>
+            <div className="trip-stat-card">
+              <IonIcon icon={cashOutline} className="trip-stat-icon" style={{ color: '#00e676' }} />
+              <p className="trip-stat-value">{rideData.fare}</p>
+              <span className="trip-stat-label">Fare</span>
             </div>
           </div>
 
           {/* Earnings Breakdown */}
-          <div style={{ background: 'linear-gradient(135deg, rgba(45,106,79,0.1), rgba(45,106,79,0.03))', borderRadius: 14, padding: 12, marginBottom: 12, border: '1px solid rgba(45,106,79,0.15)' }}>
-            <h4 style={{ color: '#2D6A4F', margin: '0 0 8px', fontSize: 13 }}>💰 Your Earnings</h4>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 4 }}>
+          <div className="earnings-card">
+            <h4 className="earnings-title">
+              <IonIcon icon={cashOutline} /> Your Earnings
+            </h4>
+            <div className="earnings-row">
               <span>Total Fare</span><span>UGX {earnings.fare.toLocaleString()}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 4 }}>
+            <div className="earnings-row">
               <span>Commission (10%)</span><span>-UGX {earnings.commission.toLocaleString()}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#00e676', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6 }}>
+            <div className="earnings-total">
               <span>You Earn</span><span>UGX {earnings.net.toLocaleString()}</span>
             </div>
           </div>
 
           {/* Action Buttons */}
           {rideStatus === 'heading' && (
-            <IonButton expand="block" className="main-btn" onClick={() => updateStatus('arrived')} style={{ '--background': '#FF6B35', '--border-radius': 14, height: 48, fontWeight: 700 } as any}>
+            <IonButton expand="block" className="main-action-btn" onClick={() => updateStatus('arrived')}>
               <IonIcon icon={checkmarkCircleOutline} slot="start" /> I Have Arrived 📍
             </IonButton>
           )}
           {rideStatus === 'arrived' && (
-            <IonButton expand="block" color="success" onClick={() => updateStatus('completed')} style={{ '--border-radius': 14, height: 48, fontWeight: 700 } as any}>
+            <IonButton expand="block" className="complete-action-btn" onClick={() => updateStatus('completed')}>
               <IonIcon icon={checkmarkCircleOutline} slot="start" /> Complete Trip ✅
             </IonButton>
           )}
@@ -207,8 +207,8 @@ const DriverActiveRide: React.FC = () => {
           <SOSButton userLocation={{ lat: pos[0], lng: pos[1] }} userName="Driver" variant="compact" />
 
           {rideStatus === 'completed' && (
-            <div style={{ textAlign: 'center', padding: 20, color: '#2D6A4F' }}>
-              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 48 }} />
+            <div className="completion-state">
+              <IonIcon icon={checkmarkCircleOutline} />
               <h3>Trip Completed!</h3>
               <p>You earned UGX {earnings.net.toLocaleString()}</p>
             </div>

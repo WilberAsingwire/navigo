@@ -1,1 +1,182 @@
-.ride-history-content { --background: #080c14; }
+/* ============================================ */
+/* NAVIGO RIDE HISTORY - PREMIUM GLASS           */
+/* ============================================ */
+
+.ride-history-container {
+  --background: #080c14;
+  background: #080c14;
+  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+}
+
+/* Stats Grid */
+.history-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.history-stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.history-stat-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 90, 31, 0.3);
+  transform: translateY(-2px);
+}
+
+.history-stat-value {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.history-stat-value.completed { color: #00e676; }
+.history-stat-value.spent { color: #FF6B35; }
+
+.history-stat-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* Ride Card */
+.history-ride-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+}
+
+.history-ride-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 90, 31, 0.3);
+  transform: scale(1.01);
+}
+
+.ride-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.ride-info-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ride-type-icon {
+  font-size: 20px;
+  color: #FF6B35;
+}
+
+.ride-route {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ride-time {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  margin: 4px 0 0;
+}
+
+.ride-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ride-meta {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.ride-fare {
+  color: #FF6B35;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* Detail Modal */
+.history-detail-modal {
+  padding: 30px 20px;
+  background: rgba(8, 12, 20, 0.9) !important;
+  backdrop-filter: blur(30px);
+  color: #fff;
+  height: 100%;
+  overflow: auto;
+}
+
+.detail-glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-item-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  display: block;
+}
+
+.detail-item-value {
+  color: #fff;
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fare-highlight-card {
+  background: rgba(255, 107, 53, 0.08);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.fare-highlight-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+.fare-highlight-value {
+  color: #FF6B35;
+  font-size: 32px;
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+.book-similar-btn {
+  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --border-radius: 16px !important;
+  font-weight: 700 !important;
+  height: 52px !important;
+}

@@ -36,7 +36,7 @@ const DriverDocuments: React.FC = () => {
 
   const handleSubmit = async () => {
     setError('');
-    
+
     if (!drivingLicense.trim()) return setError('Driving license number is required');
     if (!vehiclePlate.trim()) return setError('Vehicle plate number is required');
     if (!vehicleModel.trim()) return setError('Vehicle model is required');
@@ -57,12 +57,12 @@ const DriverDocuments: React.FC = () => {
 
       setSuccess('Documents submitted! Admin will review within 24-48 hours.');
       setShowToast(true);
-      
+
       const savedUser = JSON.parse(localStorage.getItem('navigo_user') || '{}');
       savedUser.verificationStatus = 'pending';
       savedUser.isFemaleDriver = isFemaleDriver;
       localStorage.setItem('navigo_user', JSON.stringify(savedUser));
-      
+
       setTimeout(() => history.push('/driver/home'), 2000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Upload failed');
@@ -82,16 +82,16 @@ const DriverDocuments: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
+      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
+        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/driver/home" />
+            <IonBackButton defaultHref="/driver/home" style={{color: '#fff'}} />
           </IonButtons>
-          <IonTitle>Driver Verification</IonTitle>
+          <IonTitle style={{color: '#fff'}}>Driver Verification</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="docs-content">
+      <IonContent className="driver-docs-container">
         <div className="docs-container">
           <IonCard className="status-card">
             <IonCardContent>
@@ -116,7 +116,9 @@ const DriverDocuments: React.FC = () => {
 
           {(verificationStatus === 'unverified' || verificationStatus === 'rejected') && (
             <>
-              <h3>📄 Required Documents</h3>
+              <h3 className="docs-form-title">
+                <IonIcon icon={documentTextOutline} /> Required Documents
+              </h3>
 
               <IonList className="docs-form">
                 <IonItem className="docs-input">
@@ -171,20 +173,25 @@ const DriverDocuments: React.FC = () => {
               </IonList>
 
               {/* Female Driver Toggle */}
-              <div style={{ background: 'rgba(255,105,180,0.08)', borderRadius: 12, padding: 14, marginTop: 12, border: isFemaleDriver ? '2px solid #FF69B4' : '2px solid transparent' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 24 }}>👩</span>
-                    <div>
-                      <strong style={{ color: '#fff', fontSize: 14 }}>Female Driver</strong>
-                      <p style={{ color: 'rgba(255,248,240,0.6)', fontSize: 11, margin: 2 }}>Enable to appear in Women Preferred searches</p>
-                    </div>
+              <div className={`female-driver-toggle ${isFemaleDriver ? 'active' : ''}`}>
+                <div className="female-driver-info">
+                  <span style={{ fontSize: 24 }}>👩</span>
+                  <div>
+                    <strong className="female-driver-title">Female Driver</strong>
+                    <p className="female-driver-desc">Enable to appear in Women Preferred searches</p>
                   </div>
-                  <div 
+                  <div
                     onClick={() => setIsFemaleDriver(!isFemaleDriver)}
-                    style={{ width: 52, height: 28, borderRadius: 14, background: isFemaleDriver ? '#FF69B4' : 'rgba(255,255,255,0.2)', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}
+                    style={{
+                      width: 52, height: 28, borderRadius: 14,
+                      background: isFemaleDriver ? '#FF69B4' : 'rgba(255,255,255,0.2)',
+                      position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0
+                    }}
                   >
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#fff', position: 'absolute', top: 3, left: isFemaleDriver ? 27 : 3, transition: '0.3s' }} />
+                    <div style={{
+                      width: 22, height: 22, borderRadius: '50%', background: '#fff',
+                      position: 'absolute', top: 3, left: isFemaleDriver ? 27 : 3, transition: '0.3s'
+                    }} />
                   </div>
                 </div>
               </div>
@@ -193,12 +200,12 @@ const DriverDocuments: React.FC = () => {
                 <div className="photo-upload-box">
                   <IonIcon icon={cloudUploadOutline} />
                   <p>Vehicle Photo</p>
-                  <IonText color="medium">(Coming soon)</IonText>
+                  <IonText className="hint" color="medium">Coming soon</IonText>
                 </div>
                 <div className="photo-upload-box">
                   <IonIcon icon={personOutline} />
                   <p>Selfie with Vehicle</p>
-                  <IonText color="medium">(Coming soon)</IonText>
+                  <IonText className="hint" color="medium">Coming soon</IonText>
                 </div>
               </div>
 

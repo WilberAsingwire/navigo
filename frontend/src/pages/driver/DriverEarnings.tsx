@@ -49,14 +49,14 @@ const DriverEarnings: React.FC = () => {
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" /></IonButtons>
-          <IonTitle>Earnings</IonTitle>
+      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
+        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
+          <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{color: '#fff'}} /></IonButtons>
+          <IonTitle style={{color: '#fff'}}>Earnings</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent className="driver-earnings-container">
         <IonRefresher slot="fixed" onIonRefresh={(e) => { setTimeout(() => e.target.complete(), 1000); }}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>
@@ -65,44 +65,41 @@ const DriverEarnings: React.FC = () => {
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
           {/* Balance Card */}
-          <IonCard style={{ background: 'linear-gradient(135deg, #1B4965, #0d2137)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
-            <IonCardContent style={{ textAlign: 'center', padding: 24 }}>
-              <IonIcon icon={walletOutline} style={{ fontSize: 32, color: '#FF6B35', marginBottom: 8 }} />
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, margin: 0 }}>Available Balance</p>
-              <h1 style={{ color: '#fff', fontSize: 36, fontWeight: 800, margin: '8px 0' }}>
-                UGX {earningsData.balance.toLocaleString()}
-              </h1>
-              <IonButton expand="block" disabled={earningsData.balance < 50000}
-                style={{ '--background': '#FF6B35', '--border-radius': 14, fontWeight: 700, height: 44, marginTop: 8 } as any}>
+          <div className="earnings-balance-card">
+            <IonIcon icon={walletOutline} className="balance-icon" />
+            <p className="balance-label">Available Balance</p>
+            <h1 className="balance-amount">UGX {earningsData.balance.toLocaleString()}</h1>
+            <div className="payout-actions">
+              <IonButton expand="block" disabled={earningsData.balance < 50000} className="payout-btn">
                 <IonIcon icon={arrowDownOutline} slot="start" /> Request Payout
               </IonButton>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>Minimum payout: UGX 50,000</p>
-            </IonCardContent>
-          </IonCard>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>Minimum payout: UGX 50,000</p>
+          </div>
 
           {/* Quick Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
+          <div className="earnings-stats-grid">
             {[
               { label: 'Today', value: `UGX ${(earningsData.todayEarnings/1000).toFixed(0)}K`, icon: timeOutline, color: '#FF6B35' },
               { label: 'This Week', value: `UGX ${(earningsData.thisWeek/1000).toFixed(0)}K`, icon: trendingUpOutline, color: '#4da6ff' },
               { label: 'Total', value: `UGX ${(earningsData.totalEarnings/1000000).toFixed(1)}M`, icon: statsChartOutline, color: '#2D6A4F' },
             ].map(s => (
-              <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
-                <IonIcon icon={s.icon} style={{ color: s.color, fontSize: 18, marginBottom: 4 }} />
-                <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 2 }}>{s.value}</p>
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{s.label}</span>
+              <div key={s.label} className="earnings-stat-card">
+                <IonIcon icon={s.icon} className="stat-icon" style={{ color: s.color }} />
+                <p className="stat-value">{s.value}</p>
+                <span className="stat-label">{s.label}</span>
               </div>
             ))}
           </div>
 
           {/* Weekly Chart */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, marginBottom: 16 }}>
-            <h4 style={{ color: '#fff', margin: '0 0 12px', fontSize: 14 }}>📊 This Week</h4>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 100 }}>
+          <div className="earnings-chart-card">
+            <h4 className="chart-title">📊 This Week</h4>
+            <div className="chart-container">
               {weeklyData.map((d, i) => (
-                <div key={i} style={{ flex: 1, textAlign: 'center' }}>
-                  <div style={{ height: `${(d.amount / maxAmount) * 100}%`, background: 'linear-gradient(180deg, #FF6B35, #E85D75)', borderRadius: '4px 4px 0 0', minHeight: 4, opacity: d.day === 'Sun' ? 0.3 : 0.8 }} />
-                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginTop: 4, display: 'block' }}>{d.day}</span>
+                <div key={i} className="chart-bar-wrapper">
+                  <div className="chart-bar" style={{ height: `${(d.amount / maxAmount) * 100}%`, opacity: d.day === 'Sun' ? 0.3 : 0.8 }} />
+                  <span className="chart-day-label">{d.day}</span>
                 </div>
               ))}
             </div>
@@ -117,23 +114,23 @@ const DriverEarnings: React.FC = () => {
 
           {/* History Tab */}
           {activeTab === 'history' && (
-            <div>
+            <div className="history-section">
               <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Recent Trips ({earningsData.totalTrips} total)</h3>
               {earningsData.recentTrips.map(trip => (
-                <div key={trip._id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, marginBottom: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div key={trip._id} className="earnings-history-card">
+                  <div className="history-header">
+                    <div className="history-rider-info">
                       <IonIcon icon={receiptOutline} style={{ color: '#FF6B35' }} />
                       <div>
-                        <span style={{ color: '#fff', fontSize: 13 }}>{trip.passengerName}</span>
-                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 1 }}>{trip.type} • {trip.from} → {trip.to}</p>
+                        <span className="history-rider-name">{trip.passengerName}</span>
+                        <p className="history-ride-meta">{trip.type} • {trip.from} → {trip.to}</p>
                       </div>
                     </div>
-                    <span style={{ color: '#00e676', fontWeight: 700, fontSize: 14 }}>+UGX {trip.fare.toLocaleString()}</span>
+                    <span className="history-amount">+UGX {trip.fare.toLocaleString()}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>{new Date(trip.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>You earned: UGX {(trip.fare * 0.85).toLocaleString()} (85%)</span>
+                  <div className="history-footer">
+                    <span>{new Date(trip.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                    <span className="history-net-earning">You earned: UGX {(trip.fare * 0.85).toLocaleString()} (85%)</span>
                   </div>
                 </div>
               ))}
@@ -142,16 +139,16 @@ const DriverEarnings: React.FC = () => {
 
           {/* Payouts Tab */}
           {activeTab === 'payouts' && (
-            <div>
+            <div className="payouts-section">
               <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Payout History</h3>
               {earningsData.payouts.map(payout => (
-                <div key={payout._id} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(45,106,79,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <IonIcon icon={checkmarkCircleOutline} style={{ color: '#2D6A4F', fontSize: 18 }} />
+                <div key={payout._id} className="earnings-payout-card">
+                  <div className="payout-icon">
+                    <IonIcon icon={checkmarkCircleOutline} />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <span style={{ color: '#fff', fontSize: 13 }}>UGX {payout.amount.toLocaleString()}</span>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>{payout.method} • {new Date(payout.date).toLocaleDateString()}</p>
+                  <div className="payout-info">
+                    <h4>UGX {payout.amount.toLocaleString()}</h4>
+                    <p>{payout.method} • {new Date(payout.date).toLocaleDateString()}</p>
                   </div>
                   <IonBadge color="success" style={{ fontSize: 9 }}>Completed</IonBadge>
                 </div>
@@ -168,10 +165,10 @@ const DriverEarnings: React.FC = () => {
                 { label: 'You Keep', value: '85%', icon: cashOutline },
                 { label: 'Payout Method', value: 'MTN Money', icon: cardOutline },
               ].map(s => (
-                <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
-                  <IonIcon icon={s.icon} style={{ color: '#FF6B35', fontSize: 20, marginBottom: 6 }} />
-                  <p style={{ color: '#fff', fontSize: 16, fontWeight: 700, margin: 2 }}>{s.value}</p>
-                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{s.label}</span>
+                <div key={s.label} className="earnings-overview-card">
+                  <IonIcon icon={s.icon} className="overview-icon" />
+                  <p className="overview-value">{s.value}</p>
+                  <span className="overview-label">{s.label}</span>
                 </div>
               ))}
             </div>
