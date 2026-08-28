@@ -221,7 +221,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
     L.tileLayer(tileUrls[mapStyle].url, {
       attribution: tileUrls[mapStyle].attribution,
-      maxZoom: mapStyle === 'satellite' ? 18 : 22,
+      maxZoom: mapStyle === 'satellite' ? 22 : 22,
       maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
     }).addTo(map);
 

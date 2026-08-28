@@ -116,7 +116,7 @@ initDB().then(async () => {
       const adminPassword = await hashPassword('Kakumiro222');
       const adminId = 'admin_' + Date.now();
       await db.run(
-        'INSERT INTO users (id, name, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', 1, 'approved', new Date().toISOString()]
       );
       console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
