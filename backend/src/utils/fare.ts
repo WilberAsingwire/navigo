@@ -65,7 +65,8 @@ export const VEHICLES: VehicleSpec[] = [
 ];
 
 export function getVehicle(type: string): VehicleSpec {
-  return VEHICLES.find((v) => v.type === type) ?? VEHICLES[0];
+  const normalizedType = type === 'go' ? 'economy' : type;
+  return VEHICLES.find((v) => v.type === normalizedType) ?? VEHICLES[0];
 }
 
 /** Recommended fare in UGX, rounded to nearest 100. */

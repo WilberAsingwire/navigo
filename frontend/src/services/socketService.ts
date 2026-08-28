@@ -10,12 +10,19 @@ class SocketService {
 
     this.socket = io(SOCKET_URL, {
       transports: ['websocket'],
-      upgrade: false
+      upgrade: false,
+      auth: {
+        token: localStorage.getItem('navigo_token')
+      }
     });
 
     this.socket.on('connect', () => {
       console.log('🔌 Connected to NAVIGO Socket Server');
       this.socket.emit('join', userId);
+    });
+
+    this.socket.on('connect_error', (err: any) => {
+      console.error('❌ Socket Connection Error:', err.message);
     });
 
     return this.socket;

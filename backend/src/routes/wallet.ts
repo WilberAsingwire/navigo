@@ -51,6 +51,18 @@ router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Idempotency Check: Ensure this payment reference hasn't been used already
+    const existingTx = await db.get(
+      "SELECT id FROM wallet_transactions WHERE note LIKE ?",
+      [`%Ref: ${paymentReference}%`]
+    );
+    if (existingTx) {
+      return res.status(400).json({
+        ok: false,
+        message: 'This payment reference has already been processed.'
+      });
+    }
+
     // Security check: Verify that the verified amount matches the requested top-up amount
     if (verification.amount && verification.amount !== amount) {
       return res.status(400).json({

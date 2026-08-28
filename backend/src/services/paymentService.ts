@@ -13,7 +13,12 @@ class PaymentService {
 
   async verifyTransaction(transactionId: string): Promise<PaymentVerificationResponse> {
     if (!this.secretKey) {
-      console.warn('⚠️ FLUTTERWAVE_SECRET_KEY not set. Using simulation mode for payments.');
+      if (process.env.NODE_ENV === 'production') {
+        console.error('❌ CRITICAL: FLUTTERWAVE_SECRET_KEY missing in production!');
+        return { status: 'failed', error: 'Payment gateway not configured' };
+      }
+
+      console.warn('⚠️ FLUTTERWAVE_SECRET_KEY not set. Using simulation mode for development.');
       // Simulation mode: if tx_ref starts with 'TEST_', we assume it's successful
       if (transactionId.startsWith('TEST_')) {
         return { status: 'success', amount: 1000, currency: 'UGX', tx_ref: transactionId };

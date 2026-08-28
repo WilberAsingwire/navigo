@@ -43,7 +43,7 @@ export const settleRidePayment = async (rideId: string) => {
       await tx.query('BEGIN');
 
       // Deduct from rider
-      const riderWalletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ?', [riderId]);
+      const riderWalletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [riderId]);
       const riderWallet = riderWalletRes.rows[0];
       if (!riderWallet || riderWallet.balance < fare) {
         throw new Error('Insufficient wallet balance');
@@ -54,10 +54,11 @@ export const settleRidePayment = async (rideId: string) => {
         [fare, riderId]
       );
 
-      // Credit driver
+      // Credit driver (UPSERT to handle missing wallet row)
       await tx.query(
-        'UPDATE wallets SET balance = balance + ? WHERE userId = ?',
-        [driverShare, driverId]
+        `INSERT INTO wallets (userId, balance) VALUES (?, ?)
+         ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance`,
+        [driverId, driverShare]
       );
 
       // Record rider transaction

@@ -1,13 +1,13 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
-import { fareQuote } from '../utils/fare';
+import { fareQuote, clampOffer } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 
 const router = express.Router();
 
 // ─── Fare Quotation ──────────────────────────────────────
-router.get('/quote', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/quote', async (req: Request, res: Response) => {
   try {
     const { type, km, min } = req.query;
     if (!type || !km) return res.status(400).json({ message: 'Ride type and distance are required' });
@@ -45,6 +45,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
 
     // Professional Fare Calculation
     const fareRecommended = fareQuote(rideType, distanceKm || 0, durationMin || 0);
+    const finalFareOffered = clampOffer(rideType, distanceKm || 0, fareOffered || fareRecommended);
 
     // Server-side balance validation for wallet payments
     if (paymentMethod === 'wallet') {
@@ -78,7 +79,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
         distanceKm || 0,
         durationMin || 0,
         fareRecommended,
-        fareOffered || fareRecommended, // Use rider's offer if provided, else recommended
+        finalFareOffered, // Use clamped rider's offer if provided, else recommended
         fareRecommended, // Initial final is the recommended fare
         packageDetails || null,
         receiverName || null,

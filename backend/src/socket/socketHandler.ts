@@ -3,6 +3,13 @@ import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
 
+// Helper to verify if a user is part of a ride
+async function isRideMember(userId: string, rideId: string): Promise<boolean> {
+  const db = getDB();
+  const ride = await db.get('SELECT userId, driverId FROM rides WHERE id = ?', [rideId]);
+  return !!(ride && (ride.userId === userId || ride.driverId === userId));
+}
+
 export const setupSocketHandlers = (io: Server) => {
   // ─── Authentication Middleware ──────────────────────────
   io.use((socket, next) => {
@@ -92,7 +99,7 @@ export const setupSocketHandlers = (io: Server) => {
 
     // Driver accepts a ride
     socket.on('accept-ride', async (data: { driverId: string; rideId: string; riderId: string }) => {
-      const { driverId, rideId, riderId } = data;
+      const { driverId, rideId } = data;
 
       // Security check: must be a driver/motorist and must be themselves
       if (userRole !== 'driver' && userRole !== 'motorist') {
@@ -104,10 +111,17 @@ export const setupSocketHandlers = (io: Server) => {
 
       const db = getDB();
       try {
+        const ride = await db.get('SELECT userId FROM rides WHERE id = ?', [rideId]);
+        if (!ride) {
+          socket.emit('error', { message: 'Ride not found.' });
+          return;
+        }
+        const actualRiderId = ride.userId;
+
         await db.run('UPDATE rides SET status = ?, driverId = ? WHERE id = ?', ['accepted', driverId, rideId]);
         await db.run('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
 
-        io.to(riderId).emit('ride-accepted', {
+        io.to(actualRiderId).emit('ride-accepted', {
           rideId,
           driverId,
           message: 'Your driver has accepted the request!'
@@ -179,11 +193,21 @@ export const setupSocketHandlers = (io: Server) => {
     });
 
     // Chat logic
-    socket.on('join-chat', (d: any) => {
-      socket.join(d.rideId);
+    socket.on('join-chat', async (d: any) => {
+      const { rideId } = d;
+      if (await isRideMember(userId, rideId)) {
+        socket.join(rideId);
+      } else {
+        socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
+      }
     });
-    socket.on('send-message', (d: any) => {
-      socket.to(d.rideId).emit('new-message', d.message);
+    socket.on('send-message', async (d: any) => {
+      const { rideId, message } = d;
+      if (await isRideMember(userId, rideId)) {
+        socket.to(rideId).emit('new-message', { ...message, senderId: userId });
+      } else {
+        socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
+      }
     });
 
     socket.on('disconnect', () => {

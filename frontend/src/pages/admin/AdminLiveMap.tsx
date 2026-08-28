@@ -86,7 +86,15 @@ const AdminLiveMap: React.FC = () => {
 
   useEffect(() => {
     if (!autoRefresh) return;
-    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
+    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
+      auth: {
+        token: localStorage.getItem('navigo_token')
+      }
+    });
+
+    socket.on('connect_error', (err: any) => {
+      console.error('❌ Admin Map Socket Auth Error:', err.message);
+    });
 
     socket.on('admin-location-updated', (data: { userId: string; lat: number; lng: number }) => {
       setUsers(prev => {

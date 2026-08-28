@@ -48,9 +48,15 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
+      auth: {
+        token: localStorage.getItem('navigo_token')
+      },
       query: { userId: currentUser.id, role: currentUser.role }
     });
     newSocket.on('connect', () => { setIsConnected(true); newSocket.emit('join-chat', { rideId }); });
+    newSocket.on('connect_error', (err: any) => {
+      console.error('❌ Chat Socket Auth Error:', err.message);
+    });
     newSocket.on('disconnect', () => setIsConnected(false));
     newSocket.on('new-message', (message: Message) => {
       setMessages(prev => [...prev, { ...message, status: 'delivered' }]);
