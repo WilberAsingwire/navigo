@@ -77,7 +77,7 @@
   border-radius: 3px !important;
   margin-bottom: 6px !important;
   --background: #1A2232 !important;
-  --progress-background: #FF5A1F !important;
+  --progress-background: #FF6B35 !important;
 }
 
 .loyalty-progress-text {
@@ -115,7 +115,7 @@
 }
 
 .loyalty-tab-active {
-  background: #FF5A1F;
+  background: #FF6B35;
   color: #FFFFFF;
   box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3);
 }
@@ -178,7 +178,7 @@
 }
 
 .action-redeem {
-  color: #FF5A1F;
+  color: #FF6B35;
 }
 
 .reward-name-locked {
@@ -261,14 +261,14 @@
 }
 
 .refer-code {
-  color: #FF5A1F;
+  color: #FF6B35;
   font-size: 1.125rem;
   font-weight: 800;
   letter-spacing: 2px;
 }
 
 .btn-copy-code {
-  background: #FF5A1F;
+  background: #FF6B35;
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
@@ -281,5 +281,5 @@
 }
 
 .btn-copy-code:hover {
-  background: #FF4500;
+  background: #FF6B35;
 }

@@ -11,9 +11,7 @@ import {
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import './AuthStyles.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
+import { BACKEND_ORIGIN } from '../../config';
 
 const Login: React.FC = () => {
   const history = useHistory();
@@ -44,7 +42,7 @@ const Login: React.FC = () => {
       if (savedUser) {
         const user = JSON.parse(savedUser);
         const redirectPath = user.role === 'admin' ? '/admin/dashboard' :
-                            (user.role === 'driver' || user.role === 'motorist') ? '/driver/home' : '/rider/home';
+                            (user.role === 'driver' || user.role === 'motorist') ? '/driver/home' : '/customer/home';
         history.push(redirectPath);
       }
     } catch (err: any) {
@@ -194,7 +192,7 @@ const Login: React.FC = () => {
                   background: 'var(--navigo-white-5)', color: 'white', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '14px'
                 }}
-                onClick={() => window.location.href = `${BASE_URL}/auth/google`}
+                onClick={() => window.location.href = `${BACKEND_ORIGIN}/auth/google`}
               >
                 <IonIcon icon={logoGoogle} /> Continue with Google
               </button>

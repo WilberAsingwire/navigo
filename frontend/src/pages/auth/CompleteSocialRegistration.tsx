@@ -6,8 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { checkmarkCircleOutline, globeOutline } from 'ionicons/icons';
 import './Auth.css';
 import './CompleteSocialRegistration.css';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { API_URL } from '../../config';
 
 const CompleteSocialRegistration: React.FC = () => {
   const history = useHistory();
@@ -41,7 +40,7 @@ const CompleteSocialRegistration: React.FC = () => {
 
       const role = response.data.user.role;
       const redirectPath = (role === 'driver' || role === 'motorist') ? '/driver/home' :
-                           (role === 'admin') ? '/admin/dashboard' : '/rider/home';
+                           (role === 'admin') ? '/admin/dashboard' : '/customer/home';
 
       history.push(redirectPath);
     } catch (err: any) {

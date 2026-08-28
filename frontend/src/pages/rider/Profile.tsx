@@ -8,10 +8,12 @@ import {
   personOutline, phonePortraitOutline, mailOutline, logOutOutline,
   shieldCheckmarkOutline, createOutline, closeOutline, checkmarkCircleOutline,
   cardOutline, starOutline, carOutline, giftOutline, locationOutline,
-  notificationsOutline, moonOutline, lockClosedOutline, helpCircleOutline,
+  lockClosedOutline, helpCircleOutline,
   informationCircleOutline, trashOutline
 } from 'ionicons/icons';
+import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 
@@ -23,17 +25,13 @@ const Profile: React.FC = () => {
   const [toastMsg, setToastMsg] = useState('');
   const [editName, setEditName] = useState(user?.fullName || '');
   const [editEmail, setEditEmail] = useState(user?.email || '');
-  const [darkMode, setDarkMode] = useState(true);
-  const [notifications, setNotifications] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
       const token = localStorage.getItem('navigo_token');
-      await axios.put(`${BASE_URL}/api/users/update`,
+      await axios.put(`${API_URL}/users/update`,
         { fullName: editName, email: editEmail },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -65,7 +63,7 @@ const Profile: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" /></IonButtons>
           <IonTitle>Profile</IonTitle>
           <IonButton slot="end" fill="clear" onClick={() => { setEditName(user?.fullName || ''); setEditEmail(user?.email || ''); setShowEdit(true); }}>
             <IonIcon icon={createOutline} style={{ color: '#FF6B35' }} />
@@ -78,12 +76,12 @@ const Profile: React.FC = () => {
           
           {/* Avatar Section */}
           <div style={{ textAlign: 'center', marginBottom: 20, paddingTop: 10 }}>
-            <IonAvatar style={{ width: 88, height: 88, margin: '0 auto 12px', border: '3px solid #FF6B35' }}>
-              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Rider')}&background=FF6B35&color=fff&size=128`} alt="Profile" />
-            </IonAvatar>
-            <h2 style={{ color: '#fff', margin: '8px 0 2px', fontSize: 20 }}>{user?.fullName || 'Rider'}</h2>
+            <div style={{ width: 88, height: 88, margin: '0 auto 12px', border: '3px solid #FF6B35', borderRadius: '50%', overflow: 'hidden' }}>
+              <InitialsAvatar name={user?.fullName || 'N'} size={88} />
+            </div>
+            <h2 style={{ color: '#fff', margin: '8px 0 2px', fontSize: 20 }}>{user?.fullName || 'Customer'}</h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
-              {user?.role === 'rider' ? '🚗 Rider' : user?.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'} • {user?.phone || 'No phone'}
+              {user?.role === 'rider' ? '🚗 Customer' : user?.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'} • {user?.phone || 'No phone'}
             </p>
             {user?.verificationStatus === 'approved' && (
               <IonBadge color="success" style={{ marginTop: 6 }}>✅ Verified</IonBadge>
@@ -130,17 +128,7 @@ const Profile: React.FC = () => {
           {/* Settings */}
           <h3 style={{ color: '#fff', fontSize: 14, margin: '20px 0 10px' }}>Settings</h3>
           <IonList style={{ background: 'transparent' }}>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any}>
-              <IonIcon icon={notificationsOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
-              <IonLabel>Push Notifications</IonLabel>
-              <IonToggle checked={notifications} onIonChange={e => setNotifications(e.detail.checked)} color="success" />
-            </IonItem>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any}>
-              <IonIcon icon={moonOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
-              <IonLabel>Dark Mode</IonLabel>
-              <IonToggle checked={darkMode} onIonChange={e => setDarkMode(e.detail.checked)} color="success" />
-            </IonItem>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any} button onClick={() => history.push('/rider/support')}>
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any} button onClick={() => history.push('/customer/support')}>
               <IonIcon icon={helpCircleOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
               <IonLabel>Help & Support</IonLabel>
             </IonItem>

@@ -3,6 +3,19 @@ import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
 
+let ioInstance: Server | null = null;
+
+/** Called from index.ts so REST routes can emit socket events (e.g. cancellations). */
+export const setIO = (io: Server) => { ioInstance = io; };
+
+/** Emit to the ride room + the rider's and driver's personal rooms. */
+export const notifyRide = (rideId: string, riderId: string | null, driverId: string | null, event: string, payload: any) => {
+  if (!ioInstance) return;
+  ioInstance.to(rideId).emit(event, payload);
+  if (riderId) ioInstance.to(riderId).emit(event, payload);
+  if (driverId) ioInstance.to(driverId).emit(event, payload);
+};
+
 // Helper to verify if a user is part of a ride
 async function isRideMember(userId: string, rideId: string): Promise<boolean> {
   const db = getDB();
@@ -178,13 +191,24 @@ export const setupSocketHandlers = (io: Server) => {
 
     // Ride status updates (arrived, started, completed)
     socket.on('update-status', async (data: { rideId: string; riderId: string; status: string }) => {
-      const { rideId, riderId, status } = data;
+      const { rideId, status } = data;
       const db = getDB();
 
       try {
-        const ride = await db.get('SELECT driverId FROM rides WHERE id = ?', [rideId]);
+        const ride = await db.get('SELECT driverId, userId FROM rides WHERE id = ?', [rideId]);
         if (!ride || ride.driverId !== userId) {
           return socket.emit('error', { message: 'Unauthorized: Only the assigned driver can update status' });
+        }
+
+        // Guard: only forward legal transitions (a completed/cancelled ride can't be re-opened)
+        const current = await db.get('SELECT status FROM rides WHERE id = ?', [rideId]);
+        const allowed: Record<string, string[]> = {
+          accepted: ['arrived'],
+          arrived: ['ongoing'],
+          ongoing: ['completed'],
+        };
+        if (!allowed[current?.status]?.includes(status)) {
+          return socket.emit('error', { message: `Can't move a ${current?.status} ride to ${status}` });
         }
 
         await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
@@ -199,7 +223,8 @@ export const setupSocketHandlers = (io: Server) => {
           }
         }
 
-        io.to(riderId).emit('status-changed', { rideId, status });
+        // Notify the rider (from the DB, never client-supplied) + the ride room
+        notifyRide(rideId, ride.userId, userId, 'status-changed', { rideId, status });
       } catch (e) {
         console.error('Error updating status:', e);
         socket.emit('error', { message: 'Failed to update status.' });

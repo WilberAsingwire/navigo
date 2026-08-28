@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://navigo-1-z7ne.onrender.com/api';
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 interface User {

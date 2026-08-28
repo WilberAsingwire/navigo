@@ -22,7 +22,7 @@ const AuthCallback: React.FC = () => {
       // User already exists, just save token and go to home
       localStorage.setItem('navigo_token', token);
       // Note: In a real app, we'd fetch the user profile here via /auth/me
-      history.push('/rider/home');
+      history.push('/customer/home');
     } else if (status === 'new' && name && socialId && provider) {
       // New user, redirect to complete registration page
       localStorage.setItem('temp_social_user', JSON.stringify({ name, email, socialId, provider }));

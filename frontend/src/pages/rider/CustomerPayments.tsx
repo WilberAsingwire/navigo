@@ -74,7 +74,7 @@ const RiderPayments: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" style={{color: '#fff'}} /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
           <IonTitle style={{color: '#fff'}}>Wallet & Payments</IonTitle>
         </IonToolbar>
         <IonToolbar style={{'--background': '#080c14'} as any}>

@@ -13,13 +13,14 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
+import bodaImg from '../../assets/vehicles/boda.png';
+import goImg from '../../assets/vehicles/go.png';
+import comfortImg from '../../assets/vehicles/comfort.png';
+import xlImg from '../../assets/vehicles/xl.png';
 import './RideRequest.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
-
 interface Location { lat: number; lng: number; address: string; name?: string; }
-interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
+interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; image: string; }
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
 enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
 
@@ -31,10 +32,10 @@ const POPULAR_PLACES: Location[] = [
 ];
 
 const RIDE_OPTIONS: RideOption[] = [
-  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
-  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', surgeMultiplier: 1.0, color: '#2D6A4F', emoji: '🚗' },
-  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', emoji: '🚙' },
-  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', emoji: '🚐' }
+  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', image: bodaImg },
+  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', surgeMultiplier: 1.0, color: '#2D6A4F', image: goImg },
+  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', image: comfortImg },
+  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', image: xlImg }
 ];
 
 
@@ -66,7 +67,8 @@ const RideRequest: React.FC = () => {
   const [actualRouteDur, setActualRouteDur] = useState(0);
   const [driverFound, setDriverFound] = useState(false);
   const [matchedDriver, setMatchedDriver] = useState<any>(null);
-  const [matchingProgress, setMatchingProgress] = useState(0);
+  const [pendingRideId, setPendingRideId] = useState<string | null>(null);
+  const [cancellingRequest, setCancellingRequest] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -83,30 +85,26 @@ const RideRequest: React.FC = () => {
   const [receiverPhone, setReceiverPhone] = useState('');
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        await getCurrentLocation();
-        await fetchWalletBalance();
-        await fetchRecentRides();
-      } catch (e) {
-        console.error('Init error:', e);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    init();
+    // Never block the booking UI on slow geolocation or API calls:
+    // render immediately and let the data fill in as it arrives.
+    // (Previously this awaited all three sequentially, so a dead or slow
+    // backend URL left users stuck on "Initializing Experience…" forever.)
+    setIsInitializing(false);
+    getCurrentLocation();
+    fetchWalletBalance();
+    fetchRecentRides();
 
     if (isAuthenticated && user) {
       const socket = socketService.connect(user.id);
       socket.on('ride-accepted', (data: any) => {
         setDriverFound(true);
         setIsMatching(false);
-        setMatchingProgress(100);
+        setPendingRideId(null);
         setMatchedDriver(data);
         socket.emit('join-ride-room', { rideId: data.rideId });
         // Redirect to active ride page
         setTimeout(() => {
-          ionRouter.push('/rider/active-ride');
+          ionRouter.push('/customer/active-ride');
         }, 1500);
       });
       socket.on('no-drivers-found', (data: any) => {
@@ -153,7 +151,7 @@ const RideRequest: React.FC = () => {
             const lng = pos.coords.longitude;
             setPickup({ lat, lng, address: 'Fetching precise location...', name: '📍 Your Location' });
             try {
-              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { timeout: 8000 });
               const data = res.data;
               const addr = data.display_name || '';
               const address = data.address || {};
@@ -199,7 +197,8 @@ const RideRequest: React.FC = () => {
           limit: 10,
           viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
           bounded: 1
-        }
+        },
+        timeout: 8000
       });
       let results = nomRes.data.map((item: any) => ({
         lat: parseFloat(item.lat),
@@ -209,7 +208,8 @@ const RideRequest: React.FC = () => {
       }));
       if (results.length === 0) {
         const photonRes = await axios.get('https://photon.komoot.io/api/', {
-          params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 }
+          params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 },
+          timeout: 8000
         });
         let photonResults = photonRes.data?.features?.map((item: any) => {
           const props = item.properties;
@@ -297,7 +297,7 @@ const RideRequest: React.FC = () => {
   const handleMapClick = async (latlng: [number, number]) => {
     const [lat, lng] = latlng;
     try {
-      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { timeout: 8000 });
       const addr = res.data.display_name || '';
       const address = res.data.address || {};
       const road = address.road || address.pedestrian || address.footway || '';
@@ -346,23 +346,34 @@ const RideRequest: React.FC = () => {
         fareOffered: finalFare,
       });
       const ride = res.data.ride;
+      setPendingRideId(ride.id);
       setStep(BookingStep.MATCHING);
       setIsMatching(true);
-      setMatchingProgress(0);
       const socket = socketService.getSocket();
       if (socket) socket.emit('request-ride', { userId: user?.id, rideId: ride.id });
-      const interval = setInterval(() => {
-        setMatchingProgress(p => {
-          if (p >= 100) { clearInterval(interval); return 100; }
-          return p + Math.random() * 15;
-        });
-      }, 500);
-      setTimeout(() => { clearInterval(interval); }, 15000);
     } catch (e) {
       setToastMsg('Failed to request booking. Please try again.');
       setShowToast(true);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!pendingRideId || cancellingRequest) return;
+    setCancellingRequest(true);
+    try {
+      await api.post(`/rides/${pendingRideId}/cancel`);
+      setStep(BookingStep.LOCATION);
+      setIsMatching(false);
+      setPendingRideId(null);
+      setToastMsg('Request cancelled');
+      setShowToast(true);
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Could not cancel the request');
+      setShowToast(true);
+    } finally {
+      setCancellingRequest(false);
     }
   };
 
@@ -380,7 +391,7 @@ const RideRequest: React.FC = () => {
       <IonContent>
         <div className="booking-page-container">
           <div className="booking-form-panel">
-            <button className="back-nav-btn" onClick={() => ionRouter.push('/rider/home')}>
+            <button className="back-nav-btn" onClick={() => ionRouter.push('/customer/home')}>
               <IonIcon icon={arrowBackOutline} /> Back
             </button>
 
@@ -481,7 +492,7 @@ const RideRequest: React.FC = () => {
                     <div className="search-results-list">
                       {searchResults.map((r, i) => (
                         <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
-                          <IonIcon icon={locationOutline} style={{ color: '#FF5A1F' }} />
+                          <IonIcon icon={locationOutline} style={{ color: '#FF6B35' }} />
                           <div className="result-info">
                             <span className="result-name">{r.name || r.address.split(',')[0]}</span>
                             <span className="result-addr">{r.address}</span>
@@ -500,7 +511,9 @@ const RideRequest: React.FC = () => {
                   return (
                     <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)}>
                       <div className="vehicle-main-info">
-                        <span className="vehicle-emoji">{opt.emoji}</span>
+                        <span className="vehicle-emoji">
+                          <img src={opt.image} alt={opt.name} className="vehicle-thumb" />
+                        </span>
                         <div className="vehicle-details">
                           <span className="vehicle-type-name">{opt.name}</span>
                           <span className="vehicle-type-desc">{opt.description}</span>
@@ -562,7 +575,7 @@ const RideRequest: React.FC = () => {
               <div className="location-input-wrapper">
                 <div className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
                 <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
-                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF5A1F', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
+                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
               </div>
 
               <button className="btn-continue" disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
@@ -574,14 +587,31 @@ const RideRequest: React.FC = () => {
 
           {step === BookingStep.MATCHING && (
             <div className="matching-state">
-              <div className="matching-emoji">🚕</div>
+              <div className="matching-emoji pulse-soft">🚕</div>
               <div className="space-y-2">
-                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver...</h2>
-                <p style={{ color: '#94A3B8', fontSize: '14px' }}>Please wait while we match you with the nearest driver.</p>
+                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver…</h2>
+                <p style={{ color: '#94A3B8', fontSize: '14px', margin: 0 }}>
+                  We've alerted drivers near {pickup?.name || 'you'}. You'll be connected the moment one accepts.
+                </p>
               </div>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${matchingProgress}%` }} />
-              </div>
+              <button
+                onClick={handleCancelRequest}
+                disabled={cancellingRequest}
+                style={{
+                  marginTop: 18,
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  background: 'rgba(239,68,68,0.08)',
+                  color: '#EF4444',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                {cancellingRequest ? 'Cancelling…' : 'Cancel request'}
+              </button>
             </div>
           )}
         </div>

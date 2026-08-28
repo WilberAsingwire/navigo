@@ -48,7 +48,7 @@ const RiderSupport: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" style={{color: '#fff'}} /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
           <IonTitle style={{color: '#fff'}}>Support Center</IonTitle>
         </IonToolbar>
         <IonToolbar style={{'--background': '#080c14'} as any}>
@@ -139,7 +139,7 @@ const RiderSupport: React.FC = () => {
                   <h4 className="support-contact-title">Email</h4>
                   <p className="support-contact-desc">support@navigo.ug</p>
                 </div>
-                <div onClick={() => history.push('/rider/book')}
+                <div onClick={() => history.push('/customer/book')}
                   className="support-contact-card theme-office">
                   <IonIcon icon={locationOutline} className="support-contact-icon" />
                   <h4 className="support-contact-title">Visit Us</h4>

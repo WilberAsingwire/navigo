@@ -13,7 +13,7 @@ import walletRoutes from './routes/wallet';
 import poiRoutes from './routes/poi';
 import supportRoutes from './routes/support';
 import { initDB } from './config/database';
-import { setupSocketHandlers } from './socket/socketHandler';
+import { setupSocketHandlers, setIO } from './socket/socketHandler';
 import { generalLimiter } from './middleware/rateLimit';
 
 dotenv.config();
@@ -101,6 +101,7 @@ app.use((req, res, next) => {
 
 // Socket.io
 const io = new Server(httpServer, { cors: { origin: '*' } });
+setIO(io);
 setupSocketHandlers(io);
 
 const PORT = process.env.PORT || 5000;

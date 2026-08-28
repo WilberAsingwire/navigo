@@ -15,14 +15,14 @@ const ExploreContainer: React.FC<ContainerProps> = ({ role = 'rider' }) => {
   const history = useHistory();
 
   const riderActions = [
-    { label: 'Book Ride', icon: carOutline, path: '/rider/book', color: '#FF6B35', badge: 'New' },
-    { label: 'Boda Boda', icon: bicycleOutline, path: '/rider/book', color: '#ffab40', badge: 'Fast' },
-    { label: 'History', icon: timeOutline, path: '/rider/history', color: '#4da6ff' },
-    { label: 'Wallet', icon: walletOutline, path: '/rider/payments', color: '#2D6A4F' },
-    { label: 'Live Map', icon: mapOutline, path: '/rider/book', color: '#1B4965' },
-    { label: 'Rewards', icon: giftOutline, path: '/rider/home', color: '#FFC107' },
+    { label: 'Book Ride', icon: carOutline, path: '/customer/book', color: '#FF6B35', badge: 'New' },
+    { label: 'Boda Boda', icon: bicycleOutline, path: '/customer/book', color: '#ffab40', badge: 'Fast' },
+    { label: 'History', icon: timeOutline, path: '/customer/history', color: '#4da6ff' },
+    { label: 'Wallet', icon: walletOutline, path: '/customer/payments', color: '#2D6A4F' },
+    { label: 'Live Map', icon: mapOutline, path: '/customer/book', color: '#1B4965' },
+    { label: 'Rewards', icon: giftOutline, path: '/customer/home', color: '#FFC107' },
     { label: 'Offline', icon: phonePortraitOutline, path: '/ussd', color: '#b47fff', badge: 'USSD' },
-    { label: 'Rate Us', icon: starOutline, path: '/rider/support', color: '#E85D75' },
+    { label: 'Rate Us', icon: starOutline, path: '/customer/support', color: '#E85D75' },
   ];
 
   const driverActions = [

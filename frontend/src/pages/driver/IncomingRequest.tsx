@@ -8,11 +8,16 @@ import {
   cashOutline, closeOutline, checkmarkCircleOutline,
   personOutline, mapOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import socketService from '../../services/socketService';
 import api from '../../services/api';
 import './IncomingRequest.css';
+
+const VEHICLE_LABELS: Record<string, string> = {
+  boda: 'Boda Boda', go: 'NAVIGO Go', economy: 'NAVIGO Go', comfort: 'NAVIGO Comfort', xl: 'NAVIGO XL',
+};
 
 const IncomingRequest: React.FC = () => {
   const history = useHistory();
@@ -32,27 +37,26 @@ const IncomingRequest: React.FC = () => {
 
     socket.on('ride-requested', async (data: any) => {
       console.log('🔔 New ride request received!', data);
+      // Start (or restart) the decision timer only when a request actually arrives
+      setTimeLeft(20);
       try {
         const res = await api.get(`/rides/details/${data.rideId}`);
         setRequestData({
           ...res.data,
-          riderName: res.data.rider?.fullName || 'Rider',
+          riderName: res.data.rider?.fullName || 'Customer',
           riderRating: res.data.rider?.rating || 5.0,
           riderTrips: res.data.rider?.totalTrips || 0,
         });
       } catch {
-        // Fallback for demo if endpoint doesn't exist yet
         setRequestData({
           id: data.rideId,
-          pickup: 'Requested Location',
-          destination: 'Destination',
-          fare: 8500,
-          distance: '3.2 km',
-          estimatedTime: '12 min',
-          riderName: 'Rider',
-          riderRating: 4.8,
-          riderTrips: 10,
-          rideType: 'NAVIGO Go',
+          pickup: { address: 'Pickup location unavailable', lat: 0, lng: 0 },
+          destination: { address: 'Destination unavailable', lat: 0, lng: 0 },
+          fareRecommended: null,
+          fareFinal: null,
+          riderName: 'Customer',
+          riderRating: 5.0,
+          riderTrips: 0,
         });
       }
     });
@@ -61,13 +65,16 @@ const IncomingRequest: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
+    // Only count down while a request is on screen
+    if (!requestData) return;
     if (timeLeft <= 0) {
+      setRequestData(null);
       history.replace('/driver/home');
       return;
     }
     const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, [timeLeft, requestData, history]);
 
   const handleAccept = async () => {
     setIsAccepting(true);
@@ -127,16 +134,31 @@ const IncomingRequest: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 12, marginBottom: 14 }}>
             <IonAvatar style={{ width: 44, height: 44 }}>
-              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(requestData.riderName)}&background=FF6B35&color=fff&size=64`} alt={requestData.riderName} />
+              <InitialsAvatar name={requestData.riderName} size={44} />
             </IonAvatar>
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>{requestData.riderName}</h3>
+              <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>
+                {requestData.riderName}
+                {requestData.serviceType === 'delivery' && (
+                  <IonBadge color="light" style={{ marginLeft: 8, fontSize: 9, verticalAlign: 'middle' }}>📦 DELIVERY</IonBadge>
+                )}
+              </h3>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>
-                <IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {requestData.riderRating} • {requestData.rideType}
+                <IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {Number(requestData.riderRating || 5).toFixed(1)}
+                {VEHICLE_LABELS[requestData.vehicleType] ? ` • ${VEHICLE_LABELS[requestData.vehicleType]}` : requestData.rideType ? ` • ${requestData.rideType}` : ''}
               </p>
             </div>
-            <IonBadge color="warning" style={{ fontSize: 10 }}>{requestData.riderTrips} trips</IonBadge>
+            {Number(requestData.riderTrips) > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{requestData.riderTrips} trips</IonBadge>}
           </div>
+
+          {requestData.serviceType === 'delivery' && (
+            <div style={{ background: 'rgba(77,166,255,0.08)', border: '1px solid rgba(77,166,255,0.25)', borderRadius: 12, padding: 12, marginBottom: 14, fontSize: 12 }}>
+              <p style={{ color: '#fff', margin: 0, fontWeight: 600 }}>Package: {requestData.packageDetails || '—'}</p>
+              <p style={{ color: 'rgba(255,255,255,0.6)', margin: '4px 0 0' }}>
+                Hand to: {requestData.receiverName || '—'} {requestData.receiverPhone ? `• ${requestData.receiverPhone}` : ''}
+              </p>
+            </div>
+          )}
 
           <div className="route-card">
             <div className="route-item">
@@ -159,12 +181,16 @@ const IncomingRequest: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={mapOutline} style={{ color: '#4da6ff', fontSize: 16, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>{requestData.distance}</p>
+              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>
+                {requestData.distanceKm ? `${requestData.distanceKm} km` : (requestData.distance || '—')}
+              </p>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Distance</span>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={timeOutline} style={{ color: '#FFC107', fontSize: 16, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>{requestData.estimatedTime}</p>
+              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>
+                {requestData.durationMin ? `${requestData.durationMin} min` : (requestData.estimatedTime || '—')}
+              </p>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>ETA</span>
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>

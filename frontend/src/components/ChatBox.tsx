@@ -10,9 +10,17 @@ import {
   locationOutline, informationCircleOutline, cameraOutline
 } from 'ionicons/icons';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_URL } from '../config';
+import InitialsAvatar from './InitialsAvatar';
 import './ChatBox.css';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+/** Avatar that stays local — no third-party avatar service. */
+const ChatAvatar: React.FC<{ name: string; photo?: string; size: number }> = ({ name, photo, size }) =>
+  photo ? (
+    <img src={photo} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+  ) : (
+    <InitialsAvatar name={name} size={size} />
+  );
 
 interface Message {
   id: string;
@@ -127,13 +135,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
       <div className="chat-header">
         <div className="chat-user-info">
           <IonAvatar className="chat-avatar">
-            <img src={otherUser.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.name)}&background=FF6B35&color=fff&size=64`} alt={otherUser.name} />
+            <ChatAvatar name={otherUser.name} photo={otherUser.photo} size={40} />
           </IonAvatar>
           <div className="chat-user-details">
             <h4>{otherUser.name}</h4>
             <div className="chat-user-meta">
               <IonIcon icon={otherUser.role === 'driver' ? carOutline : personOutline} />
-              <span>{otherUser.role === 'driver' ? 'Driver' : 'Rider'}</span>
+              <span>{otherUser.role === 'driver' ? 'Driver' : 'Customer'}</span>
               {isConnected ? <IonBadge color="success" className="online-dot">● Online</IonBadge> : <IonBadge color="medium">Offline</IonBadge>}
             </div>
           </div>
@@ -164,7 +172,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
           return (
             <div key={msg.id} className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}>
               {!isMine && <IonAvatar className="msg-avatar" style={{ opacity: showAvatar ? 1 : 0 }}>
-                <img src={otherUser.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.name)}&background=FF6B35&color=fff&size=32`} alt="" />
+                <ChatAvatar name={otherUser.name} photo={otherUser.photo} size={26} />
               </IonAvatar>}
               <div className={`message-bubble ${isMine ? 'mine' : 'theirs'} ${msg.type === 'location' ? 'location' : ''}`}>
                 {msg.type === 'location' ? (
@@ -181,7 +189,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
 
         {isTyping && (
           <div className="typing-indicator">
-            <IonAvatar className="msg-avatar"><img src={otherUser.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUser.name)}&background=FF6B35&color=fff&size=32`} alt="" /></IonAvatar>
+            <IonAvatar className="msg-avatar"><ChatAvatar name={otherUser.name} photo={otherUser.photo} size={26} /></IonAvatar>
             <div className="typing-bubble"><span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" /></div>
           </div>
         )}

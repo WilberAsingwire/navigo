@@ -135,8 +135,8 @@
 }
 
 .location-input-wrapper:focus-within {
-  border-color: #FF5A1F;
-  box-shadow: 0 0 0 1px #FF5A1F;
+  border-color: #FF6B35;
+  box-shadow: 0 0 0 1px #FF6B35;
 }
 
 .input-icon {
@@ -235,12 +235,12 @@
 
 .vehicle-option-card:hover {
   background: #1A2232;
-  border-color: #FF5A1F;
+  border-color: #FF6B35;
 }
 
 .vehicle-option-card.selected {
   background: rgba(255, 90, 31, 0.1);
-  border-color: #FF5A1F;
+  border-color: #FF6B35;
   box-shadow: 0 0 15px rgba(255, 90, 31, 0.1);
 }
 
@@ -251,7 +251,24 @@
 }
 
 .vehicle-emoji {
-  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.vehicle-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 .vehicle-details {
@@ -272,13 +289,13 @@
 }
 
 .vehicle-price-badge {
-  color: #FF5A1F;
+  color: #FF6B35;
   font-weight: 800;
   font-size: 14px;
 }
 
 .btn-continue {
-  background: #FF5A1F !important;
+  background: #FF6B35 !important;
   color: #FFFFFF !important;
   font-weight: 800 !important;
   font-size: 16px !important;
@@ -298,7 +315,7 @@
 }
 
 .btn-continue:hover:not(:disabled) {
-  background: #FF4500 !important;
+  background: #FF6B35 !important;
   transform: translateY(-2px);
   box-shadow: 0 6px 30px rgba(255, 90, 31, 0.6) !important;
 }
@@ -345,7 +362,7 @@
 .fare-total {
   font-size: 20px;
   font-weight: 700;
-  color: #FF5A1F;
+  color: #FF6B35;
 }
 
 .matching-state {
@@ -378,7 +395,7 @@
 }
 
 .progress-bar-fill {
-  background: #FF5A1F;
+  background: #FF6B35;
   height: 100%;
   transition: width 0.5s ease;
 }
@@ -390,7 +407,7 @@
 }
 
 .welcome-eyebrow {
-  color: #FF5A1F;
+  color: #FF6B35;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -437,7 +454,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #FF5A1F;
+  color: #FF6B35;
 }
 
 .popular-places-grid {
@@ -459,7 +476,7 @@
 }
 
 .place-chip:hover {
-  border-color: #FF5A1F;
+  border-color: #FF6B35;
   color: #FFFFFF;
 }
 
@@ -513,7 +530,7 @@
 
 .bid-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: #FF5A1F;
+  border-color: #FF6B35;
 }
 
 .bid-amount {

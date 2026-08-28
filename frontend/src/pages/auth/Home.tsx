@@ -321,8 +321,8 @@ const Home: React.FC = () => {
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Ride</h4>
-                <span className="footer-link" onClick={() => ionRouter.push('/rider/book')}>Book a Ride</span>
-                <span className="footer-link" onClick={() => ionRouter.push('/rider/history')}>Ride History</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/customer/book')}>Book a Ride</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/customer/history')}>Ride History</span>
                 <span className="footer-link" onClick={() => ionRouter.push('/ussd')}>Offline Booking</span>
               </div>
               <div className="footer-col">
@@ -333,7 +333,7 @@ const Home: React.FC = () => {
               <div className="footer-col">
                 <h4 className="footer-col-title">Company</h4>
                 <span className="footer-link">About Us</span>
-                <span className="footer-link" onClick={() => ionRouter.push('/rider/support')}>Support</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/customer/support')}>Support</span>
                 <span className="footer-link">Privacy Policy</span>
                 <span className="footer-link">Terms of Service</span>
               </div>

@@ -54,7 +54,7 @@ const PhoneVerification: React.FC = () => {
         
         const role = savedUser.role || 'rider';
         const redirectPath = role === 'admin' ? '/admin/dashboard' :
-                            (role === 'driver' || role === 'motorist') ? '/driver/home' : '/rider/home';
+                            (role === 'driver' || role === 'motorist') ? '/driver/home' : '/customer/home';
         setTimeout(() => history.push(redirectPath), 500);
       } else {
         setError('Invalid code. Please try again.');
