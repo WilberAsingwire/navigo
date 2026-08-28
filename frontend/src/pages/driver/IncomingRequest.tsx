@@ -37,8 +37,8 @@ const IncomingRequest: React.FC = () => {
         setRequestData({
           ...res.data,
           riderName: res.data.rider?.fullName || 'Rider',
-          riderRating: res.data.rider?.verificationStatus || 4.8,
-          riderTrips: 10,
+          riderRating: res.data.rider?.rating || 5.0,
+          riderTrips: res.data.rider?.totalTrips || 0,
         });
       } catch {
         // Fallback for demo if endpoint doesn't exist yet
@@ -169,7 +169,7 @@ const IncomingRequest: React.FC = () => {
             </div>
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={cashOutline} style={{ color: '#00e676', fontSize: 16, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>UGX {requestData.fare.toLocaleString()}</p>
+              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>UGX {(requestData.fareFinal || requestData.fareRecommended || requestData.fare || 0).toLocaleString()}</p>
               <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Fare</span>
             </div>
           </div>

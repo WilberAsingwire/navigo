@@ -80,15 +80,15 @@ export function fareQuote(type: string, km: number, min: number = 0): number {
   return Math.round(raw / 100) * 100;
 }
 
-export function clampOffer(type: string, km: number, offer: number): number {
-  const rec = fareQuote(type, km);
-  const min = Math.round((rec * 0.65) / 100) * 100;
-  const max = Math.round((rec * 1.5) / 100) * 100;
-  return Math.min(max, Math.max(min, Math.round(offer / 100) * 100));
+export function clampOffer(type: string, km: number, min: number, offer: number): number {
+  const rec = fareQuote(type, km, min);
+  const minBound = Math.round((rec * 0.65) / 100) * 100;
+  const maxBound = Math.round((rec * 1.5) / 100) * 100;
+  return Math.min(maxBound, Math.max(minBound, Math.round(offer / 100) * 100));
 }
 
-export function offerBounds(type: string, km: number): { min: number; max: number } {
-  const rec = fareQuote(type, km);
+export function offerBounds(type: string, km: number, min: number): { min: number; max: number } {
+  const rec = fareQuote(type, km, min);
   return {
     min: Math.round((rec * 0.65) / 100) * 100,
     max: Math.round((rec * 1.5) / 100) * 100,

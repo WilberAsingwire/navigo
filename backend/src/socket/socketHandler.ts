@@ -101,7 +101,6 @@ export const setupSocketHandlers = (io: Server) => {
     socket.on('accept-ride', async (data: { driverId: string; rideId: string; riderId: string }) => {
       const { driverId, rideId } = data;
 
-      // Security check: must be a driver/motorist and must be themselves
       if (userRole !== 'driver' && userRole !== 'motorist') {
         return socket.emit('error', { message: 'Unauthorized: Only drivers can accept rides' });
       }
@@ -118,8 +117,23 @@ export const setupSocketHandlers = (io: Server) => {
         }
         const actualRiderId = ride.userId;
 
-        await db.run('UPDATE rides SET status = ?, driverId = ? WHERE id = ?', ['accepted', driverId, rideId]);
-        await db.run('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
+        const tx = await db.getTransactionClient();
+        try {
+          await tx.query('BEGIN');
+          const updateRes = await tx.query('UPDATE rides SET status = ?, driverId = ? WHERE id = ? AND status = ?', ['accepted', driverId, rideId, 'requested']);
+
+          if (updateRes.rowCount === 0) {
+            throw new Error('Ride is no longer available');
+          }
+
+          await tx.query('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
+          await tx.query('COMMIT');
+          tx.release();
+        } catch (e: any) {
+          await tx.query('ROLLBACK');
+          tx.release();
+          throw e;
+        }
 
         io.to(actualRiderId).emit('ride-accepted', {
           rideId,
@@ -128,9 +142,9 @@ export const setupSocketHandlers = (io: Server) => {
         });
 
         console.log(`✅ Ride ${rideId} accepted by Driver ${driverId}`);
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error accepting ride:', e);
-        socket.emit('error', { message: 'Failed to accept ride.' });
+        socket.emit('error', { message: e.message || 'Failed to accept ride.' });
       }
     });
 

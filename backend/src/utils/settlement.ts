@@ -42,6 +42,12 @@ export const settleRidePayment = async (rideId: string) => {
     try {
       await tx.query('BEGIN');
 
+      // Double-settlement guard: Check and set settled = true atomically
+      const settledRes = await tx.query('UPDATE rides SET settled = TRUE WHERE id = ? AND settled = FALSE', [rideId]);
+      if (settledRes.rowCount === 0) {
+        throw new Error('Ride already settled or not found');
+      }
+
       // Deduct from rider
       const riderWalletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [riderId]);
       const riderWallet = riderWalletRes.rows[0];
@@ -72,9 +78,6 @@ export const settleRidePayment = async (rideId: string) => {
         'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
         [`tx_earn_${Date.now()}_${driverId}`, driverId, 'payout', driverShare, `Earnings from ride ${rideId}`, rideId]
       );
-
-      // Mark ride as settled
-      await tx.query('UPDATE rides SET settled = true WHERE id = ?', [rideId]);
 
       await tx.query('COMMIT');
       tx.release();

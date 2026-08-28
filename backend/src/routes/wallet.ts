@@ -53,8 +53,8 @@ router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
 
     // Idempotency Check: Ensure this payment reference hasn't been used already
     const existingTx = await db.get(
-      "SELECT id FROM wallet_transactions WHERE note LIKE ?",
-      [`%Ref: ${paymentReference}%`]
+      'SELECT id FROM wallet_transactions WHERE reference = ?',
+      [paymentReference]
     );
     if (existingTx) {
       return res.status(400).json({
@@ -83,8 +83,8 @@ router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
         [amount, userId]
       );
       await tx.query(
-        'INSERT INTO wallet_transactions (id, userId, kind, amount, note) VALUES (?, ?, ?, ?, ?)',
-        [transactionId, userId, 'topup', amount, `Wallet top-up (Ref: ${paymentReference})`]
+        'INSERT INTO wallet_transactions (id, userId, kind, amount, reference, note) VALUES (?, ?, ?, ?, ?, ?)',
+        [transactionId, userId, 'topup', amount, paymentReference, `Wallet top-up (Ref: ${paymentReference})`]
       );
       await tx.query('COMMIT');
       tx.release();

@@ -45,7 +45,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
 
     // Professional Fare Calculation
     const fareRecommended = fareQuote(rideType, distanceKm || 0, durationMin || 0);
-    const finalFareOffered = clampOffer(rideType, distanceKm || 0, fareOffered || fareRecommended);
+    const finalFareOffered = clampOffer(rideType, distanceKm || 0, durationMin || 0, fareOffered || fareRecommended);
 
     // Server-side balance validation for wallet payments
     if (paymentMethod === 'wallet') {
