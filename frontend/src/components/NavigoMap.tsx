@@ -70,7 +70,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
-    standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
+    standard: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
     satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
   };
 
@@ -221,7 +221,8 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
     L.tileLayer(tileUrls[mapStyle].url, {
       attribution: tileUrls[mapStyle].attribution,
-      maxZoom: 19,
+      maxZoom: 22,
+      maxNativeZoom: 19,
     }).addTo(map);
   }, [loading, mapStyle, interactive]);
 
@@ -356,7 +357,6 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           overflow: 'hidden',
           position: 'relative',
           border: '2px solid rgba(255,255,255,0.08)',
-          filter: mapStyle === 'dark' ? 'brightness(2) contrast(1.1) saturate(1.3)' : 'none'
         }}
       >
         {loading && (
