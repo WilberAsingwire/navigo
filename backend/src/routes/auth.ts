@@ -216,7 +216,7 @@ router.post('/google-register', async (req: Request, res: Response) => {
       phone: cleanPhone,
       email: email ? email.toLowerCase().trim() : null,
       role: 'rider',
-      phoneVerified: 1,
+      phoneVerified: true,
       verificationStatus: 'approved',
       socialProvider: provider,
       socialId: socialId,
@@ -298,7 +298,7 @@ router.post('/admin/wipe-all', async (req: Request, res: Response) => {
     const adminId = 'admin_' + Date.now();
     await db.run(
       'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, 'NAVIGO Admin', 'admin_' + adminId, 'navigouganda@gmail.com', hashed, 'admin', 1, 'approved', new Date().toISOString()]
+      [adminId, 'NAVIGO Admin', 'admin_' + adminId, 'navigouganda@gmail.com', hashed, 'admin', true, 'approved', new Date().toISOString()]
     );
 
     res.json({
@@ -328,7 +328,7 @@ router.post('/admin/force-setup', async (req: Request, res: Response) => {
     await db.run('DELETE FROM users WHERE role = ?', ['admin']);
     await db.run(
       'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail || 'navigouganda@gmail.com', hashed, 'admin', 1, 'approved', new Date().toISOString()]
+      [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail || 'navigouganda@gmail.com', hashed, 'admin', true, 'approved', new Date().toISOString()]
     );
 
     res.json({
