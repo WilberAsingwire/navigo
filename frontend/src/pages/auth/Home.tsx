@@ -11,6 +11,8 @@ import {
 import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
 
+const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-with-light-trails-3452-large.mp4'; // Replace with your own high-quality city traffic video
+
 const Home: React.FC = () => {
   const ionRouter = useIonRouter();
   const { theme, toggleTheme } = useTheme();
@@ -104,6 +106,12 @@ const Home: React.FC = () => {
 
           {/* HERO SECTION */}
           <section className="hero-section">
+            <div className="hero-bg">
+              <video autoPlay muted loop playsInline className="hero-video">
+                <source src={HERO_BG_VIDEO} type="video/mp4" />
+              </video>
+              <div className="hero-overlay"></div>
+            </div>
             <div className="hero-text">
               <div className="hero-badge">
                 <IonIcon icon={flashOutline} /> Uganda's #1 Ride-Hailing App
