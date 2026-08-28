@@ -26,8 +26,14 @@ router.get('/search', async (req, res) => {
 
     res.json(response.data);
   } catch (error: any) {
-    console.error('POI Proxy Error:', error.message);
-    res.status(500).json({ message: 'Failed to fetch POIs from Overpass API' });
+    const status = error.response?.status;
+    const data = error.response?.data;
+    console.error(`POI Proxy Error [${status}]: ${error.message}`, data);
+    if (status === 429) {
+      res.status(429).json({ message: 'Too many requests to POI service. Please slow down.' });
+    } else {
+      res.status(500).json({ message: 'Failed to fetch POIs from Overpass API', details: error.message });
+    }
   }
 });
 

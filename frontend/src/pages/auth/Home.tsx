@@ -91,7 +91,7 @@ const Home: React.FC = () => {
                 <div className="nav-link-text" onClick={() => { ionRouter.push('/explore'); setIsMenuOpen(false); }}>Explore</div>
                 <div className="nav-link-text" onClick={() => { ionRouter.push('/login'); setIsMenuOpen(false); }}>Sign In</div>
                 <div className="theme-toggle" onClick={toggleTheme}>
-                  <IonIcon icon={theme === 'light' ? 'moonOutline' : 'sunnyOutline'} />
+                  <IonIcon icon={theme === 'light' ? moonOutline : sunnyOutline} />
                 </div>
                 <IonButton size="small" className="nav-signup-btn" routerLink="/register" onClick={() => setIsMenuOpen(false)}>Sign Up</IonButton>
               </div>
