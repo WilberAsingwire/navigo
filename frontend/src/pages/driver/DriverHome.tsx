@@ -40,7 +40,7 @@ const DriverHome: React.FC = () => {
     const socket = socketService.connect(user.id);
     socket.on('ride-requested', (data) => {
       console.log('🔔 Ride request received in DriverHome!', data);
-      ionRouter.push('/driver/incoming-request');
+      ionRouter.push('/driver/requests');
     });
 
     return () => socket.off('ride-requested');

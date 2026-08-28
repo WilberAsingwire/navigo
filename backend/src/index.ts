@@ -14,6 +14,7 @@ import poiRoutes from './routes/poi';
 import supportRoutes from './routes/support';
 import { initDB } from './config/database';
 import { setupSocketHandlers } from './socket/socketHandler';
+import { generalLimiter } from './middleware/rateLimit';
 
 dotenv.config();
 
@@ -80,6 +81,7 @@ app.get('/auth/google/callback',
 );
 
 // Regular routes
+app.use('/api', generalLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/rides', rideRoutes);
 app.use('/api/drivers', driverRoutes);

@@ -6,6 +6,8 @@ export interface VehicleSpec {
   tagline: string;
   base: number;
   perKm: number;
+  perMin: number;
+  surgeMultiplier: number;
   min: number;
   seats: string;
   pickupEtaMin: [number, number]; // display range
@@ -17,7 +19,9 @@ export const VEHICLES: VehicleSpec[] = [
     name: "Navigo Boda",
     tagline: "Fastest way across town",
     base: 1500,
-    perKm: 700,
+    perKm: 600,
+    perMin: 80,
+    surgeMultiplier: 1.0,
     min: 2000,
     seats: "1 passenger",
     pickupEtaMin: [2, 5],
@@ -28,6 +32,8 @@ export const VEHICLES: VehicleSpec[] = [
     tagline: "Affordable everyday rides",
     base: 2000,
     perKm: 900,
+    perMin: 100,
+    surgeMultiplier: 1.0,
     min: 3000,
     seats: "Up to 4 passengers",
     pickupEtaMin: [4, 9],
@@ -38,6 +44,8 @@ export const VEHICLES: VehicleSpec[] = [
     tagline: "Newer cars, top drivers",
     base: 4000,
     perKm: 1200,
+    perMin: 150,
+    surgeMultiplier: 1.2,
     min: 5000,
     seats: "Up to 4 passengers",
     pickupEtaMin: [5, 12],
@@ -48,6 +56,8 @@ export const VEHICLES: VehicleSpec[] = [
     tagline: "Extra space for groups",
     base: 6000,
     perKm: 1800,
+    perMin: 200,
+    surgeMultiplier: 1.1,
     min: 8000,
     seats: "Up to 6 passengers",
     pickupEtaMin: [6, 15],
@@ -59,9 +69,13 @@ export function getVehicle(type: string): VehicleSpec {
 }
 
 /** Recommended fare in UGX, rounded to nearest 100. */
-export function fareQuote(type: string, km: number): number {
+export function fareQuote(type: string, km: number, min: number = 0): number {
   const v = getVehicle(type);
-  const raw = Math.max(v.min, v.base + v.perKm * km);
+  const distFare = Math.round(km * v.perKm);
+  const timeFare = Math.round(min * v.perMin);
+  const base = v.base;
+  const surge = Math.round((base + distFare + timeFare) * (v.surgeMultiplier - 1));
+  const raw = Math.max(v.min, base + distFare + timeFare + surge);
   return Math.round(raw / 100) * 100;
 }
 

@@ -33,6 +33,7 @@ import IncomingRequest from './pages/driver/IncomingRequest';
 import DriverEarnings from './pages/driver/DriverEarnings';
 import DriverVehicle from './pages/driver/DriverVehicle';
 import DriverDocuments from './pages/driver/DriverDocuments';
+import DriverActiveRide from './pages/driver/DriverActiveRide';
 
 /* --- ADMIN PAGES --- */
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -132,7 +133,7 @@ const App: React.FC = () => {
               <Route path="/driver/earnings" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} />} />
               <Route path="/driver/vehicle" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} />} />
               <Route path="/driver/documents" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} />} />
-              <Route path="/driver/active-ride" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={ActiveRidePlaceholder} />} />
+              <Route path="/driver/active-ride" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverActiveRide} />} />
 
               {/* Admin Routes */}
               <Route path="/admin/dashboard" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminDashboard} />} />

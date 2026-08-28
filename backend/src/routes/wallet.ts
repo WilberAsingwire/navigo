@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, AuthRequest } from '../middleware/authMiddleware';
+import { paymentService } from '../services/paymentService';
 
 const router = express.Router();
 
@@ -41,15 +42,29 @@ router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ ok: false, message: 'Payment reference is required for verification' });
     }
 
+    // Verify the payment with the gateway
+    const verification = await paymentService.verifyTransaction(paymentReference);
+    if (verification.status !== 'success') {
+      return res.status(400).json({
+        ok: false,
+        message: `Payment verification failed: ${verification.error || 'Transaction not found'}`
+      });
+    }
+
+    // Security check: Verify that the verified amount matches the requested top-up amount
+    if (verification.amount && verification.amount !== amount) {
+      return res.status(400).json({
+        ok: false,
+        message: `Amount mismatch. Verified: ${verification.amount}, Requested: ${amount}`
+      });
+    }
+
     const transactionId = 'tx_topup_' + Date.now();
 
     // Use a dedicated client for the transaction
     const tx = await db.getTransactionClient();
     try {
       await tx.query('BEGIN');
-
-      // NOTE: In production, you MUST verify the paymentReference via a payment gateway (MoMo/Airtel)
-      // before proceeding with the update. This is currently a placeholder.
 
       await tx.query(
         'UPDATE wallets SET balance = balance + ?, updatedAt = CURRENT_TIMESTAMP WHERE userId = ?',

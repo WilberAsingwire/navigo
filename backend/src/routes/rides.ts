@@ -6,6 +6,19 @@ import { normalizeUgPhone } from '../utils/uganda';
 
 const router = express.Router();
 
+// ─── Fare Quotation ──────────────────────────────────────
+router.get('/quote', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { type, km, min } = req.query;
+    if (!type || !km) return res.status(400).json({ message: 'Ride type and distance are required' });
+
+    const fare = fareQuote(type as string, parseFloat(km as string), parseFloat(min as string || '0'));
+    res.json({ ok: true, fare });
+  } catch (error) {
+    res.status(500).json({ message: 'Error calculating quote' });
+  }
+});
+
 // ─── Request Ride/Delivery ───────────────────────────────────────
 router.post('/request', authenticate, async (req: AuthRequest, res: Response) => {
   try {
@@ -19,7 +32,8 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
       durationMin,
       packageDetails,
       receiverName,
-      receiverPhone
+      receiverPhone,
+      fareOffered,
     } = req.body;
 
     const userId = req.user?.userId;
@@ -30,7 +44,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
     }
 
     // Professional Fare Calculation
-    const fareRecommended = fareQuote(rideType, distanceKm || 0);
+    const fareRecommended = fareQuote(rideType, distanceKm || 0, durationMin || 0);
 
     // Server-side balance validation for wallet payments
     if (paymentMethod === 'wallet') {
@@ -64,7 +78,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
         distanceKm || 0,
         durationMin || 0,
         fareRecommended,
-        fareRecommended, // Default offered is the recommended fare
+        fareOffered || fareRecommended, // Use rider's offer if provided, else recommended
         fareRecommended, // Initial final is the recommended fare
         packageDetails || null,
         receiverName || null,
@@ -91,10 +105,16 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
 router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { rideId } = req.params;
+    const userId = req.user?.userId;
     const db = getDB();
 
     const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
     if (!ride) return res.status(404).json({ message: 'Ride not found' });
+
+    // Security check: only the rider or the assigned driver can view ride details
+    if (ride.userId !== userId && ride.driverId !== userId) {
+      return res.status(403).json({ message: 'Unauthorized: You are not part of this ride' });
+    }
 
     const rider = await db.get('SELECT id, fullName, phone, verificationStatus FROM users WHERE id = ?', [ride.userId]);
 

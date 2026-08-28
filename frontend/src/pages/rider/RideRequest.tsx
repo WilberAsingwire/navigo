@@ -253,17 +253,32 @@ const RideRequest: React.FC = () => {
     setSearchResults([]);
   };
 
-  const calculateFare = () => {
+  const calculateFare = async () => {
     if (!pickup || !destination) return;
     const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
     const speed = selectedRide.vehicleType === 'boda' ? 28 : 22;
     const dur = actualRouteDur > 0 ? actualRouteDur : (dist / speed) * 60;
-    const base = selectedRide.basePrice;
-    const distFare = Math.round(dist * selectedRide.pricePerKm);
-    const timeFare = Math.round(dur * selectedRide.pricePerMinute);
-    const surge = Math.round((base + distFare + timeFare) * (selectedRide.surgeMultiplier - 1));
-    const total = Math.max(base + distFare + timeFare + surge - discount, base);
-    setFare({ distance: Math.round(dist * 10) / 10, duration: Math.round(dur), baseFare: base, distanceFare: distFare, timeFare, surgeFare: surge, totalFare: total, formattedTotal: 'UGX ' + total.toLocaleString() });
+
+    try {
+      const res = await api.get(`/rides/quote`, {
+        params: { type: selectedRide.vehicleType, km: dist, min: dur }
+      });
+      if (res.data.ok) {
+        const total = Math.max(res.data.fare - discount, selectedRide.basePrice);
+        setFare({
+          distance: Math.round(dist * 10) / 10,
+          duration: Math.round(dur),
+          baseFare: selectedRide.basePrice,
+          distanceFare: 0, // Backend quote is total, we don't break it down here
+          timeFare: 0,
+          surgeFare: 0,
+          totalFare: total,
+          formattedTotal: 'UGX ' + total.toLocaleString()
+        });
+      }
+    } catch (e) {
+      console.error('Quote error:', e);
+    }
   };
 
   const applyPromo = () => {

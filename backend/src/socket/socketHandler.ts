@@ -1,13 +1,38 @@
 import { Server, Socket } from 'socket.io';
 import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
+import { verifyToken } from '../utils/auth';
 
 export const setupSocketHandlers = (io: Server) => {
+  // ─── Authentication Middleware ──────────────────────────
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    if (!token) {
+      return next(new Error('Authentication error: Token is required'));
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return next(new Error('Authentication error: Invalid or expired token'));
+    }
+
+    // Attach user info to socket for use in handlers
+    socket.data.userId = decoded.id;
+    socket.data.role = decoded.role;
+    next();
+  });
+
   io.on('connection', (socket: Socket) => {
-    console.log(`🌐 User connected: ${socket.id}`);
+    const userId = socket.data.userId;
+    const userRole = socket.data.role;
+    console.log(`🌐 User connected: ${userId} (${userRole}) | Socket: ${socket.id}`);
 
     // Join a room based on userId to receive targeted notifications
-    socket.on('join', (userId: string) => {
+    socket.on('join', (userIdFromClient: string) => {
+      // Security check: only allow joining your own room
+      if (userIdFromClient !== userId) {
+        return socket.emit('error', { message: 'Unauthorized: You can only join your own room' });
+      }
       socket.join(userId);
       console.log(`👤 User ${userId} joined their private room`);
     });
@@ -17,9 +42,6 @@ export const setupSocketHandlers = (io: Server) => {
       const { rideId } = data;
       const db = getDB();
       try {
-        // Use the userId associated with this socket connection
-        // Note: In a real app, userId would be attached to socket during auth middleware
-        // For this implementation, we'll assume the userId is passed or managed via session
         const ride = await db.get('SELECT userId, driverId FROM rides WHERE id = ?', [rideId]);
 
         if (!ride) {
@@ -27,8 +49,12 @@ export const setupSocketHandlers = (io: Server) => {
           return;
         }
 
-        // We don't have a strict auth middleware here, so we'll trust the userId from the socket's initial 'join'
-        // but in production, we'd check socket.user.id
+        // Security check: only rider or driver of this ride can join
+        if (userId !== ride.userId && userId !== ride.driverId) {
+          socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
+          return;
+        }
+
         socket.join(rideId);
         console.log(`🚕 Socket ${socket.id} joined ride room ${rideId}`);
       } catch (e) {
@@ -39,7 +65,12 @@ export const setupSocketHandlers = (io: Server) => {
 
     // Rider requests a ride
     socket.on('request-ride', async (data: { userId: string; rideId: string }) => {
-      const { userId, rideId } = data;
+      // Security check: only the authenticated user can request a ride for themselves
+      if (data.userId !== userId) {
+        return socket.emit('error', { message: 'Unauthorized request' });
+      }
+
+      const { rideId } = data;
       const db = getDB();
 
       // Find approved, online, and available drivers
@@ -49,12 +80,9 @@ export const setupSocketHandlers = (io: Server) => {
       );
 
       if (drivers.length > 0) {
-        // In a real app, we'd use GPS to find the CLOSEST driver.
-        // For now, we broadcast to all available drivers.
         io.emit('ride-requested', {
           rideId,
           riderId: userId,
-          // We'll fetch ride details in the frontend or send them here
         });
         console.log(`🚕 Broadcasted ride ${rideId} to ${drivers.length} drivers`);
       } else {
@@ -65,13 +93,20 @@ export const setupSocketHandlers = (io: Server) => {
     // Driver accepts a ride
     socket.on('accept-ride', async (data: { driverId: string; rideId: string; riderId: string }) => {
       const { driverId, rideId, riderId } = data;
-      const db = getDB();
 
+      // Security check: must be a driver/motorist and must be themselves
+      if (userRole !== 'driver' && userRole !== 'motorist') {
+        return socket.emit('error', { message: 'Unauthorized: Only drivers can accept rides' });
+      }
+      if (driverId !== userId) {
+        return socket.emit('error', { message: 'Unauthorized: Driver ID mismatch' });
+      }
+
+      const db = getDB();
       try {
         await db.run('UPDATE rides SET status = ?, driverId = ? WHERE id = ?', ['accepted', driverId, rideId]);
         await db.run('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
 
-        // Notify the rider that their ride has been accepted
         io.to(riderId).emit('ride-accepted', {
           rideId,
           driverId,
@@ -87,19 +122,22 @@ export const setupSocketHandlers = (io: Server) => {
 
     // Real-time location updates from Driver to Rider
     socket.on('update-location', async (data: { rideId: string; lat: number; lng: number; userId: string }) => {
-      const { rideId, lat, lng, userId } = data;
+      const { rideId, lat, lng, userId: clientUserId } = data;
+
+      // Security check: only the authenticated user can update their location
+      if (clientUserId !== userId) {
+        return socket.emit('error', { message: 'Unauthorized location update' });
+      }
+
       const db = getDB();
       try {
-        // Persist location to the users table for the admin map
         await db.run('UPDATE users SET currentLat = ?, currentLng = ? WHERE id = ?', [lat, lng, userId]);
 
-        // Send the update to everyone in the ride room
         socket.to(rideId).emit('location-updated', {
           lat,
           lng
         });
 
-        // Broadcast to admin map
         io.emit('admin-location-updated', {
           userId,
           lat,
@@ -115,29 +153,41 @@ export const setupSocketHandlers = (io: Server) => {
       const { rideId, riderId, status } = data;
       const db = getDB();
 
-      await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
-
-      // If ride is completed, trigger payment settlement
-      if (status === 'completed') {
-        console.log(`🏁 Ride ${rideId} marked as completed. Triggering settlement...`);
-        const settlement = await settleRidePayment(rideId);
-        if (settlement.success) {
-          console.log(`💰 Settlement successful for ride ${rideId}`);
-        } else {
-          console.error(`❌ Settlement failed for ride ${rideId}: ${settlement.message}`);
+      try {
+        const ride = await db.get('SELECT driverId FROM rides WHERE id = ?', [rideId]);
+        if (!ride || ride.driverId !== userId) {
+          return socket.emit('error', { message: 'Unauthorized: Only the assigned driver can update status' });
         }
-      }
 
-      // Notify rider of status change
-      io.to(riderId).emit('status-changed', { rideId, status });
+        await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
+
+        if (status === 'completed') {
+          console.log(`🏁 Ride ${rideId} marked as completed. Triggering settlement...`);
+          const settlement = await settleRidePayment(rideId);
+          if (settlement.success) {
+            console.log(`💰 Settlement successful for ride ${rideId}`);
+          } else {
+            console.error(`❌ Settlement failed for ride ${rideId}: ${settlement.message}`);
+          }
+        }
+
+        io.to(riderId).emit('status-changed', { rideId, status });
+      } catch (e) {
+        console.error('Error updating status:', e);
+        socket.emit('error', { message: 'Failed to update status.' });
+      }
     });
 
-    // Chat logic (maintained from previous version)
-    socket.on('join-chat', (d: any) => socket.join(d.rideId));
-    socket.on('send-message', (d: any) => { socket.to(d.rideId).emit('new-message', d.message); });
+    // Chat logic
+    socket.on('join-chat', (d: any) => {
+      socket.join(d.rideId);
+    });
+    socket.on('send-message', (d: any) => {
+      socket.to(d.rideId).emit('new-message', d.message);
+    });
 
     socket.on('disconnect', () => {
-      console.log(`🌐 User disconnected: ${socket.id}`);
+      console.log(`🌐 User disconnected: ${userId} (${socket.id})`);
     });
   });
 };

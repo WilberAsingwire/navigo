@@ -78,7 +78,7 @@ const IncomingRequest: React.FC = () => {
       socket.emit('accept-ride', {
         driverId: user?.id,
         rideId: requestData?.id,
-        riderId: requestData?.riderId || 'unknown'
+        riderId: requestData?.userId || requestData?.rider?.id || 'unknown'
       });
 
       presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
@@ -143,7 +143,7 @@ const IncomingRequest: React.FC = () => {
               <IonIcon icon={locationOutline} style={{ color: '#2D6A4F', fontSize: 20 }} />
               <div className="route-text">
                 <label>PICKUP</label>
-                <p>{requestData.pickup}</p>
+                <p>{requestData.pickup?.address || requestData.pickup}</p>
               </div>
             </div>
             <div style={{ width: 2, height: 20, background: 'rgba(255,255,255,0.1)', marginLeft: 9 }} />
@@ -151,7 +151,7 @@ const IncomingRequest: React.FC = () => {
               <IonIcon icon={flagOutline} style={{ color: '#E85D75', fontSize: 20 }} />
               <div className="route-text">
                 <label>DESTINATION</label>
-                <p>{requestData.destination}</p>
+                <p>{requestData.destination?.address || requestData.destination}</p>
               </div>
             </div>
           </div>
