@@ -71,7 +71,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
     standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
-    dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
+    dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
     satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
   };
 
@@ -177,6 +177,18 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       // MOVE ZOOM CONTROL TO BOTTOM RIGHT
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+      const locateControl = L.control({ position: 'topright' });
+      locateControl.onAdd = function() {
+        const btn = L.DomUtil.create('a', 'leaflet-control-locate');
+        btn.innerHTML = '📍 My Location';
+        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#FF6B35; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
+        btn.onclick = () => {
+          map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+        };
+        return btn;
+      };
+      locateControl.addTo(map);
+
       setTimeout(() => {
         map.invalidateSize();
       }, 200);
@@ -186,43 +198,6 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       });
       resizeObserver.observe(mapContainerRef.current!);
     }
-
-    const map = mapInstanceRef.current;
-
-    // UPDATE TILE LAYER WITHOUT RECREATING MAP
-    // Remove existing tile layers first
-    map.eachLayer(layer => {
-      if (layer instanceof L.TileLayer) {
-        map.removeLayer(layer);
-      }
-    });
-
-    L.tileLayer(tileUrls[mapStyle].url, {
-      attribution: tileUrls[mapStyle].attribution,
-      maxZoom: 19,
-    }).addTo(map);
-
-    // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
-    map.on('moveend', () => {
-      if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
-      poiFetchTimeoutRef.current = setTimeout(() => fetchNearbyPOIs(map), 500);
-    });
-
-    map.on('click', (e) => {
-      if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
-    });
-
-    const locateControl = L.control({ position: 'topright' });
-    locateControl.onAdd = function() {
-      const btn = L.DomUtil.create('a', 'leaflet-control-locate');
-      btn.innerHTML = '📍 My Location';
-      btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#FF6B35; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
-      btn.onclick = () => {
-        map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
-      };
-      return btn;
-    };
-    locateControl.addTo(map);
 
     return () => {
       // Do NOT remove the map here if we want it to persist across style changes
