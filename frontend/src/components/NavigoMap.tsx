@@ -52,10 +52,10 @@ const poiIcon = (emoji: string) => L.divIcon({
 });
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
-  boda: { url: 'https://cdn-icons-png.flaticon.com/512/1048/1048329.png', color: '#ffab40' },
-  go: { url: 'https://cdn-icons-png.flaticon.com/512/741/741407.png', color: '#FF6B35' },
-  comfort: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202920.png', color: '#4CAF50' },
-  xl: { url: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png', color: '#2196F3' },
+  boda: { url: 'https://cdn-icons-png.flaticon.com/512/171/171233.png', color: '#ffab40' },
+  go: { url: 'https://cdn-icons-png.flaticon.com/512/3085/3085330.png', color: '#FF6B35' },
+  comfort: { url: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png', color: '#4CAF50' },
+  xl: { url: 'https://cdn-icons-png.flaticon.com/512/4143/4143153.png', color: '#2196F3' },
 };
 
 
