@@ -399,9 +399,12 @@
 .ride-carousel {
   display: flex;
   overflow-x: auto;
-  gap: 2rem;
-  padding: 1rem 0;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ride-card {
@@ -582,6 +585,8 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
+  justify-content: center;
+  justify-items: center;
 }
 
 .tier-card {
@@ -837,6 +842,17 @@
     width: 100%;
   }
 
+  .ride-carousel {
+    padding: 1rem 0;
+    gap: 1rem;
+    justify-content: flex-start;
+  }
+
+  .ride-card {
+    flex: 0 0 260px;
+    padding: 1.5rem;
+  }
+
   .timeline {
     grid-template-columns: 1fr;
     gap: 3rem;
@@ -845,6 +861,9 @@
   .rewards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+    justify-content: center;
+    justify-items: center;
+    padding: 0 1rem;
   }
 
   .section {
