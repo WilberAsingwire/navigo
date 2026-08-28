@@ -15,7 +15,7 @@ import goImg from '../../assets/vehicles/go.png';
 import comfortImg from '../../assets/vehicles/comfort.png';
 import xlImg from '../../assets/vehicles/xl.png';
 
-const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1582-large.mp4'; // Ultra-stable high-quality city traffic loop
+const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-city-traffic-at-night-1103-large.mp4'; // High-quality urban time-lapse loop
 const HERO_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1542291026-7e91ecfa746d?q=80&w=2070&auto=format&fit=crop'; // High-res urban traffic fallback
 
 const Home: React.FC = () => {

@@ -931,4 +931,10 @@
     padding: 4rem 1.5rem;
   }
 }
-.preview-vehicle-img, .card-vehicle-img { mix-blend-mode: multiply; }
+.preview-vehicle-img, .card-vehicle-img {
+  width: 140px;
+  height: 100px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
