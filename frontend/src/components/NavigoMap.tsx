@@ -226,12 +226,13 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     }).addTo(map);
 
     if (mapStyle === 'satellite') {
-      // Add a transparent labels layer on top of satellite imagery to create a "Hybrid" look
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+      // Add a high-contrast labels and roads layer on top of satellite imagery
+      // Using 'voyager_only_labels' which typically includes more roads and better contrast (white text with halos)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 22,
         maxNativeZoom: 19,
-        zIndex: 10, // Ensure labels are above the satellite imagery
+        zIndex: 10,
       }).addTo(map);
     }
   }, [loading, mapStyle, interactive]);
