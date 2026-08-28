@@ -191,7 +191,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
       map.on('moveend', () => {
         if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
-        poiFetchTimeoutRef.current = setTimeout(() => fetchNearbyPOIs(map), 500);
+        poiFetchTimeoutRef.current = setTimeout(() => fetchNearbyPOIs(map), 1500);
       });
 
       map.on('click', (e) => {
@@ -226,20 +226,12 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     }).addTo(map);
 
     if (mapStyle === 'satellite') {
-      // Add a high-contrast labels and roads layer on top of satellite imagery
+      // Add a high-contrast labels layer on top of satellite imagery
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 22,
         maxNativeZoom: 19,
         zIndex: 10,
-      }).addTo(map);
-
-      // Add a roads/boundaries layer for better area definition
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_roads/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        maxZoom: 22,
-        maxNativeZoom: 19,
-        zIndex: 9,
       }).addTo(map);
     }
   }, [loading, mapStyle, interactive]);
