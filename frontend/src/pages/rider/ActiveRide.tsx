@@ -120,7 +120,6 @@ const status = await checkPaymentStatus(result.transactionId!, paymentMethod as 
             </div>
           </div>
         </div>
-        </div>
 
         <div className="fare-display"><div className="fare-card"><IonIcon icon={cashOutline} /><div><IonLabel>Total Fare</IonLabel><h2>UGX {fare.toLocaleString()}</h2></div><IonBadge color={paymentMethod === 'cash' ? 'warning' : 'primary'}>{paymentMethod === 'cash' ? '💵 Cash' : paymentMethod === 'mtn' ? '📱 MTN' : paymentMethod === 'airtel' ? '📱 Airtel' : '💳 Card'}</IonBadge></div></div>
 
