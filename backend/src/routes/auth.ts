@@ -99,7 +99,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const needsVerification = userRole === 'driver';
     const hashedPassword = await hashPassword(password);
 
-    const userId = 'user_' + Date.now();
+    const userId = `user_${Math.random().toString(36).substr(2, 9)}${Date.now()}`;
     const newUser: any = {
       id: userId,
       fullName: fullName.trim(),
@@ -112,10 +112,19 @@ router.post('/register', async (req: Request, res: Response) => {
       createdAt: new Date().toISOString()
     };
 
-    await db.run(
-      'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
-    );
+    try {
+      await db.run(
+        'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
+      );
+    } catch (dbError: any) {
+      console.error('DATABASE INSERT ERROR:', dbError);
+      return res.status(500).json({
+        message: 'Database insertion failed',
+        detail: dbError.detail,
+        error: dbError.message
+      });
+    }
 
     const token = generateToken({ id: newUser.id, role: newUser.role });
     const message = needsVerification
