@@ -24,6 +24,7 @@ const Home: React.FC = () => {
     {
       id: 'boda',
       name: 'Boda Boda',
+      image: 'https://cdn-icons-png.flaticon.com/512/1048/1048329.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
@@ -38,6 +39,7 @@ const Home: React.FC = () => {
     {
       id: 'go',
       name: 'NAVIGO Go',
+      image: 'https://cdn-icons-png.flaticon.com/512/741/741407.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="11" width="18" height="7" rx="2" />
@@ -53,6 +55,7 @@ const Home: React.FC = () => {
     {
       id: 'comfort',
       name: 'Comfort',
+      image: 'https://cdn-icons-png.flaticon.com/512/3202/3202920.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="10" width="20" height="8" rx="3" />
@@ -68,6 +71,7 @@ const Home: React.FC = () => {
     {
       id: 'xl',
       name: 'NAVIGO XL',
+      image: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="10" width="20" height="8" rx="2" />
@@ -143,6 +147,14 @@ const Home: React.FC = () => {
                   <IonIcon icon={locationOutline} className="preview-icon" />
                 </div>
 
+                <div className="preview-vehicle-container">
+                  <img
+                    src={rideOptions.find(r => r.id === activeRide)?.image}
+                    alt={rideOptions.find(r => r.id === activeRide)?.name}
+                    className="preview-vehicle-img"
+                  />
+                </div>
+
                 <div className="preview-route">
                   <div className="route-stop">
                     <div className="stop-dot"></div>
@@ -184,7 +196,7 @@ const Home: React.FC = () => {
               {rideOptions.map((ride, idx) => (
                 <div key={ride.id} className={`ride-card ${idx === 0 ? 'featured' : ''}`}>
                   {idx === 0 && <div className="ride-badge">Most Popular</div>}
-                  <span className="ride-icon">{ride.icon}</span>
+                  <img src={ride.image} alt={ride.name} className="card-vehicle-img" />
                   <h3 className="card-title">{ride.name}</h3>
                   <p className="card-desc">{ride.desc}</p>
                   <div className="ride-features">

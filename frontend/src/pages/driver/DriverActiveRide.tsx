@@ -11,28 +11,10 @@ import {
   mapOutline, arrowForwardOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
-import L from 'leaflet';
+import NavigoMap from '../../components/NavigoMap';
 import SOSButton from '../../components/SOSButton';
 import ChatBox from '../../components/ChatBox';
-import 'leaflet/dist/leaflet.css';
 import './DriverActiveRide.css';
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
-
-const driverCarIcon = L.divIcon({ html: '<div style="background:#FF6B35;width:28px;height:28px;border-radius:50%;border:3px solid white;font-size:14px;text-align:center;line-height:28px;box-shadow:0 0 14px rgba(255,107,53,0.8)">🚗</div>', iconSize: [34, 34], iconAnchor: [17, 17] });
-const riderPinIcon = L.divIcon({ html: '<div style="background:#00e676;width:22px;height:22px;border-radius:50%;border:3px solid white;box-shadow:0 0 10px rgba(0,230,118,0.6)"></div>', iconSize: [26, 26], iconAnchor: [13, 13] });
-
-const MapController: React.FC<{ center: [number, number] }> = ({ center }) => {
-  const map = useMap();
-  useEffect(() => { map.setView(center, 15); }, [center, map]);
-  return null;
-};
 
 const DriverActiveRide: React.FC = () => {
   const history = useHistory();
@@ -107,14 +89,13 @@ const DriverActiveRide: React.FC = () => {
       <IonContent className="driver-active-container">
         {/* Map */}
         <div style={{ height: '40vh', width: '100%', position: 'relative' }}>
-          <MapContainer center={pos} zoom={15} style={{ height: '100%', width: '100%' }}>
-            <TileLayer url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png" />
-            <MapController center={pos} />
-            <Marker position={pos} icon={driverCarIcon}><Popup>🚗 Your Location</Popup></Marker>
-            <Marker position={rideData.destinationPos} icon={riderPinIcon}><Popup>📍 {rideData.riderName}</Popup></Marker>
-            <Polyline positions={[pos, rideData.destinationPos]} color="#FF6B35" weight={3} opacity={0.6} dashArray="8, 6" />
-          </MapContainer>
-
+          <NavigoMap
+            userLocation={{ lat: pos[0], lng: pos[1] }}
+            destination={{ lat: rideData.destinationPos[0], lng: rideData.destinationPos[1] }}
+            height="100%"
+            showRoute={true}
+            driverType="go"
+          />
           {/* Floating Navigate Button */}
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 1000 }}>
             <IonButton color="light" size="small" onClick={openNavigation}>

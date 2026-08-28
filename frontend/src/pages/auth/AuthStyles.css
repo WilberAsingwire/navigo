@@ -13,9 +13,9 @@
 .auth-container {
   min-height: 100vh;
   background: linear-gradient(
-    rgba(10, 10, 10, 0.7),
-    rgba(10, 10, 10, 0.7)
-  ), url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2048&auto=format&fit=crop');
+    rgba(10, 10, 10, 0.75),
+    rgba(10, 10, 10, 0.75)
+  ), url('https://images.unsplash.com/photo-1449824913935-59a10b5d7a98?q=80&w=2070&auto=format&fit=crop');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;

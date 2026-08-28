@@ -32,10 +32,11 @@ const POPULAR_PLACES: Location[] = [
 
 const RIDE_OPTIONS: RideOption[] = [
   { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
-  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'economy', surgeMultiplier: 1.0, color: '#2D6A4F', emoji: '🚗' },
+  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', surgeMultiplier: 1.0, color: '#2D6A4F', emoji: '🚗' },
   { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', emoji: '🚙' },
   { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', emoji: '🚐' }
 ];
+
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -568,7 +569,15 @@ const RideRequest: React.FC = () => {
       </div>
 
       <div className="booking-map-panel">
-        <NavigoMap userLocation={pickup} destination={destination} height="100%" showControls={true} onMapClick={handleMapClick} onDistanceChange={(d, t) => { setActualRouteDist(d); setActualRouteDur(t); }} />
+        <NavigoMap
+          userLocation={pickup}
+          destination={destination}
+          driverType={selectedRide.vehicleType}
+          height="100%"
+          showControls={true}
+          onMapClick={handleMapClick}
+          onDistanceChange={(d, t) => { setActualRouteDist(d); setActualRouteDur(t); }}
+        />
       </div>
 
       <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} color="dark" position="top" />

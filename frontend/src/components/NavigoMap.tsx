@@ -26,21 +26,44 @@ const createPulsingIcon = (color: string, emoji: string, size: number = 28) => {
   });
 };
 
+const createVehicleIcon = (imageUrl: string, color: string, size: number = 40) => {
+  return L.divIcon({
+    html: `<div style="position:relative;width:${size}px;height:${size}px;">
+            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.4;"></div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
+              <img src="${imageUrl}" style="width:80%; height:80%; object-fit:contain;" />
+            </div>
+          </div>
+          <style>
+            @keyframes pulse { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(2); opacity: 0; } }
+          </style>
+        `,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+};
+
 const pickIcon = createPulsingIcon('#2D6A4F', '📍', 30);
 const destIcon = createPulsingIcon('#E85D75', '🎯', 32);
-const driverIcon = createPulsingIcon('#FF6B35', '🚗', 34);
-const bikeIcon = createPulsingIcon('#ffab40', '🏍️', 34);
 const poiIcon = (emoji: string) => L.divIcon({
-  html: `<div style="background:#121824; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${emoji}</div>`,
+  html: `<div style="background:#121824; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:24px; height:24px; display:flex; align-items:center;justify-content:center; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${emoji}</div>`,
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
+
+const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
+  boda: { url: 'https://cdn-icons-png.flaticon.com/512/1048/1048329.png', color: '#ffab40' },
+  go: { url: 'https://cdn-icons-png.flaticon.com/512/741/741407.png', color: '#FF6B35' },
+  comfort: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202920.png', color: '#4CAF50' },
+  xl: { url: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png', color: '#2196F3' },
+};
+
 
 interface MapProps {
   userLocation: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
   driverLocation?: { lat: number; lng: number } | null;
-  driverType?: 'car' | 'bike';
+  driverType?: 'boda' | 'go' | 'comfort' | 'xl';
   height?: string;
   interactive?: boolean;
   showRoute?: boolean;
@@ -51,7 +74,7 @@ interface MapProps {
 }
 
 const NavigoMap: React.FC<MapProps> = React.memo(({
-  userLocation, destination, driverLocation, driverType = 'car',
+  userLocation, destination, driverLocation, driverType = 'go',
   height = '350px', interactive = true, showRoute = true,
   showControls = true, followUser = true, onDistanceChange, onMapClick
 }) => {
@@ -281,9 +304,10 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
     // 3. Driver Marker (with Smooth Motion)
     if (driverLocation) {
-      const dIcon = driverType === 'bike' ? bikeIcon : driverIcon;
+      const vehicleCfg = VEHICLE_ICONS[driverType] || VEHICLE_ICONS['go'];
+      const dIcon = createVehicleIcon(vehicleCfg.url, vehicleCfg.color);
       if (!markersRef.current['driver']) {
-        markersRef.current['driver'] = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType === 'bike' ? '🏍️' : '🚗'} Driver`);
+        markersRef.current['driver'] = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType.toUpperCase()} Driver`);
       } else {
         const marker = markersRef.current['driver'] as L.Marker;
         const oldPos = marker.getLatLng();
