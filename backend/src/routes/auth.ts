@@ -303,66 +303,45 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
   }
 });
 
-// ─── EMERGENCY: WIPE ALL USERS ─────────────────────────
-router.post('/admin/wipe-all', async (req: Request, res: Response) => {
+// ─── ADMIN: GET ALL USERS ────────────────────────────
+router.get('/admin/users', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
-    const { secretKey } = req.body;
-    if (secretKey !== 'NAVIGO_SUPER_SECRET_RECOVERY_2026') {
-      return res.status(403).json({ message: 'Invalid recovery key.' });
-    }
-
     const db = getDB();
-
-    // 1. Delete all users
-    await db.run('DELETE FROM users');
-    console.log('☢️ ALL USERS WIPED FROM DATABASE');
-
-    // 2. Create a guaranteed fresh admin
-    const hashed = await hashPassword('Kakumiro222');
-    const adminId = 'admin_' + Date.now();
-    await db.run(
-      'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, 'NAVIGO Admin', 'admin_' + adminId, 'navigouganda@gmail.com', hashed, 'admin', true, 'approved', new Date().toISOString()]
-    );
-
-    res.json({
-      message: 'Database wiped and fresh admin created!',
-      email: 'navigouganda@gmail.com',
-      password: 'Kakumiro222'
-    });
+    const users = await db.all('SELECT * FROM users');
+    res.json(users.map(sanitizeUser));
   } catch (error) {
-    console.error('Wipe error:', error);
-    res.status(500).json({ message: 'Wipe failed.' });
+    console.error('Fetch users error:', error);
+    res.status(500).json({ message: 'Failed to fetch users' });
   }
 });
 
-// ─── EMERGENCY ADMIN RECOVERY ─────────────────────────
-router.post('/admin/force-setup', async (req: Request, res: Response) => {
+// ─── ADMIN: GET DASHBOARD STATS ────────────────────────────
+router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
-    const { secretKey, adminEmail, adminPassword } = req.body;
-
-    if (secretKey !== 'NAVIGO_SUPER_SECRET_RECOVERY_2026') {
-      return res.status(403).json({ message: 'Invalid recovery key.' });
-    }
-
     const db = getDB();
-    const hashed = await hashPassword(adminPassword || 'Kakumiro222');
-    const adminId = 'admin_' + Date.now();
 
-    await db.run('DELETE FROM users WHERE role = ?', ['admin']);
-    await db.run(
-      'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail || 'navigouganda@gmail.com', hashed, 'admin', true, 'approved', new Date().toISOString()]
-    );
+    const [totalUsers] = await db.all('SELECT COUNT(*) as count FROM users');
+    const [totalDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'driver'");
+    const [totalMotorists] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'motorist'");
+    const [activeRides] = await db.all("SELECT COUNT(*) as count FROM rides WHERE status NOT IN ('completed', 'cancelled')");
+    const [revenue] = await db.all("SELECT SUM(amount) as total FROM wallet_transactions WHERE kind = 'ride_payment' AND amount > 0");
+    const [avgRating] = await db.all('SELECT AVG(rating) as avg FROM driver_profiles');
+    const [pending] = await db.all("SELECT COUNT(*) as count FROM users WHERE verificationStatus = 'pending'");
 
     res.json({
-      message: 'Admin account successfully recovered!',
-      email: adminEmail || 'navigouganda@gmail.com',
-      password: adminPassword || 'Kakumiro222'
+      totalUsers: totalUsers?.count || 0,
+      totalDrivers: totalDrivers?.count || 0,
+      totalMotorists: totalMotorists?.count || 0,
+      activeRides: activeRides?.count || 0,
+      revenue: revenue?.total || 0,
+      avgRating: parseFloat(avgRating?.avg || '0').toFixed(1),
+      pendingApprovals: pending?.count || 0,
+      supportTickets: 0, // Mocked
+      disputes: 0 // Mocked
     });
   } catch (error) {
-    console.error('Recovery error:', error);
-    res.status(500).json({ message: 'Recovery failed.' });
+    console.error('Stats error:', error);
+    res.status(500).json({ message: 'Failed to fetch stats' });
   }
 });
 
@@ -372,7 +351,7 @@ router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (r
     const { driverId, action, reason } = req.body;
     const db = getDB();
 
-    const driver = await db.get('SELECT * FROM users WHERE id = ?', driverId);
+    const driver = await db.get('SELECT * FROM users WHERE id = ?', [driverId]);
     if (!driver) {
       return res.status(404).json({ message: 'Driver not found.' });
     }
@@ -388,6 +367,48 @@ router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (r
     }
   } catch (error) {
     res.status(500).json({ message: 'Verification failed.' });
+  }
+});
+
+// ─── ADMIN: UPDATE USER STATUS ──────────────────────
+router.post('/admin/update-user-status', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId, status } = req.body;
+    const validStatuses = ['active', 'suspended', 'banned'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    const db = getDB();
+    await db.run('UPDATE users SET status = ? WHERE id = ?', [status, userId]);
+    res.json({ message: `User status updated to ${status}` });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update user status' });
+  }
+});
+
+// ─── ADMIN: DELETE USER ──────────────────────
+router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const db = getDB();
+    await db.run('DELETE FROM users WHERE id = ?', [id]);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete user' });
+  }
+});
+
+// ─── ADMIN: LIVE LOCATIONS ──────────────────
+router.get('/admin/live-locations', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    // Only get users who are online and have a location
+    const users = await db.all(
+      'SELECT id, fullName, role, currentLat, currentLng, isOnline FROM users WHERE isOnline = TRUE AND currentLat IS NOT NULL AND currentLng IS NOT NULL'
+    );
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch live locations' });
   }
 });
 
@@ -408,14 +429,14 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     const db = getDB();
     const cleanPhone = normalizePhone(phone);
 
-    const user = await db.get('SELECT * FROM users WHERE phone = ?', cleanPhone);
+    const user = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
     if (!user) {
       return res.json({ message: 'If registered, you will receive a reset code.' });
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     await db.run('CREATE TABLE IF NOT EXISTS password_resets (phone TEXT PRIMARY KEY, code TEXT, expires DATETIME)');
-    await db.run('INSERT OR REPLACE INTO password_resets (phone, code, expires) VALUES (?, ?, ?)', [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]);
+    await db.run('INSERT INTO password_resets (phone, code, expires) VALUES (?, ?, ?) ON CONFLICT (phone) DO UPDATE SET code = EXCLUDED.code, expires = EXCLUDED.expires', [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]);
 
     // Send via SMS
     const smsResult = await notificationService.sendSMS(cleanPhone, `Your NAVIGO reset code is: ${resetCode}. Valid for 10 minutes.`);
@@ -434,7 +455,6 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
 
     res.json({
       message: 'If registered, you will receive a reset code.',
-      devCode: resetCode, // Kept for development ease
       sentVia: {
         sms: smsResult.success,
         email: user.email ? emailResult.success : false
@@ -451,7 +471,7 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     const db = getDB();
     const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
 
-    const reset = await db.get('SELECT * FROM password_resets WHERE phone = ?', cleanPhone);
+    const reset = await db.get('SELECT * FROM password_resets WHERE phone = ?', [cleanPhone]);
     if (!reset || reset.code !== code) {
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
@@ -461,7 +481,7 @@ router.post('/reset-password', async (req: Request, res: Response) => {
 
     const hashedPassword = await hashPassword(newPassword);
     await db.run('UPDATE users SET password = ? WHERE phone = ?', [hashedPassword, cleanPhone]);
-    await db.run('DELETE FROM password_resets WHERE phone = ?', cleanPhone);
+    await db.run('DELETE FROM password_resets WHERE phone = ?', [cleanPhone]);
 
     res.json({ message: 'Password reset successful!' });
   } catch (error) {

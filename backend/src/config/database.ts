@@ -152,6 +152,25 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS support_tickets (
+          id SERIAL PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          type TEXT NOT NULL,
+          description TEXT NOT NULL,
+          priority TEXT CHECK(priority IN ('low', 'medium', 'high', 'urgent')) DEFAULT 'medium',
+          status TEXT CHECK(status IN ('open', 'in-progress', 'resolved')) DEFAULT 'open',
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS support_replies (
+          id SERIAL PRIMARY KEY,
+          ticketId INTEGER REFERENCES support_tickets(id) ON DELETE CASCADE,
+          fromUser TEXT NOT NULL,
+          message TEXT NOT NULL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
         -- Migration: Remove role check constraint and rename 'name' to 'fullName'
         DO $$
         BEGIN
@@ -162,6 +181,14 @@ export const initDB = async () => {
           IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='name') AND
              NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='fullName') THEN
             ALTER TABLE users RENAME COLUMN name TO fullName;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='currentLat') THEN
+            ALTER TABLE users ADD COLUMN currentLat DECIMAL;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='currentLng') THEN
+            ALTER TABLE users ADD COLUMN currentLng DECIMAL;
           END IF;
         END $$;
       `);
@@ -184,6 +211,16 @@ export const getDB = () => {
   }
 
   return {
+    getTransactionClient: async () => {
+      const client = await pool!.connect();
+      return {
+        query: async (query: string, params: any[] = []) => {
+          const convertedQuery = convertPlaceholders(query);
+          return client.query(convertedQuery, params);
+        },
+        release: () => client.release(),
+      };
+    },
     get: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);

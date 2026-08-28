@@ -12,7 +12,7 @@ import {
 import { io, Socket } from 'socket.io-client';
 import './ChatBox.css';
 
-const SOCKET_URL = 'https://navigo-1-z7ne.onrender.com';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface Message {
   id: string;

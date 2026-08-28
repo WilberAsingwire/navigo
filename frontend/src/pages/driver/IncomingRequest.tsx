@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonButton, IonIcon, IonProgressBar,
-  useIonToast, IonText, IonBadge, IonAvatar, IonCard, IonCardContent
+  useIonToast, IonText, IonBadge, IonAvatar, IonCard, IonCardContent, IonSpinner
 } from '@ionic/react';
 import {
   locationOutline, flagOutline, starOutline, timeOutline,
@@ -11,7 +11,7 @@ import {
 import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import socketService from '../../services/socketService';
-import axios from 'axios';
+import api from '../../services/api';
 import './IncomingRequest.css';
 
 const IncomingRequest: React.FC = () => {
@@ -32,13 +32,12 @@ const IncomingRequest: React.FC = () => {
 
     socket.on('ride-requested', async (data: any) => {
       console.log('🔔 New ride request received!', data);
-      // In a real app, we would fetch ride details from /api/rides/:id
       try {
-        const res = await axios.get(`http://localhost:5000/api/rides/details/${data.rideId}`);
+        const res = await api.get(`/rides/details/${data.rideId}`);
         setRequestData({
           ...res.data,
-          riderName: 'Rider', // Would be fetched from user table
-          riderRating: 4.8,
+          riderName: res.data.rider?.fullName || 'Rider',
+          riderRating: res.data.rider?.verificationStatus || 4.8,
           riderTrips: 10,
         });
       } catch {

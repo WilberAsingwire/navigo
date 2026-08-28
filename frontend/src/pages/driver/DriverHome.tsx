@@ -11,6 +11,8 @@ import {
   checkmarkCircleOutline, cashOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import socketService from '../../services/socketService';
 import BodaSafeScore from '../../components/BodaSafeBadges';
 import LoyaltyCard from '../../components/LoyaltyCard';
 import './DriverHome.css';
@@ -19,6 +21,30 @@ const DriverHome: React.FC = () => {
   const ionRouter = useIonRouter();
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(false);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await api.get('/drivers/profile');
+        setIsOnline(res.data.user?.isOnline || false);
+      } catch (e) {
+        console.error('Failed to fetch driver status:', e);
+      }
+    };
+    fetchStatus();
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const socket = socketService.connect(user.id);
+    socket.on('ride-requested', (data) => {
+      console.log('🔔 Ride request received in DriverHome!', data);
+      ionRouter.push('/driver/incoming-request');
+    });
+
+    return () => socket.off('ride-requested');
+  }, [user?.id, ionRouter]);
 
   useEffect(() => {
     const status = user?.verificationStatus || 'unverified';
@@ -43,13 +69,21 @@ const DriverHome: React.FC = () => {
     { id: '4', text: 'Your rating increased to 4.8 ⭐', time: '1 day ago', icon: trendingUpOutline, color: '#FFC107' },
   ]);
 
-  const handleStatusToggle = (online: boolean) => {
+  const handleStatusToggle = async (online: boolean) => {
     if (user?.verificationStatus !== 'approved') {
       setIsOnline(false);
       alert('Your account must be approved by an admin before you can go online.');
       return;
     }
-    setIsOnline(online);
+
+    try {
+      await api.post('/drivers/status/online', { online });
+      setIsOnline(online);
+    } catch (error) {
+      console.error('Failed to update online status:', error);
+      alert('Could not update status. Please try again.');
+      setIsOnline(!online); // Revert toggle
+    }
   };
 
   return (
@@ -59,10 +93,10 @@ const DriverHome: React.FC = () => {
           <div className="header-content">
             <div className="user-profile-group">
               <IonAvatar style={{ width: 36, height: 36 }} onClick={() => ionRouter.push('/driver/profile')}>
-                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Driver')}&background=FF6B35&color=fff&size=64`} alt="profile" />
+                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Driver')}&background=FF6B35&color=fff&size=64`} alt="profile" />
               </IonAvatar>
               <div>
-                <h2 className="driver-welcome-text">Hello, {user?.name?.split(' ')[0] || 'Driver'} 👋</h2>
+                <h2 className="driver-welcome-text">Hello, {user?.fullName?.split(' ')[0] || 'Driver'} 👋</h2>
                 <p className={`driver-status-text ${isOnline ? 'online' : 'offline'}`}>{isOnline ? '🟢 Online' : '🔴 Offline'}</p>
               </div>
             </div>

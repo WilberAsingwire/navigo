@@ -27,7 +27,7 @@ router.put('/update', authenticate, async (req: AuthRequest, res: Response) => {
       [fullName.trim(), email ? email.toLowerCase().trim() : null, userId]
     );
 
-    const updatedUser = await db.get('SELECT * FROM users WHERE id = ?', userId);
+    const updatedUser = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
     res.json({ message: 'Profile updated successfully!', user: updatedUser });
   } catch (error) {
     res.status(500).json({ message: 'Error updating profile.' });

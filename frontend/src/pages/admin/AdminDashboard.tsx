@@ -7,17 +7,33 @@ import {
   refreshOutline, shieldCheckmarkOutline, cashOutline, callOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
+import api from '../../services/api';
 
 const AdminDashboard: React.FC = () => {
   const history = useHistory();
   const [loading, setLoading] = useState(true);
-  const [stats] = useState({
-    totalUsers: 1250, totalDrivers: 480, totalMotorists: 320,
-    activeRides: 42, revenue: 'UGX 2.4M', rating: 4.8,
-    pendingApprovals: 12, supportTickets: 5, disputes: 3
+  const [stats, setStats] = useState({
+    totalUsers: 0, totalDrivers: 0, totalMotorists: 0,
+    activeRides: 0, revenue: '0', rating: '0',
+    pendingApprovals: 0, supportTickets: 0, disputes: 0
   });
 
-  useEffect(() => { setTimeout(() => setLoading(false), 600); }, []);
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await api.get('/auth/admin/stats');
+        setStats({
+          ...res.data,
+          revenue: `UGX ${parseInt(res.data.revenue).toLocaleString()}`
+        });
+      } catch (e) {
+        console.error('Failed to fetch admin stats:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const kpiCards = [
     { label: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: peopleOutline, color: '#4da6ff', change: '+12%' },

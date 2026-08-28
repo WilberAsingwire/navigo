@@ -13,47 +13,52 @@ import {
   shieldCheckmarkOutline, downloadOutline,
   closeOutline, peopleOutline, starOutline
 } from 'ionicons/icons';
+import api from '../../services/api';
 import './AdminUsers.css';
 
 interface User {
-  _id: string;
-  name: string;
+  id: string;
+  fullName: string;
   email?: string;
   phone: string;
   role: 'rider' | 'driver' | 'motorist' | 'admin';
   status: 'active' | 'suspended' | 'banned';
   rating?: number;
   totalRides?: number;
-  joinedDate: string;
+  createdAt: string;
   verificationStatus?: string;
 }
 
-const MOCK_USERS: User[] = [
-  { _id: '1', name: 'Alice Nakamya', email: 'alice@email.com', phone: '0772123456', role: 'rider', status: 'active', rating: 4.8, totalRides: 45, joinedDate: 'Jan 2024' },
-  { _id: '2', name: 'Peter Okello', email: 'peter@email.com', phone: '0753123456', role: 'driver', status: 'active', rating: 4.6, totalRides: 230, joinedDate: 'Mar 2024', verificationStatus: 'approved' },
-  { _id: '3', name: 'Grace Birungi', phone: '0789123456', role: 'motorist', status: 'active', rating: 4.9, totalRides: 450, joinedDate: 'Feb 2024', verificationStatus: 'approved' },
-  { _id: '4', name: 'James Ouma', email: 'james@email.com', phone: '0701123456', role: 'driver', status: 'suspended', rating: 3.2, totalRides: 12, joinedDate: 'Jun 2024' },
-  { _id: '5', name: 'Sarah Kintu', email: 'sarah@email.com', phone: '0776123456', role: 'rider', status: 'active', rating: 4.5, totalRides: 89, joinedDate: 'Apr 2024' },
-  { _id: '6', name: 'David Mugisha', phone: '0758123456', role: 'motorist', status: 'active', rating: 4.7, totalRides: 156, joinedDate: 'May 2024', verificationStatus: 'pending' },
-  { _id: '7', name: 'Admin User', email: 'admin@navigo.ug', phone: '0770000000', role: 'admin', status: 'active', joinedDate: 'Jan 2024' },
-  { _id: '8', name: 'Mary Auma', email: 'mary@email.com', phone: '0785123456', role: 'rider', status: 'banned', rating: 2.1, totalRides: 3, joinedDate: 'Jul 2024' },
-];
+// Remove MOCK_USERS entirely
 
 const AdminUsers: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [users] = useState<User[]>(MOCK_USERS);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [presentToast] = useIonToast();
   const [activeFilter, setActiveFilter] = useState<'all' | 'rider' | 'driver' | 'motorist'>('all');
   const [showDetail, setShowDetail] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'banned'>('all');
 
-  useEffect(() => { setTimeout(() => setLoading(false), 600); }, []);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get('/auth/admin/users');
+        setUsers(res.data);
+      } catch (e) {
+        console.error('Failed to fetch users:', e);
+        presentToast({ message: 'Error loading users', duration: 3000, color: 'danger' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+    const matchesSearch = user.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchText.toLowerCase()) ||
       user.phone.includes(searchText);
     const matchesRole = activeFilter === 'all' || user.role === activeFilter;
@@ -70,12 +75,28 @@ const AdminUsers: React.FC = () => {
     banned: users.filter(u => u.status === 'banned').length,
   };
 
-  const updateUserStatus = (id: string, status: 'active' | 'suspended' | 'banned') => {
-    presentToast({ message: `User ${status === 'active' ? 'activated' : status === 'suspended' ? 'suspended' : 'banned'}`, duration: 2000, color: status === 'active' ? 'success' : 'warning' });
+  const updateUserStatus = async (id: string, status: 'active' | 'suspended' | 'banned') => {
+    try {
+      await api.post('/auth/admin/update-user-status', { userId: id, status });
+      presentToast({ message: `User ${status === 'active' ? 'activated' : status === 'suspended' ? 'suspended' : 'banned'}`, duration: 2000, color: status === 'active' ? 'success' : 'warning' });
+      // Refresh users list
+      const res = await api.get('/auth/admin/users');
+      setUsers(res.data);
+    } catch (e) {
+      presentToast({ message: 'Error updating status', duration: 3000, color: 'danger' });
+    }
   };
 
-  const deleteUser = (id: string) => {
-    presentToast({ message: 'User deleted', duration: 2000, color: 'danger' });
+  const deleteUser = async (id: string) => {
+    try {
+      await api.delete(`/auth/admin/user/${id}`);
+      presentToast({ message: 'User deleted', duration: 2000, color: 'danger' });
+      // Refresh users list
+      const res = await api.get('/auth/admin/users');
+      setUsers(res.data);
+    } catch (e) {
+      presentToast({ message: 'Error deleting user', duration: 3000, color: 'danger' });
+    }
   };
 
   const getRoleIcon = (role: string) => {
@@ -146,17 +167,17 @@ const AdminUsers: React.FC = () => {
           {filteredUsers.map(user => {
             const sc = getStatusColor(user.status);
             return (
-              <div key={user._id} onClick={() => { setSelectedUser(user); setShowDetail(true); }}
+              <div key={user.id} onClick={() => { setSelectedUser(user); setShowDetail(true); }}
                 style={{background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.04)'}}>
                 <IonAvatar style={{width: 40, height: 40, background: '#2A2A2A'}}>
-                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=2A2A2A&color=fff&size=64&bold=true`} alt={user.name} />
+                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=2A2A2A&color=fff&size=64&bold=true`} alt={user.fullName} />
                 </IonAvatar>
                 <div style={{flex: 1}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                    <span style={{color: '#fff', fontSize: 13, fontWeight: 600}}>{user.name}</span>
+                    <span style={{color: '#fff', fontSize: 13, fontWeight: 600}}>{user.fullName}</span>
                     <IonIcon icon={getRoleIcon(user.role)} style={{color: getRoleColor(user.role), fontSize: 14}} />
                   </div>
-                  <p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{user.email || user.phone} • Joined {user.joinedDate}</p>
+                  <p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{user.email || user.phone} • Joined {new Date(user.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end'}}>
                   <span style={{background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, padding: '3px 8px', borderRadius: 6, fontSize: 9, fontWeight: 600}}>
@@ -176,12 +197,12 @@ const AdminUsers: React.FC = () => {
           {selectedUser && (
             <div style={{padding: 20, background: '#0d1117', color: '#fff', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
-                <h2 style={{margin: 0}}>{selectedUser.name}</h2>
+                <h2 style={{margin: 0}}>{selectedUser.fullName}</h2>
                 <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{color: '#fff', fontSize: 22}} /></IonButton>
               </div>
               <div style={{textAlign: 'center', marginBottom: 20}}>
                 <IonAvatar style={{width: 80, height: 80, margin: '0 auto 10px', background: '#2A2A2A'}}>
-                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=2A2A2A&color=fff&size=128&bold=true`} alt="" />
+                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.fullName)}&background=2A2A2A&color=fff&size=128&bold=true`} alt="" />
                 </IonAvatar>
                 {(() => { const sc = getStatusColor(selectedUser.status); return <span style={{background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600}}>{selectedUser.status}</span>; })()}
               </div>
@@ -191,20 +212,20 @@ const AdminUsers: React.FC = () => {
                 <p>🔄 Role: {selectedUser.role}</p>
                 <p>⭐ Rating: {selectedUser.rating || 'N/A'}</p>
                 <p>🚗 Rides: {selectedUser.totalRides || 0}</p>
-                <p>📅 Joined: {selectedUser.joinedDate}</p>
+                <p>📅 Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
               </div>
               <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
                 {selectedUser.status !== 'active' && (
-                  <IonButton expand="block" color="success" onClick={() => { updateUserStatus(selectedUser._id, 'active'); setShowDetail(false); }}>
+                  <IonButton expand="block" color="success" onClick={() => { updateUserStatus(selectedUser.id, 'active'); setShowDetail(false); }}>
                     <IonIcon icon={checkmarkCircleOutline} slot="start" /> Activate Account
                   </IonButton>
                 )}
                 {selectedUser.status === 'active' && (
-                  <IonButton expand="block" color="warning" onClick={() => { updateUserStatus(selectedUser._id, 'suspended'); setShowDetail(false); }}>
+                  <IonButton expand="block" color="warning" onClick={() => { updateUserStatus(selectedUser.id, 'suspended'); setShowDetail(false); }}>
                     <IonIcon icon={banOutline} slot="start" /> Suspend Account
                   </IonButton>
                 )}
-                <IonButton expand="block" color="danger" fill="outline" onClick={() => { deleteUser(selectedUser._id); setShowDetail(false); }}>
+                <IonButton expand="block" color="danger" fill="outline" onClick={() => { deleteUser(selectedUser.id); setShowDetail(false); }}>
                   <IonIcon icon={trashOutline} slot="start" /> Delete Permanently
                 </IonButton>
               </div>
@@ -220,9 +241,9 @@ const AdminUsers: React.FC = () => {
           buttons={[
             { text: 'Email User', icon: mailOutline, handler: () => { if (selectedUser?.email) window.location.href = `mailto:${selectedUser.email}`; } },
             { text: 'Call User', icon: callOutline, handler: () => { if (selectedUser?.phone) window.open(`tel:${selectedUser.phone}`, '_system'); } },
-            { text: selectedUser?.status === 'active' ? 'Suspend Account' : 'Activate Account', icon: selectedUser?.status === 'active' ? banOutline : checkmarkCircleOutline, handler: () => { updateUserStatus(selectedUser!._id, selectedUser?.status === 'active' ? 'suspended' : 'active'); } },
-            { text: 'Ban User', icon: banOutline, role: 'destructive', handler: () => { updateUserStatus(selectedUser!._id, 'banned'); } },
-            { text: 'Delete Permanently', role: 'destructive', icon: trashOutline, handler: () => { deleteUser(selectedUser!._id); } },
+            { text: selectedUser?.status === 'active' ? 'Suspend Account' : 'Activate Account', icon: selectedUser?.status === 'active' ? banOutline : checkmarkCircleOutline, handler: () => { updateUserStatus(selectedUser!.id, selectedUser?.status === 'active' ? 'suspended' : 'active'); } },
+            { text: 'Ban User', icon: banOutline, role: 'destructive', handler: () => { updateUserStatus(selectedUser!.id, 'banned'); } },
+            { text: 'Delete Permanently', role: 'destructive', icon: trashOutline, handler: () => { deleteUser(selectedUser!.id); } },
             { text: 'Cancel', role: 'cancel' }
           ]}
         />

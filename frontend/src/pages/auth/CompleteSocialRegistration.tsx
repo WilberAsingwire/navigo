@@ -78,7 +78,7 @@ const CompleteSocialRegistration: React.FC = () => {
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
                 placeholder="700 000 000"
-                maxlength={10}
+                maxLength={10}
                 onKeyDown={(e) => e.key === 'Enter' && handleCompleteRegistration()}
               />
             </div>

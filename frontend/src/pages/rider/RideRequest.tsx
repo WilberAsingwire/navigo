@@ -104,6 +104,10 @@ const RideRequest: React.FC = () => {
         setMatchingProgress(100);
         setMatchedDriver(data);
         socket.emit('join-ride-room', { rideId: data.rideId });
+        // Redirect to active ride page
+        setTimeout(() => {
+          ionRouter.push('/rider/active-ride');
+        }, 1500);
       });
       socket.on('no-drivers-found', (data: any) => {
         setIsMatching(false);

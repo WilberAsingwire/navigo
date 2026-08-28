@@ -20,7 +20,7 @@ export const setupSocketHandlers = (io: Server) => {
         // Use the userId associated with this socket connection
         // Note: In a real app, userId would be attached to socket during auth middleware
         // For this implementation, we'll assume the userId is passed or managed via session
-        const ride = await db.get('SELECT riderId, driverId FROM rides WHERE id = ?', [rideId]);
+        const ride = await db.get('SELECT userId, driverId FROM rides WHERE id = ?', [rideId]);
 
         if (!ride) {
           socket.emit('error', { message: 'Ride not found.' });
@@ -44,7 +44,7 @@ export const setupSocketHandlers = (io: Server) => {
 
       // Find approved, online, and available drivers
       const drivers = await db.all(
-        'SELECT id, name FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = 1 AND isAvailable = 1',
+        'SELECT id, fullName FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = TRUE AND isAvailable = TRUE',
         ['driver', 'motorist', 'approved']
       );
 
@@ -69,7 +69,7 @@ export const setupSocketHandlers = (io: Server) => {
 
       try {
         await db.run('UPDATE rides SET status = ?, driverId = ? WHERE id = ?', ['accepted', driverId, rideId]);
-        await db.run('UPDATE users SET isAvailable = 0 WHERE id = ?', [driverId]);
+        await db.run('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
 
         // Notify the rider that their ride has been accepted
         io.to(riderId).emit('ride-accepted', {
@@ -86,12 +86,28 @@ export const setupSocketHandlers = (io: Server) => {
     });
 
     // Real-time location updates from Driver to Rider
-    socket.on('update-location', (data: { rideId: string; lat: number; lng: number }) => {
-      // Send the update to everyone in the ride room
-      socket.to(data.rideId).emit('location-updated', {
-        lat: data.lat,
-        lng: data.lng
-      });
+    socket.on('update-location', async (data: { rideId: string; lat: number; lng: number; userId: string }) => {
+      const { rideId, lat, lng, userId } = data;
+      const db = getDB();
+      try {
+        // Persist location to the users table for the admin map
+        await db.run('UPDATE users SET currentLat = ?, currentLng = ? WHERE id = ?', [lat, lng, userId]);
+
+        // Send the update to everyone in the ride room
+        socket.to(rideId).emit('location-updated', {
+          lat,
+          lng
+        });
+
+        // Broadcast to admin map
+        io.emit('admin-location-updated', {
+          userId,
+          lat,
+          lng
+        });
+      } catch (e) {
+        console.error('Error updating location:', e);
+      }
     });
 
     // Ride status updates (arrived, started, completed)

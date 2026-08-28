@@ -22,7 +22,7 @@ const RiderDashboard: React.FC = () => {
     { id: '2', name: 'Sarah M.', vehicle: 'Bajaj Boxer', type: 'bike', distance: '1.2' },
     { id: '3', name: 'Peter O.', vehicle: 'Toyota Hiace', type: 'car', distance: '2.0' },
   ]);
-  const userData = { name: user?.name || 'Rider', stats: { totalRides: 5, rating: 4.8 } };
+  const userData = { name: user?.fullName || 'Rider', stats: { totalRides: 5, rating: 4.8 } };
 
   useEffect(() => { setTimeout(() => setLoading(false), 600); }, []);
 
@@ -42,7 +42,7 @@ const RiderDashboard: React.FC = () => {
                 className="profile-avatar"
                 onClick={() => history.push('/rider/profile')}
               >
-                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Rider')}&background=FF6B35&color=fff&size=64`} alt="profile" />
+                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Rider')}&background=FF6B35&color=fff&size=64`} alt="profile" />
               </IonAvatar>
             </div>
           </div>

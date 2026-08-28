@@ -29,7 +29,7 @@ router.get('/balance', authenticate, async (req: AuthRequest, res: Response) => 
 // ─── Top Up Wallet ──────────────────────────────────────────
 router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { amount } = req.body;
+    const { amount, paymentReference } = req.body;
     const userId = req.user?.userId;
     const db = getDB();
 
@@ -37,25 +37,36 @@ router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ ok: false, message: 'Invalid top-up amount' });
     }
 
+    if (!paymentReference) {
+      return res.status(400).json({ ok: false, message: 'Payment reference is required for verification' });
+    }
+
     const transactionId = 'tx_topup_' + Date.now();
 
-    // Use a transaction for consistency
-    await db.run('BEGIN');
+    // Use a dedicated client for the transaction
+    const tx = await db.getTransactionClient();
     try {
-      await db.run(
+      await tx.query('BEGIN');
+
+      // NOTE: In production, you MUST verify the paymentReference via a payment gateway (MoMo/Airtel)
+      // before proceeding with the update. This is currently a placeholder.
+
+      await tx.query(
         'UPDATE wallets SET balance = balance + ?, updatedAt = CURRENT_TIMESTAMP WHERE userId = ?',
         [amount, userId]
       );
-      await db.run(
+      await tx.query(
         'INSERT INTO wallet_transactions (id, userId, kind, amount, note) VALUES (?, ?, ?, ?, ?)',
-        [transactionId, userId, 'topup', amount, 'Wallet top-up']
+        [transactionId, userId, 'topup', amount, `Wallet top-up (Ref: ${paymentReference})`]
       );
-      await db.run('COMMIT');
+      await tx.query('COMMIT');
+      tx.release();
 
       const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
       res.json({ ok: true, balance: wallet?.balance });
     } catch (e) {
-      await db.run('ROLLBACK');
+      await tx.query('ROLLBACK');
+      tx.release();
       throw e;
     }
   } catch (error) {

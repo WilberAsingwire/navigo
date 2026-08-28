@@ -4,6 +4,8 @@ import { refreshOutline, bicycleOutline, carOutline, personOutline, pauseOutline
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import api from '../../services/api';
+import { io } from 'socket.io-client';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -46,30 +48,10 @@ const AdminLiveMap: React.FC = () => {
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   };
 
-  const generateUsers = useCallback(() => {
-    const newUsers = [];
-    for (let i = 1; i <= 8; i++) {
-      const roles = ['driver', 'motorist', 'rider'];
-      const role = roles[i % 3];
-      newUsers.push({
-        id: `${i}`, name: `${role === 'driver' ? 'Driver' : role === 'motorist' ? 'Motorist' : 'Rider'} ${i}`, role,
-        lat: userLocation[0] + (Math.random() - 0.5) * 0.04, lng: userLocation[1] + (Math.random() - 0.5) * 0.04,
-        status: Math.random() > 0.2 ? 'active' : 'idle',
-        tripTo: role !== 'rider' ? { lat: userLocation[0] + (Math.random() - 0.5) * 0.06, lng: userLocation[1] + (Math.random() - 0.5) * 0.06 } : undefined,
-      });
-    }
-    setUsers(newUsers);
-    setStats({
-      drivers: newUsers.filter(u => u.role === 'driver').length,
-      motorists: newUsers.filter(u => u.role === 'motorist').length,
-      riders: newUsers.filter(u => u.role === 'rider').length,
-      activeTrips: newUsers.filter(u => u.status === 'active' && u.role !== 'rider').length,
-    });
-  }, [userLocation]);
-
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setMapKey(prev => prev + 1);
+
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
@@ -77,15 +59,49 @@ const AdminLiveMap: React.FC = () => {
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
-    setTimeout(() => { generateUsers(); setLoading(false); }, 600);
-  }, [generateUsers]);
+
+    try {
+      const res = await api.get('/auth/admin/live-locations');
+      const fetchedUsers = res.data.map((u: any) => ({
+        ...u,
+        lat: u.currentLat,
+        lng: u.currentLng,
+        status: u.isOnline ? 'active' : 'idle'
+      }));
+      setUsers(fetchedUsers);
+      setStats({
+        drivers: fetchedUsers.filter(u => u.role === 'driver').length,
+        motorists: fetchedUsers.filter(u => u.role === 'motorist').length,
+        riders: fetchedUsers.filter(u => u.role === 'rider').length,
+        activeTrips: 0 // Requires more complex join with rides table
+      });
+    } catch (e) {
+      console.error('Failed to fetch live locations:', e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => { loadData(); }, []);
+
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(generateUsers, 8000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, generateUsers]);
+    const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
+
+    socket.on('admin-location-updated', (data: { userId: string; lat: number; lng: number }) => {
+      setUsers(prev => {
+        const index = prev.findIndex(u => u.id === data.userId);
+        if (index !== -1) {
+          const next = [...prev];
+          next[index] = { ...next[index], lat: data.lat, lng: data.lng };
+          return next;
+        }
+        return prev;
+      });
+    });
+
+    return () => { socket.disconnect(); };
+  }, [autoRefresh]);
 
   useEffect(() => {
     if (activeFilter === 'all') setFilteredUsers(users);
@@ -139,10 +155,7 @@ const AdminLiveMap: React.FC = () => {
               <FlyToButton center={userLocation} />
               <Marker position={userLocation} icon={riderIcon}><Popup>📍 Your Location</Popup></Marker>
               {filteredUsers.map(u => (
-                <React.Fragment key={u.id}>
-                  <Marker position={[u.lat, u.lng]} icon={getIcon(u.role)}><Popup><strong>{u.name}</strong><br/>Role: {u.role}<br/>Status: {u.status}</Popup></Marker>
-                  {u.tripTo && <Polyline positions={[[u.lat, u.lng], [u.tripTo.lat, u.tripTo.lng]]} color={u.role === 'driver' ? '#4da6ff' : '#ffab40'} weight={2} opacity={0.4} dashArray="6, 4" />}
-                </React.Fragment>
+                <Marker key={u.id} position={[u.lat, u.lng]} icon={getIcon(u.role)}><Popup><strong style={{color: '#000'}}>{u.fullName}</strong><br/><span style={{color: '#666'}}>Role: {u.role}</span><br/><span style={{color: '#666'}}>Status: {u.status}</span></Popup></Marker>
               ))}
             </MapContainer>
           </div>
@@ -156,7 +169,7 @@ const AdminLiveMap: React.FC = () => {
           {filteredUsers.map(u => (
             <div key={u.id} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10}}>
               <IonIcon icon={getRoleIcon(u.role)} style={{color: u.role === 'driver' ? '#4da6ff' : u.role === 'motorist' ? '#ffab40' : '#00e676', fontSize: 18}} />
-              <div style={{flex: 1}}><span style={{color: '#fff', fontSize: 13}}>{u.name}</span><p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{u.lat.toFixed(4)}, {u.lng.toFixed(4)}</p></div>
+              <div style={{flex: 1}}><span style={{color: '#fff', fontSize: 13}}>{u.fullName}</span><p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{u.lat?.toFixed(4)}, {u.lng?.toFixed(4)}</p></div>
               <IonBadge style={{background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: 10}}>{u.status === 'active' ? 'Active' : 'Idle'}</IonBadge>
             </div>
           ))}

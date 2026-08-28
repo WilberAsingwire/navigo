@@ -87,6 +87,29 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
   }
 });
 
+// ─── Get Ride Details ──────────────────────────────────────
+router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { rideId } = req.params;
+    const db = getDB();
+
+    const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
+    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+
+    const rider = await db.get('SELECT id, fullName, phone, verificationStatus FROM users WHERE id = ?', [ride.userId]);
+
+    res.json({
+      ...ride,
+      rider: rider,
+      pickup: { address: ride.pickupName, lat: ride.pickupLat, lng: ride.pickupLng },
+      destination: { address: ride.dropName, lat: ride.dropLat, lng: ride.dropLng }
+    });
+  } catch (error) {
+    console.error('Ride details error:', error);
+    res.status(500).json({ message: 'Error fetching ride details' });
+  }
+});
+
 // ─── Get Recent Trips (for Home Screen) ────────────────────────────────
 router.get('/recent', authenticate, async (req: AuthRequest, res: Response) => {
   try {

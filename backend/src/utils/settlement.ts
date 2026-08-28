@@ -38,45 +38,50 @@ export const settleRidePayment = async (rideId: string) => {
     }
 
     // 2. Atomic Wallet Transfer
-    await db.run('BEGIN');
+    const tx = await db.getTransactionClient();
     try {
+      await tx.query('BEGIN');
+
       // Deduct from rider
-      const riderWallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [riderId]);
+      const riderWalletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ?', [riderId]);
+      const riderWallet = riderWalletRes.rows[0];
       if (!riderWallet || riderWallet.balance < fare) {
         throw new Error('Insufficient wallet balance');
       }
 
-      await db.run(
+      await tx.query(
         'UPDATE wallets SET balance = balance - ? WHERE userId = ?',
         [fare, riderId]
       );
 
       // Credit driver
-      await db.run(
+      await tx.query(
         'UPDATE wallets SET balance = balance + ? WHERE userId = ?',
         [driverShare, driverId]
       );
 
       // Record rider transaction
-      await db.run(
+      await tx.query(
         'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
         [`tx_pay_${Date.now()}_${riderId}`, riderId, 'ride_payment', -fare, `Payment for ride ${rideId}`, rideId]
       );
 
       // Record driver transaction
-      await db.run(
+      await tx.query(
         'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
         [`tx_earn_${Date.now()}_${driverId}`, driverId, 'payout', driverShare, `Earnings from ride ${rideId}`, rideId]
       );
 
       // Mark ride as settled
-      await db.run('UPDATE rides SET settled = true WHERE id = ?', [rideId]);
+      await tx.query('UPDATE rides SET settled = true WHERE id = ?', [rideId]);
 
-      await db.run('COMMIT');
+      await tx.query('COMMIT');
+      tx.release();
       console.log(`✅ Successfully settled ride ${rideId}: UGX ${fare} (Driver: ${driverShare}, Navigo: ${navigoShare})`);
       return { success: true, message: 'Wallet settlement completed' };
     } catch (e: any) {
-      await db.run('ROLLBACK');
+      await tx.query('ROLLBACK');
+      tx.release();
       throw e;
     }
   } catch (error: any) {

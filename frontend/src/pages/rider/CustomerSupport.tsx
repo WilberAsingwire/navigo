@@ -6,6 +6,7 @@ import {
   IonTextarea, IonButton, IonSelect, IonSelectOption, useIonToast,
   IonBadge, IonCard, IonCardContent
 } from '@ionic/react';
+import { useHistory } from 'react-router-dom';
 import {
   helpCircleOutline, logoWhatsapp, mailOutline, callOutline,
   alertCircleOutline, chatbubbleEllipsesOutline, locationOutline,
@@ -15,6 +16,7 @@ import {
 import './CustomerSupport.css';
 
 const RiderSupport: React.FC = () => {
+  const history = useHistory();
   const [segment, setSegment] = useState<'faq' | 'report' | 'contact'>('faq');
   const [reportType, setReportType] = useState('');
   const [reportDescription, setReportDescription] = useState('');

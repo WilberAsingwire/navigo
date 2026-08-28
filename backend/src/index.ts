@@ -11,6 +11,7 @@ import driverRoutes from './routes/drivers';
 import userRoutes from './routes/users';
 import walletRoutes from './routes/wallet';
 import poiRoutes from './routes/poi';
+import supportRoutes from './routes/support';
 import { initDB } from './config/database';
 import { setupSocketHandlers } from './socket/socketHandler';
 
@@ -85,6 +86,7 @@ app.use('/api/drivers', driverRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/poi', poiRoutes);
+app.use('/api/support', supportRoutes);
 
 app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
 
@@ -107,21 +109,25 @@ initDB().then(async () => {
     const db = require('./config/database').getDB();
     const { hashPassword } = require('./utils/auth');
 
-    const adminEmail = 'navigouganda@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL;
 
-    // Check if admin already exists
-    const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [adminEmail]);
-
-    if (!existingAdmin) {
-      const adminPassword = await hashPassword('Kakumiro222');
-      const adminId = 'admin_' + Date.now();
-      await db.run(
-        'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', true, 'approved', new Date().toISOString()]
-      );
-      console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
+    if (!adminEmail) {
+      console.log('⚠️ ADMIN_EMAIL not set in environment. Skipping admin auto-creation.');
     } else {
-      console.log(`✅ Admin account already exists: ${adminEmail}`);
+      // Check if admin already exists
+      const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [adminEmail]);
+
+      if (!existingAdmin) {
+        const adminPassword = await hashPassword(process.env.ADMIN_PASSWORD || 'ChangeMe123!');
+        const adminId = 'admin_' + Date.now();
+        await db.run(
+          'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', true, 'approved', new Date().toISOString()]
+        );
+        console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
+      } else {
+        console.log(`✅ Admin account already exists: ${adminEmail}`);
+      }
     }
   } catch (err) {
     console.error('❌ Critical failure setting up admin:', err);

@@ -12,11 +12,9 @@ import {
   cloudUploadOutline, documentTextOutline, bicycleOutline,
   starOutline, diamondOutline, flashOutline
 } from 'ionicons/icons';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import './DriverDocuments.css';
-
-const API_URL = 'https://navigo-1-z7ne.onrender.com/api';
 
 const VEHICLE_TYPES = [
   { id: 'boda', label: 'Boda Boda', icon: bicycleOutline, desc: 'Fast & affordable' },
@@ -52,7 +50,7 @@ const DriverDocuments: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await axios.post(`${API_URL}/auth/upload-documents`, {
+      await api.post('/auth/upload-documents', {
         userId: user?.id,
         nationalId: nationalId.trim(),
         drivingLicense: drivingLicense.trim(),

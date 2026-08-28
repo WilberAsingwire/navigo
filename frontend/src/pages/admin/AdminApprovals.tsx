@@ -11,12 +11,13 @@ import {
   starOutline, eyeOutline, refreshOutline,
   checkmarkDoneOutline, closeOutline
 } from 'ionicons/icons';
+import api from '../../services/api';
 import BodaSafeScore from '../../components/BodaSafeBadges';
 import './AdminApprovals.css';
 
 interface Driver {
   id: string;
-  name: string;
+  fullName: string;
   phone: string;
   email?: string;
   role: string;
@@ -32,16 +33,9 @@ interface Driver {
   createdAt: string;
 }
 
-const MOCK_DRIVERS: Driver[] = [
-  { id: '1', name: 'Peter Okello', phone: '0772123456', role: 'driver', verificationStatus: 'pending', isFemaleDriver: false, driverDocs: { nationalId: 'CF8901234ABCD', drivingLicense: 'DL-2023-001234', vehiclePlate: 'UBA 123A', vehicleModel: 'Toyota Prius', vehicleColor: 'White' }, createdAt: '2 days ago' },
-  { id: '2', name: 'Grace Nakamya', phone: '0753123456', role: 'motorist', verificationStatus: 'pending', isFemaleDriver: true, driverDocs: { nationalId: 'CF8905678EFGH', drivingLicense: 'DL-2023-005678', vehiclePlate: 'UBC 456B', vehicleModel: 'Bajaj Boxer', vehicleColor: 'Red' }, createdAt: '1 day ago' },
-  { id: '3', name: 'James Ouma', phone: '0789123456', role: 'driver', verificationStatus: 'approved', isFemaleDriver: false, driverDocs: { nationalId: 'CF8909012IJKL', drivingLicense: 'DL-2023-009012', vehiclePlate: 'UBD 789C', vehicleModel: 'Toyota Hiace', vehicleColor: 'Silver' }, createdAt: '5 hours ago' },
-  { id: '4', name: 'Sarah Birungi', phone: '0701123456', role: 'motorist', verificationStatus: 'rejected', isFemaleDriver: true, driverDocs: { nationalId: 'CF8903456MNOP', drivingLicense: 'DL-2023-003456', vehiclePlate: 'UBE 012D', vehicleModel: 'Honda CG125', vehicleColor: 'Black' }, createdAt: '3 hours ago' },
-];
-
 const AdminApprovals: React.FC = () => {
-  const [drivers] = useState<Driver[]>(MOCK_DRIVERS);
-  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>(MOCK_DRIVERS);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
@@ -49,25 +43,59 @@ const AdminApprovals: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-  useEffect(() => { setTimeout(() => setIsLoading(false), 600); }, []);
-
-  useEffect(() => {
-    let filtered = MOCK_DRIVERS;
-    if (activeFilter !== 'all') filtered = filtered.filter(d => d.verificationStatus === activeFilter);
-    if (searchQuery) filtered = filtered.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase()) || d.phone.includes(searchQuery) || d.driverDocs?.vehiclePlate?.toLowerCase().includes(searchQuery.toLowerCase()));
-    setFilteredDrivers(filtered);
-  }, [activeFilter, searchQuery]);
-
-  const stats = {
-    total: MOCK_DRIVERS.length,
-    pending: MOCK_DRIVERS.filter(d => d.verificationStatus === 'pending').length,
-    approved: MOCK_DRIVERS.filter(d => d.verificationStatus === 'approved').length,
-    rejected: MOCK_DRIVERS.filter(d => d.verificationStatus === 'rejected').length,
+  const fetchPendingDrivers = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get('/auth/admin/pending-drivers');
+      const fetchedDrivers = res.data.drivers || [];
+      setDrivers(fetchedDrivers);
+      setFilteredDrivers(fetchedDrivers);
+    } catch (e) {
+      console.error('Failed to fetch pending drivers:', e);
+      setToastMsg('❌ Failed to load pending drivers');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleVerify = (driverId: string, action: 'approve' | 'reject') => {
-    setToastMsg(action === 'approve' ? '✅ Driver approved!' : '❌ Driver rejected');
-    setShowToast(true);
+  useEffect(() => {
+    fetchPendingDrivers();
+  }, []);
+
+  useEffect(() => {
+    let filtered = drivers;
+    if (activeFilter !== 'all') filtered = filtered.filter(d => d.verificationStatus === activeFilter);
+    if (searchQuery) filtered = filtered.filter(d =>
+      d.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.phone.includes(searchQuery) ||
+      d.driverDocs?.vehiclePlate?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredDrivers(filtered);
+  }, [activeFilter, searchQuery, drivers]);
+
+  const stats = {
+    total: drivers.length,
+    pending: drivers.filter(d => d.verificationStatus === 'pending').length,
+    approved: drivers.filter(d => d.verificationStatus === 'approved').length,
+    rejected: drivers.filter(d => d.verificationStatus === 'rejected').length,
+  };
+
+  const handleVerify = async (driverId: string, action: 'approve' | 'reject') => {
+    try {
+      const res = await api.post('/auth/admin/verify-driver', {
+        driverId,
+        action,
+        reason: action === 'reject' ? 'Documents not satisfactory' : undefined
+      });
+      setToastMsg(res.data.message || (action === 'approve' ? '✅ Driver approved!' : '❌ Driver rejected'));
+      setShowToast(true);
+      await fetchPendingDrivers(); // Refresh the list
+    } catch (e: any) {
+      console.error('Verification failed:', e);
+      setToastMsg(`❌ ${e.response?.data?.message || 'Verification failed'}`);
+      setShowToast(true);
+    }
   };
 
   return (
@@ -115,10 +143,10 @@ const AdminApprovals: React.FC = () => {
                 <IonCardContent>
                   <div className="driver-header">
                     <IonAvatar>
-                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(driver.name)}&background=FF6B35&color=fff&size=64`} alt={driver.name} />
+                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(driver.fullName)}&background=FF6B35&color=fff&size=64`} alt={driver.fullName} />
                     </IonAvatar>
                     <div className="driver-info">
-                      <h3>{driver.name} {driver.isFemaleDriver && '👩'}</h3>
+                      <h3>{driver.fullName} {driver.isFemaleDriver && '👩'}</h3>
                       <div style={{display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4}}>
                         <IonBadge style={{background: '#1E1E1E', color: '#fff'}}>{driver.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}</IonBadge>
                         <IonBadge style={{
@@ -166,7 +194,7 @@ const AdminApprovals: React.FC = () => {
               </div>
               <BodaSafeScore badges={['helmet','sanitized','idverified']} rating={4.5} totalRides={50} />
               <div style={{background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: 16, marginBottom: 16}}>
-                <h3 style={{color: '#fff', margin: '0 0 12px'}}>{selectedDriver.name} {selectedDriver.isFemaleDriver && '👩'}</h3>
+                <h3 style={{color: '#fff', margin: '0 0 12px'}}>{selectedDriver.fullName} {selectedDriver.isFemaleDriver && '👩'}</h3>
                 <p style={{color: '#D1D5DB'}}>📞 {selectedDriver.phone}</p>
                 <p style={{color: '#D1D5DB'}}>📧 {selectedDriver.email || 'No email'}</p>
                 <p style={{color: '#D1D5DB'}}>🚗 {selectedDriver.driverDocs?.vehiclePlate} • {selectedDriver.driverDocs?.vehicleModel}</p>
