@@ -49,7 +49,21 @@ const CustomerDashboard: React.FC = () => {
     return () => { alive = false; };
   }, [user?.id]);
 
-  const handleRefresh = (event: any) => { setTimeout(() => { event.target.complete(); }, 800); };
+  const handleRefresh = (event: any) => { setTimeout(() => { event?.target?.complete(); }, 800); };
+
+  // Defensive: never crash if auth state is unexpected
+  if (!user) {
+    return (
+      <IonPage>
+        <IonContent className="rider-page-container">
+          <div style={{ padding: 24, textAlign: 'center', color: '#fff' }}>
+            <h3>Loading profile...</h3>
+            <p style={{ color: '#94A3B8' }}>Please wait while we fetch your account.</p>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
@@ -136,7 +150,7 @@ const CustomerDashboard: React.FC = () => {
           </div>
 
           {/* 3. ZAWADI REWARDS */}
-          <LoyaltyCard points={280} tier="silver" />
+          {user && <LoyaltyCard points={280} tier="silver" />}
 
           {/* 4. POPULAR DESTINATIONS (real Kampala shortcuts → booking) */}
           <div className="drivers-section-header">
