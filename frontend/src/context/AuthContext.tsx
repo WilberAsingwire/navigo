@@ -6,7 +6,7 @@ const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
 interface User {
   id: string;
-  name: string;
+  fullName: string;
   phone: string;
   email?: string;
   role: 'rider' | 'driver' | 'admin';

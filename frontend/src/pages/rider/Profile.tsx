@@ -21,7 +21,7 @@ const Profile: React.FC = () => {
   const [showEdit, setShowEdit] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
-  const [editName, setEditName] = useState(user?.name || '');
+  const [editName, setEditName] = useState(user?.fullName || '');
   const [editEmail, setEditEmail] = useState(user?.email || '');
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
@@ -34,11 +34,11 @@ const Profile: React.FC = () => {
       const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
       const token = localStorage.getItem('navigo_token');
       await axios.put(`${BASE_URL}/api/users/update`,
-        { name: editName, email: editEmail },
+        { fullName: editName, email: editEmail },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      updateUser({ name: editName, email: editEmail });
+      updateUser({ fullName: editName, email: editEmail });
       setShowEdit(false);
       setToastMsg('Profile updated successfully! ✅');
       setShowToast(true);
@@ -67,7 +67,7 @@ const Profile: React.FC = () => {
         <IonToolbar>
           <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
           <IonTitle>Profile</IonTitle>
-          <IonButton slot="end" fill="clear" onClick={() => { setEditName(user?.name || ''); setEditEmail(user?.email || ''); setShowEdit(true); }}>
+          <IonButton slot="end" fill="clear" onClick={() => { setEditName(user?.fullName || ''); setEditEmail(user?.email || ''); setShowEdit(true); }}>
             <IonIcon icon={createOutline} style={{ color: '#FF6B35' }} />
           </IonButton>
         </IonToolbar>
@@ -79,9 +79,9 @@ const Profile: React.FC = () => {
           {/* Avatar Section */}
           <div style={{ textAlign: 'center', marginBottom: 20, paddingTop: 10 }}>
             <IonAvatar style={{ width: 88, height: 88, margin: '0 auto 12px', border: '3px solid #FF6B35' }}>
-              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Rider')}&background=FF6B35&color=fff&size=128`} alt="Profile" />
+              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Rider')}&background=FF6B35&color=fff&size=128`} alt="Profile" />
             </IonAvatar>
-            <h2 style={{ color: '#fff', margin: '8px 0 2px', fontSize: 20 }}>{user?.name || 'Rider'}</h2>
+            <h2 style={{ color: '#fff', margin: '8px 0 2px', fontSize: 20 }}>{user?.fullName || 'Rider'}</h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
               {user?.role === 'rider' ? '🚗 Rider' : user?.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'} • {user?.phone || 'No phone'}
             </p>
@@ -108,7 +108,7 @@ const Profile: React.FC = () => {
               <IonIcon icon={personOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
               <IonLabel>
                 <h3 style={{ color: '#fff', fontSize: 13, margin: 0 }}>Full Name</h3>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>{user?.name || 'Not set'}</p>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>{user?.fullName || 'Not set'}</p>
               </IonLabel>
             </IonItem>
             <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any}>
