@@ -3,6 +3,10 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
 import api from '../services/api';
+import bodaImg from '../assets/vehicles/boda.png';
+import goImg from '../assets/vehicles/go.png';
+import comfortImg from '../assets/vehicles/comfort.png';
+import xlImg from '../assets/vehicles/xl.png';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -52,10 +56,10 @@ const poiIcon = (emoji: string) => L.divIcon({
 });
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
-  boda: { url: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png', color: '#ffab40' },
-  go: { url: 'https://cdn-icons-png.flaticon.com/512/741/741407.png', color: '#FF6B35' },
-  comfort: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202920.png', color: '#4CAF50' },
-  xl: { url: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png', color: '#2196F3' },
+  boda: { url: bodaImg, color: '#ffab40' },
+  go: { url: goImg, color: '#FF6B35' },
+  comfort: { url: comfortImg, color: '#4CAF50' },
+  xl: { url: xlImg, color: '#2196F3' },
 };
 
 
