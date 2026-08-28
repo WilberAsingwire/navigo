@@ -102,7 +102,7 @@ router.post('/register', async (req: Request, res: Response) => {
       email: email ? email.toLowerCase().trim() : null,
       password: hashedPassword,
       role: userRole,
-      phoneVerified: 1,
+      phoneVerified: true,
       verificationStatus: needsVerification ? 'unverified' : 'approved',
       createdAt: new Date().toISOString()
     };
