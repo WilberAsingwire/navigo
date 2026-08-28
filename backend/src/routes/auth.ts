@@ -250,10 +250,10 @@ router.post('/google-register', async (req: Request, res: Response) => {
 // ─── UPLOAD DRIVER DOCUMENTS ─────────────────────────
 router.post('/upload-documents', async (req: Request, res: Response) => {
   try {
-    const { userId, nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle } = req.body;
+    const { userId, nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle, vehicleType } = req.body;
     const db = getDB();
 
-    const user = await db.get('SELECT * FROM users WHERE id = ?', userId);
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
@@ -268,6 +268,9 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
     if (!vehiclePlate) {
       return res.status(400).json({ message: 'Vehicle plate number is required.' });
     }
+    if (!vehicleType) {
+      return res.status(400).json({ message: 'Vehicle type is required.' });
+    }
 
     const driverDocs = JSON.stringify({
       nationalId,
@@ -279,13 +282,23 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       selfieWithVehicle
     });
 
+    // 1. Update user verification status and docs
     await db.run('UPDATE users SET driverDocs = ?, verificationStatus = ? WHERE id = ?', [driverDocs, 'pending', userId]);
+
+    // 2. Upsert driver profile with vehicle type and plate
+    await db.run(
+      `INSERT INTO driver_profiles (userId, vehicleType, plate)
+       VALUES (?, ?, ?)
+       ON CONFLICT (userId) DO UPDATE SET vehicleType = EXCLUDED.vehicleType, plate = EXCLUDED.plate`,
+      [userId, vehicleType, vehiclePlate.toUpperCase()]
+    );
 
     res.json({
       message: 'Documents uploaded! Admin will review within 24-48 hours.',
       user: { ...user, driverDocs: JSON.parse(driverDocs), verificationStatus: 'pending' }
     });
   } catch (error) {
+    console.error('Upload documents error:', error);
     res.status(500).json({ message: 'Upload failed.' });
   }
 });
