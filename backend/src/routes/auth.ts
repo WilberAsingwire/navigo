@@ -86,8 +86,10 @@ router.post('/register', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Phone already registered. Please login.' });
     }
 
-    if (email) {
-      const existingEmail = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+    // Fix: Ensure empty strings are treated as null/missing for unique checks
+    const processedEmail = (email && email.trim()) ? email.toLowerCase().trim() : null;
+    if (processedEmail) {
+      const existingEmail = await db.get('SELECT * FROM users WHERE email = ?', [processedEmail]);
       if (existingEmail) {
         return res.status(400).json({ message: 'Email already registered.' });
       }
@@ -102,7 +104,7 @@ router.post('/register', async (req: Request, res: Response) => {
       id: userId,
       fullName: fullName.trim(),
       phone: cleanPhone,
-      email: email ? email.toLowerCase().trim() : null,
+      email: processedEmail,
       password: hashedPassword,
       role: userRole,
       phoneVerified: true,
