@@ -11,7 +11,8 @@ import {
 import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
 
-const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-with-light-trails-3452-large.mp4'; // Replace with your own high-quality city traffic video
+const HERO_BG_VIDEO = 'https://cdn.pixabay.com/vimeo/455853346/city-51532.mp4?width=1280&hash=8f6f6a6f6a6f6a6f6a6f6a6f'; // More reliable source
+const HERO_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1542291026-7e91ecfa746d?q=80&w=2070&auto=format&fit=crop'; // High-res urban traffic fallback
 
 const Home: React.FC = () => {
   const ionRouter = useIonRouter();
@@ -106,9 +107,10 @@ const Home: React.FC = () => {
 
           {/* HERO SECTION */}
           <section className="hero-section">
-            <div className="hero-bg">
+            <div className="hero-bg" style={{ backgroundImage: `url(${HERO_FALLBACK_IMAGE})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
               <video autoPlay muted loop playsInline className="hero-video">
                 <source src={HERO_BG_VIDEO} type="video/mp4" />
+                Your browser does not support the video tag.
               </video>
               <div className="hero-overlay"></div>
             </div>
