@@ -141,6 +141,7 @@ const App: React.FC = () => {
               <Route path="/admin/home" exact render={() => <Redirect to="/admin/dashboard" />} />
               <Route path="/admin/approvals" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminApprovals} />} />
               <Route path="/admin/support" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminSupport} />} />
+              <Route path="/admin/payouts" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminPayouts} />} />
               <Route path="/admin/users" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUsers} />} />
               <Route path="/admin/map" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} />} />
               <Route path="/admin/approve" exact render={() => <ProtectedContent allowedRoles={['admin']} component={AdminUserReview} />} />

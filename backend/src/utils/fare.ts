@@ -1,13 +1,40 @@
+/**
+ * NAVIGO PRICING ENGINE — researched & calibrated for Kampala (2026).
+ *
+ * Market anchors (research, 2025-2026):
+ *  - Street boda: 1-3km ≈ UGX 1,000 | 4-6km ≈ 2,000 | 7-10km ≈ 3,000 | long 5k-20k
+ *  - Uber BODA:   min 1,500, base 500, 450/km, 70/min, cancellation 1,500
+ *  - Special hire: 15,000-20,000 to most destinations
+ *  - Petrol: ~UGX 5,800-7,000/L (2026) + UGX 200/L fuel levy (June 2026)
+ *  - Competitor commission: Bolt 20%, Uber 20-25%, SafeBoda 15%, Union 10%
+ *
+ * NAVIGO doctrine ("nobody gets cheated"):
+ *  1. NO SURGE — Kampala traffic is compensated by the per-minute component,
+ *     so the quoted price is the final price. Customers never face
+ *     "quoted low, charged 40k more" (the #1 market complaint).
+ *  2. Round DOWN to the nearest 100 (customer-friendly, Tinka-style).
+ *  3. First 500m free (covered by the base fare).
+ *  4. Flat 10% commission — half of Bolt's, at the Union/Tinka tier.
+ *  5. Tips go 100% to the driver. Commission never applies to tips.
+ *  6. Mobile-money payout fee is absorbed by NAVIGO — the driver's 90%
+ *     lands in full (receiving MoMo is free in Uganda).
+ */
+
 export type VehicleType = "boda" | "economy" | "comfort" | "xl";
 
 export interface VehicleSpec {
   type: VehicleType;
   name: string;
   tagline: string;
+  /** Covers trip start + first 500m (free distance). */
   base: number;
+  /** UGX per billable kilometre (after the first 500m). */
   perKm: number;
+  /** UGX per minute — this is how Kampala traffic pays the driver (no surge needed). */
   perMin: number;
-  surgeMultiplier: number;
+  /** Added on top when the trip is a delivery (handling fee). */
+  deliveryFee: number;
+  /** Never charge below this. */
   min: number;
   seats: string;
   pickupEtaMin: [number, number]; // display range
@@ -16,13 +43,13 @@ export interface VehicleSpec {
 export const VEHICLES: VehicleSpec[] = [
   {
     type: "boda",
-    name: "Navigo Boda",
+    name: "NAVIGO Boda",
     tagline: "Fastest way across town",
-    base: 1500,
-    perKm: 600,
-    perMin: 80,
-    surgeMultiplier: 1.0,
-    min: 2000,
+    base: 800,
+    perKm: 450,
+    perMin: 45,
+    deliveryFee: 500,
+    min: 1500,
     seats: "1 passenger",
     pickupEtaMin: [2, 5],
   },
@@ -30,10 +57,10 @@ export const VEHICLES: VehicleSpec[] = [
     type: "economy",
     name: "NAVIGO Go",
     tagline: "Affordable everyday rides",
-    base: 2000,
-    perKm: 900,
-    perMin: 100,
-    surgeMultiplier: 1.0,
+    base: 1500,
+    perKm: 750,
+    perMin: 70,
+    deliveryFee: 1000,
     min: 3000,
     seats: "Up to 4 passengers",
     pickupEtaMin: [4, 9],
@@ -42,10 +69,10 @@ export const VEHICLES: VehicleSpec[] = [
     type: "comfort",
     name: "NAVIGO Comfort",
     tagline: "Newer cars, top drivers",
-    base: 4000,
-    perKm: 1200,
-    perMin: 150,
-    surgeMultiplier: 1.2,
+    base: 2500,
+    perKm: 950,
+    perMin: 90,
+    deliveryFee: 1500,
     min: 5000,
     seats: "Up to 4 passengers",
     pickupEtaMin: [5, 12],
@@ -54,30 +81,65 @@ export const VEHICLES: VehicleSpec[] = [
     type: "xl",
     name: "NAVIGO XL",
     tagline: "Extra space for groups",
-    base: 6000,
-    perKm: 1800,
-    perMin: 200,
-    surgeMultiplier: 1.1,
+    base: 4000,
+    perKm: 1300,
+    perMin: 110,
+    deliveryFee: 2000,
     min: 8000,
     seats: "Up to 6 passengers",
     pickupEtaMin: [6, 15],
   },
 ];
 
+export const COMMISSION_RATE: number = Math.min(
+  0.2,
+  Math.max(0.05, Number(process.env.NAVIGO_COMMISSION_RATE ?? 0.1))
+);
+
+export const FREE_FIRST_KM = 0.5;
+
 export function getVehicle(type: string): VehicleSpec {
-  const normalizedType = type === 'go' ? 'economy' : type;
+  const normalizedType = type === "go" ? "economy" : type;
   return VEHICLES.find((v) => v.type === normalizedType) ?? VEHICLES[0];
 }
 
-/** Recommended fare in UGX, rounded to nearest 100. */
-export function fareQuote(type: string, km: number, min: number = 0): number {
+export interface FareBreakdown {
+  base: number;
+  distance: number;
+  time: number;
+  deliveryFee: number;
+  total: number;
+  driverShare: number;
+  commission: number;
+}
+
+const roundDown100 = (n: number) => Math.floor(n / 100) * 100;
+
+export function fareBreakdown(
+  type: string,
+  km: number,
+  min: number = 0,
+  serviceType: "ride" | "delivery" = "ride"
+): FareBreakdown {
   const v = getVehicle(type);
-  const distFare = Math.round(km * v.perKm);
-  const timeFare = Math.round(min * v.perMin);
+  const billableKm = Math.max(0, km - FREE_FIRST_KM);
+
   const base = v.base;
-  const surge = Math.round((base + distFare + timeFare) * (v.surgeMultiplier - 1));
-  const raw = Math.max(v.min, base + distFare + timeFare + surge);
-  return Math.round(raw / 100) * 100;
+  const distance = Math.round(billableKm * v.perKm);
+  const time = Math.round(min * v.perMin);
+  const deliveryFee = serviceType === "delivery" ? v.deliveryFee : 0;
+
+  let total = Math.max(v.min, base + distance + time + deliveryFee);
+  total = roundDown100(total);
+
+  const commission = Math.round(total * COMMISSION_RATE);
+  const driverShare = total - commission;
+
+  return { base, distance, time, deliveryFee, total, driverShare, commission };
+}
+
+export function fareQuote(type: string, km: number, min: number = 0, serviceType: "ride" | "delivery" = "ride"): number {
+  return fareBreakdown(type, km, min, serviceType).total;
 }
 
 export function clampOffer(type: string, km: number, min: number, offer: number): number {
@@ -95,22 +157,10 @@ export function offerBounds(type: string, km: number, min: number): { min: numbe
   };
 }
 
+export function driverShare(fare: number): number {
+  return fare - Math.round(fare * COMMISSION_RATE);
+}
+
 export function formatUGX(n: number): string {
   return `UGX ${Math.abs(Math.round(n)).toLocaleString("en-UG")}`;
-}
-
-export function formatKm(km: number): string {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
-}
-
-export function formatDuration(min: number): string {
-  if (min < 1) return "<1 min";
-  if (min < 60) return `${Math.round(min)} min`;
-  const h = Math.floor(min / 60);
-  return `${h}h ${Math.round(min % 60)}m`;
-}
-
-/** Captain keeps 90% — the fairest split in Uganda. */
-export function captainShare(fare: number): number {
-  return Math.round(fare * 0.9);
 }

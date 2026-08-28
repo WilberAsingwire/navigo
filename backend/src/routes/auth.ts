@@ -438,7 +438,7 @@ router.post('/forgot-password', authLimiter, smsLimiter, async (req: Request, re
       );
     }
 
-    console.log(`🔑 Reset code for ${cleanPhone}: ${resetCode}`);
+    // Reset code sent via SMS/Email
 
     res.json({
       message: 'If registered, you will receive a reset code.',

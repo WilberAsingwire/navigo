@@ -23,7 +23,22 @@ app.set('trust proxy', 1); // Trust Render's proxy to ensure HTTPS is detected c
 
 const httpServer = createServer(app);
 
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : null;
+app.use(cors({
+  origin: (origin, callback) => {
+    // If ALLOWED_ORIGINS is not set, allow all origins (safe default for deployment)
+    if (!allowedOrigins) {
+      return callback(null, true);
+    }
+    // Otherwise, only allow origins in the list (or requests with no origin)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json());
 app.use(passport.initialize());
 
@@ -100,7 +115,7 @@ app.use((req, res, next) => {
 
 
 // Socket.io
-const io = new Server(httpServer, { cors: { origin: '*' } });
+const io = new Server(httpServer, { cors: { origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*' } });
 setIO(io);
 setupSocketHandlers(io);
 
@@ -121,7 +136,11 @@ initDB().then(async () => {
       const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [adminEmail]);
 
       if (!existingAdmin) {
-        const adminPassword = await hashPassword(process.env.ADMIN_PASSWORD || 'ChangeMe123!');
+        if (!process.env.ADMIN_PASSWORD) {
+  console.error('❌ CRITICAL: ADMIN_PASSWORD not set in environment. Admin auto-creation aborted.');
+  return;
+}
+const adminPassword = await hashPassword(process.env.ADMIN_PASSWORD);
         const adminId = 'admin_' + Date.now();
         await db.run(
           'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',

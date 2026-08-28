@@ -27,6 +27,7 @@ interface Ride {
   serviceType: 'ride' | 'delivery';
   vehicleType: string;
   fareFinal: number;
+  tip?: number;
   pickup: { address: string; lat: number; lng: number };
   destination: { address: string; lat: number; lng: number };
   packageDetails?: string;
@@ -55,6 +56,8 @@ const ActiveRide: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [rating, setRating] = useState(0);
+  const [tip, setTip] = useState(0);
+  const [isTipping, setIsTipping] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const rideIdRef = useRef<string | null>(null);
 
@@ -112,6 +115,22 @@ const ActiveRide: React.FC = () => {
       socket.off('ride-cancelled', onCancelled);
     };
   }, [user, history]);
+
+  const handleTip = async (amount: number) => {
+    if (!ride) return;
+    setIsTipping(true);
+    try {
+      const res = await api.post(`/rides/${ride.id}/tip`, { amount });
+      setTip(amount);
+      setToastMsg(`❤️ Tip of UGX ${amount.toLocaleString()} sent!`);
+      setShowToast(true);
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Failed to send tip');
+      setShowToast(true);
+    } finally {
+      setIsTipping(false);
+    }
+  };
 
   const handleCancel = async () => {
     if (!ride || cancelling) return;
@@ -284,6 +303,29 @@ const ActiveRide: React.FC = () => {
           </div>
 
           {/* Status-driven actions */}
+          {phase === 'ongoing' && (
+            <div style={{ background: 'rgba(255,107,53,0.05)', border: '1px solid rgba(255,107,53,0.2)', borderRadius: 16, padding: 14, marginBottom: 12, textAlign: 'center' }}>
+              <p style={{ color: '#FF6B35', margin: '0 0 10px', fontSize: 13, fontWeight: 600 }}>Support your driver</p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
+                {[1000, 2000, 5000].map(amt => (
+                  <button
+                    key={amt}
+                    onClick={() => handleTip(amt)}
+                    disabled={isTipping}
+                    style={{
+                      padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,107,53,0.4)',
+                      background: tip === amt ? '#FF6B35' : 'transparent',
+                      color: tip === amt ? '#fff' : '#FF6B35',
+                      fontSize: '12px', fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    {isTipping && tip === amt ? <IonSpinner name="crescent" style={{ width: 12, height: 12 }} /> : `UGX ${amt / 1000}k`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {phase === 'completed' && (
             <div style={{ textAlign: 'center', padding: '6px 0 12px' }}>
               <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 44, color: '#10B981' }} />

@@ -60,7 +60,7 @@ router.post('/admin/reply', authenticate, authorize(['admin']), async (req: Auth
       return res.status(400).json({ message: 'Ticket ID and message are required' });
     }
 
-    await db.run('INSERT INTO support_replies (ticketId, fromUser, message) VALUES (?, ?, ?)', ['Admin', message, ticketId]);
+    await db.run('INSERT INTO support_replies (ticketId, fromUser, message) VALUES (?, ?, ?)', [ticketId, 'Admin', message]);
     await db.run('UPDATE support_tickets SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', ['in-progress', ticketId]);
 
     res.json({ message: 'Reply sent successfully' });
@@ -79,7 +79,7 @@ router.post('/admin/resolve', authenticate, authorize(['admin']), async (req: Au
     if (!ticketId) return res.status(400).json({ message: 'Ticket ID is required' });
 
     if (message) {
-      await db.run('INSERT INTO support_replies (ticketId, fromUser, message) VALUES (?, ?, ?)', ['Admin', message, ticketId]);
+      await db.run('INSERT INTO support_replies (ticketId, fromUser, message) VALUES (?, ?, ?)', [ticketId, 'Admin', message]);
     }
 
     await db.run('UPDATE support_tickets SET status = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?', ['resolved', ticketId]);

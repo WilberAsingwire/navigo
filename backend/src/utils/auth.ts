@@ -15,14 +15,14 @@ export const comparePassword = async (password: string, hash: string): Promise<b
   return bcrypt.compare(password, hash);
 };
 
-export const generateToken = (payload: any): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+export const generateToken = (payload: any) => {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
 };
 
 export const verifyToken = (token: string) => {
   try {
     return jwt.verify(token, JWT_SECRET) as any;
-  } catch (error) {
+  } catch {
     return null;
   }
 };

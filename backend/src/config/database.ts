@@ -171,6 +171,20 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS payouts (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          amount INTEGER NOT NULL,
+          provider TEXT NOT NULL,   -- mtn | airtel
+          phone TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending',  -- pending | processing | completed | failed
+          gatewayRef TEXT,
+          fee INTEGER DEFAULT 0,
+          note TEXT,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          completedAt TIMESTAMP WITH TIME ZONE
+        );
+
         -- Migration: Remove role check constraint and rename 'name' to 'fullName'
         DO $$
         BEGIN
@@ -181,6 +195,10 @@ export const initDB = async () => {
           IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='name') AND
              NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='fullname') THEN
             ALTER TABLE users RENAME COLUMN name TO fullName;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='status') THEN
+            ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';
           END IF;
 
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='currentlat') THEN
