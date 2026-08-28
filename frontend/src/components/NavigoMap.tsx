@@ -56,7 +56,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   showControls = true, followUser = true, onDistanceChange, onMapClick
 }) => {
   const [loading, setLoading] = useState(true);
-  const [mapStyle, setMapStyle] = useState<'standard' | 'dark' | 'satellite'>('standard');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
 
@@ -71,7 +71,6 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
   const tileUrls: Record<string, { url: string; attribution: string }> = {
     standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
-    dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' },
     satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
   };
 
