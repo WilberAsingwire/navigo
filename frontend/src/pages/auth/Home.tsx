@@ -11,7 +11,7 @@ import {
 import './Home.css';
 import { useTheme } from '../../context/ThemeContext';
 
-const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-traffic-in-the-city-at-night-1222-large.mp4'; // Reliable direct loopable urban video
+const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-1582-large.mp4'; // Ultra-stable high-quality city traffic loop
 const HERO_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1542291026-7e91ecfa746d?q=80&w=2070&auto=format&fit=crop'; // High-res urban traffic fallback
 
 const Home: React.FC = () => {
@@ -24,7 +24,7 @@ const Home: React.FC = () => {
     {
       id: 'boda',
       name: 'Boda Boda',
-      image: 'https://cdn-icons-png.flaticon.com/512/198/198416.png',
+      image: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
@@ -55,7 +55,7 @@ const Home: React.FC = () => {
     {
       id: 'comfort',
       name: 'Comfort',
-      image: 'https://cdn-icons-png.flaticon.com/512/1048/1048313.png',
+      image: 'https://cdn-icons-png.flaticon.com/512/3202/3202920.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="10" width="20" height="8" rx="3" />
@@ -71,7 +71,7 @@ const Home: React.FC = () => {
     {
       id: 'xl',
       name: 'NAVIGO XL',
-      image: 'https://cdn-icons-png.flaticon.com/512/4143/4143153.png',
+      image: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png',
       icon: (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="10" width="20" height="8" rx="2" />
