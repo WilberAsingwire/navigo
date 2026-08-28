@@ -10,9 +10,8 @@ import {
   locationOutline, informationCircleOutline, cameraOutline
 } from 'ionicons/icons';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_URL } from '../config';
 import './ChatBox.css';
-
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 interface Message {
   id: string;

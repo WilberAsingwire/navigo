@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../../services/api';
 import { io } from 'socket.io-client';
+import { SOCKET_URL } from '../../config';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -86,7 +87,7 @@ const AdminLiveMap: React.FC = () => {
 
   useEffect(() => {
     if (!autoRefresh) return;
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+    const socket = io(SOCKET_URL, {
       auth: {
         token: localStorage.getItem('navigo_token')
       }

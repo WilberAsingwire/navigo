@@ -10,6 +10,7 @@ import {
   cashOutline, starOutline, refreshOutline, mapOutline,
   closeOutline, informationCircleOutline
 } from 'ionicons/icons';
+import { API_URL } from '../../config';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
@@ -30,10 +31,8 @@ const CustomerRideHistory: React.FC = () => {
       if (!user?.id) return;
       setIsLoading(true);
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
         const token = localStorage.getItem('navigo_token');
-        const res = await axios.get(`${BASE_URL}/api/rides/history/${user.id}`, {
+        const res = await axios.get(`${API_URL}/rides/history/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { status: statusFilter }
         });

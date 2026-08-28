@@ -11,6 +11,7 @@ import {
   notificationsOutline, moonOutline, lockClosedOutline, helpCircleOutline,
   informationCircleOutline, trashOutline
 } from 'ionicons/icons';
+import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
@@ -30,10 +31,8 @@ const Profile: React.FC = () => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
       const token = localStorage.getItem('navigo_token');
-      await axios.put(`${BASE_URL}/api/users/update`,
+      await axios.put(`${API_URL}/users/update`,
         { fullName: editName, email: editEmail },
         { headers: { Authorization: `Bearer ${token}` } }
       );

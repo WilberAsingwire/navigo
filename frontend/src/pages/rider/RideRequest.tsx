@@ -15,9 +15,6 @@ import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
 import './RideRequest.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
-
 interface Location { lat: number; lng: number; address: string; name?: string; }
 interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }

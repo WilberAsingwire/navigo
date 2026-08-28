@@ -117,7 +117,15 @@ router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Respo
       return res.status(403).json({ message: 'Unauthorized: You are not part of this ride' });
     }
 
-    const rider = await db.get('SELECT id, fullName, phone, verificationStatus FROM users WHERE id = ?', [ride.userId]);
+    const rider = await db.get(
+      `SELECT u.id, u.fullName, u.phone, u.verificationStatus,
+              COALESCE(dp.rating, 5) AS rating,
+              COALESCE(dp.totalTrips, 0) AS totalTrips
+       FROM users u
+       LEFT JOIN driver_profiles dp ON dp.userId = u.id
+       WHERE u.id = ?`,
+      [ride.userId]
+    );
 
     res.json({
       ...ride,

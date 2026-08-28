@@ -10,6 +10,7 @@ import {
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import { API_URL } from '../../config';
 import './CustomerSavedPlaces.css';
 
 const CustomerSavedPlaces: React.FC = () => {
@@ -32,10 +33,8 @@ const CustomerSavedPlaces: React.FC = () => {
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
       const token = localStorage.getItem('navigo_token');
-      const res = await axios.get(`${BASE_URL}/api/users/saved-places/${user.id}`, {
+      const res = await axios.get(`${API_URL}/users/saved-places/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPlaces(res.data);
@@ -79,10 +78,8 @@ const CustomerSavedPlaces: React.FC = () => {
     }
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
       const token = localStorage.getItem('navigo_token');
-      await axios.post(`${BASE_URL}/api/users/saved-places`, {
+      await axios.post(`${API_URL}/users/saved-places`, {
         label: placeLabel,
         address: selectedPlace.address,
         lat: selectedPlace.lat,
@@ -105,10 +102,8 @@ const CustomerSavedPlaces: React.FC = () => {
 
   const deletePlace = async (placeId: string) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const BASE_URL = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
       const token = localStorage.getItem('navigo_token');
-      await axios.delete(`${BASE_URL}/api/users/saved-places/${placeId}`, {
+      await axios.delete(`${API_URL}/users/saved-places/${placeId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPlaces(places.filter(p => p.id !== placeId));
