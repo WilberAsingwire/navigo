@@ -29,7 +29,7 @@ export const initDB = async () => {
           email TEXT UNIQUE,
           phone TEXT UNIQUE NOT NULL,
           password TEXT,
-          role TEXT CHECK(role IN ('rider', 'driver', 'admin')) NOT NULL DEFAULT 'rider',
+          role TEXT NOT NULL DEFAULT 'rider',
           city TEXT DEFAULT 'Kampala',
           vehicleType TEXT,
           isBot BOOLEAN DEFAULT FALSE,
@@ -152,9 +152,13 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
-        -- Migration: Rename 'name' to 'fullName' if it exists and 'fullName' doesn't
+        -- Migration: Remove role check constraint and rename 'name' to 'fullName'
         DO $$
         BEGIN
+          IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_role_check') THEN
+            ALTER TABLE users DROP CONSTRAINT users_role_check;
+          END IF;
+
           IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='name') AND
              NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='fullName') THEN
             ALTER TABLE users RENAME COLUMN name TO fullName;
