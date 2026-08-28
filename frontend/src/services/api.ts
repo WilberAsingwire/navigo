@@ -3,6 +3,8 @@ import { API_URL } from '../config';
 
 const api = axios.create({
   baseURL: API_URL,
+  // Never let a slow/dead backend hang the app — fail fast and let the UI show its error state
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },

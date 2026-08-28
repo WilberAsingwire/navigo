@@ -84,18 +84,14 @@ const RideRequest: React.FC = () => {
   const [receiverPhone, setReceiverPhone] = useState('');
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        await getCurrentLocation();
-        await fetchWalletBalance();
-        await fetchRecentRides();
-      } catch (e) {
-        console.error('Init error:', e);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    init();
+    // Never block the booking UI on slow geolocation or API calls:
+    // render immediately and let the data fill in as it arrives.
+    // (Previously this awaited all three sequentially, so a dead or slow
+    // backend URL left users stuck on "Initializing Experience…" forever.)
+    setIsInitializing(false);
+    getCurrentLocation();
+    fetchWalletBalance();
+    fetchRecentRides();
 
     if (isAuthenticated && user) {
       const socket = socketService.connect(user.id);
@@ -154,7 +150,7 @@ const RideRequest: React.FC = () => {
             const lng = pos.coords.longitude;
             setPickup({ lat, lng, address: 'Fetching precise location...', name: '📍 Your Location' });
             try {
-              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { timeout: 8000 });
               const data = res.data;
               const addr = data.display_name || '';
               const address = data.address || {};
@@ -200,7 +196,8 @@ const RideRequest: React.FC = () => {
           limit: 10,
           viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
           bounded: 1
-        }
+        },
+        timeout: 8000
       });
       let results = nomRes.data.map((item: any) => ({
         lat: parseFloat(item.lat),
@@ -210,7 +207,8 @@ const RideRequest: React.FC = () => {
       }));
       if (results.length === 0) {
         const photonRes = await axios.get('https://photon.komoot.io/api/', {
-          params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 }
+          params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 },
+          timeout: 8000
         });
         let photonResults = photonRes.data?.features?.map((item: any) => {
           const props = item.properties;
@@ -298,7 +296,7 @@ const RideRequest: React.FC = () => {
   const handleMapClick = async (latlng: [number, number]) => {
     const [lat, lng] = latlng;
     try {
-      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { timeout: 8000 });
       const addr = res.data.display_name || '';
       const address = res.data.address || {};
       const road = address.road || address.pedestrian || address.footway || '';
