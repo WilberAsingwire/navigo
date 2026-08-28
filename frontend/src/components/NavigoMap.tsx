@@ -26,16 +26,16 @@ const createPulsingIcon = (color: string, emoji: string, size: number = 28) => {
   });
 };
 
-const createVehicleIcon = (imageUrl: string, color: string, size: number = 40) => {
+const createVehicleIcon = (imageUrl: string, color: string, size: number = 32) => {
   return L.divIcon({
     html: `<div style="position:relative;width:${size}px;height:${size}px;">
-            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.4;"></div>
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
-              <img src="${imageUrl}" style="width:80%; height:80%; object-fit:contain;" />
+            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.3;"></div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
+              <img src="${imageUrl}" style="width:70%; height:70%; object-fit:contain; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));" />
             </div>
           </div>
           <style>
-            @keyframes pulse { 0% { transform: scale(1); opacity: 0.4; } 100% { transform: scale(2); opacity: 0; } }
+            @keyframes pulse { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(2); opacity: 0; } }
           </style>
         `,
     iconSize: [size, size],
@@ -52,9 +52,9 @@ const poiIcon = (emoji: string) => L.divIcon({
 });
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
-  boda: { url: 'https://cdn-icons-png.flaticon.com/512/171/171233.png', color: '#ffab40' },
-  go: { url: 'https://cdn-icons-png.flaticon.com/512/3085/3085330.png', color: '#FF6B35' },
-  comfort: { url: 'https://cdn-icons-png.flaticon.com/512/2554/2554936.png', color: '#4CAF50' },
+  boda: { url: 'https://cdn-icons-png.flaticon.com/512/198/198416.png', color: '#ffab40' },
+  go: { url: 'https://cdn-icons-png.flaticon.com/512/741/741407.png', color: '#FF6B35' },
+  comfort: { url: 'https://cdn-icons-png.flaticon.com/512/1048/1048313.png', color: '#4CAF50' },
   xl: { url: 'https://cdn-icons-png.flaticon.com/512/4143/4143153.png', color: '#2196F3' },
 };
 
