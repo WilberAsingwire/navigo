@@ -58,6 +58,9 @@ router.post('/register', async (req: Request, res: Response) => {
     const { fullName, phone, password, email, role } = req.body;
     const db = getDB();
 
+    if (!phone) {
+      return res.status(400).json({ message: 'Phone number is required' });
+    }
     const cleanPhone = normalizePhone(phone);
     if (!cleanPhone.match(/^07\d{8}$/)) {
       return res.status(400).json({
