@@ -27,6 +27,24 @@ router.get('/balance', authenticate, async (req: AuthRequest, res: Response) => 
   }
 });
 
+// ─── Get Transaction History ────────────────────────────────
+router.get('/transactions', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    const transactions = await db.all(
+      'SELECT * FROM wallet_transactions WHERE userId = ? ORDER BY createdAt DESC LIMIT 100',
+      [userId]
+    );
+
+    res.json({ ok: true, transactions });
+  } catch (error) {
+    console.error('Transactions error:', error);
+    res.status(500).json({ ok: false, message: 'Failed to fetch transactions' });
+  }
+});
+
 // ─── Top Up Wallet ──────────────────────────────────────────
 router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
   try {

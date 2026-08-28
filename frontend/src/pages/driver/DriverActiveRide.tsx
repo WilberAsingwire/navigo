@@ -1,103 +1,229 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle,
-  IonButton, IonIcon, IonText, IonCard, IonCardContent, IonAvatar,
-  IonBadge, IonModal, IonToast, IonSpinner
+  IonButton, IonIcon, IonBadge, IonToast, IonAvatar,
+  IonModal, IonSpinner, IonNote
 } from '@ionic/react';
 import {
   flagOutline, locationOutline, checkmarkCircleOutline, callOutline,
   chatbubbleEllipsesOutline, navigateOutline, closeOutline,
-  cashOutline, timeOutline, starOutline, shieldCheckmarkOutline,
-  mapOutline, arrowForwardOutline
+  cashOutline, timeOutline, starOutline,
+  mapOutline, paperPlaneOutline, carOutline
 } from 'ionicons/icons';
 import InitialsAvatar from '../../components/InitialsAvatar';
+import EmptyState from '../../components/EmptyState';
 import { useHistory } from 'react-router-dom';
 import NavigoMap from '../../components/NavigoMap';
 import SOSButton from '../../components/SOSButton';
 import ChatBox from '../../components/ChatBox';
+import socketService from '../../services/socketService';
+import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import './DriverActiveRide.css';
 
+interface Ride {
+  id: string;
+  status: 'accepted' | 'arrived' | 'ongoing' | 'completed' | 'cancelled';
+  serviceType: 'ride' | 'delivery';
+  vehicleType: string;
+  fareFinal: number;
+  distanceKm?: number;
+  durationMin?: number;
+  pickup: { address: string; lat: number; lng: number };
+  destination: { address: string; lat: number; lng: number };
+  packageDetails?: string;
+  receiverName?: string;
+  receiverPhone?: string;
+}
+
+const VEHICLE_LABELS: Record<string, string> = {
+  boda: 'Boda Boda', go: 'NAVIGO Go', economy: 'NAVIGO Go', comfort: 'NAVIGO Comfort', xl: 'NAVIGO XL',
+};
+
+const PHASE_TITLES: Record<string, string> = {
+  accepted: 'Heading to Pickup',
+  arrived: 'At Pickup',
+  ongoing: 'Trip in Progress',
+  completed: 'Trip Completed',
+  cancelled: 'Trip Cancelled',
+};
+
+/**
+ * Real driver trip screen: current ride from the API, shares the driver's
+ * live location over the socket, and drives the accepted → arrived →
+ * ongoing → completed lifecycle (which also triggers settlement).
+ */
 const DriverActiveRide: React.FC = () => {
   const history = useHistory();
-  const [rideStatus, setRideStatus] = useState<'heading' | 'arrived' | 'completed'>('heading');
-  const [pos, setPos] = useState<[number, number]>([0.3476, 32.5825]);
-  const [showChat, setShowChat] = useState(false);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [earnings, setEarnings] = useState({ fare: 8500, commission: 850, net: 7650 });
+  const [ride, setRide] = useState<Ride | null>(null);
+  const [rider, setRider] = useState<any>(null);
+  const [pos, setPos] = useState<[number, number] | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [sendingStatus, setSendingStatus] = useState(false);
+  const watchIdRef = useRef<number | null>(null);
+  const rideIdRef = useRef<string | null>(null);
 
-  // Mock ride data
-  const rideData = {
-    riderName: 'Alice Nakamya',
-    riderPhone: '+256772123456',
-    pickup: 'Kampala Road, City Center',
-    destination: 'Acacia Mall, Kololo',
-    rideType: 'NAVIGO Go',
-    fare: 'UGX 8,500',
-    destinationPos: [0.3550, 32.5850] as [number, number],
-    estimatedTime: '8 min',
-    distance: '3.2 km',
-    riderRating: 4.8,
+  const loadRide = async () => {
+    try {
+      const res = await api.get('/rides/active');
+      if (res.data.ride && res.data.isDriver) {
+        setRide(res.data.ride);
+        setRider(res.data.rider || null);
+        rideIdRef.current = res.data.ride.id;
+      } else {
+        setRide(null);
+      }
+    } catch (e) {
+      console.error('Failed to load active trip:', e);
+      setRide(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 800);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.watchPosition(
-        (p) => setPos([p.coords.latitude, p.coords.longitude]),
-        () => {},
-        { enableHighAccuracy: true }
-      );
-    }
+    loadRide();
   }, []);
 
-  const updateStatus = (status: 'arrived' | 'completed') => {
-    setRideStatus(status);
+  // Share live location while a trip is active
+  useEffect(() => {
+    if (!ride || !user) return;
+    if (['completed', 'cancelled'].includes(ride.status)) return;
+    if (!('geolocation' in navigator)) return;
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (p) => {
+        setPos([p.coords.latitude, p.coords.longitude]);
+        const socket = socketService.getSocket();
+        if (socket && rideIdRef.current) {
+          socket.emit('update-location', {
+            rideId: rideIdRef.current,
+            lat: p.coords.latitude,
+            lng: p.coords.longitude,
+            userId: user.id,
+          });
+        }
+      },
+      () => { /* location unavailable — trip still works without live tracking */ },
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+    return () => {
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    };
+  }, [ride?.id, ride?.status, user]);
+
+  // Rider cancellations while on this screen
+  useEffect(() => {
+    if (!user) return;
+    const socket = socketService.connect(user.id);
+    const onCancelled = (data: { rideId: string; message: string }) => {
+      if (data.rideId !== rideIdRef.current) return;
+      setToastMsg(data.message);
+      setShowToast(true);
+      setRide(prev => (prev ? { ...prev, status: 'cancelled' } : prev));
+    };
+    socket.on('ride-cancelled', onCancelled);
+    return () => socket.off('ride-cancelled', onCancelled);
+  }, [user]);
+
+  const sendStatus = (status: 'arrived' | 'ongoing' | 'completed') => {
+    if (!ride || sendingStatus) return;
+    const socket = socketService.getSocket();
+    if (!socket) {
+      setToastMsg('Not connected to the server');
+      setShowToast(true);
+      return;
+    }
+    setSendingStatus(true);
+    socket.emit('update-status', { rideId: ride.id, status });
+    setRide(prev => (prev ? { ...prev, status } : prev));
+    setSendingStatus(false);
+
     if (status === 'completed') {
-      setTimeout(() => history.push('/driver/home'), 2000);
+      setToastMsg('✅ Trip completed — settling payment');
+      setShowToast(true);
+      setTimeout(() => history.push('/driver/home'), 2600);
     }
   };
 
   const openNavigation = () => {
-    window.open(`https://www.google.com/maps/dir/?api=1&origin=${pos[0]},${pos[1]}&destination=${rideData.destinationPos[0]},${rideData.destinationPos[1]}`, '_blank');
+    if (!ride) return;
+    const from = pos || [ride.pickup.lat, ride.pickup.lng];
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${from[0]},${from[1]}&destination=${ride.destination.lat},${ride.destination.lng}`, '_blank');
   };
 
   if (loading) {
     return (
       <IonPage>
-        <IonContent style={{'--background': '#080c14'} as any}>
+        <IonContent style={{ '--background': '#080c14' } as any}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <IonSpinner name="crescent" color="warning" />
-            <p style={{ color: '#fff' }}>Loading trip details...</p>
+            <p style={{ color: '#94A3B8' }}>Loading trip details…</p>
           </div>
         </IonContent>
       </IonPage>
     );
   }
 
+  if (!ride) {
+    return (
+      <IonPage>
+        <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
+          <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
+            <IonTitle style={{ color: '#fff' }}>Active Trip</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent style={{ '--background': '#080c14' } as any}>
+          <EmptyState
+            icon={<IonIcon icon={carOutline} style={{ fontSize: 26 }} />}
+            title="No active trip"
+            subtitle="When you accept a ride it will show up here with navigation and trip controls."
+            actionLabel="Go online"
+            onAction={() => history.push('/driver/home')}
+          />
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  const phase = ride.status;
+  const isDelivery = ride.serviceType === 'delivery';
+  const riderName = rider?.fullName || 'Customer';
+  const fare = ride.fareFinal || 0;
+  const commission = Math.round(fare * 0.1);
+  const net = fare - commission;
+
   return (
     <IonPage>
-      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
-        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonTitle style={{color: '#fff'}}>
-            {rideStatus === 'heading' ? 'Heading to Pickup' : rideStatus === 'arrived' ? 'Trip in Progress' : 'Completed'}
-          </IonTitle>
-          <IonBadge slot="end" color={rideStatus === 'heading' ? 'warning' : rideStatus === 'arrived' ? 'primary' : 'success'} style={{ marginRight: 10 }}>
-            {rideStatus === 'heading' ? 'En Route' : rideStatus === 'arrived' ? 'Active' : 'Done'}
+      <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
+        <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
+          <IonTitle style={{ color: '#fff' }}>{PHASE_TITLES[phase] || 'Trip'}</IonTitle>
+          <IonBadge
+            slot="end"
+            color={phase === 'completed' ? 'success' : phase === 'cancelled' ? 'danger' : 'warning'}
+            style={{ marginRight: 10, textTransform: 'capitalize' }}
+          >
+            {phase}
           </IonBadge>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="driver-active-container">
+      <IonContent className="driver-active-container" style={{ '--background': '#080c14' } as any}>
         {/* Map */}
         <div style={{ height: '40vh', width: '100%', position: 'relative' }}>
           <NavigoMap
-            userLocation={{ lat: pos[0], lng: pos[1] }}
-            destination={{ lat: rideData.destinationPos[0], lng: rideData.destinationPos[1] }}
+            userLocation={pos ? { lat: pos[0], lng: pos[1] } : ride.pickup}
+            destination={ride.destination}
             height="100%"
             showRoute={true}
-            driverType="go"
+            driverType={(ride.vehicleType as any) || 'go'}
+            followUser={false}
           />
-          {/* Floating Navigate Button */}
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 1000 }}>
             <IonButton color="light" size="small" onClick={openNavigation}>
               <IonIcon icon={navigateOutline} slot="start" /> Navigate
@@ -105,107 +231,150 @@ const DriverActiveRide: React.FC = () => {
           </div>
         </div>
 
-        {/* Trip Info */}
-        <div style={{ padding: 14 }}>
+        <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
           {/* Rider Card */}
-          <div className="rider-info-card">
+          <div className="rider-info-card" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
             <IonAvatar style={{ width: 48, height: 48 }}>
-              <InitialsAvatar name={rideData.riderName} size={48} />
+              <InitialsAvatar name={riderName} size={48} />
             </IonAvatar>
-            <div className="rider-details">
-              <h3>{rideData.riderName}</h3>
-              <p><IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {rideData.riderRating} • {rideData.rideType}</p>
+            <div className="rider-details" style={{ flex: 1 }}>
+              <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>{riderName}</h3>
+              <p style={{ color: '#94A3B8', margin: '2px 0 0', fontSize: 12 }}>
+                <IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {Number(rider?.rating || 5).toFixed(1)} • {VEHICLE_LABELS[ride.vehicleType] || ride.vehicleType}
+              </p>
             </div>
             <div className="rider-actions">
-              <IonButton fill="clear" size="small" onClick={() => window.open(`tel:${rideData.riderPhone}`, '_system')}>
-                <IonIcon icon={callOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
-              </IonButton>
+              {rider?.phone && (
+                <IonButton fill="clear" size="small" onClick={() => window.open(`tel:${rider.phone}`)}>
+                  <IonIcon icon={callOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
+                </IonButton>
+              )}
               <IonButton fill="clear" size="small" onClick={() => setShowChat(true)}>
                 <IonIcon icon={chatbubbleEllipsesOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
               </IonButton>
             </div>
           </div>
 
-          {/* Route Details */}
-          <div className="route-info-card">
-            <div className="route-point">
-              <IonIcon icon={locationOutline} style={{ color: '#2D6A4F', fontSize: 16 }} />
-              <span>Pickup: {rideData.pickup}</span>
+          {/* Delivery info */}
+          {isDelivery && (
+            <div style={{ background: 'rgba(77,166,255,0.08)', border: '1px solid rgba(77,166,255,0.25)', borderRadius: 12, padding: 12, marginBottom: 12, display: 'flex', gap: 10 }}>
+              <IonIcon icon={paperPlaneOutline} style={{ color: '#4DA6FF', fontSize: 20 }} />
+              <div>
+                <p style={{ color: '#fff', margin: 0, fontSize: 13, fontWeight: 600 }}>
+                  Delivering: {ride.packageDetails || 'Package'}
+                </p>
+                <p style={{ color: '#94A3B8', margin: '2px 0 0', fontSize: 12 }}>
+                  Hand to: {ride.receiverName || '—'} {ride.receiverPhone ? `• ${ride.receiverPhone}` : ''}
+                </p>
+              </div>
             </div>
-            <div className="route-point">
+          )}
+
+          {/* Route Details */}
+          <div className="route-info-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+            <div className="route-point" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <IonIcon icon={locationOutline} style={{ color: '#2D6A4F', fontSize: 16 }} />
+              <span style={{ color: '#fff', fontSize: 13 }}>Pickup: {ride.pickup.address}</span>
+            </div>
+            <div className="route-point" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <IonIcon icon={flagOutline} style={{ color: '#E85D75', fontSize: 16 }} />
-              <span>Destination: {rideData.destination}</span>
+              <span style={{ color: '#fff', fontSize: 13 }}>{isDelivery ? 'Deliver to:' : 'Destination:'} {ride.destination.address}</span>
             </div>
           </div>
 
           {/* Trip Stats */}
-          <div className="trip-stats-grid">
-            <div className="trip-stat-card">
-              <IonIcon icon={mapOutline} className="trip-stat-icon" style={{ color: '#4da6ff' }} />
-              <p className="trip-stat-value">{rideData.distance}</p>
-              <span className="trip-stat-label">Distance</span>
+          <div className="trip-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+            <div className="trip-stat-card" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+              <IonIcon icon={mapOutline} style={{ color: '#4da6ff', fontSize: 18, marginBottom: 4 }} />
+              <p className="trip-stat-value" style={{ color: '#fff', margin: 2, fontSize: 14, fontWeight: 700 }}>{ride.distanceKm ? `${ride.distanceKm} km` : '—'}</p>
+              <span className="trip-stat-label" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Distance</span>
             </div>
-            <div className="trip-stat-card">
-              <IonIcon icon={timeOutline} className="trip-stat-icon" style={{ color: '#FFC107' }} />
-              <p className="trip-stat-value">{rideData.estimatedTime}</p>
-              <span className="trip-stat-label">ETA</span>
+            <div className="trip-stat-card" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+              <IonIcon icon={timeOutline} style={{ color: '#FFC107', fontSize: 18, marginBottom: 4 }} />
+              <p className="trip-stat-value" style={{ color: '#fff', margin: 2, fontSize: 14, fontWeight: 700 }}>{ride.durationMin ? `${ride.durationMin} min` : '—'}</p>
+              <span className="trip-stat-label" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Duration</span>
             </div>
-            <div className="trip-stat-card">
-              <IonIcon icon={cashOutline} className="trip-stat-icon" style={{ color: '#00e676' }} />
-              <p className="trip-stat-value">{rideData.fare}</p>
-              <span className="trip-stat-label">Fare</span>
+            <div className="trip-stat-card" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+              <IonIcon icon={cashOutline} style={{ color: '#00e676', fontSize: 18, marginBottom: 4 }} />
+              <p className="trip-stat-value" style={{ color: '#fff', margin: 2, fontSize: 14, fontWeight: 700 }}>UGX {fare.toLocaleString()}</p>
+              <span className="trip-stat-label" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Fare</span>
             </div>
           </div>
 
           {/* Earnings Breakdown */}
-          <div className="earnings-card">
-            <h4 className="earnings-title">
-              <IonIcon icon={cashOutline} /> Your Earnings
+          <div className="earnings-card" style={{ background: 'linear-gradient(135deg, rgba(45,106,79,0.25), rgba(13,33,55,0.6))', border: '1px solid rgba(45,106,79,0.4)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+            <h4 className="earnings-title" style={{ color: '#fff', margin: '0 0 10px', fontSize: 14 }}>
+              <IonIcon icon={cashOutline} style={{ color: '#FF6B35' }} /> Your Earnings
             </h4>
-            <div className="earnings-row">
-              <span>Total Fare</span><span>UGX {earnings.fare.toLocaleString()}</span>
+            <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 12, marginBottom: 6 }}>
+              <span>Total Fare</span><span style={{ color: '#fff' }}>UGX {fare.toLocaleString()}</span>
             </div>
-            <div className="earnings-row">
-              <span>Commission (10%)</span><span>-UGX {earnings.commission.toLocaleString()}</span>
+            <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 12, marginBottom: 10 }}>
+              <span>NAVIGO Commission (10%)</span><span style={{ color: '#E85D75' }}>-UGX {commission.toLocaleString()}</span>
             </div>
-            <div className="earnings-total">
-              <span>You Earn</span><span>UGX {earnings.net.toLocaleString()}</span>
+            <div className="earnings-total" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>You Earn</span>
+              <span style={{ color: '#00e676', fontWeight: 800, fontSize: 16 }}>UGX {net.toLocaleString()}</span>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          {rideStatus === 'heading' && (
-            <IonButton expand="block" className="main-action-btn" onClick={() => updateStatus('arrived')}>
-              <IonIcon icon={checkmarkCircleOutline} slot="start" /> I Have Arrived 📍
+          {/* Lifecycle actions */}
+          {phase === 'accepted' && (
+            <IonButton expand="block" className="main-action-btn" onClick={() => sendStatus('arrived')} disabled={sendingStatus} style={{ borderRadius: 12, marginBottom: 10, fontWeight: 700 }}>
+              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={checkmarkCircleOutline} slot="start" />} I Have Arrived 📍
             </IonButton>
           )}
-          {rideStatus === 'arrived' && (
-            <IonButton expand="block" className="complete-action-btn" onClick={() => updateStatus('completed')}>
-              <IonIcon icon={checkmarkCircleOutline} slot="start" /> Complete Trip ✅
+          {phase === 'arrived' && (
+            <IonButton expand="block" className="main-action-btn" onClick={() => sendStatus('ongoing')} disabled={sendingStatus} style={{ borderRadius: 12, marginBottom: 10, fontWeight: 700 }}>
+              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={navigateOutline} slot="start" />} Start Trip 🚗
+            </IonButton>
+          )}
+          {phase === 'ongoing' && (
+            <IonButton expand="block" className="complete-action-btn" onClick={() => sendStatus('completed')} disabled={sendingStatus} style={{ borderRadius: 12, marginBottom: 10, fontWeight: 700 }}>
+              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={checkmarkCircleOutline} slot="start" />} Complete Trip ✅
             </IonButton>
           )}
 
-          {/* SOS Button */}
-          <SOSButton userLocation={{ lat: pos[0], lng: pos[1] }} userName="Driver" variant="compact" />
-
-          {rideStatus === 'completed' && (
-            <div className="completion-state">
-              <IonIcon icon={checkmarkCircleOutline} />
-              <h3>Trip Completed!</h3>
-              <p>You earned UGX {earnings.net.toLocaleString()}</p>
+          {phase === 'completed' && (
+            <div className="completion-state" style={{ textAlign: 'center', padding: '10px 0' }}>
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 48, color: '#10B981' }} />
+              <h3 style={{ color: '#fff' }}>Trip Completed!</h3>
+              <p style={{ color: '#94A3B8', fontSize: 13 }}>You earned <span style={{ color: '#00e676', fontWeight: 700 }}>UGX {net.toLocaleString()}</span></p>
+              <IonNote style={{ color: 'rgba(255,255,255,0.35)' }}>Wallet payments settle automatically.</IonNote>
             </div>
+          )}
+
+          {phase === 'cancelled' && (
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <IonIcon icon={closeOutline} style={{ fontSize: 48, color: '#EF4444' }} />
+              <h3 style={{ color: '#fff' }}>Trip Cancelled</h3>
+              <IonButton expand="block" fill="outline" color="light" onClick={() => history.push('/driver/home')} style={{ borderRadius: 12 }}>
+                Back to home
+              </IonButton>
+            </div>
+          )}
+
+          {['accepted', 'arrived', 'ongoing'].includes(phase) && (
+            <SOSButton
+              userLocation={pos ? { lat: pos[0], lng: pos[1] } : { lat: ride.pickup.lat, lng: ride.pickup.lng }}
+              userName={user?.fullName || 'Driver'}
+              userPhone={user?.phone}
+              variant="compact"
+            />
           )}
         </div>
 
-        {/* Chat Modal */}
+        {/* Chat with real ride data */}
         <IonModal isOpen={showChat} onDidDismiss={() => setShowChat(false)}>
           <ChatBox
-            rideId="ride_001"
-            currentUser={{ id: 'driver_001', name: 'You', role: 'driver' }}
-            otherUser={{ id: 'rider_001', name: rideData.riderName, role: 'rider' }}
+            rideId={ride.id}
+            currentUser={{ id: user?.id || '', name: user?.fullName || 'You', role: 'driver' }}
+            otherUser={{ id: rider?.id || '', name: riderName, role: 'customer' }}
             onClose={() => setShowChat(false)}
           />
         </IonModal>
+
+        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} position="top" />
       </IonContent>
     </IonPage>
   );

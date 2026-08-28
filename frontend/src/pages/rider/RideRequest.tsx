@@ -67,7 +67,8 @@ const RideRequest: React.FC = () => {
   const [actualRouteDur, setActualRouteDur] = useState(0);
   const [driverFound, setDriverFound] = useState(false);
   const [matchedDriver, setMatchedDriver] = useState<any>(null);
-  const [matchingProgress, setMatchingProgress] = useState(0);
+  const [pendingRideId, setPendingRideId] = useState<string | null>(null);
+  const [cancellingRequest, setCancellingRequest] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -98,7 +99,7 @@ const RideRequest: React.FC = () => {
       socket.on('ride-accepted', (data: any) => {
         setDriverFound(true);
         setIsMatching(false);
-        setMatchingProgress(100);
+        setPendingRideId(null);
         setMatchedDriver(data);
         socket.emit('join-ride-room', { rideId: data.rideId });
         // Redirect to active ride page
@@ -345,23 +346,34 @@ const RideRequest: React.FC = () => {
         fareOffered: finalFare,
       });
       const ride = res.data.ride;
+      setPendingRideId(ride.id);
       setStep(BookingStep.MATCHING);
       setIsMatching(true);
-      setMatchingProgress(0);
       const socket = socketService.getSocket();
       if (socket) socket.emit('request-ride', { userId: user?.id, rideId: ride.id });
-      const interval = setInterval(() => {
-        setMatchingProgress(p => {
-          if (p >= 100) { clearInterval(interval); return 100; }
-          return p + Math.random() * 15;
-        });
-      }, 500);
-      setTimeout(() => { clearInterval(interval); }, 15000);
     } catch (e) {
       setToastMsg('Failed to request booking. Please try again.');
       setShowToast(true);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!pendingRideId || cancellingRequest) return;
+    setCancellingRequest(true);
+    try {
+      await api.post(`/rides/${pendingRideId}/cancel`);
+      setStep(BookingStep.LOCATION);
+      setIsMatching(false);
+      setPendingRideId(null);
+      setToastMsg('Request cancelled');
+      setShowToast(true);
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Could not cancel the request');
+      setShowToast(true);
+    } finally {
+      setCancellingRequest(false);
     }
   };
 
@@ -575,14 +587,31 @@ const RideRequest: React.FC = () => {
 
           {step === BookingStep.MATCHING && (
             <div className="matching-state">
-              <div className="matching-emoji">🚕</div>
+              <div className="matching-emoji pulse-soft">🚕</div>
               <div className="space-y-2">
-                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver...</h2>
-                <p style={{ color: '#94A3B8', fontSize: '14px' }}>Please wait while we match you with the nearest driver.</p>
+                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver…</h2>
+                <p style={{ color: '#94A3B8', fontSize: '14px', margin: 0 }}>
+                  We've alerted drivers near {pickup?.name || 'you'}. You'll be connected the moment one accepts.
+                </p>
               </div>
-              <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: `${matchingProgress}%` }} />
-              </div>
+              <button
+                onClick={handleCancelRequest}
+                disabled={cancellingRequest}
+                style={{
+                  marginTop: 18,
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: 12,
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  background: 'rgba(239,68,68,0.08)',
+                  color: '#EF4444',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                {cancellingRequest ? 'Cancelling…' : 'Cancel request'}
+              </button>
             </div>
           )}
         </div>

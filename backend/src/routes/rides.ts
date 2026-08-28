@@ -3,6 +3,7 @@ import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 import { fareQuote, clampOffer } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
+import { notifyRide } from '../socket/socketHandler';
 
 const router = express.Router();
 
@@ -102,6 +103,138 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
   }
 });
 
+// ─── Get Active Ride (rider's or driver's in-progress ride) ──
+router.get('/active', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    // Most recent ride the user is part of that isn't finished/cancelled.
+    const ride = await db.get(
+      `SELECT * FROM rides
+       WHERE (userId = ? OR driverId = ?)
+         AND status IN ('requested', 'accepted', 'arrived', 'ongoing')
+       ORDER BY requestedAt DESC
+       LIMIT 1`,
+      [userId, userId]
+    );
+    if (!ride) return res.json({ ride: null });
+
+    const rider = await db.get(
+      `SELECT u.id, u.fullName, u.phone, COALESCE(dp.rating, 5) AS rating
+       FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
+       WHERE u.id = ?`,
+      [ride.userId]
+    );
+
+    let driver: any = null;
+    if (ride.driverId) {
+      driver = await db.get(
+        `SELECT u.id, u.fullName, u.phone, u.currentLat, u.currentLng,
+                dp.plate, dp.vehicleType, dp.rating
+         FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
+         WHERE u.id = ?`,
+        [ride.driverId]
+      );
+    }
+
+    res.json({
+      ride: {
+        ...ride,
+        pickup: { address: ride.pickupName, lat: ride.pickupLat, lng: ride.pickupLng },
+        destination: { address: ride.dropName, lat: ride.dropLat, lng: ride.dropLng }
+      },
+      rider,
+      driver,
+      isDriver: ride.driverId === userId
+    });
+  } catch (error) {
+    console.error('Active ride error:', error);
+    res.status(500).json({ message: 'Error fetching active ride' });
+  }
+});
+
+// ─── Cancel Ride (rider or assigned driver) ─────────────────
+router.post('/:rideId/cancel', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { rideId } = req.params;
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
+    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    if (ride.userId !== userId && ride.driverId !== userId) {
+      return res.status(403).json({ message: 'You can only cancel a ride you are part of' });
+    }
+    if (!['requested', 'accepted', 'arrived', 'ongoing'].includes(ride.status)) {
+      return res.status(400).json({ message: `A ride that is ${ride.status} can't be cancelled` });
+    }
+
+    await db.run(
+      'UPDATE rides SET status = ?, cancelledAt = ? WHERE id = ?',
+      ['cancelled', new Date().toISOString(), rideId]
+    );
+
+    // Tell the other party in real time (fire & forget).
+    notifyRide(String(rideId), ride.userId, ride.driverId, 'ride-cancelled', {
+      rideId,
+      cancelledBy: userId,
+      message: userId === ride.userId ? 'The rider cancelled the ride.' : 'The driver cancelled the ride.'
+    });
+
+    res.json({ message: 'Ride cancelled' });
+  } catch (error) {
+    console.error('Cancel ride error:', error);
+    res.status(500).json({ message: 'Failed to cancel ride' });
+  }
+});
+
+// ─── Rate Driver (rider only, after completion) ─────────────
+router.post('/:rideId/rate', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { rideId } = req.params;
+    const { rating } = req.body;
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Rating must be a whole number from 1 to 5' });
+    }
+
+    const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
+    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    if (ride.userId !== userId) return res.status(403).json({ message: 'Only the rider can rate this ride' });
+    if (ride.status !== 'completed') return res.status(400).json({ message: 'You can only rate a completed ride' });
+    if (!ride.driverId) return res.status(400).json({ message: 'No driver was assigned to this ride' });
+
+    // Store on the ride, then fold into the driver's rolling rating.
+    await db.run('UPDATE rides SET riderRating = ? WHERE id = ?', [rating, rideId]);
+
+    const profile = await db.get(
+      'SELECT rating, ratingCount FROM driver_profiles WHERE userId = ?',
+      [ride.driverId]
+    );
+    if (profile) {
+      const newCount = (profile.ratingCount || 0) + 1;
+      const newRating = ((profile.rating || 5) * (profile.ratingCount || 0) + rating) / newCount;
+      await db.run(
+        'UPDATE driver_profiles SET rating = ?, ratingCount = ? WHERE userId = ?',
+        [Math.round(newRating * 100) / 100, newCount, ride.driverId]
+      );
+    } else {
+      await db.run(
+        'INSERT INTO driver_profiles (userId, rating, ratingCount) VALUES (?, ?, 1)',
+        [ride.driverId, rating]
+      );
+    }
+
+    res.json({ message: 'Thanks for rating your driver!' });
+  } catch (error) {
+    console.error('Rate ride error:', error);
+    res.status(500).json({ message: 'Failed to save rating' });
+  }
+});
+
 // ─── Get Ride Details ──────────────────────────────────────
 router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Response) => {
   try {
@@ -112,8 +245,15 @@ router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Respo
     const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
     if (!ride) return res.status(404).json({ message: 'Ride not found' });
 
-    // Security check: only the rider or the assigned driver can view ride details
-    if (ride.userId !== userId && ride.driverId !== userId) {
+    // Security check: the rider or the assigned driver can always view a ride.
+    // Pending ('requested') rides are broadcast to drivers, so any driver may
+    // view those in order to decide whether to accept.
+    const isDriver = req.user?.role === 'driver' || req.user?.role === 'motorist';
+    const allowed =
+      ride.userId === userId ||
+      ride.driverId === userId ||
+      (ride.status === 'requested' && isDriver);
+    if (!allowed) {
       return res.status(403).json({ message: 'Unauthorized: You are not part of this ride' });
     }
 

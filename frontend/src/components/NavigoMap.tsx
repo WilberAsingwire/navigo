@@ -345,10 +345,12 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     // 4. Route Visualization & FitBounds
     if (showRoute && userLocation && destination) {
       const fetchRoute = async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
         try {
           const from = `${userLocation.lng},${userLocation.lat}`;
           const to = `${destination.lng},${destination.lat}`;
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`);
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: controller.signal });
           const data = await res.json();
           if (data.routes?.length > 0) {
             const route = data.routes[0];
@@ -368,10 +370,24 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             const t = Math.round(route.duration / 60);
             setRouteDistance(d); setRouteDuration(t);
             if (onDistanceChange) onDistanceChange(d, t);
+            return;
           }
+          throw new Error('No route found');
         } catch {
+          // Route server unavailable — draw a straight line and still report
+          // an (approximate) distance so fares keep working.
+          if (markersRef.current['route']) {
+            map.removeLayer(markersRef.current['route'] as any);
+            delete markersRef.current['route'];
+          }
           const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 5, opacity: 0.8 }).addTo(map);
           markersRef.current['route'] = fallbackLine;
+          const d = Math.round(map.distance([userLocation.lat, userLocation.lng], [destination.lat, destination.lng]) / 100) / 10;
+          const t = Math.max(1, Math.round((d / 22) * 60));
+          setRouteDistance(d); setRouteDuration(t);
+          if (onDistanceChange) onDistanceChange(d, t);
+        } finally {
+          clearTimeout(timeout);
         }
       };
       fetchRoute();

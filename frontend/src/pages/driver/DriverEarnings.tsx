@@ -1,88 +1,144 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons, 
-  IonBackButton, IonGrid, IonRow, IonCol, IonCard, IonCardContent, 
-  IonIcon, IonText, IonButton, IonList, IonProgressBar, 
-  IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
+  IonBackButton, IonIcon, IonText, IonButton, IonProgressBar,
+  IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton,
   IonLabel, IonBadge, IonSpinner
 } from '@ionic/react';
-import { 
-  trendingUpOutline, arrowDownOutline, receiptOutline, calendarOutline, 
-  chevronDownCircleOutline, walletOutline, cashOutline, cardOutline,
+import {
+  trendingUpOutline, arrowDownOutline, receiptOutline,
+  chevronDownCircleOutline, walletOutline, cashOutline,
   statsChartOutline, timeOutline, checkmarkCircleOutline
 } from 'ionicons/icons';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import EmptyState from '../../components/EmptyState';
+import Skeleton from '../../components/Skeleton';
 import './DriverEarnings.css';
 
-const MOCK_EARNINGS = {
-  balance: 125000,
-  totalEarnings: 1580000,
-  thisWeek: 320000,
-  todayEarnings: 85000,
-  totalTrips: 156,
-  avgRating: 4.8,
-  recentTrips: [
-    { _id: '1', passengerName: 'Alice N.', date: '2026-07-26', fare: 8500, type: 'NAVIGO Go', from: 'Kololo', to: 'Acacia Mall' },
-    { _id: '2', passengerName: 'Peter O.', date: '2026-07-26', fare: 3200, type: 'Boda Boda', from: 'Ntinda', to: 'Kampala Rd' },
-    { _id: '3', passengerName: 'Sarah K.', date: '2026-07-25', fare: 12000, type: 'Comfort', from: 'Makerere', to: 'Entebbe Rd' },
-    { _id: '4', passengerName: 'James M.', date: '2026-07-25', fare: 5500, type: 'NAVIGO Go', from: 'Wandegeya', to: 'Old Taxi Park' },
-    { _id: '5', passengerName: 'Grace B.', date: '2026-07-24', fare: 4500, type: 'Boda Boda', from: 'Bugolobi', to: 'Industrial Area' },
-  ],
-  payouts: [
-    { _id: 'p1', amount: 200000, date: '2026-07-20', method: 'MTN Mobile Money', status: 'completed' },
-    { _id: 'p2', amount: 150000, date: '2026-07-13', method: 'Airtel Money', status: 'completed' },
-  ]
-};
+interface WalletTx {
+  id: string;
+  kind: 'topup' | 'ride_payment' | 'payout' | 'tip';
+  amount: number;
+  note: string;
+  rideId?: string;
+  createdAt: string;
+}
 
+/**
+ * Real driver earnings — balance, trip income and trip count all come
+ * from the backend (wallet transactions + driver profile).
+ */
 const DriverEarnings: React.FC = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [earningsData] = useState(MOCK_EARNINGS);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [transactions, setTransactions] = useState<WalletTx[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'payouts'>('overview');
 
-  useEffect(() => { setTimeout(() => setLoading(false), 600); }, []);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [balRes, txRes, profRes] = await Promise.all([
+        api.get('/wallet/balance').catch(() => null),
+        api.get('/wallet/transactions').catch(() => null),
+        api.get('/drivers/profile').catch(() => null),
+      ]);
+      if (balRes?.data?.ok) setBalance(balRes.data.balance);
+      setTransactions(txRes?.data?.transactions || []);
+      setProfile(profRes?.data || null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const weeklyData = [
-    { day: 'Mon', amount: 45000 }, { day: 'Tue', amount: 62000 }, { day: 'Wed', amount: 38000 },
-    { day: 'Thu', amount: 71000 }, { day: 'Fri', amount: 55000 }, { day: 'Sat', amount: 49000 }, { day: 'Sun', amount: 0 },
-  ];
+  useEffect(() => { loadData(); }, []);
 
-  const maxAmount = Math.max(...weeklyData.map(d => d.amount));
+  // Driver income = payout + tip transactions from ride settlement
+  const earnings = useMemo(() => transactions.filter(t => t.kind === 'payout' || t.kind === 'tip'), [transactions]);
+
+  const sumSince = (days: number) => {
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return earnings.filter(t => new Date(t.createdAt).getTime() >= cutoff).reduce((s, t) => s + t.amount, 0);
+  };
+
+  const todayEarnings = sumSince(1);
+  const thisWeek = sumSince(7);
+  const totalEarnings = earnings.reduce((s, t) => s + t.amount, 0);
+
+  const weeklyData = useMemo(() => {
+    const days: { day: string; amount: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      const amount = earnings
+        .filter(t => {
+          const ts = new Date(t.createdAt).getTime();
+          return ts >= dayStart && ts < dayEnd;
+        })
+        .reduce((s, t) => s + t.amount, 0);
+      days.push({ day: d.toLocaleDateString('en', { weekday: 'narrow' }), amount });
+    }
+    return days;
+  }, [earnings]);
+
+  const maxAmount = Math.max(...weeklyData.map(d => d.amount), 1);
+  const totalTrips = profile?.profile?.totalTrips ?? 0;
+  const rating = profile?.profile?.rating ?? 5;
+
+  if (loading) {
+    return (
+      <IonPage>
+        <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
+          <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
+            <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{ color: '#fff' }} /></IonButtons>
+            <IonTitle style={{ color: '#fff' }}>Earnings</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="driver-earnings-container" style={{ '--background': '#080c14' } as any}>
+          <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}><Skeleton rows={4} /></div>
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
-        <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{color: '#fff'}} /></IonButtons>
-          <IonTitle style={{color: '#fff'}}>Earnings</IonTitle>
+      <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
+        <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
+          <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{ color: '#fff' }} /></IonButtons>
+          <IonTitle style={{ color: '#fff' }}>Earnings</IonTitle>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="driver-earnings-container">
-        <IonRefresher slot="fixed" onIonRefresh={(e) => { setTimeout(() => e.target.complete(), 1000); }}>
+      <IonContent className="driver-earnings-container" style={{ '--background': '#080c14' } as any}>
+        <IonRefresher slot="fixed" onIonRefresh={(e) => { loadData(); setTimeout(() => e.target.complete(), 800); }}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>
-
-        {loading && <IonProgressBar type="indeterminate" color="warning" />}
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
           {/* Balance Card */}
           <div className="earnings-balance-card">
             <IonIcon icon={walletOutline} className="balance-icon" />
             <p className="balance-label">Available Balance</p>
-            <h1 className="balance-amount">UGX {earningsData.balance.toLocaleString()}</h1>
+            <h1 className="balance-amount">{balance === null ? 'UGX —' : `UGX ${balance.toLocaleString()}`}</h1>
             <div className="payout-actions">
-              <IonButton expand="block" disabled={earningsData.balance < 50000} className="payout-btn">
+              <IonButton expand="block" disabled className="payout-btn">
                 <IonIcon icon={arrowDownOutline} slot="start" /> Request Payout
               </IonButton>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>Minimum payout: UGX 50,000</p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>Payouts to Mobile Money are coming soon</p>
           </div>
 
           {/* Quick Stats */}
           <div className="earnings-stats-grid">
             {[
-              { label: 'Today', value: `UGX ${(earningsData.todayEarnings/1000).toFixed(0)}K`, icon: timeOutline, color: '#FF6B35' },
-              { label: 'This Week', value: `UGX ${(earningsData.thisWeek/1000).toFixed(0)}K`, icon: trendingUpOutline, color: '#4da6ff' },
-              { label: 'Total', value: `UGX ${(earningsData.totalEarnings/1000000).toFixed(1)}M`, icon: statsChartOutline, color: '#2D6A4F' },
+              { label: 'Today', value: `UGX ${(todayEarnings / 1000).toFixed(0)}K`, icon: timeOutline, color: '#FF6B35' },
+              { label: 'This Week', value: `UGX ${(thisWeek / 1000).toFixed(0)}K`, icon: trendingUpOutline, color: '#4da6ff' },
+              { label: 'Total', value: `UGX ${(totalEarnings / 1000).toFixed(0)}K`, icon: statsChartOutline, color: '#2D6A4F' },
             ].map(s => (
               <div key={s.label} className="earnings-stat-card">
                 <IonIcon icon={s.icon} className="stat-icon" style={{ color: s.color }} />
@@ -98,7 +154,7 @@ const DriverEarnings: React.FC = () => {
             <div className="chart-container">
               {weeklyData.map((d, i) => (
                 <div key={i} className="chart-bar-wrapper">
-                  <div className="chart-bar" style={{ height: `${(d.amount / maxAmount) * 100}%`, opacity: d.day === 'Sun' ? 0.3 : 0.8 }} />
+                  <div className="chart-bar" style={{ height: `${Math.max((d.amount / maxAmount) * 100, d.amount > 0 ? 8 : 2)}%`, opacity: 0.85 }} />
                   <span className="chart-day-label">{d.day}</span>
                 </div>
               ))}
@@ -115,25 +171,33 @@ const DriverEarnings: React.FC = () => {
           {/* History Tab */}
           {activeTab === 'history' && (
             <div className="history-section">
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Recent Trips ({earningsData.totalTrips} total)</h3>
-              {earningsData.recentTrips.map(trip => (
-                <div key={trip._id} className="earnings-history-card">
-                  <div className="history-header">
-                    <div className="history-rider-info">
-                      <IonIcon icon={receiptOutline} style={{ color: '#FF6B35' }} />
-                      <div>
-                        <span className="history-rider-name">{trip.passengerName}</span>
-                        <p className="history-ride-meta">{trip.type} • {trip.from} → {trip.to}</p>
+              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Earnings ({earnings.length} trips)</h3>
+              {earnings.length === 0 ? (
+                <EmptyState
+                  icon={<IonIcon icon={receiptOutline} style={{ fontSize: 26 }} />}
+                  title="No earnings yet"
+                  subtitle="Complete a wallet ride and your 90% share will appear here instantly."
+                />
+              ) : (
+                earnings.slice(0, 20).map(trip => (
+                  <div key={trip.id} className="earnings-history-card">
+                    <div className="history-header">
+                      <div className="history-rider-info">
+                        <IonIcon icon={receiptOutline} style={{ color: '#FF6B35' }} />
+                        <div>
+                          <span className="history-rider-name">Trip earnings</span>
+                          <p className="history-ride-meta">{trip.rideId || 'Ride'}</p>
+                        </div>
                       </div>
+                      <span className="history-amount">+UGX {trip.amount.toLocaleString()}</span>
                     </div>
-                    <span className="history-amount">+UGX {trip.fare.toLocaleString()}</span>
+                    <div className="history-footer">
+                      <span>{new Date(trip.createdAt).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="history-net-earning">After 10% NAVIGO commission</span>
+                    </div>
                   </div>
-                  <div className="history-footer">
-                    <span>{new Date(trip.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                    <span className="history-net-earning">You earned: UGX {(trip.fare * 0.85).toLocaleString()} (85%)</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
 
@@ -141,18 +205,11 @@ const DriverEarnings: React.FC = () => {
           {activeTab === 'payouts' && (
             <div className="payouts-section">
               <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Payout History</h3>
-              {earningsData.payouts.map(payout => (
-                <div key={payout._id} className="earnings-payout-card">
-                  <div className="payout-icon">
-                    <IonIcon icon={checkmarkCircleOutline} />
-                  </div>
-                  <div className="payout-info">
-                    <h4>UGX {payout.amount.toLocaleString()}</h4>
-                    <p>{payout.method} • {new Date(payout.date).toLocaleDateString()}</p>
-                  </div>
-                  <IonBadge color="success" style={{ fontSize: 9 }}>Completed</IonBadge>
-                </div>
-              ))}
+              <EmptyState
+                icon={<IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 26 }} />}
+                title="No payouts yet"
+                subtitle="Payouts to Mobile Money are coming soon. Your balance keeps accumulating in the meantime."
+              />
             </div>
           )}
 
@@ -160,10 +217,10 @@ const DriverEarnings: React.FC = () => {
           {activeTab === 'overview' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
-                { label: 'Total Trips', value: earningsData.totalTrips, icon: receiptOutline },
-                { label: 'Avg Rating', value: earningsData.avgRating, icon: trendingUpOutline },
-                { label: 'You Keep', value: '85%', icon: cashOutline },
-                { label: 'Payout Method', value: 'MTN Money', icon: cardOutline },
+                { label: 'Total Trips', value: totalTrips, icon: receiptOutline },
+                { label: 'Avg Rating', value: Number(rating).toFixed(1), icon: trendingUpOutline },
+                { label: 'You Keep', value: '90%', icon: cashOutline },
+                { label: 'Payout Method', value: 'Coming soon', icon: arrowDownOutline },
               ].map(s => (
                 <div key={s.label} className="earnings-overview-card">
                   <IonIcon icon={s.icon} className="overview-icon" />
