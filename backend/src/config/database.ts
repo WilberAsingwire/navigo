@@ -151,6 +151,15 @@ export const initDB = async () => {
           lng DECIMAL NOT NULL,
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- Migration: Rename 'name' to 'fullName' if it exists and 'fullName' doesn't
+        DO $$
+        BEGIN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='name') AND
+             NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='fullName') THEN
+            ALTER TABLE users RENAME COLUMN name TO fullName;
+          END IF;
+        END $$;
       `);
       console.log('✅ Database tables initialized');
     } finally {

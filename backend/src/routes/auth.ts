@@ -118,9 +118,13 @@ router.post('/register', async (req: Request, res: Response) => {
       : `Welcome to NAVIGO, ${newUser.fullName}! 🚀`;
 
     res.status(201).json({ message, user: sanitizeUser(newUser), token });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Register error:', error);
-    res.status(500).json({ message: 'Registration failed.' });
+    res.status(500).json({
+      message: 'Registration failed.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details: error.detail // PostgreSQL often puts the specific error here
+    });
   }
 });
 
