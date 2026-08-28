@@ -931,3 +931,4 @@
     padding: 4rem 1.5rem;
   }
 }
+.preview-vehicle-img, .card-vehicle-img { mix-blend-mode: multiply; }

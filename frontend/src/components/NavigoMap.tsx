@@ -35,7 +35,7 @@ const createVehicleIcon = (imageUrl: string, color: string, size: number = 32) =
     html: `<div style="position:relative;width:${size}px;height:${size}px;">
             <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.3;"></div>
             <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
-              <img src="${imageUrl}" style="width:70%; height:70%; object-fit:contain; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));" />
+              <img src="${imageUrl}" style="width:70%; height:70%; object-fit:contain; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5)); mix-blend-mode: multiply;" />
             </div>
           </div>
           <style>
