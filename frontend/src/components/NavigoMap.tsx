@@ -189,6 +189,16 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       };
       locateControl.addTo(map);
 
+      // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
+      map.on('moveend', () => {
+        if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
+        poiFetchTimeoutRef.current = setTimeout(() => fetchNearbyPOIs(map), 500);
+      });
+
+      map.on('click', (e) => {
+        if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
+      });
+
       setTimeout(() => {
         map.invalidateSize();
       }, 200);
@@ -199,10 +209,21 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       resizeObserver.observe(mapContainerRef.current!);
     }
 
-    return () => {
-      // Do NOT remove the map here if we want it to persist across style changes
-      // The map is cleaned up when the component finally unmounts
-    };
+    const map = mapInstanceRef.current;
+    console.log(`Updating map style to: ${mapStyle}, URL: ${tileUrls[mapStyle].url}`);
+
+    // UPDATE TILE LAYER WITHOUT RECREATING MAP
+    // Remove existing tile layers first
+    map.eachLayer(layer => {
+      if (layer instanceof L.TileLayer) {
+        map.removeLayer(layer);
+      }
+    });
+
+    L.tileLayer(tileUrls[mapStyle].url, {
+      attribution: tileUrls[mapStyle].attribution,
+      maxZoom: 19,
+    }).addTo(map);
   }, [loading, mapStyle, interactive]);
 
   useEffect(() => {
