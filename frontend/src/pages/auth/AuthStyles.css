@@ -12,7 +12,13 @@
 
 .auth-container {
   min-height: 100vh;
-  background-color: var(--navigo-ink);
+  background: linear-gradient(
+    rgba(10, 10, 10, 0.7),
+    rgba(10, 10, 10, 0.7)
+  ), url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2048&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: white;
   display: flex;
   justify-content: center;
@@ -54,6 +60,12 @@
   max-width: 420px;
   padding: 40px 24px;
   text-align: center;
+  background: rgba(18, 24, 36, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 32px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
 }
 
 .auth-header {
@@ -89,8 +101,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  background: var(--navigo-white-5);
-  border: 1px solid var(--navigo-white-10);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 4px;
   margin-bottom: 24px;
@@ -130,8 +142,8 @@
 
 .input-field {
   width: 100%;
-  background: var(--navigo-white-5);
-  border: 1px solid var(--navigo-white-10);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 12px 16px;
   color: white;
