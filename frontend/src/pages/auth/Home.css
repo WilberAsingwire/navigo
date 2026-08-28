@@ -42,7 +42,7 @@
 
 .main-wrapper {
   padding-top: 4rem;
-  padding-bottom: 10rem;
+  padding-bottom: 12rem;
   background: var(--bg-deep);
   min-height: 100vh;
   position: relative;
@@ -196,6 +196,8 @@
   height: 56px;
   font-size: 1.1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  max-width: 100%;
 }
 
 .hero-btn.primary {
@@ -310,9 +312,11 @@
   overflow-x: auto;
   padding: 10px 5px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ride-pill {
+  flex: 0 0 auto;
   padding: 8px 16px;
   border-radius: 100px;
   font-size: 0.85rem;
@@ -325,6 +329,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .ride-pill.active {
@@ -340,19 +345,25 @@
   align-items: center;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-glass);
+  gap: 10px;
+  overflow: hidden;
 }
 
 .fare-label {
   font-size: 1rem;
   color: var(--text-muted);
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .fare-amount {
-  font-size: 2.2rem;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
   font-weight: 800;
   color: var(--text-bright);
   letter-spacing: -1px;
+  text-align: right;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .section {
