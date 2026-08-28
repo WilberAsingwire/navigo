@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { API_URL } from '../../config';
+import EmptyState from '../../components/EmptyState';
 import './CustomerSavedPlaces.css';
 
 const CustomerSavedPlaces: React.FC = () => {
@@ -125,7 +126,7 @@ const CustomerSavedPlaces: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" /></IonButtons>
           <IonTitle>Saved Places</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -136,10 +137,11 @@ const CustomerSavedPlaces: React.FC = () => {
             <IonSpinner name="crescent" color="warning" />
           </div>
         ) : places.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.4)' }}>
-            <IonIcon icon={locationOutline} style={{ fontSize: 48 }} />
-            <p>No saved places yet</p>
-          </div>
+          <EmptyState
+            icon={<IonIcon icon={locationOutline} style={{ fontSize: 26 }} />}
+            title="No saved places yet"
+            subtitle="Save Home or Work to book faster next time."
+          />
         ) : (
           <IonList style={{background: 'transparent'}}>
             {places.map(place => (

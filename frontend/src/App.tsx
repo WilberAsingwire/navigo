@@ -76,7 +76,7 @@ const HomeRedirect: React.FC = () => {
       const role = user.role || 'customer';
       if (role === 'admin') return <Redirect to="/admin/dashboard" />;
       if (role === 'driver' || role === 'motorist') return <Redirect to="/driver/home" />;
-      return <Redirect to="/rider/home" />;
+      return <Redirect to="/customer/home" />;
     } catch { return <Redirect to="/login" />; }
   }
   return <Redirect to="/login" />;
@@ -108,24 +108,25 @@ const App: React.FC = () => {
               <Route path="/auth/callback" component={AuthCallback} exact />
               <Route path="/auth/complete-social-reg" component={CompleteSocialRegistration} exact />
 
-              {/* Rider Routes */}
-              <Route path="/rider/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
-              <Route path="/rider/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
-              <Route path="/rider/active-ride" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} />} />
-              <Route path="/rider/history" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} />} />
-              <Route path="/rider/places" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} />} />
-              <Route path="/rider/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
-              <Route path="/rider/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
-              <Route path="/rider/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
+              {/* Customer Routes (primary — NAVIGO customers book rides & deliveries) */}
+              <Route path="/customer/home" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} />} />
+              <Route path="/customer/book" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} />} />
+              <Route path="/customer/active-ride" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} />} />
+              <Route path="/customer/history" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} />} />
+              <Route path="/customer/places" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} />} />
+              <Route path="/customer/payments" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} />} />
+              <Route path="/customer/support" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} />} />
+              <Route path="/customer/profile" exact render={() => <ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} />} />
 
-              {/* Customer Routes (backward compatible) */}
-              <Route path="/customer/home" exact render={() => <Redirect to="/rider/home" />} />
-              <Route path="/customer/book" exact render={() => <Redirect to="/rider/book" />} />
-              <Route path="/customer/history" exact render={() => <Redirect to="/rider/history" />} />
-              <Route path="/customer/places" exact render={() => <Redirect to="/rider/places" />} />
-              <Route path="/customer/payments" exact render={() => <Redirect to="/rider/payments" />} />
-              <Route path="/customer/support" exact render={() => <Redirect to="/rider/support" />} />
-              <Route path="/customer/profile" exact render={() => <Redirect to="/rider/profile" />} />
+              {/* /rider/* — legacy paths, redirected for backward compatibility */}
+              <Route path="/customer/home" exact render={() => <Redirect to="/customer/home" />} />
+              <Route path="/customer/book" exact render={() => <Redirect to="/customer/book" />} />
+              <Route path="/customer/active-ride" exact render={() => <Redirect to="/customer/active-ride" />} />
+              <Route path="/customer/history" exact render={() => <Redirect to="/customer/history" />} />
+              <Route path="/customer/places" exact render={() => <Redirect to="/customer/places" />} />
+              <Route path="/customer/payments" exact render={() => <Redirect to="/customer/payments" />} />
+              <Route path="/customer/support" exact render={() => <Redirect to="/customer/support" />} />
+              <Route path="/customer/profile" exact render={() => <Redirect to="/customer/profile" />} />
 
               {/* Driver Routes */}
               <Route path="/driver/home" exact render={() => <ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} />} />

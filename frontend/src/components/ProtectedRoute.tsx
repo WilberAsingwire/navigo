@@ -48,7 +48,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
         if (!allowedRoles.includes(userRole)) {
           const redirectPath = userRole === 'admin' ? '/admin/dashboard' :
-                              (userRole === 'driver' || userRole === 'motorist') ? '/driver/home' : '/rider/home';
+                              (userRole === 'driver' || userRole === 'motorist') ? '/driver/home' : '/customer/home';
           return <Redirect to={redirectPath} />;
         }
 

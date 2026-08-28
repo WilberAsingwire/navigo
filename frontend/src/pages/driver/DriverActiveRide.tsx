@@ -10,6 +10,7 @@ import {
   cashOutline, timeOutline, starOutline, shieldCheckmarkOutline,
   mapOutline, arrowForwardOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import { useHistory } from 'react-router-dom';
 import NavigoMap from '../../components/NavigoMap';
 import SOSButton from '../../components/SOSButton';
@@ -109,7 +110,7 @@ const DriverActiveRide: React.FC = () => {
           {/* Rider Card */}
           <div className="rider-info-card">
             <IonAvatar style={{ width: 48, height: 48 }}>
-              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(rideData.riderName)}&background=FF6B35&color=fff&size=64`} alt={rideData.riderName} />
+              <InitialsAvatar name={rideData.riderName} size={48} />
             </IonAvatar>
             <div className="rider-details">
               <h3>{rideData.riderName}</h3>

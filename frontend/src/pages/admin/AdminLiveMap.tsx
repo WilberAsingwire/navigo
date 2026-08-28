@@ -4,15 +4,18 @@ import { refreshOutline, bicycleOutline, carOutline, personOutline, pauseOutline
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import api from '../../services/api';
 import { io } from 'socket.io-client';
 import { SOCKET_URL } from '../../config';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconRetinaUrl: markerIcon2xUrl,
+  iconUrl: markerIconUrl,
+  shadowUrl: markerShadowUrl,
 });
 
 const carIcon = L.divIcon({ html: '<div style="background:#4da6ff;width:22px;height:22px;border-radius:50%;border:3px solid white;font-size:12px;text-align:center;line-height:22px;box-shadow:0 0 10px rgba(77,166,255,0.6)">🚗</div>', iconSize: [28, 28], iconAnchor: [14, 14] });
@@ -138,7 +141,7 @@ const AdminLiveMap: React.FC = () => {
 
       <IonContent style={{'--background': '#080c14'} as any}>
         <div style={{display: 'flex', gap: 6, padding: '8px 12px', overflowX: 'auto'}}>
-          {[{label: 'Drivers', value: stats.drivers, color: '#FF6B35'}, {label: 'Motorists', value: stats.motorists, color: '#FF6B35'}, {label: 'Riders', value: stats.riders, color: '#FF6B35'}, {label: 'Active Trips', value: stats.activeTrips, color: '#FF6B35'}].map(s => (
+          {[{label: 'Drivers', value: stats.drivers, color: '#FF6B35'}, {label: 'Motorists', value: stats.motorists, color: '#FF6B35'}, {label: 'Customers', value: stats.riders, color: '#FF6B35'}, {label: 'Active Trips', value: stats.activeTrips, color: '#FF6B35'}].map(s => (
             <div key={s.label} style={{background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px', textAlign: 'center', flex: 1, minWidth: 70}}>
               <div style={{fontSize: 16, fontWeight: 700, color: s.color}}>{s.value}</div>
               <div style={{fontSize: 10, color: '#D1D5DB', whiteSpace: 'nowrap'}}>{s.label}</div>
@@ -150,7 +153,7 @@ const AdminLiveMap: React.FC = () => {
           <IonSegmentButton value="all"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>All</IonLabel></IonSegmentButton>
           <IonSegmentButton value="drivers"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
           <IonSegmentButton value="motorists"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Boda</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="riders"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Riders</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="riders"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
         </IonSegment>
 
         {loading ? (

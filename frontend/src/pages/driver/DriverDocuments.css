@@ -152,7 +152,7 @@
 
 /* Submit Button */
 .submit-btn {
-  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
   --color: #fff !important;
   --border-radius: 16px !important;
   font-weight: 700 !important;

@@ -40,7 +40,7 @@ const CompleteSocialRegistration: React.FC = () => {
 
       const role = response.data.user.role;
       const redirectPath = (role === 'driver' || role === 'motorist') ? '/driver/home' :
-                           (role === 'admin') ? '/admin/dashboard' : '/rider/home';
+                           (role === 'admin') ? '/admin/dashboard' : '/customer/home';
 
       history.push(redirectPath);
     } catch (err: any) {

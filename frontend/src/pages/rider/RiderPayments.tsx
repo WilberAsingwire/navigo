@@ -74,7 +74,7 @@ const RiderPayments: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border">
         <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" /></IonButtons>
           <IonTitle>Wallet & Payments</IonTitle>
           <IonButton slot="end" fill="clear" onClick={loadData}><IonIcon icon={refreshOutline} style={{ color: '#FF6B35' }} /></IonButton>
         </IonToolbar>

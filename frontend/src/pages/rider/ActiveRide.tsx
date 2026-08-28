@@ -69,7 +69,7 @@ const ActiveRide: React.FC = () => {
     };
   }, [user]);
 
-  const handleCancel = () => { setShowCancelModal(false); setToastMsg('Ride cancelled'); setShowToast(true); setTimeout(() => history.push('/rider/home'), 1500); };
+  const handleCancel = () => { setShowCancelModal(false); setToastMsg('Ride cancelled'); setShowToast(true); setTimeout(() => history.push('/customer/home'), 1500); };
   const handleStartRide = () => { setRideStatus('started'); setToastMsg('🚗 Ride started!'); setShowToast(true); };
   const handleArriveDestination = () => { setRideStatus('payment_pending'); setShowPaymentModal(true); };
 
@@ -97,7 +97,7 @@ const status = await checkPaymentStatus(result.transactionId!, paymentMethod as 
     setIsProcessing(false);
   };
 
-  const handleSubmitRating = () => { setShowRating(false); setToastMsg(`⭐ ${rating} stars! Thank you.`); setShowToast(true); setTimeout(() => history.push('/rider/home'), 2000); };
+  const handleSubmitRating = () => { setShowRating(false); setToastMsg(`⭐ ${rating} stars! Thank you.`); setShowToast(true); setTimeout(() => history.push('/customer/home'), 2000); };
 
   return (
     <IonPage>

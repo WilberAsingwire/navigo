@@ -171,7 +171,7 @@ const ForgotPassword: React.FC = () => {
 
                 <button
                   className="btn-secondary"
-                  style={{ background: 'none', border: 'none', color: '#FF5A1F', cursor: 'pointer', marginTop: 12, fontSize: '13px' }}
+                  style={{ background: 'none', border: 'none', color: '#FF6B35', cursor: 'pointer', marginTop: 12, fontSize: '13px' }}
                   onClick={handleRequestCode}
                   disabled={!canResend || isLoading}
                 >

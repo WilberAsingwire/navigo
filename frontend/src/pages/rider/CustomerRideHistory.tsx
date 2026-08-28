@@ -14,6 +14,8 @@ import { API_URL } from '../../config';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
+import EmptyState from '../../components/EmptyState';
+import Skeleton from '../../components/Skeleton';
 import './CustomerRideHistory.css';
 
 const CustomerRideHistory: React.FC = () => {
@@ -70,7 +72,7 @@ const CustomerRideHistory: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/rider/home" style={{color: '#fff'}} /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
           <IonTitle style={{color: '#fff'}}>Ride History</IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -106,15 +108,15 @@ const CustomerRideHistory: React.FC = () => {
 
           {/* Ride List */}
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: 40 }}>
-              <IonSpinner name="crescent" color="warning" />
-              <p style={{ color: '#fff', marginTop: 10 }}>Loading your trips...</p>
-            </div>
+            <Skeleton rows={3} />
           ) : filteredRides.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.4)' }}>
-              <IonIcon icon={carOutline} style={{ fontSize: 48 }} />
-              <p>No rides found</p>
-            </div>
+            <EmptyState
+              icon={<IonIcon icon={carOutline} style={{ fontSize: 26 }} />}
+              title="No rides yet"
+              subtitle="Your trip history will appear here after your first ride."
+              actionLabel="Book a ride"
+              onAction={() => history.push('/customer/book')}
+            />
           ) : (
             filteredRides.map(ride => (
               <div key={ride.id} onClick={() => { setSelectedRide(ride); setShowDetail(true); }}
@@ -189,7 +191,7 @@ const CustomerRideHistory: React.FC = () => {
               </div>
 
               {(selectedRide.status === 'completed' || selectedRide.status === 'Completed') && (
-                <IonButton expand="block" className="book-similar-btn" onClick={() => { setShowDetail(false); history.push('/rider/book'); }}
+                <IonButton expand="block" className="book-similar-btn" onClick={() => { setShowDetail(false); history.push('/customer/book'); }}
                   style={{ '--color': '#fff' } as any}>
                   <IonIcon icon={refreshOutline} slot="start" /> Book Similar Ride
                 </IonButton>

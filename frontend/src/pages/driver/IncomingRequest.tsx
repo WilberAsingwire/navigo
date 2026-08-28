@@ -8,6 +8,7 @@ import {
   cashOutline, closeOutline, checkmarkCircleOutline,
   personOutline, mapOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import { useHistory, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import socketService from '../../services/socketService';
@@ -127,7 +128,7 @@ const IncomingRequest: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 12, marginBottom: 14 }}>
             <IonAvatar style={{ width: 44, height: 44 }}>
-              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(requestData.riderName)}&background=FF6B35&color=fff&size=64`} alt={requestData.riderName} />
+              <InitialsAvatar name={requestData.riderName} size={44} />
             </IonAvatar>
             <div style={{ flex: 1 }}>
               <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>{requestData.riderName}</h3>

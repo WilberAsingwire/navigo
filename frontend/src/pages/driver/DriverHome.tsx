@@ -10,6 +10,7 @@ import {
   chevronDownCircleOutline, settingsOutline, personOutline,
   checkmarkCircleOutline, cashOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
@@ -92,8 +93,8 @@ const DriverHome: React.FC = () => {
         <IonToolbar className="driver-toolbar">
           <div className="header-content">
             <div className="user-profile-group">
-              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => ionRouter.push('/driver/profile')}>
-                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || 'Driver')}&background=FF6B35&color=fff&size=64`} alt="profile" />
+              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => ionRouter.push('/driver/vehicle')}>
+                <InitialsAvatar name={user?.fullName || 'D'} size={36} />
               </IonAvatar>
               <div>
                 <h2 className="driver-welcome-text">Hello, {user?.fullName?.split(' ')[0] || 'Driver'} 👋</h2>

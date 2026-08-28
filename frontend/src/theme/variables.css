@@ -1,87 +1,107 @@
-/* For information on how to create your own theme, please refer to:
-http://ionicframework.com/docs/theming/ */
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGO DESIGN TOKENS — single source of truth
+   ─────────────────────────────────────────────────────────────
+   Brand:   ember orange on deep navy, glassmorphic cards.
+   Fonts:   Sora (display/headings) + Inter (body) — bundled.
+   Every page MUST use these tokens instead of raw hex values.
+   ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Brand Constants */
-  --navigo-orange: #FF6B35;
-  --navigo-green: #2D6A4F;
-  --navigo-navy: #080C14;
-  --navigo-dark-grey: #1A1A1A;
+  /* ── Brand ─────────────────────────────────────────────── */
+  --navigo-orange: #FF6B35;            /* THE brand color — use this everywhere */
+  --navigo-orange-hover: #FF7E4D;
+  --navigo-orange-soft: rgba(255, 107, 53, 0.14);
+  --navigo-orange-glow: rgba(255, 107, 53, 0.35);
+  --navigo-green: #2D6A4F;             /* secondary brand (boda/success family) */
+
+  /* ── Backgrounds (dark surface scale) ──────────────────── */
+  --nav-bg: #080C14;                    /* app background */
+  --nav-bg-soft: #0D131F;               /* raised sections */
+  --nav-card: #131B2A;                  /* cards */
+  --nav-card-soft: rgba(255, 255, 255, 0.04);  /* subtle fills */
+  --nav-border: rgba(255, 255, 255, 0.08);
+  --nav-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* ── Text ──────────────────────────────────────────────── */
+  --nav-text: #F5F7FA;
+  --nav-text-secondary: #94A3B8;
+  --nav-text-muted: #64748B;
+
+  /* ── Semantic ──────────────────────────────────────────── */
+  --nav-success: #10B981;
+  --nav-warning: #F59E0B;
+  --nav-danger: #EF4444;
+  --nav-info: #4DA6FF;
+
+  /* ── Shape (the only radii we use) ─────────────────────── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  /* ── Elevation ─────────────────────────────────────────── */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+  /* ── Type ──────────────────────────────────────────────── */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* --- LIGHT THEME --- */
-body.light {
-  --app-background: #F8F9FA;
-  --app-text: #1A1A1A;
-  --app-card-bg: #FFFFFF;
-  --app-secondary-text: #6B7280;
-  --app-border: #E5E7EB;
-  --app-footer-bg: #F1F3F5;
-
-  /* Ionic Header Overrides for Light Mode */
-  --ion-toolbar-background: #FFFFFF;
-  --ion-toolbar-color: #1A1A1A;
-}
-
-/* --- DARK THEME --- */
-body.dark {
-  --app-background: #090D16;
-  --app-text: #FFFFFF;
-  --app-card-bg: #1A1A1A;
-  --app-secondary-text: #D1D5DB;
-  --app-border: #2D3748;
-  --app-footer-bg: #0d1117;
-
-  /* Ionic Header Overrides for Dark Mode */
-  --ion-toolbar-background: #1A1A1A;
-  --ion-toolbar-color: #FFFFFF;
-}
-
-/* Root Global Styles - Eliminate White Margins */
+/* ── Base ─────────────────────────────────────────────────────── */
 html, body {
-  background-color: #090D16 !important;
-  color: #ffffff;
+  background-color: var(--nav-bg);
+  color: var(--nav-text);
+  font-family: var(--font-body);
   min-height: 100vh;
   margin: 0;
   padding: 0;
   width: 100%;
 }
 
-ion-page {
-  --background: #090D16 !important;
-  background: #090D16 !important;
+ion-app {
+  background-color: var(--nav-bg);
 }
 
-/* Global Header Fix - Using Variables */
+ion-page {
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  font-family: var(--font-body);
+}
+
+/* Display type — headings use Sora */
+h1, h2, h3, .sora-font,
+.welcome-title, .card-title, .welcome-text, .section-title {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Ionic header/toolbar — follow tokens */
 ion-header,
 ion-toolbar {
-  --background: var(--ion-toolbar-background) !important;
-  --color: var(--ion-toolbar-color) !important;
-  background-color: var(--ion-toolbar-background) !important;
-  color: var(--ion-toolbar-color) !important;
+  --background: var(--nav-bg);
+  --color: var(--nav-text);
 }
 
 ion-header ion-title {
-  color: var(--ion-toolbar-color) !important;
+  color: var(--nav-text);
 }
 
-/* Custom scrollbar - themed */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--app-background);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--app-border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--app-secondary-text);
-}
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--nav-bg); }
+::-webkit-scrollbar-thumb { background: var(--nav-border-strong); border-radius: var(--radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--nav-text-muted); }
 
-/* Prevent scrollbar overlap */
+/* Prevent horizontal overflow */
 body {
   overflow-x: hidden;
   padding-right: 0 !important;
+}
+
+/* Shared card look */
+.glass-card, [class*='card'] {
+  font-family: var(--font-body);
 }

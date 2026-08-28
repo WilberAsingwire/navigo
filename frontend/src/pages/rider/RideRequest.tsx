@@ -13,10 +13,14 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
+import bodaImg from '../../assets/vehicles/boda.png';
+import goImg from '../../assets/vehicles/go.png';
+import comfortImg from '../../assets/vehicles/comfort.png';
+import xlImg from '../../assets/vehicles/xl.png';
 import './RideRequest.css';
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
-interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; emoji: string; }
+interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; image: string; }
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
 enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
 
@@ -28,10 +32,10 @@ const POPULAR_PLACES: Location[] = [
 ];
 
 const RIDE_OPTIONS: RideOption[] = [
-  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', emoji: '🏍️' },
-  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', surgeMultiplier: 1.0, color: '#2D6A4F', emoji: '🚗' },
-  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', emoji: '🚙' },
-  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', emoji: '🚐' }
+  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', image: bodaImg },
+  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', surgeMultiplier: 1.0, color: '#2D6A4F', image: goImg },
+  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', image: comfortImg },
+  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', image: xlImg }
 ];
 
 
@@ -103,7 +107,7 @@ const RideRequest: React.FC = () => {
         socket.emit('join-ride-room', { rideId: data.rideId });
         // Redirect to active ride page
         setTimeout(() => {
-          ionRouter.push('/rider/active-ride');
+          ionRouter.push('/customer/active-ride');
         }, 1500);
       });
       socket.on('no-drivers-found', (data: any) => {
@@ -377,7 +381,7 @@ const RideRequest: React.FC = () => {
       <IonContent>
         <div className="booking-page-container">
           <div className="booking-form-panel">
-            <button className="back-nav-btn" onClick={() => ionRouter.push('/rider/home')}>
+            <button className="back-nav-btn" onClick={() => ionRouter.push('/customer/home')}>
               <IonIcon icon={arrowBackOutline} /> Back
             </button>
 
@@ -478,7 +482,7 @@ const RideRequest: React.FC = () => {
                     <div className="search-results-list">
                       {searchResults.map((r, i) => (
                         <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
-                          <IonIcon icon={locationOutline} style={{ color: '#FF5A1F' }} />
+                          <IonIcon icon={locationOutline} style={{ color: '#FF6B35' }} />
                           <div className="result-info">
                             <span className="result-name">{r.name || r.address.split(',')[0]}</span>
                             <span className="result-addr">{r.address}</span>
@@ -497,7 +501,9 @@ const RideRequest: React.FC = () => {
                   return (
                     <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)}>
                       <div className="vehicle-main-info">
-                        <span className="vehicle-emoji">{opt.emoji}</span>
+                        <span className="vehicle-emoji">
+                          <img src={opt.image} alt={opt.name} className="vehicle-thumb" />
+                        </span>
                         <div className="vehicle-details">
                           <span className="vehicle-type-name">{opt.name}</span>
                           <span className="vehicle-type-desc">{opt.description}</span>
@@ -559,7 +565,7 @@ const RideRequest: React.FC = () => {
               <div className="location-input-wrapper">
                 <div className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
                 <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
-                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF5A1F', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
+                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
               </div>
 
               <button className="btn-continue" disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>

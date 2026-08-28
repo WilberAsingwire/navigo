@@ -25,7 +25,7 @@
 }
 
 .step-badge {
-  color: #FF5A1F;
+  color: #FF6B35;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -61,7 +61,7 @@
 }
 
 .phone-input-wrapper:focus-within {
-  border-color: #FF5A1F;
+  border-color: #FF6B35;
   box-shadow: 0 0 0 2px rgba(255, 90, 31, 0.2);
 }
 
@@ -96,7 +96,7 @@
 
 /* Buttons */
 .btn-primary {
-  background: #FF5A1F;
+  background: #FF6B35;
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
@@ -110,7 +110,7 @@
 }
 
 .btn-primary:hover {
-  background: #FF4500;
+  background: #FF6B35;
   transform: translateY(-1px);
   box-shadow: 0 6px 24px rgba(255, 90, 31, 0.4);
 }
@@ -137,7 +137,7 @@
   height: 56px;
   border-radius: 50%;
   background: rgba(255, 90, 31, 0.1);
-  color: #FF5A1F;
+  color: #FF6B35;
   border: 1px solid rgba(255, 90, 31, 0.2);
   display: flex;
   align-items: center;

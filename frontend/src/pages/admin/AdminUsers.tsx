@@ -13,6 +13,7 @@ import {
   shieldCheckmarkOutline, downloadOutline,
   closeOutline, peopleOutline, starOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import api from '../../services/api';
 import './AdminUsers.css';
 
@@ -132,7 +133,7 @@ const AdminUsers: React.FC = () => {
         <div style={{padding: 14, maxWidth: 700, margin: '0 auto'}}>
           {/* Stats */}
           <div className="stats-grid">
-            {[{label: 'Total', value: stats.total}, {label: 'Riders', value: stats.riders}, {label: 'Drivers', value: stats.drivers + stats.motorists}, {label: 'Suspended', value: stats.suspended}, {label: 'Banned', value: stats.banned}].map(s => (
+            {[{label: 'Total', value: stats.total}, {label: 'Customers', value: stats.riders}, {label: 'Drivers', value: stats.drivers + stats.motorists}, {label: 'Suspended', value: stats.suspended}, {label: 'Banned', value: stats.banned}].map(s => (
               <div key={s.label} className="stat-card">
                 <div style={{fontSize: 16, fontWeight: 700, color: '#FF6B35'}}>{s.value}</div>
                 <div style={{fontSize: 9, color: '#D1D5DB'}}>{s.label}</div>
@@ -147,7 +148,7 @@ const AdminUsers: React.FC = () => {
           {/* Role Filter */}
           <IonSegment value={activeFilter} onIonChange={e => setActiveFilter(e.detail.value as any)} style={{marginBottom: 8}}>
             <IonSegmentButton value="all"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="rider"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Riders</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="rider"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
             <IonSegmentButton value="driver"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
             <IonSegmentButton value="motorist"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Motorists</IonLabel></IonSegmentButton>
           </IonSegment>
@@ -170,7 +171,7 @@ const AdminUsers: React.FC = () => {
               <div key={user.id} onClick={() => { setSelectedUser(user); setShowDetail(true); }}
                 style={{background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.04)'}}>
                 <IonAvatar style={{width: 40, height: 40, background: '#2A2A2A'}}>
-                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=2A2A2A&color=fff&size=64&bold=true`} alt={user.fullName} />
+                  <InitialsAvatar name={user.fullName} size={40} color="#64748B" />
                 </IonAvatar>
                 <div style={{flex: 1}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
@@ -202,7 +203,7 @@ const AdminUsers: React.FC = () => {
               </div>
               <div style={{textAlign: 'center', marginBottom: 20}}>
                 <IonAvatar style={{width: 80, height: 80, margin: '0 auto 10px', background: '#2A2A2A'}}>
-                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.fullName)}&background=2A2A2A&color=fff&size=128&bold=true`} alt="" />
+                  <InitialsAvatar name={selectedUser.fullName} size={80} color="#64748B" />
                 </IonAvatar>
                 {(() => { const sc = getStatusColor(selectedUser.status); return <span style={{background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600}}>{selectedUser.status}</span>; })()}
               </div>

@@ -11,6 +11,7 @@ import {
   starOutline, eyeOutline, refreshOutline,
   checkmarkDoneOutline, closeOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import api from '../../services/api';
 import BodaSafeScore from '../../components/BodaSafeBadges';
 import './AdminApprovals.css';
@@ -143,7 +144,7 @@ const AdminApprovals: React.FC = () => {
                 <IonCardContent>
                   <div className="driver-header">
                     <IonAvatar>
-                      <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(driver.fullName)}&background=FF6B35&color=fff&size=64`} alt={driver.fullName} />
+                      <InitialsAvatar name={driver.fullName} size={40} />
                     </IonAvatar>
                     <div className="driver-info">
                       <h3>{driver.fullName} {driver.isFemaleDriver && '👩'}</h3>

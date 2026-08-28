@@ -42,7 +42,7 @@ const Login: React.FC = () => {
       if (savedUser) {
         const user = JSON.parse(savedUser);
         const redirectPath = user.role === 'admin' ? '/admin/dashboard' :
-                            (user.role === 'driver' || user.role === 'motorist') ? '/driver/home' : '/rider/home';
+                            (user.role === 'driver' || user.role === 'motorist') ? '/driver/home' : '/customer/home';
         history.push(redirectPath);
       }
     } catch (err: any) {

@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
+import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
 import api from '../services/api';
 import bodaImg from '../assets/vehicles/boda.png';
@@ -10,9 +13,9 @@ import xlImg from '../assets/vehicles/xl.png';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconRetinaUrl: markerIcon2xUrl,
+  iconUrl: markerIconUrl,
+  shadowUrl: markerShadowUrl,
 });
 
 const createPulsingIcon = (color: string, emoji: string, size: number = 28) => {
@@ -86,6 +89,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
+  const [tilesHealthy, setTilesHealthy] = useState(true);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -246,11 +250,22 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       }
     });
 
-    L.tileLayer(tileUrls[mapStyle].url, {
+    const tileErrors = { count: 0 };
+    const tileLayer = L.tileLayer(tileUrls[mapStyle].url, {
       attribution: tileUrls[mapStyle].attribution,
       maxZoom: mapStyle === 'satellite' ? 22 : 22,
       maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
-    }).addTo(map);
+    });
+    tileLayer.on('tileload', () => { setTilesHealthy(true); });
+    tileLayer.on('tileerror', () => {
+      tileErrors.count += 1;
+      if (tileErrors.count >= 3) setTilesHealthy(false);
+    });
+    tileLayer.addTo(map);
+    // If tiles never arrive (offline / CDN blocked), surface a friendly state
+    const fallbackTimer = setTimeout(() => {
+      if (tileErrors.count >= 3) setTilesHealthy(false);
+    }, 6000);
 
     if (mapStyle === 'satellite') {
       // Add a high-contrast labels layer on top of satellite imagery
@@ -261,6 +276,8 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
         zIndex: 10,
       }).addTo(map);
     }
+
+    return () => clearTimeout(fallbackTimer);
   }, [loading, mapStyle, interactive]);
 
   useEffect(() => {
@@ -395,11 +412,19 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
           overflow: 'hidden',
           position: 'relative',
           border: '2px solid rgba(255,255,255,0.08)',
+          /* Branded backdrop — the map area is never an empty black void */
+          background: 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%)',
         }}
       >
+        {!tilesHealthy && (
+          <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 900, background: 'rgba(13,19,31,0.92)', border: '1px solid rgba(255,107,53,0.35)', borderRadius: 9999, padding: '6px 14px', fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
+            🗺️ Map tiles unavailable — locations still work
+          </div>
+        )}
         {loading && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080c14' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 60%, #070b12 100%)' }}>
             <IonSpinner name="crescent" color="warning" />
+            <span style={{ fontSize: 11, color: '#64748B', letterSpacing: 1 }}>LOADING MAP</span>
           </div>
         )}
       </div>

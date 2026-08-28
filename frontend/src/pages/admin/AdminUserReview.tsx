@@ -13,6 +13,7 @@ import {
   documentTextOutline, cameraOutline, timeOutline, bicycleOutline,
   checkmarkDoneOutline, closeOutline, eyeOutline, refreshOutline
 } from 'ionicons/icons';
+import InitialsAvatar from '../../components/InitialsAvatar';
 import './AdminUserReview.css';
 
 interface Driver {
@@ -161,7 +162,7 @@ const AdminUserReview: React.FC = () => {
                 style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 14, marginBottom: 8, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <IonAvatar style={{ width: 44, height: 44 }}>
-                    <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(driver.name)}&background=FF6B35&color=fff&size=64`} alt={driver.name} />
+                    <InitialsAvatar name={driver.name} size={44} />
                   </IonAvatar>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

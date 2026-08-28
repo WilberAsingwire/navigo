@@ -78,7 +78,7 @@ ion-toggle {
 }
 
 .settings-save-btn {
-  --background: linear-gradient(135deg, #FF5A1F 0%, #FF4500 100%) !important;
+  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
   --color: #fff !important;
   --border-radius: 14px !important;
   font-weight: 700 !important;
