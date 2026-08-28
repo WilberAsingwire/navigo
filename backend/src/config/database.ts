@@ -178,16 +178,16 @@ export const initDB = async () => {
             ALTER TABLE users DROP CONSTRAINT users_role_check;
           END IF;
 
-          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='name') AND
-             NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='fullName') THEN
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='name') AND
+             NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='fullname') THEN
             ALTER TABLE users RENAME COLUMN name TO fullName;
           END IF;
 
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='currentLat') THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='currentlat') THEN
             ALTER TABLE users ADD COLUMN currentLat DECIMAL;
           END IF;
 
-          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='currentLng') THEN
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='currentlng') THEN
             ALTER TABLE users ADD COLUMN currentLng DECIMAL;
           END IF;
         END $$;
