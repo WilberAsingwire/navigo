@@ -224,6 +224,16 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       maxZoom: mapStyle === 'satellite' ? 18 : 22,
       maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
     }).addTo(map);
+
+    if (mapStyle === 'satellite') {
+      // Add a transparent labels layer on top of satellite imagery to create a "Hybrid" look
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        maxZoom: 22,
+        maxNativeZoom: 19,
+        zIndex: 10, // Ensure labels are above the satellite imagery
+      }).addTo(map);
+    }
   }, [loading, mapStyle, interactive]);
 
   useEffect(() => {
