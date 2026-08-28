@@ -667,9 +667,10 @@
 
 .footer {
   background: #05070D;
-  padding: 0 2rem 4rem;
+  padding: 0 1.5rem 4rem;
   border-top: 1px solid var(--border-glass);
   margin-top: 6rem;
+  box-sizing: border-box;
 }
 
 .footer-grid {
@@ -864,6 +865,28 @@
     justify-content: center;
     justify-items: center;
     padding: 0 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    padding-top: 2rem;
+    justify-items: center;
+  }
+
+  .footer-col {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-col p {
+    margin: 0 auto;
+    max-width: 200px;
+    text-align: center;
   }
 
   .section {
