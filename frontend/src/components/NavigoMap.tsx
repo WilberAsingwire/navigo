@@ -134,16 +134,15 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     animationRef.current = requestAnimationFrame(step);
   };
 
-  const fetchNearbyPOIs = async (map: L.Map) => {
+  const fetchNearbyPOIs = async (map: L.Map, radius: number, isPriority: boolean = true) => {
     const center = map.getCenter();
-    const zoom = map.getZoom();
 
-    // VERY LARGE radius to show EVERYTHING possible: businesses, shops, buildings, parks, etc.
-    const radius = zoom > 16 ? 1500 : zoom > 14 ? 5000 : zoom > 12 ? 15000 : 25000;
+    if (isPriority) {
+      console.log(`🚀 Priority Fetch: POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)`);
+    } else {
+      console.log(`☁️ Background Fetch: POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)`);
+    }
 
-    console.log(`📡 Fetching ALL POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m — EVERYTHING)...`);
-
-    // BROAD OVERPASS QUERY — include every possible amenity, shop, office, building, landmark
     const overpassQuery = `
       [out:json][timeout:30];
       (
@@ -173,9 +172,11 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       const res = await fetch(queryUrl, { headers: { 'Accept': 'application/json' } });
       const data = await res.json();
 
-      // Clear old POIs
-      Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
-      poiMarkersRef.current = {};
+      if (isPriority) {
+        // For priority loads, we clear existing POIs to keep the map clean
+        Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
+        poiMarkersRef.current = {};
+      }
 
       const poiEmojiMap: Record<string, string> = {
         restaurant: '🍴', cafe: '☕', bar: '🍺', pub: '🍻', fast_food: '🍔',
@@ -194,6 +195,9 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
       if (data.elements && data.elements.length > 0) {
         data.elements.forEach((element: any) => {
+          // Avoid duplicate markers
+          if (poiMarkersRef.current[element.id]) return;
+
           const tags = element.tags || {};
           const amenity = tags.amenity || tags.shop || tags.office || tags.leisure || tags.tourism || tags.building || tags.place || 'other';
           const name = tags.name || tags.operator || 'Unnamed Spot';
@@ -209,13 +213,21 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
 
           poiMarkersRef.current[element.id] = marker;
         });
-        console.log(`✅ Loaded ${data.elements.length} nearby EVERYTHING POIs`);
-      } else {
-        console.log(`✅ Zero POIs in this area — nothing mapped by OpenStreetMap yet`);
       }
     } catch (e) {
       console.error('❌ POI Fetch Error (Overpass):', e);
     }
+  };
+
+  const loadPOIsInRings = async (map: L.Map) => {
+    // Ring 1: Immediate (1km) - High Priority
+    await fetchNearbyPOIs(map, 1000, true);
+
+    // Ring 2: Local (5km) - Background
+    setTimeout(() => fetchNearbyPOIs(map, 5000, false), 1000);
+
+    // Ring 3: Regional (25km) - Background
+    setTimeout(() => fetchNearbyPOIs(map, 25000, false), 3000);
   };
 
   useEffect(() => {
@@ -256,7 +268,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
       map.on('moveend', () => {
         if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
-        poiFetchTimeoutRef.current = setTimeout(() => fetchNearbyPOIs(map), 1500);
+        poiFetchTimeoutRef.current = setTimeout(() => loadPOIsInRings(map), 1500);
       });
 
       map.on('click', (e) => {

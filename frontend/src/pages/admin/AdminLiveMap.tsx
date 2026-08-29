@@ -36,12 +36,43 @@ const FlyToButton: React.FC<{ center: [number, number] }> = ({ center }) => {
   );
 };
 
+const DemandLayer: React.FC = () => {
+  const map = useMap();
+  const demandPoints = [
+    { lat: 0.3136, lng: 32.5811, intensity: 0.9, label: 'City Center' },
+    { lat: 0.3333, lng: 32.5922, intensity: 0.7, label: 'Kololo' },
+    { lat: 0.3234, lng: 32.5888, intensity: 0.8, label: 'Nakasero' },
+    { lat: 0.3000, lng: 32.5700, intensity: 0.5, label: 'Kiwatule' },
+    { lat: 0.3400, lng: 32.5600, intensity: 0.6, label: 'Kazo' },
+  ];
+
+  useEffect(() => {
+    const layers: L.Layer[] = [];
+    demandPoints.forEach(p => {
+      const circle = L.circle([p.lat, p.lng], {
+        radius: 500 * p.intensity,
+        color: p.intensity > 0.7 ? '#ef4444' : p.intensity > 0.5 ? '#f97316' : '#facc15',
+        fillColor: p.intensity > 0.7 ? '#ef4444' : p.intensity > 0.5 ? '#f97316' : '#facc15',
+        fillOpacity: 0.4,
+        weight: 0
+      }).addTo(map);
+      layers.push(circle);
+    });
+
+    return () => {
+      layers.forEach(l => map.removeLayer(l));
+    };
+  }, [map]);
+
+  return null;
+};
+
 const AdminLiveMap: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number]>([0.3476, 32.5825]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'drivers' | 'motorists' | 'riders'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'drivers' | 'motorists' | 'riders' | 'heatmap'>('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [mapKey, setMapKey] = useState(0);
   const [mapStyle] = useState<'standard' | 'dark'>('dark');
@@ -154,6 +185,7 @@ const AdminLiveMap: React.FC = () => {
           <IonSegmentButton value="drivers"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
           <IonSegmentButton value="motorists"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Boda</IonLabel></IonSegmentButton>
           <IonSegmentButton value="riders"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="heatmap"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Demand</IonLabel></IonSegmentButton>
         </IonSegment>
 
         {loading ? (

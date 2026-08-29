@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IonToast, IonProgressBar } from '@ionic/react';
 import { useAuth } from '../context/AuthContext';
+import { Haptic } from '../services/HapticService';
 import './LoyaltyCard.css';
 
 interface LoyaltyCardProps {
@@ -52,20 +53,24 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
     if (points >= reward.points) {
       const alreadyRedeemed = redeemedRewards.includes(reward.name);
       if (!alreadyRedeemed) {
+        Haptic.success();
         redeemedRewards.push(reward.name);
         localStorage.setItem('navigo_redeemed', JSON.stringify(redeemedRewards));
         const discountAmount = reward.points * 10;
         setToastMsg(`🎉 Redeemed: ${reward.name}! UGX ${discountAmount.toLocaleString()} discount applied.`);
       } else {
+        Haptic.error();
         setToastMsg(`Already redeemed: ${reward.name}`);
       }
     } else {
+      Haptic.error();
       setToastMsg(`Need ${reward.points - points} more pts for ${reward.name}`);
     }
     setShowToast(true);
   };
 
   const copyReferralCode = () => {
+    Haptic.tick();
     navigator.clipboard?.writeText(referralCode);
     const current = parseInt(localStorage.getItem('navigo_referrals') || '0');
     localStorage.setItem('navigo_referrals', String(current + 1));

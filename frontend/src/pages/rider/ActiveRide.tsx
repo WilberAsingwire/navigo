@@ -147,18 +147,9 @@ const ActiveRide: React.FC = () => {
     }
   };
 
-  const handleRate = async () => {
-    if (!ride || rating === 0) return;
-    try {
-      await api.post(`/rides/${ride.id}/rate`, { rating });
-      setToastMsg(`⭐ ${rating} stars! Thank you.`);
-      setShowToast(true);
-      setShowRating(false);
-      setTimeout(() => history.push('/customer/home'), 1800);
-    } catch (e: any) {
-      setToastMsg(e.response?.data?.message || 'Could not save rating');
-      setShowToast(true);
-    }
+  const openNavigation = () => {
+    if (!ride || !driverPos) return;
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${driverPos.lat},${driverPos.lng}&destination=${ride.destination.lat},${ride.destination.lng}`, '_blank');
   };
 
   if (loading) {
@@ -219,15 +210,22 @@ const ActiveRide: React.FC = () => {
       </IonHeader>
 
       <IonContent className="active-ride-content" style={{ '--background': '#080c14' } as any}>
-        <NavigoMap
-          userLocation={driverPos || ride.pickup}
-          driverLocation={phase === 'accepted' || phase === 'arrived' ? driverPos : null}
-          destination={ride.destination}
-          height="280px"
-          showRoute={!!(driverPos && (phase === 'accepted' || phase === 'arrived'))}
-          driverType={(ride.vehicleType as any) || 'go'}
-          followUser={false}
-        />
+        <div style={{ height: '280px', width: '100%', position: 'relative' }}>
+          <NavigoMap
+            userLocation={driverPos || ride.pickup}
+            driverLocation={phase === 'accepted' || phase === 'arrived' ? driverPos : null}
+            destination={ride.destination}
+            height="280px"
+            showRoute={!!(driverPos && (phase === 'accepted' || phase === 'arrived'))}
+            driverType={(ride.vehicleType as any) || 'go'}
+            followUser={false}
+          />
+          <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 1000 }}>
+            <IonButton color="light" size="small" onClick={openNavigation}>
+              <IonIcon icon={navigateOutline} slot="start" /> Navigate
+            </IonButton>
+          </div>
+        </div>
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
           {/* Driver card (once assigned) */}

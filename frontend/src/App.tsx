@@ -1,11 +1,13 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 // Navigo Map Perfection Implementation
 import { Route, Redirect } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { DriverNotificationProvider } from './context/DriverNotificationContext';
 import Home from './pages/auth/Home';
+import Onboarding from './components/Onboarding';
 
 /* --- AUTH PAGES --- */
 import Login from './pages/auth/Login';
@@ -44,6 +46,7 @@ import AdminLiveMap from './pages/admin/AdminLiveMap';
 import AdminApprovals from './pages/admin/AdminApprovals';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayouts from './pages/admin/AdminPayouts';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 import ErrorBoundary from './components/ErrorBoundary';
 
 /* Core CSS */
@@ -96,59 +99,82 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <IonApp>
-          <IonReactRouter>
-            <IonRouterOutlet>
-
-              {/* Public Routes */}
-              <Route path="/login" component={() => <ErrorBoundary><Login /></ErrorBoundary>} exact />
-              <Route path="/register" component={() => <ErrorBoundary><Register /></ErrorBoundary>} exact />
-              <Route path="/forgot-password" component={() => <ErrorBoundary><ForgotPassword /></ErrorBoundary>} exact />
-              <Route path="/verify-phone" component={() => <ErrorBoundary><SkipVerification /></ErrorBoundary>} exact />
-              <Route path="/explore" component={() => <ErrorBoundary><RideRequest /></ErrorBoundary>} exact />
-              <Route path="/ussd" component={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} exact />
-              <Route path="/auth/callback" component={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} exact />
-              <Route path="/auth/complete-social-reg" component={() => <ErrorBoundary><CompleteSocialRegistration /></ErrorBoundary>} exact />
-
-              {/* Customer Routes (primary — NAVIGO customers book rides & deliveries) */}
-              <Route path="/customer/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} /></ErrorBoundary>} />
-              <Route path="/customer/book" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} /></ErrorBoundary>} />
-              <Route path="/customer/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} /></ErrorBoundary>} />
-              <Route path="/customer/history" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} /></ErrorBoundary>} />
-              <Route path="/customer/places" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} /></ErrorBoundary>} />
-              <Route path="/customer/payments" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} /></ErrorBoundary>} />
-              <Route path="/customer/support" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} /></ErrorBoundary>} />
-              <Route path="/customer/profile" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} /></ErrorBoundary>} />
-
-              {/* Legacy paths — removed broken self-redirects */}
-
-              {/* Driver Routes */}
-              <Route path="/driver/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} /></ErrorBoundary>} />
-              <Route path="/driver/requests" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={IncomingRequest} /></ErrorBoundary>} />
-              <Route path="/driver/earnings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} /></ErrorBoundary>} />
-              <Route path="/driver/vehicle" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} /></ErrorBoundary>} />
-              <Route path="/driver/documents" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} /></ErrorBoundary>} />
-              <Route path="/driver/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverActiveRide} /></ErrorBoundary>} />
-
-              {/* Admin Routes */}
-              <Route path="/admin/dashboard" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminDashboard} /></ErrorBoundary>} />
-              <Route path="/admin/home" exact render={() => <ErrorBoundary><Redirect to="/admin/dashboard" /></ErrorBoundary>} />
-              <Route path="/admin/approvals" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminApprovals} /></ErrorBoundary>} />
-              <Route path="/admin/support" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminSupport} /></ErrorBoundary>} />
-              <Route path="/admin/payouts" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminPayouts} /></ErrorBoundary>} />
-              <Route path="/admin/users" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminUsers} /></ErrorBoundary>} />
-              <Route path="/admin/map" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} /></ErrorBoundary>} />
-              <Route path="/admin/approve" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminUserReview} /></ErrorBoundary>} />
-              <Route path="/admin/settings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminSettings} /></ErrorBoundary>} />
-
-              {/* Default */}
-              <Route path="/" component={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
-
-            </IonRouterOutlet>
-          </IonReactRouter>
-        </IonApp>
+        <DriverNotificationProvider>
+          <AppContent />
+        </DriverNotificationProvider>
       </ThemeProvider>
     </AuthProvider>
+  );
+};
+
+const AppContent: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('navigo_onboarding_complete');
+    if (isAuthenticated && !hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [isAuthenticated]);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('navigo_onboarding_complete', 'true');
+    setShowOnboarding(false);
+  };
+
+  return (
+    <IonApp>
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+      <IonReactRouter>
+        <IonRouterOutlet>
+
+          {/* Public Routes */}
+          <Route path="/login" component={() => <ErrorBoundary><Login /></ErrorBoundary>} exact />
+          <Route path="/register" component={() => <ErrorBoundary><Register /></ErrorBoundary>} exact />
+          <Route path="/forgot-password" component={() => <ErrorBoundary><ForgotPassword /></ErrorBoundary>} exact />
+          <Route path="/verify-phone" component={() => <ErrorBoundary><SkipVerification /></ErrorBoundary>} exact />
+          <Route path="/explore" component={() => <ErrorBoundary><RideRequest /></ErrorBoundary>} exact />
+          <Route path="/ussd" component={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} exact />
+          <Route path="/auth/callback" component={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} exact />
+          <Route path="/auth/complete-social-reg" component={() => <ErrorBoundary><CompleteSocialRegistration /></ErrorBoundary>} exact />
+
+          {/* Customer Routes (primary — NAVIGO customers book rides & deliveries) */}
+          <Route path="/customer/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} /></ErrorBoundary>} />
+          <Route path="/customer/book" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={RideRequest} /></ErrorBoundary>} />
+          <Route path="/customer/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={ActiveRide} /></ErrorBoundary>} />
+          <Route path="/customer/history" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerRideHistory} /></ErrorBoundary>} />
+          <Route path="/customer/places" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSavedPlaces} /></ErrorBoundary>} />
+          <Route path="/customer/payments" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={RiderPayments} /></ErrorBoundary>} />
+          <Route path="/customer/support" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerSupport} /></ErrorBoundary>} />
+          <Route path="/customer/profile" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} /></ErrorBoundary>} />
+
+          {/* Driver Routes */}
+          <Route path="/driver/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} /></ErrorBoundary>} />
+          <Route path="/driver/requests" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={IncomingRequest} /></ErrorBoundary>} />
+          <Route path="/driver/earnings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} /></ErrorBoundary>} />
+          <Route path="/driver/vehicle" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} /></ErrorBoundary>} />
+          <Route path="/driver/documents" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} /></ErrorBoundary>} />
+          <Route path="/driver/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverActiveRide} /></ErrorBoundary>} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminDashboard} /></ErrorBoundary>} />
+          <Route path="/admin/home" exact render={() => <ErrorBoundary><Redirect to="/admin/dashboard" /></ErrorBoundary>} />
+          <Route path="/admin/approvals" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminApprovals} /></ErrorBoundary>} />
+          <Route path="/admin/support" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminSupport} /></ErrorBoundary>} />
+          <Route path="/admin/payouts" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminPayouts} /></ErrorBoundary>} />
+          <Route path="/admin/users" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminUsers} /></ErrorBoundary>} />
+          <Route path="/admin/map" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminLiveMap} /></ErrorBoundary>} />
+          <Route path="/admin/analytics" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminAnalytics} /></ErrorBoundary>} />
+          <Route path="/admin/approve" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminUserReview} /></ErrorBoundary>} />
+          <Route path="/admin/settings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminSettings} /></ErrorBoundary>} />
+
+          {/* Default */}
+          <Route path="/" component={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
+
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </IonApp>
   );
 };
 

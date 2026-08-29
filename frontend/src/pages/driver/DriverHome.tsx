@@ -38,13 +38,7 @@ const DriverHome: React.FC = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    const socket = socketService.connect(user.id);
-    socket.on('ride-requested', (data) => {
-      console.log('🔔 Ride request received in DriverHome!', data);
-      ionRouter.push('/driver/requests');
-    });
-
-    return () => socket.off('ride-requested');
+    // Ride requests are now handled by the global DriverNotificationProvider
   }, [user?.id, ionRouter]);
 
   useEffect(() => {
