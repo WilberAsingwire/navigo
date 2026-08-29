@@ -1,88 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import { IonToast, IonProgressBar } from '@ionic/react';
-import { useAuth } from '../context/AuthContext';
-import { Haptic } from '../services/HapticService';
+import React, { useState, useEffect, useCallback } from 'react';
+import { IonToast, IonProgressBar, IonSpinner } from '@ionic/react';
+import api from '../services/api';
 import './LoyaltyCard.css';
 
 interface LoyaltyCardProps {
-  points?: number;
-  tier?: 'bronze' | 'silver' | 'gold' | 'platinum';
-  referralCode?: string;
-  /** Completed ride/trip count — pass the real number fetched from the backend. */
+  /** Kept for backward compatibility with call sites; the card now always
+   * fetches the rider's real points/tier/rewards from the backend, so this
+   * is only used as a first-paint placeholder while that loads. */
   ridesCount?: number;
 }
 
-const TIER_CONFIG = {
-  bronze: { name: 'Bronze', color: '#cd7f32', nextTier: 500, emoji: '🥉', cashback: '2%' },
-  silver: { name: 'Silver', color: '#c0c0c0', nextTier: 1000, emoji: '🥈', cashback: '5%' },
-  gold: { name: 'Gold', color: '#ffd700', nextTier: 2500, emoji: '🥇', cashback: '10%' },
-  platinum: { name: 'Platinum', color: '#e5e4e2', nextTier: 99999, emoji: '💎', cashback: '15%' },
-};
+interface RewardDef {
+  name: string;
+  points: number;
+  discountAmount: number;
+  emoji: string;
+}
 
-const ALL_REWARDS = [
-  { name: 'UGX 1,000 Off', points: 50, emoji: '💰' },
-  { name: 'Free Boda Ride', points: 100, emoji: '🏍️' },
-  { name: 'UGX 500 Airtime', points: 150, emoji: '📱' },
-  { name: 'Free NAVIGO Go', points: 200, emoji: '🚗' },
-  { name: 'Free Comfort', points: 350, emoji: '🚙' },
-  { name: 'MTN Data 1GB', points: 400, emoji: '🌐' },
-  { name: 'Free XL Ride', points: 500, emoji: '🚐' },
-  { name: 'UGX 10,000 Cash', points: 800, emoji: '💵' },
-];
+interface Redemption {
+  id: string;
+  rewardName: string;
+  pointsCost: number;
+  discountAmount: number;
+  voucherCode: string;
+  usedOnRideId: string | null;
+  usedAt: string | null;
+  redeemedAt: string;
+}
 
-const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
-  points: propPoints = 0,
-  tier: propTier = 'bronze',
-  referralCode = 'NAVIGO50',
-  ridesCount = 0
-}) => {
-  const { user } = useAuth();
-  // Real loyalty points based on the caller-supplied ride count (fetched from
-  // the backend), falling back to a locally cached count if unavailable.
-  const userRides = ridesCount || parseInt(localStorage.getItem('navigo_ride_count') || '0');
-  const userReferrals = parseInt(localStorage.getItem('navigo_referrals') || '0');
-  const redeemedRewards: string[] = JSON.parse(localStorage.getItem('navigo_redeemed') || '[]');
+interface LoyaltyStatus {
+  points: number;
+  earnedPoints: number;
+  ridesCount: number;
+  rewardedReferrals: number;
+  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+  tierConfig: { name: string; nextTier: number; cashback: string };
+  referralCode: string | null;
+  redemptions: Redemption[];
+  catalog: RewardDef[];
+}
 
-  // Dynamic points: 10 pts per ride + 50 per referral
-  const realPoints = userRides * 10 + userReferrals * 50 + propPoints;
-  const points = Math.max(realPoints, propPoints || 0);
-  const tier = propTier || (points >= 2500 ? 'platinum' : points >= 1000 ? 'gold' : points >= 500 ? 'silver' : 'bronze');
+const TIER_EMOJI: Record<string, string> = { bronze: '🥉', silver: '🥈', gold: '🥇', platinum: '💎' };
+const TIER_COLOR: Record<string, string> = { bronze: '#cd7f32', silver: '#c0c0c0', gold: '#ffd700', platinum: '#e5e4e2' };
+
+const LoyaltyCard: React.FC<LoyaltyCardProps> = ({ ridesCount = 0 }) => {
+  const [status, setStatus] = useState<LoyaltyStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [redeeming, setRedeeming] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'rewards' | 'challenges' | 'refer'>('rewards');
-  const config = TIER_CONFIG[tier];
-  const progress = Math.min((points / config.nextTier) * 100, 100);
+  const [activeTab, setActiveTab] = useState<'rewards' | 'vouchers' | 'refer'>('rewards');
 
-  const handleRedeem = (reward: typeof ALL_REWARDS[0]) => {
-    if (points >= reward.points) {
-      const alreadyRedeemed = redeemedRewards.includes(reward.name);
-      if (!alreadyRedeemed) {
-        Haptic.success();
-        redeemedRewards.push(reward.name);
-        localStorage.setItem('navigo_redeemed', JSON.stringify(redeemedRewards));
-        const discountAmount = reward.points * 10;
-        setToastMsg(`🎉 Redeemed: ${reward.name}! UGX ${discountAmount.toLocaleString()} discount applied.`);
-      } else {
-        Haptic.error();
-        setToastMsg(`Already redeemed: ${reward.name}`);
-      }
-    } else {
-      Haptic.error();
-      setToastMsg(`Need ${reward.points - points} more pts for ${reward.name}`);
+  const load = useCallback(async () => {
+    try {
+      const res = await api.get('/loyalty/status');
+      if (res.data?.ok) setStatus(res.data);
+    } catch {
+      // Leave status null — the card renders a minimal honest fallback below.
+    } finally {
+      setLoading(false);
     }
-    setShowToast(true);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleRedeem = async (reward: RewardDef) => {
+    if (redeeming) return;
+    setRedeeming(reward.name);
+    try {
+      const res = await api.post('/loyalty/redeem', { rewardName: reward.name });
+      setToastMsg(res.data?.message || 'Redeemed!');
+      await load();
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Could not redeem this reward right now.');
+    } finally {
+      setRedeeming(null);
+      setShowToast(true);
+    }
   };
 
   const copyReferralCode = () => {
-    Haptic.tick();
-    navigator.clipboard?.writeText(referralCode);
-    // NOTE: referral points are only credited when a referred friend actually
-    // signs up and completes their first ride (server-side) — merely copying
-    // your own code must never bump your own counter, or anyone could farm
-    // unlimited points by clicking "Copy Code" repeatedly.
-    setToastMsg('📋 Code copied! You\'ll earn 50 pts once your friend completes their first ride.');
+    const code = status?.referralCode;
+    if (!code) return;
+    const link = `${window.location.origin}/register?ref=${code}`;
+    navigator.clipboard?.writeText(link);
+    setToastMsg('📋 Referral link copied! You earn 50 pts once your friend completes their first ride.');
     setShowToast(true);
   };
+
+  const copyVoucher = (code: string) => {
+    navigator.clipboard?.writeText(code);
+    setToastMsg(`📋 Voucher ${code} copied — paste it into "Promo Code" when booking.`);
+    setShowToast(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="loyalty-card">
+        <div className="loyalty-content" style={{ textAlign: 'center', padding: '2rem' }}>
+          <IonSpinner name="crescent" color="warning" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!status) {
+    // Backend unreachable — show an honest, non-fabricated empty state
+    // instead of guessing at points from a local ride count.
+    return (
+      <div className="loyalty-card">
+        <div className="loyalty-content" style={{ textAlign: 'center', padding: '1.5rem' }}>
+          <p style={{ color: '#94A3B8', fontSize: 13, margin: 0 }}>Zawadi Rewards is unavailable right now. Pull to refresh to try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { points, tier, tierConfig, redemptions, catalog, referralCode, ridesCount: realRides, rewardedReferrals } = status;
+  const progress = Math.min((status.earnedPoints / tierConfig.nextTier) * 100, 100);
+  const availableVouchers = redemptions.filter(r => !r.usedAt);
+  const usedVouchers = redemptions.filter(r => !!r.usedAt);
 
   return (
     <div className="loyalty-card">
@@ -90,11 +127,11 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         {/* Header */}
         <div className="loyalty-header">
           <div className="tier-info">
-            <span className="tier-emoji">{config.emoji}</span>
+            <span className="tier-emoji">{TIER_EMOJI[tier]}</span>
             <div className="tier-details">
               <span className="tier-name">Zawadi Rewards</span>
-              <span className="tier-badge" style={{ background: config.color, color: '#000' }}>
-                {config.name} • {config.cashback}
+              <span className="tier-badge" style={{ background: TIER_COLOR[tier], color: '#000' }}>
+                {tierConfig.name} • {tierConfig.cashback}
               </span>
             </div>
           </div>
@@ -106,24 +143,21 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
 
         {/* Progress */}
         <div className="loyalty-progress-container">
-          <IonProgressBar
-            value={progress / 100}
-            className="loyalty-progress-bar"
-          />
+          <IonProgressBar value={progress / 100} className="loyalty-progress-bar" />
           <p className="loyalty-progress-text">
-            {tier !== 'platinum' ? `${config.nextTier - points} pts to next tier` : '👑 Max tier!'}
+            {tier !== 'platinum' ? `${tierConfig.nextTier - status.earnedPoints} pts to next tier` : '👑 Max tier!'}
           </p>
         </div>
 
         {/* Tabs */}
         <div className="loyalty-tabs">
-          {(['rewards', 'challenges', 'refer'] as const).map(tab => (
+          {(['rewards', 'vouchers', 'refer'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`loyalty-tab ${activeTab === tab ? 'loyalty-tab-active' : 'loyalty-tab-inactive'}`}
             >
-              {tab === 'rewards' ? '🎁' : tab === 'challenges' ? '🎯' : '👥'} {tab}
+              {tab === 'rewards' ? '🎁' : tab === 'vouchers' ? '🎟️' : '👥'} {tab === 'vouchers' ? `vouchers${availableVouchers.length ? ` (${availableVouchers.length})` : ''}` : tab}
             </button>
           ))}
         </div>
@@ -131,22 +165,21 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         {/* Content Areas */}
         {activeTab === 'rewards' && (
           <div className="rewards-grid">
-            {ALL_REWARDS.map(reward => {
+            {catalog.map(reward => {
               const canAfford = points >= reward.points;
+              const isRedeeming = redeeming === reward.name;
               return (
                 <div
                   key={reward.name}
-                  onClick={() => handleRedeem(reward)}
+                  onClick={() => canAfford && !redeeming && handleRedeem(reward)}
                   className={`reward-tile ${canAfford ? 'reward-tile-available' : 'reward-tile-locked'}`}
                 >
                   <span className="reward-emoji">{reward.emoji}</span>
                   <p className={`reward-name ${canAfford ? '' : 'reward-name-locked'}`}>{reward.name}</p>
                   {canAfford ? (
-                    <span className="reward-action action-redeem">Redeem</span>
+                    <span className="reward-action action-redeem">{isRedeeming ? '…' : 'Redeem'}</span>
                   ) : (
-                    <span className="reward-action action-locked">
-                      🔒 {reward.points} pts
-                    </span>
+                    <span className="reward-action action-locked">🔒 {reward.points} pts</span>
                   )}
                 </div>
               );
@@ -154,25 +187,26 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
           </div>
         )}
 
-        {activeTab === 'challenges' && (
+        {activeTab === 'vouchers' && (
           <div className="challenges-list">
-            {[
-              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => userRides >= 5 },
-              { name: 'Refer a friend', points: 100, emoji: '👥', check: () => (parseInt(localStorage.getItem('navigo_referrals') || '0')) > 0 },
-              { name: 'Rate 3 drivers', points: 30, emoji: '⭐', check: () => true },
-              { name: 'Women Preferred', points: 25, emoji: '👩', check: () => true }
-            ].map(c => (
-              <div key={c.name} className="challenge-item" onClick={() => {
-                if (c.check()) {
-                  setToastMsg(`✅ Challenge completed! +${c.points} pts`);
-                } else {
-                  setToastMsg(`Not yet: ${c.name}`);
-                }
-                setShowToast(true);
-              }}>
-                <span className="challenge-emoji">{c.emoji}</span>
-                <span className="challenge-name">{c.name}</span>
-                <span className="challenge-points">+{c.points}</span>
+            {availableVouchers.length === 0 && usedVouchers.length === 0 && (
+              <div className="challenge-item" style={{ cursor: 'default' }}>
+                <span className="challenge-emoji">🎟️</span>
+                <span className="challenge-name">No vouchers yet — redeem a reward above to get one.</span>
+              </div>
+            )}
+            {availableVouchers.map(v => (
+              <div key={v.id} className="challenge-item" onClick={() => copyVoucher(v.voucherCode)}>
+                <span className="challenge-emoji">🎟️</span>
+                <span className="challenge-name">{v.rewardName} — code {v.voucherCode}</span>
+                <span className="challenge-points" style={{ color: '#10B981' }}>Tap to copy</span>
+              </div>
+            ))}
+            {usedVouchers.map(v => (
+              <div key={v.id} className="challenge-item" style={{ opacity: 0.5, cursor: 'default' }}>
+                <span className="challenge-emoji">✅</span>
+                <span className="challenge-name">{v.rewardName} — used</span>
+                <span className="challenge-points">—</span>
               </div>
             ))}
           </div>
@@ -180,15 +214,22 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
 
         {activeTab === 'refer' && (
           <div className="refer-container">
-            <p className="refer-text">You get 50 pts • Friend gets UGX 2,000 off</p>
+            <p className="refer-text">You get 50 pts once your friend completes their first ride</p>
             <div className="refer-code-box">
-              <span className="refer-code">{referralCode}</span>
+              <span className="refer-code">{referralCode || '—'}</span>
             </div>
-            <button className="btn-copy-code" onClick={copyReferralCode}>Copy Code</button>
+            <button className="btn-copy-code" onClick={copyReferralCode} disabled={!referralCode}>
+              Copy Referral Link
+            </button>
+            <p style={{ fontSize: 11, color: '#64748B', marginTop: 10, textAlign: 'center' }}>
+              {rewardedReferrals > 0
+                ? `${rewardedReferrals} friend${rewardedReferrals === 1 ? ' has' : 's have'} earned you points so far.`
+                : 'Share your link — points are only credited once a friend actually completes a ride.'}
+            </p>
           </div>
         )}
       </div>
-      <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} position="top" color="dark" />
+      <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3500} position="top" color="dark" />
     </div>
   );
 };

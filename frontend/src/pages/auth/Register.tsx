@@ -24,6 +24,16 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('rider');
+  // Pre-fill from a shared referral link (?ref=CODE), e.g. from the Zawadi
+  // Rewards "Copy Code" share flow — still just a convenience default, the
+  // user can still edit or clear it.
+  const [referralCode, setReferralCode] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('ref')?.toUpperCase() || '';
+    } catch {
+      return '';
+    }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -72,7 +82,7 @@ const Register: React.FC = () => {
       // register() already logs the new user in (saves token + user into
       // AuthContext), so send them straight into the app instead of bouncing
       // them back to the login screen.
-      await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
+      await register(name.trim(), cleanPhone, password, email.trim() || undefined, role, referralCode.trim() || undefined);
       history.push(role === 'driver' ? '/driver/home' : '/customer/home');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
@@ -167,6 +177,17 @@ const Register: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="For receipts & notifications"
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Referral Code (Optional)</label>
+                <input
+                  className="input-field"
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. NAVIGOAB12F"
                 />
               </div>
 

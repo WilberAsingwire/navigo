@@ -35,6 +35,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
       receiverName,
       receiverPhone,
       fareOffered,
+      voucherCode,
     } = req.body;
 
     const userId = req.user?.userId;
@@ -51,8 +52,28 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
     const normalizedRideType = normalizeVehicleType(rideType);
 
     // Professional Fare Calculation
-    const fareRecommended = fareQuote(normalizedRideType, distanceKm || 0, durationMin || 0);
-    const finalFareOffered = clampOffer(normalizedRideType, distanceKm || 0, durationMin || 0, fareOffered || fareRecommended);
+    let fareRecommended = fareQuote(normalizedRideType, distanceKm || 0, durationMin || 0);
+    let finalFareOffered = clampOffer(normalizedRideType, distanceKm || 0, durationMin || 0, fareOffered || fareRecommended);
+
+    // Real Zawadi Rewards voucher (issued by POST /loyalty/redeem) -- must
+    // belong to this rider and not have been used yet. Applying it here
+    // (server-side) is the only place a redeemed reward can ever actually
+    // discount a fare; the old client-only "Redeem" flow never touched a
+    // real ride at all.
+    let appliedVoucher: { id: string; discountAmount: number } | null = null;
+    if (voucherCode && typeof voucherCode === 'string') {
+      const voucher = await db.get(
+        'SELECT id, discountAmount FROM loyalty_redemptions WHERE voucherCode = ? AND userId = ? AND usedAt IS NULL',
+        [voucherCode.trim().toUpperCase(), userId]
+      );
+      if (!voucher) {
+        return res.status(400).json({ message: 'This voucher is invalid or has already been used.' });
+      }
+      appliedVoucher = voucher;
+      const minFare = Math.max(1000, Math.round(fareRecommended * 0.2));
+      fareRecommended = Math.max(minFare, fareRecommended - voucher.discountAmount);
+      finalFareOffered = Math.max(minFare, finalFareOffered - voucher.discountAmount);
+    }
 
     // Server-side balance validation for wallet payments
     if (paymentMethod === 'wallet') {
@@ -94,6 +115,13 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
         new Date().toISOString()
       ]
     );
+
+    if (appliedVoucher) {
+      await db.run(
+        'UPDATE loyalty_redemptions SET usedOnRideId = ?, usedAt = ? WHERE id = ?',
+        [rideId, new Date().toISOString(), appliedVoucher.id]
+      );
+    }
 
     res.json({
       message: serviceType === 'delivery' ? 'Delivery requested successfully!' : 'Ride requested successfully!',
@@ -336,12 +364,16 @@ router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Respo
       return res.status(403).json({ message: 'Unauthorized: You are not part of this ride' });
     }
 
+    // NOTE: the rider here is a customer, not a driver, so their trip count
+    // must come from their own completed-ride history — joining
+    // driver_profiles.totalTrips (as this used to do) always returned 0
+    // for non-driver accounts, so the "X trips" badge shown to the driver
+    // deciding whether to accept was always wrong/missing.
     const rider = await db.get(
       `SELECT u.id, u.fullName, u.phone, u.verificationStatus,
-              COALESCE(dp.rating, 5) AS rating,
-              COALESCE(dp.totalTrips, 0) AS totalTrips
+              (SELECT COUNT(*) FROM rides r2 WHERE r2.userId = u.id AND r2.status = 'completed') AS "totalTrips",
+              5 AS rating
        FROM users u
-       LEFT JOIN driver_profiles dp ON dp.userId = u.id
        WHERE u.id = ?`,
       [ride.userId]
     );
@@ -399,10 +431,15 @@ router.get('/history/:userId', authenticate, async (req: AuthRequest, res: Respo
     const db = getDB();
     const statusFilter = req.query.status as string;
 
+    // NOTE: this previously aliased u.verificationStatus AS driverRating —
+    // a copy-paste mistake that returned the driver's verification status
+    // (e.g. "approved") instead of their actual star rating. Join
+    // driver_profiles for the real rating.
     let query = `
-      SELECT r.*, u.fullName as driverName, u.verificationStatus as driverRating
+      SELECT r.*, u.fullName as driverName, COALESCE(dp.rating, 5) as driverRating
       FROM rides r
       LEFT JOIN users u ON r.driverId = u.id
+      LEFT JOIN driver_profiles dp ON dp.userId = r.driverId
       WHERE (r.userId = ? OR r.driverId = ?)
     `;
     const params: any[] = [userId, userId];

@@ -30,6 +30,10 @@ const CAMEL_COLUMNS = [
   'senderRole', 'serviceType', 'socialId', 'socialProvider', 'startedAt',
   'ticketId', 'totalTrips', 'updatedAt', 'userId', 'userName', 'userRole',
   'vehicleType', 'verificationStatus',
+  // Loyalty / referrals
+  'referralCode', 'referredBy', 'referredUserId', 'referrerId',
+  'rewardName', 'pointsCost', 'voucherCode', 'redeemedAt', 'usedAt',
+  'usedOnRideId', 'discountAmount', 'creditedAt',
 ];
 const LOWER_TO_CAMEL: Record<string, string> = {};
 for (const c of CAMEL_COLUMNS) LOWER_TO_CAMEL[c.toLowerCase()] = c;
@@ -293,7 +297,51 @@ export const initDB = async () => {
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='isfemaledriver') THEN
             ALTER TABLE users ADD COLUMN isFemaleDriver BOOLEAN DEFAULT FALSE;
           END IF;
+
+          -- Real referral program: every user gets a stable, unique referral
+          -- code, and we record who referred whom so a reward can be
+          -- credited when (and only when) the referred friend actually
+          -- completes their first ride — never just for sharing the code.
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='referralcode') THEN
+            ALTER TABLE users ADD COLUMN referralCode TEXT UNIQUE;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='referredby') THEN
+            ALTER TABLE users ADD COLUMN referredBy TEXT REFERENCES users(id) ON DELETE SET NULL;
+          END IF;
         END $$;
+      `);
+
+      // Backfill a referral code for any existing users that don't have one yet
+      // (new users get theirs assigned at registration time).
+      await client.query(`
+        UPDATE users SET referralCode = UPPER(SUBSTRING(MD5(id), 1, 6))
+        WHERE referralCode IS NULL;
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS referrals (
+          id TEXT PRIMARY KEY,
+          referrerId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          referredUserId TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+          rewardedAt TIMESTAMP WITH TIME ZONE, -- set once the referred user completes their first ride and points are credited
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- Real Zawadi Rewards ledger. Points are derived server-side from
+        -- completed rides + credited referrals (never trusted from the
+        -- client); redeeming a reward here deducts points and issues a
+        -- voucher code that RideRequest can actually apply to a fare.
+        CREATE TABLE IF NOT EXISTS loyalty_redemptions (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          rewardName TEXT NOT NULL,
+          pointsCost INTEGER NOT NULL,
+          discountAmount INTEGER NOT NULL DEFAULT 0,
+          voucherCode TEXT UNIQUE NOT NULL,
+          usedOnRideId TEXT REFERENCES rides(id) ON DELETE SET NULL,
+          usedAt TIMESTAMP WITH TIME ZONE,
+          redeemedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
       `);
       console.log('✅ Database tables initialized');
     } finally {

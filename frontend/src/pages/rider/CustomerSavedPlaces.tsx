@@ -53,7 +53,14 @@ const CustomerSavedPlaces: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`https://photon.geocode.eu/api/?q=${encodeURIComponent(query)}&limit=5`);
+      // NOTE: this previously pointed at "photon.geocode.eu", which is not a
+      // real/reachable Photon endpoint (a typo for the actual public
+      // instance) — every search here silently failed, so "Add New Place"
+      // could never find a location to save. photon.komoot.io is the real
+      // public instance (also used by the ride-booking search).
+      const res = await fetch(
+        `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lat=0.3476&lon=32.5825`
+      );
       const data = await res.json();
       setSearchResults(data.features || []);
     } catch (err) {

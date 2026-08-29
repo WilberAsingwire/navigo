@@ -140,7 +140,7 @@ const Home: React.FC = () => {
                 <span className="highlight" style={{ animation: 'pulse-soft 3s ease-in-out infinite' }}>Arrive Safe.</span>
               </h1>
               <p className="hero-desc">
-                Uganda's smartest way to move. Boda Safe™ verified drivers, women-preferred mode, and offline USSD booking. Ride with confidence across every corner of the city.
+                Uganda's smartest way to move. Verified drivers, women-preferred mode, and offline USSD booking (coming soon). Ride with confidence across every corner of the city.
               </p>
               <div className="hero-buttons">
                 <IonButton expand="block" className="hero-btn primary" routerLink="/register">
@@ -331,7 +331,7 @@ const Home: React.FC = () => {
                 <h4 className="footer-col-title">Ride</h4>
                 <span className="footer-link" onClick={() => ionRouter.push('/customer/book')}>Book a Ride</span>
                 <span className="footer-link" onClick={() => ionRouter.push('/customer/history')}>Ride History</span>
-                <span className="footer-link" onClick={() => ionRouter.push('/ussd')}>Offline Booking</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/ussd')}>Offline Booking (Coming Soon)</span>
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Drive</h4>
@@ -356,7 +356,7 @@ const Home: React.FC = () => {
           <div className="sticky-bottom-bar">
             <div className="ussd-pill" onClick={() => ionRouter.push('/ussd')}>
               <IonIcon icon={phonePortraitOutline} />
-              <span className="ussd-text">Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
+              <span className="ussd-text">USSD booking: <strong style={{color: 'white'}}>coming soon</strong></span>
             </div>
           </div>
         </main>

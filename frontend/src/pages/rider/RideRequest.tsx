@@ -113,9 +113,21 @@ const RideRequest: React.FC = () => {
         setShowToast(true);
         setStep(BookingStep.LOCATION);
       });
+      // The server emits a generic 'error' event for things like "ride not
+      // found" — previously unhandled here, so a failed request-ride left
+      // the rider stuck on the "Finding your driver…" spinner forever with
+      // no way to know anything had gone wrong.
+      const onSocketError = (err: { message?: string }) => {
+        setIsMatching(false);
+        setToastMsg(err?.message || 'Something went wrong finding a driver. Please try again.');
+        setShowToast(true);
+        setStep(BookingStep.LOCATION);
+      };
+      socket.on('error', onSocketError);
       return () => {
         socket.off('ride-accepted');
         socket.off('no-drivers-found');
+        socket.off('error', onSocketError);
       };
     }
   }, [isAuthenticated, user]);
@@ -365,17 +377,35 @@ const RideRequest: React.FC = () => {
     }
   };
 
-  const applyPromo = () => {
-    if (promoCode.toUpperCase() === 'NAVIGO50') {
-      setDiscount(2000);
-      setToastMsg('🎉 UGX 2,000 off!');
-    } else if (promoCode.toUpperCase() === 'FIRSTRIDE') {
-      setDiscount(selectedRide.basePrice);
-      setToastMsg('🎉 First ride free!');
-    } else {
-      setToastMsg('Invalid code. Try NAVIGO50');
+  const [appliedVoucher, setAppliedVoucher] = useState<string | null>(null);
+  const [isCheckingPromo, setIsCheckingPromo] = useState(false);
+
+  const applyPromo = async () => {
+    // Real Zawadi Rewards vouchers only — checked server-side against the
+    // rider's own unredeemed redemptions (POST /loyalty/redeem issues
+    // these). There is no separate "marketing promo code" system in the
+    // backend, so hardcoded codes like "NAVIGO50" here previously worked
+    // for absolutely everyone, forever, discounting every single ride —
+    // that was never backed by anything real.
+    const code = promoCode.trim().toUpperCase();
+    if (!code) return;
+    setIsCheckingPromo(true);
+    try {
+      const res = await api.get('/loyalty/status');
+      const match = res.data?.redemptions?.find((r: any) => r.voucherCode === code && !r.usedAt);
+      if (match) {
+        setDiscount(match.discountAmount);
+        setAppliedVoucher(code);
+        setToastMsg(`🎉 UGX ${match.discountAmount.toLocaleString()} off applied!`);
+      } else {
+        setToastMsg('Invalid or already-used voucher code.');
+      }
+    } catch {
+      setToastMsg('Could not verify that code right now.');
+    } finally {
+      setIsCheckingPromo(false);
+      setShowToast(true);
     }
-    setShowToast(true);
   };
 
   const handleMapClick = async (latlng: [number, number]) => {
@@ -428,6 +458,7 @@ const RideRequest: React.FC = () => {
         receiverName: serviceType === 'delivery' ? receiverName : null,
         receiverPhone: serviceType === 'delivery' ? receiverPhone : null,
         fareOffered: finalFare,
+        voucherCode: appliedVoucher || undefined,
       });
       const ride = res.data.ride;
       setPendingRideId(ride.id);
@@ -658,8 +689,10 @@ const RideRequest: React.FC = () => {
 
               <div className="location-input-wrapper">
                 <div className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
-                <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
-                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
+                <input className="location-input" placeholder="Zawadi voucher code" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} disabled={!!appliedVoucher} />
+                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo} disabled={isCheckingPromo || !!appliedVoucher}>
+                  {appliedVoucher ? 'Applied' : isCheckingPromo ? '…' : 'Apply'}
+                </button>
               </div>
 
               <button className="btn-continue" disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>

@@ -55,6 +55,7 @@ const Profile: React.FC = () => {
 
   const [totalRides, setTotalRides] = useState<number | null>(null);
   const [driverRating, setDriverRating] = useState<number | null>(null);
+  const [points, setPoints] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -75,18 +76,25 @@ const Profile: React.FC = () => {
       } catch {
         // leave null — UI shows a dash rather than a fake number
       }
+      // Real Zawadi points (rides + credited referrals − redeemed), not a
+      // locally-recomputed guess that ignores referrals/redemptions.
+      try {
+        const res = await axios.get(`${API_URL}/loyalty/status`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('navigo_token')}` }
+        });
+        if (res.data?.ok) setPoints(res.data.points);
+      } catch {
+        // leave null — UI shows a dash rather than a fake number
+      }
     })();
   }, [user?.id, user?.role]);
-
-  // Zawadi points: 10 pts per completed ride (kept in sync with LoyaltyCard's own formula)
-  const points = (totalRides ?? 0) * 10;
 
   const stats = [
     { label: 'Total Rides', value: totalRides === null ? '—' : String(totalRides), icon: carOutline },
     ...(user?.role === 'driver'
       ? [{ label: 'Rating', value: driverRating === null ? '—' : `${driverRating.toFixed(1)} ⭐`, icon: starOutline }]
       : []),
-    { label: 'Points', value: String(points), icon: giftOutline },
+    { label: 'Points', value: points === null ? '—' : String(points), icon: giftOutline },
   ];
 
   return (

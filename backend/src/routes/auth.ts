@@ -57,7 +57,7 @@ const normalizePhone = (phone: string) => {
 // ─── REGISTER ────────────────────────────────────────
 router.post('/register', authLimiter, async (req: Request, res: Response) => {
   try {
-    const { fullName, phone, password, email, role } = req.body;
+    const { fullName, phone, password, email, role, referralCode } = req.body;
     const db = getDB();
 
     if (!phone) {
@@ -102,6 +102,19 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
 
     const userId = `user_${Math.random().toString(36).substr(2, 9)}${Date.now()}`;
+    // Every user gets a stable, unique referral code they can actually
+    // share — previously the app showed everyone the same hardcoded
+    // "NAVIGO50" code, which isn't a real referral link to anyone.
+    const newReferralCode = `NAVIGO${userId.slice(-5).toUpperCase()}`;
+
+    // Resolve the referrer (if a valid code from someone else was supplied) —
+    // referral points are only ever credited once that friend completes
+    // their first ride (see /rides/request), never just for signing up.
+    let referrer: any = null;
+    if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
+      referrer = await db.get('SELECT id FROM users WHERE referralCode = ?', [referralCode.trim().toUpperCase()]);
+    }
+
     const newUser: any = {
       id: userId,
       fullName: fullName.trim(),
@@ -111,14 +124,22 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       role: userRole,
       phoneVerified: true,
       verificationStatus: needsVerification ? 'unverified' : 'approved',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      referralCode: newReferralCode,
+      referredBy: referrer?.id || null,
     };
 
     try {
       await db.run(
-        'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
+        'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt, referralCode, referredBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt, newUser.referralCode, newUser.referredBy]
       );
+      if (referrer?.id) {
+        await db.run(
+          'INSERT INTO referrals (id, referrerId, referredUserId) VALUES (?, ?, ?)',
+          [`ref_${Date.now()}_${userId}`, referrer.id, userId]
+        );
+      }
     } catch (dbError: any) {
       console.error('DATABASE INSERT ERROR:', dbError);
       return res.status(500).json({

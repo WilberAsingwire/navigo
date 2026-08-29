@@ -18,6 +18,17 @@ import EmptyState from '../../components/EmptyState';
 import Skeleton from '../../components/Skeleton';
 import './CustomerRideHistory.css';
 
+const VEHICLE_LABELS: Record<string, string> = {
+  boda: '🏍️ Boda', economy: '🚗 Economy', go: '🚗 Economy', comfort: '🚙 Comfort', xl: '🚐 XL',
+};
+
+const statusColor = (status: string) => {
+  const s = (status || '').toLowerCase();
+  if (s === 'completed') return 'success';
+  if (s === 'cancelled') return 'danger';
+  return 'warning'; // requested / accepted / arrived / ongoing — in progress, not an error
+};
+
 const CustomerRideHistory: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
@@ -123,7 +134,7 @@ const CustomerRideHistory: React.FC = () => {
                 className="history-ride-card">
                 <div className="ride-header">
                   <div className="ride-info-main">
-                    <IonIcon icon={ride.rideType === 'boda' ? bicycleOutline : carOutline} className="ride-type-icon" />
+                    <IonIcon icon={ride.vehicleType === 'boda' ? bicycleOutline : carOutline} className="ride-type-icon" />
                     <div>
                       <span className="ride-route">{ride.pickup?.address || 'Unknown'} → {ride.destination?.address || 'Unknown'}</span>
                       <p className="ride-time">
@@ -131,7 +142,7 @@ const CustomerRideHistory: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <IonBadge color={ride.status === 'completed' || ride.status === 'Completed' ? 'success' : 'danger'} style={{ fontSize: 9 }}>{ride.status}</IonBadge>
+                  <IonBadge color={statusColor(ride.status)} style={{ fontSize: 9 }}>{ride.status}</IonBadge>
                 </div>
                 <div className="ride-footer">
                   <span className="ride-meta">🚗 {ride.paymentMethod}</span>
@@ -151,7 +162,7 @@ const CustomerRideHistory: React.FC = () => {
                 <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
               </div>
 
-              <IonBadge color={selectedRide.status === 'completed' || selectedRide.status === 'Completed' ? 'success' : 'danger'} style={{ marginBottom: 16, fontSize: 11 }}>
+              <IonBadge color={statusColor(selectedRide.status)} style={{ marginBottom: 16, fontSize: 11 }}>
                 {selectedRide.status}
               </IonBadge>
 
@@ -173,11 +184,11 @@ const CustomerRideHistory: React.FC = () => {
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Distance</span>
-                  <p className="detail-item-value">N/A</p>
+                  <p className="detail-item-value">{selectedRide.distanceKm ? `${Number(selectedRide.distanceKm).toFixed(1)} km` : 'N/A'}</p>
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Ride Type</span>
-                  <p className="detail-item-value">{selectedRide.rideType === 'boda' ? '🏍️ Boda' : selectedRide.rideType === 'comfort' ? '🚙 Comfort' : '🚗 Economy'}</p>
+                  <p className="detail-item-value">{VEHICLE_LABELS[selectedRide.vehicleType] || selectedRide.vehicleType || 'Unknown'}</p>
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Payment</span>

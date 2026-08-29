@@ -18,6 +18,7 @@ import userRoutes from './routes/users';
 import walletRoutes from './routes/wallet';
 import poiRoutes from './routes/poi';
 import supportRoutes from './routes/support';
+import loyaltyRoutes from './routes/loyalty';
 import { initDB, getDB } from './config/database';
 import { setupSocketHandlers, setIO } from './socket/socketHandler';
 import { generalLimiter } from './middleware/rateLimit';
@@ -109,6 +110,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/poi', poiRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/loyalty', loyaltyRoutes);
 
 app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
 

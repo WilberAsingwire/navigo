@@ -24,7 +24,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (phone: string, password: string) => Promise<any>;
-  register: (name: string, phone: string, password: string, email?: string, role?: string) => Promise<void>;
+  register: (name: string, phone: string, password: string, email?: string, role?: string, referralCode?: string) => Promise<void>;
   socialLogin: (provider: string, socialId: string, name: string, email?: string, phone?: string) => Promise<any>;
   loginWithToken: (authToken: string) => Promise<User>;
   logout: () => void;
@@ -122,11 +122,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const register = async (name: string, phone: string, password: string, email?: string, role: string = 'rider') => {
+  const register = async (name: string, phone: string, password: string, email?: string, role: string = 'rider', referralCode?: string) => {
     try {
       const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
       const response = await axios.post(`${API_URL}/auth/register`, {
-        fullName: name.trim(), phone: cleanPhone, password, email: email?.trim() || undefined, role
+        fullName: name.trim(), phone: cleanPhone, password, email: email?.trim() || undefined, role,
+        referralCode: referralCode?.trim() || undefined,
       });
       saveSession(response.data.user, response.data.token);
     } catch (err: any) {

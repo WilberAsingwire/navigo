@@ -3,6 +3,7 @@ import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
 import { normalizeVehicleType } from '../utils/fare';
+import { creditReferralOnFirstCompletedRide } from '../utils/loyalty';
 
 let ioInstance: Server | null = null;
 
@@ -133,6 +134,17 @@ export const setupSocketHandlers = (io: Server) => {
         }
         console.log(`🚕 Broadcasted ${requestedType} ride ${rideId} to ${matchingDrivers.length} matching drivers`);
       } else {
+        // Previously the ride row was left sitting in 'requested' status
+        // forever when nobody was found — the rider was told "no drivers
+        // available" and bounced back to the booking screen, but if they
+        // then opened /customer/active-ride (e.g. after a refresh) it would
+        // show a phantom "Finding your driver…" for a request nobody would
+        // ever see again (matching only fires once, on this socket event).
+        // Auto-cancel it so the ride list / active-ride screen stay honest.
+        await db.run(
+          "UPDATE rides SET status = 'cancelled', cancelledAt = ? WHERE id = ? AND status = 'requested'",
+          [new Date().toISOString(), rideId]
+        );
         socket.emit('no-drivers-found', { message: 'No drivers available for this vehicle type at the moment.' });
       }
     });
@@ -250,6 +262,10 @@ export const setupSocketHandlers = (io: Server) => {
           } else {
             console.error(`❌ Settlement failed for ride ${rideId}: ${settlement.message}`);
           }
+
+          // Credit a referral reward if this was the rider's first-ever
+          // completed ride and they signed up with someone's referral code.
+          await creditReferralOnFirstCompletedRide(ride.userId);
 
           // Free the driver back up for the next ride (only if they're still online).
           await db.run(

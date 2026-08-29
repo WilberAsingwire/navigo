@@ -84,10 +84,10 @@ const RiderSupport: React.FC = () => {
     { id: 'fare', question: 'How are fares calculated?', answer: 'Fares are based on: Base fare (varies by ride type) + Distance (per km) + Time (per minute). Boda starts at UGX 1,500, NAVIGO Go at UGX 3,000, Comfort at UGX 5,000, and XL at UGX 8,000.' },
     { id: 'payment', question: 'What payment methods are accepted?', answer: 'We accept Cash, MTN Mobile Money, Airtel Money, and Credit/Debit Cards. You can manage your payment methods in the Wallet section.' },
     { id: 'cancel', question: 'How do I cancel a ride?', answer: 'You can cancel from the Active Ride screen. Cancellation within 2 minutes of booking is free. After that, a small fee may apply.' },
-    { id: 'safety', question: 'What safety features are available?', answer: 'NAVIGO offers: Boda Safe™ certified drivers, Women Preferred mode, Emergency SOS button, live GPS tracking, and 24/7 support team.' },
+    { id: 'safety', question: 'What safety features are available?', answer: 'NAVIGO offers: ID-verified drivers (checked against uploaded documents before approval), a Women Preferred option, an Emergency SOS button with real Uganda emergency numbers and nearby-hospital lookup, live GPS tracking during your ride, and 24/7 support.' },
     { id: 'refund', question: 'How do I get a refund?', answer: 'Refunds are processed automatically for cancelled rides. For billing disputes, open a support ticket and our team will resolve it within 24 hours.' },
     { id: 'driver', question: 'How do I become a driver?', answer: 'Sign up as a Driver or Motorist, upload your documents (license, ID, vehicle photos), and our team will verify you within 24-48 hours.' },
-    { id: 'offline', question: 'Can I book without internet?', answer: 'Yes! Dial *284*624# on any phone (even kabiriti) to book a ride via USSD. Works on MTN and Airtel networks.' },
+    { id: 'offline', question: 'Can I book without internet?', answer: "USSD booking (dial a code to book on any phone, even without internet) is coming soon for MTN and Airtel — it isn't live yet, so there's no number to dial today. For now you'll need the app or a data connection to book." },
     { id: 'rewards', question: 'How do Zawadi Rewards work?', answer: 'Earn points on every ride! 10 pts per ride, bonus points for referrals and 5-star ratings. Redeem for free rides, airtime, and cash rewards.' },
   ];
 
