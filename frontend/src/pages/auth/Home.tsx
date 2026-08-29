@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IonPage, IonContent, IonButton, IonIcon, IonGrid, IonRow, IonCol, useIonRouter } from '@ionic/react';
 import {
   carOutline, bicycleOutline, shieldCheckmarkOutline, starOutline,
