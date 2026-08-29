@@ -33,6 +33,11 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes heroImagePan {
+  0% { background-position: center center; background-size: 110% 110%; }
+  100% { background-position: center center; background-size: 100% 100%; }
+}
+
 .home-content {
   --background: var(--bg-deep);
   background-color: var(--bg-deep);
