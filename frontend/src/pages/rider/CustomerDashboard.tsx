@@ -15,12 +15,14 @@ import api from '../../services/api';
 import LoyaltyCard from '../../components/LoyaltyCard';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import Skeleton from '../../components/Skeleton';
+import OnboardingBanner from '../../components/OnboardingBanner';
+import SafeRender from '../../components/SafeRender';
 import './CustomerDashboard.css';
 
 const POPULAR_DESTINATIONS = [
-  { id: 'city-square', name: 'Kampala City Square', area: 'Central', icon: businessOutline, lat: 0.3136, lng: 32.5811 },
+  { id: 'city-square', name: 'Uganda Central Square', area: 'Central', icon: businessOutline, lat: 0.3136, lng: 32.5811 },
   { id: 'entebbe', name: 'Entebbe Airport', area: 'Airport Rd', icon: paperPlaneOutline, lat: 0.0437, lng: 32.4369 },
-  { id: 'makerere', name: 'Makerere University', area: 'Kampala', icon: schoolOutline, lat: 0.3361, lng: 32.5711 },
+  { id: 'makerere', name: 'Uganda University', area: 'Kampala', icon: schoolOutline, lat: 0.3361, lng: 32.5711 },
   { id: 'owino', name: 'Owino Market', area: 'Wakiso', icon: restaurantOutline, lat: 0.3446, lng: 32.5806 },
 ];
 
@@ -49,7 +51,21 @@ const CustomerDashboard: React.FC = () => {
     return () => { alive = false; };
   }, [user?.id]);
 
-  const handleRefresh = (event: any) => { setTimeout(() => { event.target.complete(); }, 800); };
+  const handleRefresh = (event: any) => { setTimeout(() => { event?.target?.complete(); }, 800); };
+
+  // Defensive: never crash if auth state is unexpected
+  if (!user) {
+    return (
+      <IonPage>
+        <IonContent className="rider-page-container">
+          <div style={{ padding: 24, textAlign: 'center', color: '#fff' }}>
+            <h3>Loading profile...</h3>
+            <p style={{ color: '#94A3B8' }}>Please wait while we fetch your account.</p>
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
@@ -58,7 +74,7 @@ const CustomerDashboard: React.FC = () => {
           <div style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
             <div className="rider-header">
               <div>
-                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0]} 👋</h2>
+                <h2 className="welcome-text">Hello, {((user?.fullName || 'there') || 'Guest').split(' ')[0] || 'Guest'} 👋</h2>
                 <p className="welcome-subtitle">Ready for your next ride?</p>
               </div>
               <IonAvatar
@@ -81,6 +97,9 @@ const CustomerDashboard: React.FC = () => {
 
         <div style={{ padding: '0 12px', maxWidth: 500, margin: '0 auto' }}>
 
+          {/* ONBOARDING: First-time user banner */}
+          <OnboardingBanner />
+
           {/* 1. PRIMARY HERO: Request a Ride */}
           <div className="ride-cta-card">
             <button
@@ -93,6 +112,7 @@ const CustomerDashboard: React.FC = () => {
             <span className="ride-cta-subtitle">Cars & Boda nearby</span>
           </div>
 
+          <SafeRender>
           {/* Real stats only — no fake numbers */}
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -111,9 +131,15 @@ const CustomerDashboard: React.FC = () => {
                   {walletBalance === null ? '—' : `UGX ${(walletBalance / 1000).toFixed(0)}k`}
                 </h3>
                 <p className="stat-label">Wallet</p>
+                {walletBalance === null && (
+                  <span style={{ fontSize: 10, color: '#FF6B35', marginTop: 4, textAlign: 'center' }}>
+                    Gateway not configured
+                  </span>
+                )}
               </div>
             </div>
           )}
+          </SafeRender>
 
           {/* 2. QUICK ACTIONS */}
           <h3 className="quick-actions-header">Quick Actions</h3>
@@ -136,9 +162,11 @@ const CustomerDashboard: React.FC = () => {
           </div>
 
           {/* 3. ZAWADI REWARDS */}
-          <LoyaltyCard points={280} tier="silver" />
+          <SafeRender>
+            {user && <LoyaltyCard points={280} tier="silver" />}
+          </SafeRender>
 
-          {/* 4. POPULAR DESTINATIONS (real Kampala shortcuts → booking) */}
+          {/* 4. POPULAR DESTINATIONS (real Uganda routes → booking) */}
           <div className="drivers-section-header">
             <h3 className="drivers-title">Popular Destinations</h3>
             <span

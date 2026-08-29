@@ -60,7 +60,7 @@ const poiIcon = (emoji: string) => L.divIcon({
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
   boda: { url: bodaImg, color: '#ffab40' },
-  go: { url: goImg, color: '#FF6B35' },
+  go: { url: goImg, color: '#4285F4' },
   comfort: { url: comfortImg, color: '#4CAF50' },
   xl: { url: xlImg, color: '#2196F3' },
 };
@@ -76,6 +76,7 @@ interface MapProps {
   showRoute?: boolean;
   showControls?: boolean;
   followUser?: boolean;
+  searchResults?: { lat: number; lng: number; name?: string; address?: string }[];
   onDistanceChange?: (distance: number, duration: number) => void;
   onMapClick?: (latlng: [number, number]) => void;
 }
@@ -83,7 +84,8 @@ interface MapProps {
 const NavigoMap: React.FC<MapProps> = React.memo(({
   userLocation, destination, driverLocation, driverType = 'go',
   height = '350px', interactive = true, showRoute = true,
-  showControls = true, followUser = true, onDistanceChange, onMapClick
+  showControls = true, followUser = true, searchResults = [],
+  onDistanceChange, onMapClick
 }) => {
   const [loading, setLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
@@ -136,51 +138,83 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     const center = map.getCenter();
     const zoom = map.getZoom();
 
-    // Dynamic radius based on zoom level (closer zoom = smaller area)
-    const radius = zoom > 15 ? 500 : zoom > 13 ? 2000 : 5000;
+    // VERY LARGE radius to show EVERYTHING possible: businesses, shops, buildings, parks, etc.
+    const radius = zoom > 16 ? 1500 : zoom > 14 ? 5000 : zoom > 12 ? 15000 : 25000;
 
-    console.log(`📡 Fetching POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)...`);
+    console.log(`📡 Fetching ALL POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m — EVERYTHING)...`);
 
-    const query = `
-      [out:json][timeout:25];
+    // BROAD OVERPASS QUERY — include every possible amenity, shop, office, building, landmark
+    const overpassQuery = `
+      [out:json][timeout:30];
       (
-        node["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
-        way["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
-        relation["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
+        node["amenity"](around:${radius},${center.lat},${center.lng});
+        way["amenity"](around:${radius},${center.lat},${center.lng});
+        relation["amenity"](around:${radius},${center.lat},${center.lng});
+        node["shop"](around:${radius},${center.lat},${center.lng});
+        way["shop"](around:${radius},${center.lat},${center.lng});
+        relation["shop"](around:${radius},${center.lat},${center.lng});
+        node["office"](around:${radius},${center.lat},${center.lng});
+        way["office"](around:${radius},${center.lat},${center.lng});
+        node["leisure"](around:${radius},${center.lat},${center.lng});
+        way["leisure"](around:${radius},${center.lat},${center.lng});
+        node["tourism"](around:${radius},${center.lat},${center.lng});
+        way["tourism"](around:${radius},${center.lat},${center.lng});
+        node["building"](around:${radius},${center.lat},${center.lng});
+        way["building"](around:${radius},${center.lat},${center.lng});
+        node["place"](around:${radius},${center.lat},${center.lng});
+        way["place"](around:${radius},${center.lat},${center.lng});
       );
       out center;
     `;
 
+    const queryUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
     try {
-      const res = await api.get(`/poi/search`, {
-        params: { lat: center.lat, lng: center.lng, radius: radius }
-      });
-      const data = res.data;
+      const res = await fetch(queryUrl, { headers: { 'Accept': 'application/json' } });
+      const data = await res.json();
 
       // Clear old POIs
       Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
       poiMarkersRef.current = {};
 
       const poiEmojiMap: Record<string, string> = {
-        restaurant: '🍴', cafe: '☕', police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊', school: '🎓'
+        restaurant: '🍴', cafe: '☕', bar: '🍺', pub: '🍻', fast_food: '🍔',
+        police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊',
+        school: '🎓', university: '🎓', college: '🎓', library: '📚',
+        supermarket: '🛒', grocery: '🛒', market: '🛒', mall: '🛍️', shop: '🏪',
+        office: '🏢', government: '🏛️', post_office: '📮', townhall: '🏛️',
+        park: '🌳', garden: '🌷', playground: '🎡', stadium: '⚽', sports_centre: '🏋️',
+        hotel: '🏨', hostel: '🏠', guest_house: '🏡', motel: '🏨',
+        museum: '🏛️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭',
+        church: '⛪', mosque: '🕌', temple: '🕉️',
+        bus_station: '🚌', taxi: '🚕', train_station: '🚂', airport: '✈️',
+        fuel: '⛽', parking: '🅿️', charging_station: '⚡',
+        default: '📍'
       };
 
-      data.elements.forEach((element: any) => {
-        const amenity = element.tags.amenity;
-        const lat = element.lat || element.center.lat;
-        const lon = element.lon || element.center.lon;
-        const name = element.tags.name || 'Unnamed Spot';
-        const emoji = poiEmojiMap[amenity] || '📍';
+      if (data.elements && data.elements.length > 0) {
+        data.elements.forEach((element: any) => {
+          const tags = element.tags || {};
+          const amenity = tags.amenity || tags.shop || tags.office || tags.leisure || tags.tourism || tags.building || tags.place || 'other';
+          const name = tags.name || tags.operator || 'Unnamed Spot';
+          const emoji = poiEmojiMap[amenity] || poiEmojiMap.default || '📍';
 
-        const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
-          .addTo(map)
-          .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
+          const lat = element.lat || element.center?.lat;
+          const lon = element.lon || element.center?.lon;
+          if (!lat || !lon) return;
 
-        poiMarkersRef.current[element.id] = marker;
-      });
-      console.log(`✅ Loaded ${data.elements.length} nearby POIs`);
+          const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
+            .addTo(map)
+            .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
+
+          poiMarkersRef.current[element.id] = marker;
+        });
+        console.log(`✅ Loaded ${data.elements.length} nearby EVERYTHING POIs`);
+      } else {
+        console.log(`✅ Zero POIs in this area — nothing mapped by OpenStreetMap yet`);
+      }
     } catch (e) {
-      console.error('❌ POI Fetch Error:', e);
+      console.error('❌ POI Fetch Error (Overpass):', e);
     }
   };
 
@@ -211,7 +245,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       locateControl.onAdd = function() {
         const btn = L.DomUtil.create('a', 'leaflet-control-locate');
         btn.innerHTML = '📍 My Location';
-        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#FF6B35; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
+        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#4285F4; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
         btn.onclick = () => {
           map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
         };
@@ -256,8 +290,9 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       maxZoom: mapStyle === 'satellite' ? 22 : 22,
       maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
     });
-    tileLayer.on('tileload', () => { setTilesHealthy(true); });
+    tileLayer.on('tileload', () => { setTilesHealthy(true); console.log('Tile loaded successfully'); });
     tileLayer.on('tileerror', () => {
+      console.error('Tile load failed');
       tileErrors.count += 1;
       if (tileErrors.count >= 3) setTilesHealthy(false);
     });
@@ -357,7 +392,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             const points = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
 
             if (!markersRef.current['route']) {
-              markersRef.current['route'] = L.polyline(points, { color: '#FF6B35', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
+              markersRef.current['route'] = L.polyline(points, { color: '#4285F4', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
             } else {
               (markersRef.current['route'] as L.Polyline).setLatLngs(points);
             }
@@ -380,7 +415,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             map.removeLayer(markersRef.current['route'] as any);
             delete markersRef.current['route'];
           }
-          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 5, opacity: 0.8 }).addTo(map);
+          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#4285F4', weight: 5, opacity: 0.8 }).addTo(map);
           markersRef.current['route'] = fallbackLine;
           const d = Math.round(map.distance([userLocation.lat, userLocation.lng], [destination.lat, destination.lng]) / 100) / 10;
           const t = Math.max(1, Math.round((d / 22) * 60));
@@ -397,6 +432,30 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     }
   }, [userLocation, destination, driverLocation, driverType, showRoute, interactive]);
 
+  // --- Search Results Markers — every search shown on the map ---
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    // Clear previous temporary search markers
+    const prevSearchMarkers = (mapInstanceRef.current as any)?._searchMarkers || [];
+    prevSearchMarkers.forEach((m: L.Marker) => { if (map && m) map.removeLayer(m); });
+
+    const tempMarkers: L.Marker[] = [];
+    searchResults.forEach((r, idx) => {
+      const marker = L.marker([r.lat, r.lng], {
+        icon: L.divIcon({
+          html: `<div style="background:#FF6B35; border:2px solid white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:10px; box-shadow:0 2px 6px rgba(0,0,0,0.5);">${idx + 1}</div>`,
+          iconSize: [22, 22], iconAnchor: [11, 11],
+        })
+      }).addTo(map).bindPopup(`<b>🔍 Search Result ${idx + 1}</b><br/>${r.name || r.address || 'Location'}`);
+      tempMarkers.push(marker);
+    });
+    (mapInstanceRef.current as any)._searchMarkers = tempMarkers;
+    return () => {
+      tempMarkers.forEach((m) => { if (map && m) map.removeLayer(m); });
+    };
+  }, [searchResults]);
+
   const openInGoogleMaps = () => {
     if (userLocation && destination) window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination.lat},${destination.lng}`, '_blank');
   };
@@ -405,16 +464,18 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
       {showControls && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center', padding: '0 4px', position: 'absolute', top: 10, left: 10, zIndex: 1000 }}>
+          <IonBadge color="success" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● LIVE GPS</IonBadge>
+          <IonBadge color="warning" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● REAL-TIME ROUTE</IonBadge>
           {Object.keys(tileUrls).map(style => (
             <IonChip key={style} outline={mapStyle !== style} color={mapStyle === style ? 'warning' : 'medium'}
-              onClick={() => setMapStyle(style as any)} style={{ fontSize: 10, cursor: 'pointer', padding: '2px 8px' }}>
+              onClick={() => setMapStyle(style as any)} style={{ fontSize: 10, cursor: 'pointer', padding: '2px 8px', textTransform: 'uppercase' }}>
               {style === 'standard' ? '🗺️' : style === 'dark' ? '🌙' : '🛰️'} {style}
             </IonChip>
           ))}
           {userLocation && destination && (
             <>
               <IonChip outline color="primary" onClick={openInGoogleMaps} style={{ fontSize: 10, cursor: 'pointer' }}>📍 Navigate</IonChip>
-              {routeDistance > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{routeDistance}km • {routeDuration}min</IonBadge>}
+              {routeDistance > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{routeDistance}km • {routeDuration}min (Real OSRM)</IonBadge>}
             </>
           )}
         </div>

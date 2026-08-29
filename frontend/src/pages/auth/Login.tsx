@@ -46,7 +46,8 @@ const Login: React.FC = () => {
         history.push(redirectPath);
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      const msg = err?.message || 'Login failed.';
+      setError('Invalid credentials — if you registered with a phone number, use that (not your email)');
     } finally {
       setIsLoading(false);
     }

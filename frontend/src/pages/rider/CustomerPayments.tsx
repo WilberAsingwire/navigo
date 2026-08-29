@@ -16,7 +16,7 @@ import './CustomerPayments.css';
 const MOCK_TRANSACTIONS = [
   { id: '1', description: 'Ride to Acacia Mall', date: '2026-07-26', amount: 8500, type: 'debit' },
   { id: '2', description: 'Top-up via MTN Money', date: '2026-07-25', amount: 50000, type: 'credit' },
-  { id: '3', description: 'Ride to Kampala Road', date: '2026-07-25', amount: 3200, type: 'debit' },
+  { id: '3', description: 'Ride to Uganda Road', date: '2026-07-25', amount: 3200, type: 'debit' },
   { id: '4', description: 'Referral Bonus', date: '2026-07-24', amount: 5000, type: 'credit' },
   { id: '5', description: 'Ride to Entebbe Road', date: '2026-07-23', amount: 12000, type: 'debit' },
 ];

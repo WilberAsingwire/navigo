@@ -143,7 +143,7 @@ const RiderSupport: React.FC = () => {
                   className="support-contact-card theme-office">
                   <IonIcon icon={locationOutline} className="support-contact-icon" />
                   <h4 className="support-contact-title">Visit Us</h4>
-                  <p className="support-contact-desc">Kampala Office</p>
+                  <p className="support-contact-desc">Uganda Office</p>
                 </div>
               </div>
 

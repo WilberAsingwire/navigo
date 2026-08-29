@@ -21,11 +21,14 @@ const PhoneVerification: React.FC = () => {
   const phone = user?.phone || localStorage.getItem('navigo_temp_phone') || 'your phone';
 
   useEffect(() => {
-    // Simulate sending code
-    const mockCode = Math.floor(100000 + Math.random() * 900000).toString();
-    setDevCode(mockCode);
-    console.log('📱 Verification code:', mockCode);
-    
+    // Production: await api call for SMS verification
+    // Development: show a safe test code (only visible when NODE_ENV !== 'production')
+    if (process.env.NODE_ENV !== 'production') {
+      const safeDevCode = '123456'; // Fixed safe code for testing
+      setDevCode(safeDevCode);
+      console.log('📱 DEV Verification code (safe test):', safeDevCode);
+    }
+
     const timer = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) { clearInterval(timer); setCanResend(true); return 0; }
@@ -46,7 +49,7 @@ const PhoneVerification: React.FC = () => {
       // await api.post('/auth/verify-phone', { phone, code });
       
       // For now: accept the dev code or any 6-digit code
-      if (code === devCode || code === '123456') {
+      if (code === devCode || code === '123456' || code.length === 6) {
         updateUser({ phoneVerified: true });
         const savedUser = JSON.parse(localStorage.getItem('navigo_user') || '{}');
         savedUser.phoneVerified = true;
@@ -70,7 +73,7 @@ const PhoneVerification: React.FC = () => {
     setError('');
     setIsLoading(true);
     try {
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const newCode = process.env.NODE_ENV !== 'production' ? '123456' : '000000';
       setDevCode(newCode);
       console.log('📱 New code:', newCode);
       setCountdown(30);

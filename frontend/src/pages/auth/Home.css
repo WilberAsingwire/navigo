@@ -33,6 +33,11 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes heroImagePan {
+  0% { background-position: center center; background-size: 110% 110%; }
+  100% { background-position: center center; background-size: 100% 100%; }
+}
+
 .home-content {
   --background: var(--bg-deep);
   background-color: var(--bg-deep);
@@ -124,14 +129,26 @@
 }
 
 .theme-toggle {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  color: var(--text-muted);
-  transition: color 0.3s ease;
+  color: #fff;
+  transition: color 0.3s ease, transform 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .theme-toggle:hover {
   color: var(--brand-orange);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+  transform: scale(1.05);
 }
 
 .hero-section {
@@ -156,14 +173,36 @@
   height: 100%;
   z-index: -1;
   overflow: hidden;
+  background: linear-gradient(135deg, #0B111B 0%, #080C14 40%, #1A0D00 70%, #2D1B00 100%);
+  background-size: 300% 300%;
+  animation: heroImagePan 12s ease-in-out infinite alternate;
+  position: relative;
+}
+
+.hero-bg::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 90, 31, 0.25) 0%, transparent 50%),
+              radial-gradient(circle at 70% 70%, rgba(255, 130, 60, 0.15) 0%, transparent 40%),
+              radial-gradient(circle at 50% 20%, rgba(255, 90, 31, 0.1) 0%, transparent 30%);
+  animation: heroGradientShift 15s ease infinite;
+  z-index: 0;
 }
 
 .hero-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.6;
-  filter: brightness(0.7);
+  opacity: 0.85;
+  filter: brightness(0.85);
+  animation: fadeInVideo 1.5s ease-out;
+}
+
+@keyframes fadeInVideo {
+  from { opacity: 0; }
+  to { opacity: 0.85; }
 }
 
 .hero-overlay {
@@ -230,12 +269,15 @@
 
 .hero-btn {
   --border-radius: 16px;
-  font-weight: 700;
-  height: 56px;
-  font-size: 1.1rem;
+  font-weight: 800;
+  height: 60px;
+  font-size: 1.15rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   max-width: 100%;
+  border: 2px solid transparent;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
 .hero-btn.primary {
@@ -804,6 +846,30 @@
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 90, 31, 0.3);
 }
 
+.mobile-menu-toggle {
+  display: none;
+  color: #fff;
+  font-size: 1.5rem;
+  background: rgba(255,107,53,0.15);
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-toggle:hover,
+.mobile-menu-toggle:active {
+  background: rgba(255,107,53,0.3);
+  border-color: rgba(255,107,53,0.6);
+  color: #fff;
+  transform: scale(1.05);
+}
+
 @media (max-width: 768px) {
   .home-nav {
     padding: 0 1rem;
@@ -829,7 +895,27 @@
   }
 
   .mobile-menu-toggle {
-    display: block;
+    display: flex;
+    color: #fff;
+    font-size: 1.5rem;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 48px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-menu-toggle:hover,
+  .mobile-menu-toggle:active {
+    background: rgba(255,107,53,0.3);
+    border-color: rgba(255,107,53,0.6);
+    color: #fff;
+    transform: scale(1.05);
   }
 
   .hero-section {
