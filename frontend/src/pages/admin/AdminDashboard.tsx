@@ -24,7 +24,8 @@ const AdminDashboard: React.FC = () => {
         const res = await api.get('/auth/admin/stats');
         setStats({
           ...res.data,
-          revenue: `UGX ${parseInt(res.data.revenue).toLocaleString()}`
+          revenue: `UGX ${parseInt(res.data.revenue || 0).toLocaleString()}`,
+          rating: res.data.avgRating ?? res.data.rating ?? '0',
         });
       } catch (e) {
         console.error('Failed to fetch admin stats:', e);
@@ -36,12 +37,12 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const kpiCards = [
-    { label: 'Total Users', value: stats.totalUsers.toLocaleString(), icon: peopleOutline, color: '#4da6ff', change: '+12%' },
-    { label: 'Active Drivers', value: stats.totalDrivers.toLocaleString(), icon: carOutline, color: '#2D6A4F', change: '+8%' },
-    { label: 'Motorists', value: stats.totalMotorists.toLocaleString(), icon: bicycleOutline, color: '#ffab40', change: '+15%' },
-    { label: 'Active Rides', value: stats.activeRides.toString(), icon: mapOutline, color: '#FF6B35', change: 'Now' },
-    { label: 'Revenue Today', value: stats.revenue, icon: walletOutline, color: '#10B981', change: '+22%' },
-    { label: 'Avg Rating', value: stats.rating.toString(), icon: starOutline, color: '#F59E0B', change: '★' },
+    { label: 'Total Users', value: (stats.totalUsers ?? 0).toLocaleString(), icon: peopleOutline, color: '#4da6ff', change: '+12%' },
+    { label: 'Active Drivers', value: (stats.totalDrivers ?? 0).toLocaleString(), icon: carOutline, color: '#2D6A4F', change: '+8%' },
+    { label: 'Motorists', value: (stats.totalMotorists ?? 0).toLocaleString(), icon: bicycleOutline, color: '#ffab40', change: '+15%' },
+    { label: 'Active Rides', value: (stats.activeRides ?? 0).toString(), icon: mapOutline, color: '#FF6B35', change: 'Now' },
+    { label: 'Revenue Today', value: String(stats.revenue ?? '0'), icon: walletOutline, color: '#10B981', change: '+22%' },
+    { label: 'Avg Rating', value: String(stats.avgRating ?? stats.rating ?? '0'), icon: starOutline, color: '#F59E0B', change: '★' },
   ];
 
   const quickActions = [
