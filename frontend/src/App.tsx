@@ -132,16 +132,16 @@ const AppContent: React.FC = () => {
         <IonRouterOutlet>
 
           {/* Public Routes */}
-          <Route path="/login" component={() => <ErrorBoundary><Login /></ErrorBoundary>} exact />
-          <Route path="/register" component={() => <ErrorBoundary><Register /></ErrorBoundary>} exact />
-          <Route path="/forgot-password" component={() => <ErrorBoundary><ForgotPassword /></ErrorBoundary>} exact />
-          <Route path="/verify-phone" component={() => <ErrorBoundary><SkipVerification /></ErrorBoundary>} exact />
-          <Route path="/explore" component={() => <ErrorBoundary><RideRequest /></ErrorBoundary>} exact />
-          <Route path="/ussd" component={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} exact />
-          <Route path="/auth/callback" component={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} exact />
-          <Route path="/auth/complete-social-reg" component={() => <ErrorBoundary><CompleteSocialRegistration /></ErrorBoundary>} exact />
-          <Route path="/terms" component={() => <ErrorBoundary><Terms /></ErrorBoundary>} exact />
-          <Route path="/privacy" component={() => <ErrorBoundary><Privacy /></ErrorBoundary>} exact />
+          <Route path="/login" exact render={() => <ErrorBoundary><Login /></ErrorBoundary>} />
+          <Route path="/register" exact render={() => <ErrorBoundary><Register /></ErrorBoundary>} />
+          <Route path="/forgot-password" exact render={() => <ErrorBoundary><ForgotPassword /></ErrorBoundary>} />
+          <Route path="/verify-phone" exact render={() => <ErrorBoundary><SkipVerification /></ErrorBoundary>} />
+          <Route path="/explore" exact render={() => <ErrorBoundary><RideRequest /></ErrorBoundary>} />
+          <Route path="/ussd" exact render={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} />
+          <Route path="/auth/callback" exact render={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} />
+          <Route path="/auth/complete-social-reg" exact render={() => <ErrorBoundary><CompleteSocialRegistration /></ErrorBoundary>} />
+          <Route path="/terms" exact render={() => <ErrorBoundary><Terms /></ErrorBoundary>} />
+          <Route path="/privacy" exact render={() => <ErrorBoundary><Privacy /></ErrorBoundary>} />
 
           {/* Customer Routes (primary — NAVIGO customers book rides & deliveries) */}
           <Route path="/customer/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} /></ErrorBoundary>} />
@@ -174,7 +174,7 @@ const AppContent: React.FC = () => {
           <Route path="/admin/settings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminSettings} /></ErrorBoundary>} />
 
           {/* Default */}
-          <Route path="/" component={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
+          <Route path="/" exact render={() => <ErrorBoundary><Home /></ErrorBoundary>} />
 
           {/* Catch-all: any unknown URL gets a real 404 instead of a blank page */}
           <Route render={() => <ErrorBoundary><NotFound /></ErrorBoundary>} />
