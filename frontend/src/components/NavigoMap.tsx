@@ -136,51 +136,83 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     const center = map.getCenter();
     const zoom = map.getZoom();
 
-    // Dynamic radius based on zoom level (closer zoom = smaller area)
-    const radius = zoom > 15 ? 500 : zoom > 13 ? 2000 : 5000;
+    // VERY LARGE radius to show EVERYTHING possible: businesses, shops, buildings, parks, etc.
+    const radius = zoom > 16 ? 1500 : zoom > 14 ? 5000 : zoom > 12 ? 15000 : 25000;
 
-    console.log(`📡 Fetching POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)...`);
+    console.log(`📡 Fetching ALL POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m — EVERYTHING)...`);
 
-    const query = `
-      [out:json][timeout:25];
+    // BROAD OVERPASS QUERY — include every possible amenity, shop, office, building, landmark
+    const overpassQuery = `
+      [out:json][timeout:30];
       (
-        node["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
-        way["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
-        relation["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radius},${center.lat},${center.lng});
+        node["amenity"](around:${radius},${center.lat},${center.lng});
+        way["amenity"](around:${radius},${center.lat},${center.lng});
+        relation["amenity"](around:${radius},${center.lat},${center.lng});
+        node["shop"](around:${radius},${center.lat},${center.lng});
+        way["shop"](around:${radius},${center.lat},${center.lng});
+        relation["shop"](around:${radius},${center.lat},${center.lng});
+        node["office"](around:${radius},${center.lat},${center.lng});
+        way["office"](around:${radius},${center.lat},${center.lng});
+        node["leisure"](around:${radius},${center.lat},${center.lng});
+        way["leisure"](around:${radius},${center.lat},${center.lng});
+        node["tourism"](around:${radius},${center.lat},${center.lng});
+        way["tourism"](around:${radius},${center.lat},${center.lng});
+        node["building"](around:${radius},${center.lat},${center.lng});
+        way["building"](around:${radius},${center.lat},${center.lng});
+        node["place"](around:${radius},${center.lat},${center.lng});
+        way["place"](around:${radius},${center.lat},${center.lng});
       );
       out center;
     `;
 
+    const queryUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+
     try {
-      const res = await api.get(`/poi/search`, {
-        params: { lat: center.lat, lng: center.lng, radius: radius }
-      });
-      const data = res.data;
+      const res = await fetch(queryUrl, { headers: { 'Accept': 'application/json' } });
+      const data = await res.json();
 
       // Clear old POIs
       Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
       poiMarkersRef.current = {};
 
       const poiEmojiMap: Record<string, string> = {
-        restaurant: '🍴', cafe: '☕', police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊', school: '🎓'
+        restaurant: '🍴', cafe: '☕', bar: '🍺', pub: '🍻', fast_food: '🍔',
+        police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊',
+        school: '🎓', university: '🎓', college: '🎓', library: '📚',
+        supermarket: '🛒', grocery: '🛒', market: '🛒', mall: '🛍️', shop: '🏪',
+        office: '🏢', government: '🏛️', post_office: '📮', townhall: '🏛️',
+        park: '🌳', garden: '🌷', playground: '🎡', stadium: '⚽', sports_centre: '🏋️',
+        hotel: '🏨', hostel: '🏠', guest_house: '🏡', motel: '🏨',
+        museum: '🏛️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭',
+        church: '⛪', mosque: '🕌', temple: '🕉️',
+        bus_station: '🚌', taxi: '🚕', train_station: '🚂', airport: '✈️',
+        fuel: '⛽', parking: '🅿️', charging_station: '⚡',
+        default: '📍'
       };
 
-      data.elements.forEach((element: any) => {
-        const amenity = element.tags.amenity;
-        const lat = element.lat || element.center.lat;
-        const lon = element.lon || element.center.lon;
-        const name = element.tags.name || 'Unnamed Spot';
-        const emoji = poiEmojiMap[amenity] || '📍';
+      if (data.elements && data.elements.length > 0) {
+        data.elements.forEach((element: any) => {
+          const tags = element.tags || {};
+          const amenity = tags.amenity || tags.shop || tags.office || tags.leisure || tags.tourism || tags.building || tags.place || 'other';
+          const name = tags.name || tags.operator || 'Unnamed Spot';
+          const emoji = poiEmojiMap[amenity] || poiEmojiMap.default || '📍';
 
-        const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
-          .addTo(map)
-          .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
+          const lat = element.lat || element.center?.lat;
+          const lon = element.lon || element.center?.lon;
+          if (!lat || !lon) return;
 
-        poiMarkersRef.current[element.id] = marker;
-      });
-      console.log(`✅ Loaded ${data.elements.length} nearby POIs`);
+          const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
+            .addTo(map)
+            .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
+
+          poiMarkersRef.current[element.id] = marker;
+        });
+        console.log(`✅ Loaded ${data.elements.length} nearby EVERYTHING POIs`);
+      } else {
+        console.log(`✅ Zero POIs in this area — nothing mapped by OpenStreetMap yet`);
+      }
     } catch (e) {
-      console.error('❌ POI Fetch Error:', e);
+      console.error('❌ POI Fetch Error (Overpass):', e);
     }
   };
 

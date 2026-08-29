@@ -145,39 +145,46 @@ const RideRequest: React.FC = () => {
   const getCurrentLocation = () => {
     return new Promise<void>((resolve) => {
       if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
+        // CONTINUOUS HIGH-ACCURACY TRACKING — very very accurate
+        navigator.geolocation.watchPosition(
           async (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
-            setPickup({ lat, lng, address: 'Fetching precise location...', name: '📍 Your Location' });
+            const accuracy = pos.coords.accuracy;
+            console.log(`📍 Very accurate GPS: lat=${lat.toFixed(6)}, lng=${lng.toFixed(6)}, accuracy=${accuracy}m`);
+            setPickup({ lat, lng, address: `High-precision location (±${Math.round(accuracy)}m)`, name: '📍 Your Precise Location' });
+            setPickupSearch('Your Precise Location');
+
+            // Reverse geocode at zoom 18 for maximum detail
             try {
-              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { timeout: 8000 });
+              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(6)}&lon=${lng.toFixed(6)}&zoom=18&addressdetails=1`, { timeout: 8000 });
               const data = res.data;
               const addr = data.display_name || '';
               const address = data.address || {};
               const houseNumber = address.house_number || '';
-              const road = address.road || address.pedestrian || address.footway || '';
-              const suburb = address.suburb || address.neighbourhood || address.village || '';
-              const city = address.city || address.town || address.municipality || '';
+              const road = address.road || address.pedestrian || address.footway || address.path || '';
+              const suburb = address.suburb || address.neighbourhood || address.village || address.hamlet || '';
+              const city = address.city || address.town || address.municipality || address.county || '';
               let preciseName = '';
               if (houseNumber && road) preciseName = `${houseNumber} ${road}`;
               else if (road) preciseName = road;
               else if (suburb) preciseName = suburb;
-              else preciseName = city || addr.split(',')[0];
+              else if (city) preciseName = city;
+              else preciseName = addr.split(',')[0] || addr;
               setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName });
-              setPickupSearch(preciseName);
+              setPickupSearch(preciseName || 'Your Precise Location');
             } catch {
-              setPickup({ lat, lng, address: 'Your Location', name: '📍 Current Location' });
+              // Already set high-precision above
             }
-            resolve();
           },
           (err) => {
-            console.error('GPS Error:', err.message);
+            console.error('GPS Watch Error:', err.message);
             setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
             resolve();
           },
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
+        setTimeout(() => resolve(), 3000);
       } else {
         setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
         resolve();
@@ -189,12 +196,13 @@ const RideRequest: React.FC = () => {
     if (query.length < 2) return [];
     const UGANDA_BBOX = { minLat: -1.5, maxLat: 4.2, minLon: 29.5, maxLon: 35.0 };
     try {
+      // BROAD NOMINATIM: include everything — shops, businesses, buildings, landmarks
       const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
           q: `${query}, Uganda`,
           format: 'json',
           addressdetails: 1,
-          limit: 10,
+          limit: 20,
           viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
           bounded: 1
         },
@@ -206,19 +214,58 @@ const RideRequest: React.FC = () => {
         address: item.display_name,
         name: item.display_name.split(',')[0]
       }));
+
+      // BROAD OVERPASS SEARCH — everything shown on the map should appear here
+      if (results.length < 15) {
+        const overpassQuery = `
+          [out:json][timeout:25];
+          (
+            node["name"~"${query}",i](around:30000,0.3476,32.5825);
+            way["name"~"${query}",i](around:30000,0.3476,32.5825);
+            relation["name"~"${query}",i](around:30000,0.3476,32.5825);
+            node["amenity"~"${query}",i](around:30000,0.3476,32.5825);
+          );
+          out center;
+        `;
+        try {
+          const overpassRes = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`, { headers: { 'Accept': 'application/json' } });
+          const overpassData = await overpassRes.json();
+          if (overpassData.elements && overpassData.elements.length > 0) {
+            const overpassResults = overpassData.elements.map((el: any) => {
+              const lat = el.lat || el.center?.lat;
+              const lng = el.lon || el.center?.lon;
+              const tags = el.tags || {};
+              const name = tags.name || tags.amenity || tags.shop || tags.office || 'Unknown Place';
+              return { lat, lng, address: name, name: '📍 ' + name };
+            }).filter((r: any) => r.lat && r.lng);
+            results = results.concat(overpassResults);
+          }
+        } catch (e) {
+          console.log('Overpass search fallback failed:', e);
+        }
+      }
+
+      // PHOTON BROADER FALLBACK
       if (results.length === 0) {
         const photonRes = await axios.get('https://photon.komoot.io/api/', {
-          params: { q: query, limit: 10, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 },
+          params: { q: query, limit: 15, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 },
           timeout: 8000
         });
         let photonResults = photonRes.data?.features?.map((item: any) => {
           const props = item.properties;
           const geom = item.geometry.coordinates;
-          return { lat: geom[1], lng: geom[0], address: props.name || props.city || props.street || props.state || 'Unknown Location', name: props.name || props.city || props.street || 'Unknown Location' };
+          return { lat: geom[1], lng: geom[0], address: props.name || props.city || props.street || props.state || props.osm_value || 'Unknown Location', name: props.name || props.city || props.street || props.osm_value || 'Unknown Location' };
         }) || [];
         results = photonResults.filter((r: any) => r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat && r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon);
       }
-      return results;
+
+      // Deduplicate by lat/lng (rounded to 4 decimals)
+      const unique = new Map();
+      results.forEach((r: any) => {
+        const key = `${Math.round(r.lat * 10000)}-${Math.round(r.lng * 10000)}`;
+        if (!unique.has(key)) unique.set(key, r);
+      });
+      return Array.from(unique.values());
     } catch (e: any) {
       console.error('❌ Search Error:', e.response?.data || e.message);
       return [];
