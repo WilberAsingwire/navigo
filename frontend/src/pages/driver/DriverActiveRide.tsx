@@ -400,7 +400,7 @@ const DriverActiveRide: React.FC = () => {
           <ChatBox
             rideId={ride.id}
             currentUser={{ id: user?.id || '', name: user?.fullName || 'You', role: 'driver' }}
-            otherUser={{ id: rider?.id || '', name: riderName, role: 'customer' }}
+            otherUser={{ id: rider?.id || '', name: riderName, role: 'customer', phone: rider?.phone }}
             onClose={() => setShowChat(false)}
           />
         </IonModal>

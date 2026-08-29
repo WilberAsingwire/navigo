@@ -36,7 +36,7 @@ interface Message {
 interface ChatBoxProps {
   rideId: string;
   currentUser: { id: string; name: string; role: string; photo?: string; };
-  otherUser: { id: string; name: string; role: string; photo?: string; };
+  otherUser: { id: string; name: string; role: string; photo?: string; phone?: string; };
   onClose: () => void;
 }
 
@@ -147,7 +147,15 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
           </div>
         </div>
         <div className="chat-header-actions">
-          <IonButton fill="clear" size="small"><IonIcon icon={callOutline} /></IonButton>
+          {/* Previously had no onClick at all — tapping it did nothing,
+              even though the phone number is available from the ride's
+              rider/driver record in both call sites (DriverActiveRide.tsx,
+              rider/ActiveRide.tsx). */}
+          {otherUser.phone && (
+            <IonButton fill="clear" size="small" onClick={() => window.open(`tel:${otherUser.phone}`, '_system')}>
+              <IonIcon icon={callOutline} />
+            </IonButton>
+          )}
           <IonButton fill="clear" size="small" onClick={onClose}><IonIcon icon={closeOutline} /></IonButton>
         </div>
       </div>

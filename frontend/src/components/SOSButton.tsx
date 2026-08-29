@@ -21,18 +21,35 @@ interface EmergencyContact {
   isCustom?: boolean;
 }
 
+// Uganda's real national emergency lines (Uganda Police Force: 999 and 112
+// both connect to police/fire/ambulance dispatch — see serv.upf.go.ug).
+// The previous list had "912" for Fire Brigade, which is not a real Uganda
+// emergency number.
 const DEFAULT_CONTACTS: EmergencyContact[] = [
-  { id: 'police', name: 'Uganda Police', number: '999', emoji: '🚔' },
-  { id: 'ambulance', name: 'Ambulance', number: '112', emoji: '🚑' },
-  { id: 'fire', name: 'Fire Brigade', number: '912', emoji: '🔥' },
+  { id: 'police', name: 'Uganda Police (Emergency)', number: '999', emoji: '🚔' },
+  { id: 'emergency112', name: 'National Emergency Line', number: '112', emoji: '🚨' },
   { id: 'navigo', name: 'NAVIGO 24/7 Support', number: '+256800100200', emoji: '🛡️' },
 ];
 
+// Real hospitals with real coordinates (Kampala). Distance to each is
+// computed live from the user's current location below — previously this
+// showed a fixed, made-up "2.5km / 3.8km / 4.2km" regardless of where the
+// user actually was, which is misleading in an emergency.
 const HOSPITALS = [
-  { name: 'Mulago Hospital', number: '+256414554000', distance: '2.5km' },
-  { name: 'Nsambya Hospital', number: '+256414267012', distance: '3.8km' },
-  { name: 'Kibuli Hospital', number: '+256414257323', distance: '4.2km' },
+  { name: 'Mulago National Referral Hospital', number: '+256414554000', lat: 0.337786, lng: 32.575550 },
+  { name: 'Nsambya Hospital', number: '+256414267012', lat: 0.30167, lng: 32.585 },
+  { name: 'Kibuli Hospital', number: '+256414257323', lat: 0.309167, lng: 32.595278 },
 ];
+
+/** Great-circle distance in km between two lat/lng points (haversine). */
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
 
 const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone, variant = 'full' }) => {
   const [showModal, setShowModal] = useState(false);
@@ -48,6 +65,10 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
   const [autoShareLocation, setAutoShareLocation] = useState(true);
 
   const allContacts = [...DEFAULT_CONTACTS, ...savedContacts];
+
+  const sortedHospitals = [...HOSPITALS]
+    .map(h => ({ ...h, distance: userLocation ? distanceKm(userLocation, h) : null }))
+    .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
 
   const handleSOS = useCallback((contact: EmergencyContact) => {
     const locationMsg = (userLocation && autoShareLocation) 
@@ -188,15 +209,20 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
             </IonButton>
           )}
 
-          {/* Nearby Hospitals */}
+          {/* Nearby Hospitals — real coordinates, distance computed from the
+              driver/rider's actual current location and sorted nearest
+              first (previously a fixed, made-up distance was shown for
+              every user regardless of where they actually were). */}
           <h4 style={{ color: '#fff', marginBottom: 8, fontSize: 14 }}>🏥 Nearby Hospitals</h4>
-          {HOSPITALS.map(h => (
+          {sortedHospitals.map(h => (
             <div key={h.name} onClick={() => window.open(`tel:${h.number}`, '_system')}
               style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(45,106,79,0.08)', borderRadius: 10, padding: 10, marginBottom: 6, cursor: 'pointer' }}>
               <IonIcon icon={medicalOutline} style={{ color: '#2D6A4F', fontSize: 18 }} />
               <div style={{ flex: 1 }}>
                 <span style={{ color: '#fff', fontSize: 13 }}>{h.name}</span>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>{h.distance} away</p>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>
+                  {h.distance !== null ? `${h.distance.toFixed(1)}km away` : 'Distance unavailable'}
+                </p>
               </div>
               <IonButton fill="clear" size="small" color="success"><IonIcon icon={callOutline} /></IonButton>
             </div>
