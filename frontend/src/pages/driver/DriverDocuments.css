@@ -52,6 +52,10 @@
   gap: 8px;
 }
 
+.docs-form {
+  background: transparent;
+}
+
 .docs-input {
   --background: rgba(255, 255, 255, 0.05) !important;
   --color: #fff !important;
