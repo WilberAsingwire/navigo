@@ -257,12 +257,15 @@
 
 .hero-btn {
   --border-radius: 16px;
-  font-weight: 700;
-  height: 56px;
-  font-size: 1.1rem;
+  font-weight: 800;
+  height: 60px;
+  font-size: 1.15rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
   max-width: 100%;
+  border: 2px solid transparent;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
 .hero-btn.primary {

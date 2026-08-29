@@ -105,3 +105,18 @@ body {
 .glass-card, [class*='card'] {
   font-family: var(--font-body);
 }
+
+/* Light mode — applied when body has .light class */
+body.light, body.light ion-page, body.light ion-app {
+  --nav-bg: #F8FAFC;
+  --nav-bg-soft: #FFFFFF;
+  --nav-card: #FFFFFF;
+  --nav-card-soft: rgba(0, 0, 0, 0.03);
+  --nav-border: rgba(0, 0, 0, 0.08);
+  --nav-border-strong: rgba(0, 0, 0, 0.14);
+  --nav-text: #0F172A;
+  --nav-text-secondary: #475569;
+  --nav-text-muted: #94A3B8;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.1);
+}
