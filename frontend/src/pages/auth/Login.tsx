@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import {
   IonPage, IonContent, IonIcon,
-  IonSpinner, IonToast,
+  IonSpinner,
 } from '@ionic/react';
 import {
   eyeOutline, eyeOffOutline, logInOutline, logoGoogle,
   arrowForwardOutline, callOutline, globeOutline,
-  checkmarkCircleOutline, flashOutline
+  checkmarkCircleOutline, flashOutline, alertCircleOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import './AuthStyles.css';
@@ -37,17 +37,33 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       await login(identifier, password);
+      // Read by AuthContext's inactivity-timeout check — previously this
+      // flag was written but never read anywhere, so "Remember me" had no
+      // effect at all (every session force-logged-out after 30 idle
+      // minutes regardless of this checkbox).
       if (rememberMe) localStorage.setItem('navigo_remember', 'true');
+      else localStorage.removeItem('navigo_remember');
       const savedUser = localStorage.getItem('navigo_user');
       if (savedUser) {
         const user = JSON.parse(savedUser);
+        // users.role is only ever 'rider' | 'driver' | 'admin' — 'motorist'
+        // has never been a real value (boda drivers are role='driver' with
+        // driver_profiles.vehicleType='boda').
         const redirectPath = user.role === 'admin' ? '/admin/dashboard' :
-                            (user.role === 'driver' || user.role === 'motorist') ? '/driver/home' : '/customer/home';
+                            user.role === 'driver' ? '/driver/home' : '/customer/home';
         history.push(redirectPath);
       }
     } catch (err: any) {
+      // The backend returns specific messages worth showing verbatim —
+      // e.g. "This account is suspended..." / "...has been banned..." /
+      // rate-limit errors — but this used to always overwrite them with a
+      // generic "Invalid credentials" message, so a suspended/banned user
+      // (or anyone rate-limited) got a misleading explanation for why they
+      // couldn't sign in.
       const msg = err?.message || 'Login failed.';
-      setError('Invalid credentials — if you registered with a phone number, use that (not your email)');
+      setError(msg.toLowerCase().includes('invalid credentials')
+        ? 'Invalid credentials — if you registered with a phone number, use that (not your email)'
+        : msg);
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +170,7 @@ const Login: React.FC = () => {
 
               {error && (
                 <div className="error-message">
-                  <IonIcon icon={checkmarkCircleOutline} /> {error || authError}
+                  <IonIcon icon={alertCircleOutline} /> {error || authError}
                 </div>
               )}
 

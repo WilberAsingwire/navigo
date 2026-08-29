@@ -218,7 +218,10 @@ const Home: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  <span className="ride-rate">UGX {ride.price}<span className="per-km">/km</span></span>
+                  {/* These figures are the real minimum fares from backend/src/utils/fare.ts,
+                      not per-km rates (actual per-km rates are 450/750/950/1300) — labeling
+                      them "/km" was misleading, so this is shown as a starting/minimum fare. */}
+                  <span className="ride-rate">From UGX {ride.price}<span className="per-km">/trip</span></span>
                 </div>
               ))}
             </div>
@@ -340,10 +343,9 @@ const Home: React.FC = () => {
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Company</h4>
-                <span className="footer-link">About Us</span>
                 <span className="footer-link" onClick={() => ionRouter.push('/customer/support')}>Support</span>
-                <span className="footer-link">Privacy Policy</span>
-                <span className="footer-link">Terms of Service</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/privacy')}>Privacy Policy</span>
+                <span className="footer-link" onClick={() => ionRouter.push('/terms')}>Terms of Service</span>
               </div>
             </div>
             <div className="footer-bottom">

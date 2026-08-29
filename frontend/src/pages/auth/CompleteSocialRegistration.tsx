@@ -10,7 +10,11 @@ import { API_URL } from '../../config';
 
 const CompleteSocialRegistration: React.FC = () => {
   const history = useHistory();
-  const { saveSession } = useAuth() as any;
+  // saveSession used to be missing from AuthContextType's exposed value,
+  // so this was silently calling `undefined(...)` below (masked by the
+  // `as any` cast) and crashing the entire "finish social sign-up" flow
+  // for every new Google user with no phone on file yet.
+  const { saveSession } = useAuth();
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,8 +42,10 @@ const CompleteSocialRegistration: React.FC = () => {
       saveSession(response.data.user, response.data.token);
       localStorage.removeItem('temp_social_user');
 
+      // users.role is only ever 'rider' | 'driver' | 'admin' — 'motorist'
+      // has never been a real value.
       const role = response.data.user.role;
-      const redirectPath = (role === 'driver' || role === 'motorist') ? '/driver/home' :
+      const redirectPath = role === 'driver' ? '/driver/home' :
                            (role === 'admin') ? '/admin/dashboard' : '/customer/home';
 
       history.push(redirectPath);

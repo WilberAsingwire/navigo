@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { useHistory, Link } from 'react-router-dom';
 import {
   IonPage, IonContent, IonIcon,
-  IonSpinner, IonToast,
+  IonSpinner,
 } from '@ionic/react';
 import {
   phonePortraitOutline, lockClosedOutline, personOutline,
   mailOutline, eyeOutline, eyeOffOutline,
   carOutline, bicycleOutline, personOutline as RiderIcon,
   checkmarkCircleOutline, informationCircleOutline, globeOutline,
-  flashOutline
+  flashOutline, alertCircleOutline, logoGoogle
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
+import { BACKEND_ORIGIN } from '../../config';
 import './AuthStyles.css';
 
 const Register: React.FC = () => {
@@ -235,7 +236,7 @@ const Register: React.FC = () => {
 
               {error && (
                 <div className="error-message">
-                  <IonIcon icon={checkmarkCircleOutline} /> {error}
+                  <IonIcon icon={alertCircleOutline} /> {error}
                 </div>
               )}
 
@@ -261,10 +262,33 @@ const Register: React.FC = () => {
               >
                 {isLoading ? <IonSpinner name="crescent" color="dark" /> : 'Create Account'}
               </button>
+
+              {/* Login.tsx has always had a "Continue with Google" option
+                  (backed by GET /auth/google -> passport -> Google OAuth
+                  consent -> /auth/google/callback -> CompleteSocialRegistration
+                  for brand-new accounts), but Register.tsx never offered it —
+                  an asymmetry with no reason: the same backend flow already
+                  handles brand-new Google sign-ups. */}
+              <div style={{ margin: '24px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ flex: 1, height: '1px', background: 'var(--navigo-white-10)' }}></div>
+                <span style={{ fontSize: '11px', color: 'var(--navigo-zinc-500)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>or continue with</span>
+                <div style={{ flex: 1, height: '1px', background: 'var(--navigo-white-10)' }}></div>
+              </div>
+
+              <button
+                style={{
+                  width: '100%', height: '48px', borderRadius: '12px', border: '1px solid var(--navigo-white-10)',
+                  background: 'var(--navigo-white-5)', color: 'white', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '14px'
+                }}
+                onClick={() => window.location.href = `${BACKEND_ORIGIN}/auth/google`}
+              >
+                <IonIcon icon={logoGoogle} /> Continue with Google
+              </button>
             </div>
 
             <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '14px', color: 'var(--navigo-zinc-400)' }}>
-              Already have an account? <Link to="/login" style={{ color: 'var(--navigo-ember', fontWeight: 600, textDecoration: 'none' }}>Sign In</Link>
+              Already have an account? <Link to="/login" style={{ color: 'var(--navigo-ember)', fontWeight: 600, textDecoration: 'none' }}>Sign In</Link>
             </div>
 
             <div className="trust-row">

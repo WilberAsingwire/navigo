@@ -23,7 +23,11 @@ const ForgotPassword: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [devCode, setDevCode] = useState('');
+  // What channel(s) the backend actually delivered the code through — this
+  // used to show a "DEV CODE" box with the plaintext code returned by the
+  // backend, but /auth/forgot-password only ever sends the code via real
+  // SMS/email now, so that box always rendered empty for every real user.
+  const [sentVia, setSentVia] = useState<{ sms: boolean; email: boolean }>({ sms: false, email: false });
   const [countdown, setCountdown] = useState(0);
   const [canResend, setCanResend] = useState(true);
 
@@ -41,8 +45,8 @@ const ForgotPassword: React.FC = () => {
     if (!phone || phone.length < 10) return setError('Please enter a valid phone number');
     setIsLoading(true);
     try {
-      const returnedCode = await forgotPassword(phone);
-      setDevCode(returnedCode);
+      const via = await forgotPassword(phone);
+      setSentVia(via);
       setStep('code');
       setCountdown(60);
       setCanResend(false);
@@ -83,7 +87,13 @@ const ForgotPassword: React.FC = () => {
               {step === 'phone'
                 ? "We'll send a 6-digit reset code to your phone"
                 : step === 'code'
-                  ? `We've sent a code to ${phone}`
+                  ? sentVia.sms && sentVia.email
+                    ? `We've sent a code to ${phone} by SMS and email`
+                    : sentVia.sms
+                      ? `We've sent a code to ${phone} by SMS`
+                      : sentVia.email
+                        ? `We've sent a code to your email on file`
+                        : `We've sent a code to ${phone}`
                   : "Your account is secured"}
             </p>
 
@@ -115,10 +125,6 @@ const ForgotPassword: React.FC = () => {
 
             {step === 'code' && (
               <>
-                <div className="dev-code-box">
-                  <p>🔧 DEV CODE: <strong>{devCode}</strong></p>
-                </div>
-
                 <div className="reset-field-group">
                   <label className="reset-label">6-Digit Reset Code</label>
                   <input

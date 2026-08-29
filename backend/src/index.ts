@@ -81,7 +81,12 @@ app.get('/auth/google/callback',
       [email.toLowerCase().trim(), 'google', googleId]
     );
 
-    const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-five.vercel.app/auth/callback';
+    // Every other public URL in this codebase (see wallet.ts's payment
+    // callback) is built from PUBLIC_FRONTEND_URL — this used a
+    // never-set REDIRECT_URL instead, so Google login always redirected
+    // back to the hardcoded production Vercel URL even when running
+    // locally or on a preview deployment.
+    const redirectUrl = `${(process.env.PUBLIC_FRONTEND_URL || 'https://navigo-five.vercel.app').replace(/\/+$/, '')}/auth/callback`;
 
     if (existingUser) {
       // User exists, redirect with status existing

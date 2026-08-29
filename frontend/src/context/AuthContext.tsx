@@ -25,10 +25,10 @@ interface AuthContextType {
   error: string | null;
   login: (phone: string, password: string) => Promise<any>;
   register: (name: string, phone: string, password: string, email?: string, role?: string, referralCode?: string) => Promise<void>;
-  socialLogin: (provider: string, socialId: string, name: string, email?: string, phone?: string) => Promise<any>;
   loginWithToken: (authToken: string) => Promise<User>;
+  saveSession: (userData: User, authToken: string) => void;
   logout: () => void;
-  forgotPassword: (phone: string) => Promise<string>;
+  forgotPassword: (phone: string) => Promise<{ sms: boolean; email: boolean }>;
   resetPassword: (phone: string, code: string, newPassword: string) => Promise<void>;
   continueAsGuest: () => void;
   updateUser: (userData: Partial<User>) => void;
@@ -59,9 +59,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => events.forEach(e => window.removeEventListener(e, handleActivity));
   }, []);
 
-  // Check session timeout
+  // Check session timeout — skipped entirely when the user checked
+  // "Remember me" at login (navigo_remember='true'). Previously this
+  // flag was written on login and never read anywhere, so checking or
+  // unchecking "Remember me" had literally no effect: every session was
+  // auto-logged-out after 30 minutes of inactivity regardless.
   useEffect(() => {
     if (!user || isGuest) return;
+    if (localStorage.getItem('navigo_remember') === 'true') return;
     const interval = setInterval(() => {
       if (Date.now() - lastActivity > SESSION_TIMEOUT) {
         console.log('Session expired due to inactivity');
@@ -135,15 +140,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const socialLogin = async (provider: string, socialId: string, name: string, email?: string, phone?: string): Promise<any> => {
-    try {
-      const response = await axios.post(`${API_URL}/auth/social-login`, { provider, socialId, name, email, phone });
-      saveSession(response.data.user, response.data.token);
-      return response.data;
-    } catch (err: any) {
-      throw handleApiError(err, `${provider} login failed. Please try again.`);
-    }
-  };
+  // NOTE: a `socialLogin` helper used to live here, POST-ing to
+  // /auth/social-login — a backend route that has never existed (the real
+  // Google flow goes through GET /auth/google -> /auth/google/callback,
+  // then loginWithToken() below). It was never called from any UI
+  // component, so it was dead, unreachable code that would have thrown a
+  // 404 if anything had ever invoked it. Removed rather than fixed since
+  // there is no live caller to preserve behavior for.
 
   // Used by OAuth callback flows (e.g. Google login for an existing user): the
   // server hands back a bare JWT, so we fetch the profile it belongs to and
@@ -169,13 +172,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('navigo_token');
     localStorage.removeItem('navigo_user');
     localStorage.removeItem('navigo_guest');
+    localStorage.removeItem('navigo_remember');
   }, []);
 
-  const forgotPassword = async (phone: string): Promise<string> => {
+  // Returns which channel(s) the backend actually delivered the reset code
+  // through — the backend never returns the code itself over the wire
+  // (POST /auth/forgot-password sends it via real SMS/email only), so
+  // there is no "dev code" for the UI to show here.
+  const forgotPassword = async (phone: string): Promise<{ sms: boolean; email: boolean }> => {
     try {
       const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
       const response = await axios.post(`${API_URL}/auth/forgot-password`, { phone: cleanPhone });
-      return response.data.devCode || '';
+      return { sms: !!response.data.sentVia?.sms, email: !!response.data.sentVia?.email };
     } catch (err: any) {
       throw handleApiError(err, 'Failed to send reset code. Please try again.');
     }
@@ -215,7 +223,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         user, token, isAuthenticated: !!user, isGuest, isLoading, error,
-        login, register, socialLogin, loginWithToken, logout, forgotPassword, resetPassword,
+        login, register, loginWithToken, saveSession, logout, forgotPassword, resetPassword,
         continueAsGuest, updateUser, clearError
       }}>
       {children}
