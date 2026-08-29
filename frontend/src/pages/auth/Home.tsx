@@ -127,7 +127,7 @@ const Home: React.FC = () => {
 
           {/* HERO SECTION */}
           <section className="hero-section">
-            <div className="hero-bg" style={{ backgroundImage: `url(${HERO_FALLBACK_IMAGE})`, backgroundSize: 'cover', backgroundPosition: 'center', animation: 'heroImagePan 20s ease-in-out infinite alternate' }}>
+            <div className="hero-bg">
               <div className="hero-overlay"></div>
             </div>
             <div className="hero-text">
