@@ -94,23 +94,23 @@ const AdminAnalytics: React.FC = () => {
             <div>
               <h2 style={{ color: '#fff', margin: 0 }}>Market Overview</h2>
               <p style={{ color: '#94A3B8', fontSize: 13 }}>Real-time performance tracking for Kampala</p>
-            </div}
+            </div>
             <div className="growth-badge">
               <IonIcon icon={trendingUpOutline} />
               <span>+{stats?.monthlyGrowth}% this month</span>
-            </div}
-          </div}
+            </div>
+          </div>
 
           {/* KPI Grid */}
           <div className="kpi-grid">
             <div className="kpi-card">
               <div className="kpi-icon-box" style={{ background: 'rgba(255,107,53,0.1)', color: '#FF6B35' }}>
                 <IonIcon icon={peopleOutline} />
-              </div}
+              </div>
               <div className="kpi-data">
                 <span className="kpi-value">{stats?.totalRides.toLocaleString()}</span>
                 <span className="kpi-label">Total Rides</span>
-              </div}
+              </div>
             </div>
 
             <div className="kpi-card">
