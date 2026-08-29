@@ -405,16 +405,18 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
       {showControls && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center', padding: '0 4px', position: 'absolute', top: 10, left: 10, zIndex: 1000 }}>
+          <IonBadge color="success" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● LIVE GPS</IonBadge>
+          <IonBadge color="warning" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● REAL-TIME ROUTE</IonBadge>
           {Object.keys(tileUrls).map(style => (
             <IonChip key={style} outline={mapStyle !== style} color={mapStyle === style ? 'warning' : 'medium'}
-              onClick={() => setMapStyle(style as any)} style={{ fontSize: 10, cursor: 'pointer', padding: '2px 8px' }}>
+              onClick={() => setMapStyle(style as any)} style={{ fontSize: 10, cursor: 'pointer', padding: '2px 8px', textTransform: 'uppercase' }}>
               {style === 'standard' ? '🗺️' : style === 'dark' ? '🌙' : '🛰️'} {style}
             </IonChip>
           ))}
           {userLocation && destination && (
             <>
               <IonChip outline color="primary" onClick={openInGoogleMaps} style={{ fontSize: 10, cursor: 'pointer' }}>📍 Navigate</IonChip>
-              {routeDistance > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{routeDistance}km • {routeDuration}min</IonBadge>}
+              {routeDistance > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{routeDistance}km • {routeDuration}min (Real OSRM)</IonBadge>}
             </>
           )}
         </div>
