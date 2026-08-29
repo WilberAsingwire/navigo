@@ -262,14 +262,77 @@ export const setupSocketHandlers = (io: Server) => {
         socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
       }
     });
+
+    // Load persisted chat history for a ride (frontend calls this with an ack callback).
+    socket.on('load-messages', async (d: any, callback?: (messages: any[]) => void) => {
+      const { rideId } = d;
+      if (!(await isRideMember(userId, rideId))) {
+        socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
+        return callback?.([]);
+      }
+      try {
+        const db = getDB();
+        const rows = await db.all(
+          'SELECT * FROM ride_messages WHERE rideId = ? ORDER BY createdAt ASC',
+          [rideId]
+        );
+        const messages = rows.map((r: any) => ({
+          id: r.id,
+          text: r.text,
+          senderId: r.senderId,
+          senderName: r.senderName,
+          senderRole: r.senderRole,
+          timestamp: r.createdAt,
+          status: r.status,
+          type: r.type,
+        }));
+        callback?.(messages);
+      } catch (e) {
+        console.error('Error loading messages:', e);
+        callback?.([]);
+      }
+    });
+
     socket.on('send-message', async (d: any) => {
       const { rideId, message } = d;
       if (await isRideMember(userId, rideId)) {
-        socket.to(rideId).emit('new-message', { ...message, senderId: userId });
+        const outgoing = { ...message, senderId: userId };
+        socket.to(rideId).emit('new-message', outgoing);
+        try {
+          const db = getDB();
+          await db.run(
+            `INSERT INTO ride_messages (id, rideId, senderId, senderName, senderRole, text, type, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [message.id, rideId, userId, message.senderName, message.senderRole, message.text, message.type || 'text', 'sent']
+          );
+        } catch (e) {
+          console.error('Error persisting message:', e);
+        }
       } else {
         socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
       }
     });
+
+    // Read receipts — the recipient acks a message, we mark it read and tell the sender.
+    socket.on('message-read', async (d: any) => {
+      const { messageId, rideId } = d;
+      if (!(await isRideMember(userId, rideId))) return;
+      try {
+        const db = getDB();
+        await db.run("UPDATE ride_messages SET status = 'read' WHERE id = ?", [messageId]);
+        socket.to(rideId).emit('message-read-confirmed', messageId);
+      } catch (e) {
+        console.error('Error marking message read:', e);
+      }
+    });
+
+    // Typing indicator — relayed live only, never persisted.
+    socket.on('typing', async (d: any) => {
+      const { rideId, isTyping } = d;
+      if (!(await isRideMember(userId, rideId))) return;
+      socket.to(rideId).emit('user-typing', { userId, isTyping: !!isTyping });
+    });
+
 
     socket.on('disconnect', () => {
       console.log(`🌐 User disconnected: ${userId} (${socket.id})`);

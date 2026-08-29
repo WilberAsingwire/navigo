@@ -30,8 +30,6 @@ interface User {
   verificationStatus?: string;
 }
 
-// Remove MOCK_USERS entirely
-
 const AdminUsers: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [showActionSheet, setShowActionSheet] = useState(false);

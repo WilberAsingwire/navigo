@@ -26,9 +26,10 @@ const CAMEL_COLUMNS = [
   'isAvailable', 'isBot', 'isOnline', 'packageDetails', 'paymentMethod',
   'phoneVerified', 'pickupLat', 'pickupLng', 'pickupName', 'ratingCount',
   'receiverName', 'receiverPhone', 'rejectionReason', 'requestedAt',
-  'rideId', 'riderRating', 'riderTags', 'serviceType', 'socialId',
-  'socialProvider', 'startedAt', 'ticketId', 'totalTrips', 'updatedAt',
-  'userId', 'userName', 'userRole', 'vehicleType', 'verificationStatus',
+  'rideId', 'riderRating', 'riderTags', 'senderId', 'senderName',
+  'senderRole', 'serviceType', 'socialId', 'socialProvider', 'startedAt',
+  'ticketId', 'totalTrips', 'updatedAt', 'userId', 'userName', 'userRole',
+  'vehicleType', 'verificationStatus',
 ];
 const LOWER_TO_CAMEL: Record<string, string> = {};
 for (const c of CAMEL_COLUMNS) LOWER_TO_CAMEL[c.toLowerCase()] = c;
@@ -207,6 +208,18 @@ export const initDB = async () => {
           ticketId INTEGER REFERENCES support_tickets(id) ON DELETE CASCADE,
           fromUser TEXT NOT NULL,
           message TEXT NOT NULL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS ride_messages (
+          id TEXT PRIMARY KEY,
+          rideId TEXT REFERENCES rides(id) ON DELETE CASCADE,
+          senderId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          senderName TEXT NOT NULL,
+          senderRole TEXT NOT NULL,
+          text TEXT NOT NULL,
+          type TEXT NOT NULL DEFAULT 'text',
+          status TEXT NOT NULL DEFAULT 'sent',
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
