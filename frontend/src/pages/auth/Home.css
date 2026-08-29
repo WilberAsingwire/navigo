@@ -129,14 +129,26 @@
 }
 
 .theme-toggle {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  color: var(--text-muted);
-  transition: color 0.3s ease;
+  color: #fff;
+  transition: color 0.3s ease, transform 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .theme-toggle:hover {
   color: var(--brand-orange);
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+  transform: scale(1.05);
 }
 
 .hero-section {
@@ -834,6 +846,30 @@
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(255, 90, 31, 0.3);
 }
 
+.mobile-menu-toggle {
+  display: none;
+  color: #fff;
+  font-size: 1.5rem;
+  background: rgba(255,107,53,0.15);
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-toggle:hover,
+.mobile-menu-toggle:active {
+  background: rgba(255,107,53,0.3);
+  border-color: rgba(255,107,53,0.6);
+  color: #fff;
+  transform: scale(1.05);
+}
+
 @media (max-width: 768px) {
   .home-nav {
     padding: 0 1rem;
@@ -859,7 +895,27 @@
   }
 
   .mobile-menu-toggle {
-    display: block;
+    display: flex;
+    color: #fff;
+    font-size: 1.5rem;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 48px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-menu-toggle:hover,
+  .mobile-menu-toggle:active {
+    background: rgba(255,107,53,0.3);
+    border-color: rgba(255,107,53,0.6);
+    color: #fff;
+    transform: scale(1.05);
   }
 
   .hero-section {
