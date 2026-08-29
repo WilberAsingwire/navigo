@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
-import { fareQuote, clampOffer, normalizeVehicleType } from '../utils/fare';
+import { fareQuote, clampOffer, normalizeVehicleType, COMMISSION_RATE } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
 
@@ -152,7 +152,14 @@ router.get('/active', authenticate, async (req: AuthRequest, res: Response) => {
       },
       rider,
       driver,
-      isDriver: ride.driverId === userId
+      isDriver: ride.driverId === userId,
+      // The driver app's earnings breakdown previously hardcoded "10%"
+      // client-side (DriverActiveRide.tsx) while the real rate is
+      // configurable via NAVIGO_COMMISSION_RATE (5-20%) and used by
+      // settleRidePayment() — if the env var were ever changed the driver's
+      // displayed earnings would silently disagree with what they're
+      // actually paid. Send the real rate so the UI can never drift from it.
+      commissionRate: COMMISSION_RATE
     });
   } catch (error) {
     console.error('Active ride error:', error);

@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, AuthRequest } from '../middleware/authMiddleware';
 import { paymentService } from '../services/paymentService';
+import { COMMISSION_RATE } from '../utils/fare';
 
 const MIN_PAYOUT = 10000; // UGX — below this, MoMo fees would eat the transfer
 
@@ -12,7 +13,11 @@ router.get('/balance', authenticate, async (req: AuthRequest, res: Response) => 
     const userId = req.user?.userId;
     const db = getDB();
     const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
-    res.json({ ok: true, balance: wallet?.balance || 0 });
+    // commissionRate lets the driver earnings screen show the real
+    // driver-keeps percentage instead of a hardcoded "90%" — previously
+    // that stat could silently disagree with settleRidePayment() if
+    // NAVIGO_COMMISSION_RATE was ever changed from its 10% default.
+    res.json({ ok: true, balance: wallet?.balance || 0, commissionRate: COMMISSION_RATE });
   } catch (error) {
     res.status(500).json({ ok: false, message: 'Failed to fetch balance' });
   }

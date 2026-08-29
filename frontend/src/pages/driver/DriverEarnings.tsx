@@ -34,6 +34,11 @@ const DriverEarnings: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState<number | null>(null);
+  // Real commission rate from the server (NAVIGO_COMMISSION_RATE, 5-20%,
+  // default 10%) — previously this screen hardcoded "90%"/"10%" everywhere,
+  // which would silently disagree with actual settlement if that env var
+  // was ever changed from its default.
+  const [commissionRate, setCommissionRate] = useState(0.1);
   const [transactions, setTransactions] = useState<WalletTx[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'payouts'>('overview');
@@ -54,7 +59,10 @@ const DriverEarnings: React.FC = () => {
         api.get('/drivers/profile').catch(() => null),
         api.get('/wallet/payouts').catch(() => null),
       ]);
-      if (balRes?.data?.ok) setBalance(balRes.data.balance);
+      if (balRes?.data?.ok) {
+        setBalance(balRes.data.balance);
+        if (typeof balRes.data.commissionRate === 'number') setCommissionRate(balRes.data.commissionRate);
+      }
       setTransactions(txRes?.data?.transactions || []);
       setProfile(profRes?.data || null);
       setPayouts(payoutsRes?.data?.payouts || []);
@@ -223,7 +231,7 @@ const DriverEarnings: React.FC = () => {
                 <EmptyState
                   icon={<IonIcon icon={receiptOutline} style={{ fontSize: 26 }} />}
                   title="No earnings yet"
-                  subtitle="Complete a wallet ride and your 90% share will appear here instantly."
+                  subtitle={`Complete a wallet ride and your ${Math.round((1 - commissionRate) * 100)}% share will appear here instantly.`}
                 />
               ) : (
                 earnings.slice(0, 20).map(trip => (
@@ -240,7 +248,7 @@ const DriverEarnings: React.FC = () => {
                     </div>
                     <div className="history-footer">
                       <span>{new Date(trip.createdAt).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                      <span className="history-net-earning">After 10% NAVIGO commission</span>
+                      <span className="history-net-earning">After {Math.round(commissionRate * 100)}% NAVIGO commission</span>
                     </div>
                   </div>
                 ))
@@ -286,7 +294,7 @@ const DriverEarnings: React.FC = () => {
               {[
                 { label: 'Total Trips', value: totalTrips, icon: receiptOutline },
                 { label: 'Avg Rating', value: Number(rating).toFixed(1), icon: trendingUpOutline },
-                { label: 'You Keep', value: '90%', icon: cashOutline },
+                { label: 'You Keep', value: `${Math.round((1 - commissionRate) * 100)}%`, icon: cashOutline },
                 { label: 'Payout Method', value: 'Mobile Money', icon: arrowDownOutline },
               ].map(s => (
                 <div key={s.label} className="earnings-overview-card">

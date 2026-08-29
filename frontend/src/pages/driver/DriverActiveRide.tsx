@@ -59,6 +59,12 @@ const DriverActiveRide: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [ride, setRide] = useState<Ride | null>(null);
   const [rider, setRider] = useState<any>(null);
+  // The actual commission rate (server-configurable, 5-20% via
+  // NAVIGO_COMMISSION_RATE) — fetched from the API rather than hardcoded,
+  // so the earnings breakdown below can never disagree with what
+  // settleRidePayment() actually pays out. Defaults to the documented 10%
+  // only until the real value arrives.
+  const [commissionRate, setCommissionRate] = useState(0.1);
   const [pos, setPos] = useState<[number, number] | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
@@ -73,6 +79,7 @@ const DriverActiveRide: React.FC = () => {
       if (res.data.ride && res.data.isDriver) {
         setRide(res.data.ride);
         setRider(res.data.rider || null);
+        if (typeof res.data.commissionRate === 'number') setCommissionRate(res.data.commissionRate);
         rideIdRef.current = res.data.ride.id;
       } else {
         setRide(null);
@@ -219,7 +226,7 @@ const DriverActiveRide: React.FC = () => {
   const isDelivery = ride.serviceType === 'delivery';
   const riderName = rider?.fullName || 'Customer';
   const fare = ride.fareFinal || 0;
-  const commission = Math.round(fare * 0.1);
+  const commission = Math.round(fare * commissionRate);
   const net = fare - commission;
 
   return (
@@ -334,7 +341,7 @@ const DriverActiveRide: React.FC = () => {
               <span>Total Fare</span><span style={{ color: '#fff' }}>UGX {fare.toLocaleString()}</span>
             </div>
             <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 12, marginBottom: 10 }}>
-              <span>NAVIGO Commission (10%)</span><span style={{ color: '#E85D75' }}>-UGX {commission.toLocaleString()}</span>
+              <span>NAVIGO Commission ({Math.round(commissionRate * 100)}%)</span><span style={{ color: '#E85D75' }}>-UGX {commission.toLocaleString()}</span>
             </div>
             <div className="earnings-total" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
               <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>You Earn</span>
