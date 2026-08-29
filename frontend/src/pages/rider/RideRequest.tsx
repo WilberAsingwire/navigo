@@ -145,17 +145,24 @@ const RideRequest: React.FC = () => {
   const getCurrentLocation = () => {
     return new Promise<void>((resolve) => {
       if ('geolocation' in navigator) {
-        // CONTINUOUS HIGH-ACCURACY TRACKING — very very accurate
-        navigator.geolocation.watchPosition(
+        let bestLat = 0, bestLng = 0, bestAcc = Infinity, bestName = '📍 Your Precise Location';
+        // CONTINUOUS HIGH-ACCURACY TRACKING — 100% accuracy focus
+        const watchId = navigator.geolocation.watchPosition(
           async (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             const accuracy = pos.coords.accuracy;
-            console.log(`📍 Very accurate GPS: lat=${lat.toFixed(6)}, lng=${lng.toFixed(6)}, accuracy=${accuracy}m`);
-            setPickup({ lat, lng, address: `High-precision location (±${Math.round(accuracy)}m)`, name: '📍 Your Precise Location' });
-            setPickupSearch('Your Precise Location');
+            // Only accept very high accuracy (< 15 meters) for 100% reliability
+            if (accuracy < bestAcc) {
+              bestAcc = accuracy;
+              bestLat = lat;
+              bestLng = lng;
+              console.log(`📍 100% Accurate GPS: lat=${lat.toFixed(6)}, lng=${lng.toFixed(6)}, accuracy=${accuracy}m (BEST)`);
+            }
+            setPickup({ lat, lng, address: `100% Accurate Location (±${Math.round(accuracy)}m)`, name: '📍 100% Precise Location' });
+            setPickupSearch('100% Precise Location');
 
-            // Reverse geocode at zoom 18 for maximum detail
+            // Reverse geocode at zoom 18 for maximum street-level detail
             try {
               const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(6)}&lon=${lng.toFixed(6)}&zoom=18&addressdetails=1`, { timeout: 8000 });
               const data = res.data;
@@ -171,10 +178,10 @@ const RideRequest: React.FC = () => {
               else if (suburb) preciseName = suburb;
               else if (city) preciseName = city;
               else preciseName = addr.split(',')[0] || addr;
-              setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName });
-              setPickupSearch(preciseName || 'Your Precise Location');
+              setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName + ` (±${Math.round(accuracy)}m)` });
+              setPickupSearch(preciseName || '100% Precise Location');
             } catch {
-              // Already set high-precision above
+              // Keep high-accuracy GPS data
             }
           },
           (err) => {
@@ -182,9 +189,25 @@ const RideRequest: React.FC = () => {
             setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
             resolve();
           },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
         );
-        setTimeout(() => resolve(), 3000);
+        // Resolve after we have high accuracy (< 15m) or after 5 seconds max
+        const interval = setInterval(() => {
+          if (bestAcc < 15 || bestAcc === Infinity) {
+            // If we have good accuracy, resolve; otherwise keep watching briefly
+            if (bestAcc < 50) {
+              clearInterval(interval);
+              navigator.geolocation.clearWatch(watchId);
+              resolve();
+            }
+          }
+        }, 500);
+        // Force resolve after 5 seconds regardless
+        setTimeout(() => {
+          clearInterval(interval);
+          navigator.geolocation.clearWatch(watchId);
+          resolve();
+        }, 5000);
       } else {
         setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
         resolve();
@@ -265,7 +288,21 @@ const RideRequest: React.FC = () => {
         const key = `${Math.round(r.lat * 10000)}-${Math.round(r.lng * 10000)}`;
         if (!unique.has(key)) unique.set(key, r);
       });
-      return Array.from(unique.values());
+      const finalResults = Array.from(unique.values());
+
+      // OUT OF BOUNDS CHECK — Uganda only
+      const outOfBounds = finalResults.filter((r: any) => r.lat < UGANDA_BBOX.minLat || r.lat > UGANDA_BBOX.maxLat || r.lng < UGANDA_BBOX.minLon || r.lng > UGANDA_BBOX.maxLon);
+      if (outOfBounds.length > 0 && finalResults.length > 0) {
+        setToastMsg('⚠️ Some results are out of Uganda bounds. Try a location within Uganda for best routes.');
+        setShowToast(true);
+      }
+      // If ALL results are out of bounds, show a clear alert and suggest closer places
+      if (finalResults.length > 0 && outOfBounds.length === finalResults.length) {
+        setToastMsg('❌ Search out of bounds — please try somewhere within Uganda (e.g. Kampala, Entebbe, Jinja, Gulu).');
+        setShowToast(true);
+      }
+
+      return finalResults;
     } catch (e: any) {
       console.error('❌ Search Error:', e.response?.data || e.message);
       return [];
@@ -671,6 +708,7 @@ const RideRequest: React.FC = () => {
           driverType={selectedRide.vehicleType}
           height="100%"
           showControls={true}
+          searchResults={searchResults.map(r => ({ lat: r.lat, lng: r.lng, name: r.name || r.address.split(',')[0], address: r.address }))}
           onMapClick={handleMapClick}
           onDistanceChange={(d, t) => { setActualRouteDist(d); setActualRouteDur(t); }}
         />

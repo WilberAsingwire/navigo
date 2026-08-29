@@ -76,6 +76,7 @@ interface MapProps {
   showRoute?: boolean;
   showControls?: boolean;
   followUser?: boolean;
+  searchResults?: { lat: number; lng: number; name?: string; address?: string }[];
   onDistanceChange?: (distance: number, duration: number) => void;
   onMapClick?: (latlng: [number, number]) => void;
 }
@@ -83,7 +84,8 @@ interface MapProps {
 const NavigoMap: React.FC<MapProps> = React.memo(({
   userLocation, destination, driverLocation, driverType = 'go',
   height = '350px', interactive = true, showRoute = true,
-  showControls = true, followUser = true, onDistanceChange, onMapClick
+  showControls = true, followUser = true, searchResults = [],
+  onDistanceChange, onMapClick
 }) => {
   const [loading, setLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
@@ -375,7 +377,36 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       delete markersRef.current['driver'];
     }
 
-    // 4. Route Visualization & FitBounds
+    // 5. Search Results Markers — every search shown on the map
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    // Clear old search markers
+    Object.values(markersRef.current).forEach(m => {
+      if (m && (m as L.Marker).getPopup && typeof (m as any)._searchResult !== 'undefined') {
+        map.removeLayer(m);
+      }
+    });
+    // Actually, use a separate ref for search markers to not interfere with main markers
+    // Let's create temporary markers for search results
+    const tempMarkers: L.Marker[] = [];
+    searchResults.forEach((r, idx) => {
+      const marker = L.marker([r.lat, r.lng], {
+        icon: L.divIcon({
+          html: `<div style="background:#FF6B35; border:2px solid white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:10px; box-shadow:0 2px 6px rgba(0,0,0,0.5);">${idx + 1}</div>`,
+          iconSize: [22, 22], iconAnchor: [11, 11],
+        })
+      }).addTo(map).bindPopup(`<b>🔍 Search Result ${idx + 1}</b><br/>${r.name || r.address || 'Location'}`);
+      tempMarkers.push(marker);
+    });
+    // Store them in a temporary ref for cleanup
+    (mapInstanceRef.current as any)._searchMarkers = tempMarkers;
+    return () => {
+      tempMarkers.forEach(m => { if (map && m) map.removeLayer(m); });
+    };
+  }, [searchResults]);
+
+  // 4. Route Visualization & FitBounds
     if (showRoute && userLocation && destination) {
       const fetchRoute = async () => {
         const controller = new AbortController();
