@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IonToast, IonProgressBar } from '@ionic/react';
+import { useAuth } from '../context/AuthContext';
 import './LoyaltyCard.css';
 
 interface LoyaltyCardProps {
-  points: number;
-  tier: 'bronze' | 'silver' | 'gold' | 'platinum';
+  points?: number;
+  tier?: 'bronze' | 'silver' | 'gold' | 'platinum';
   referralCode?: string;
 }
 
@@ -26,7 +27,16 @@ const ALL_REWARDS = [
   { name: 'UGX 10,000 Cash', points: 800, emoji: '💵' },
 ];
 
-const LoyaltyCard: React.FC<LoyaltyCardProps> = ({ points, tier, referralCode = 'NAVIGO50' }) => {
+const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
+  points: propPoints = 0,
+  tier: propTier = 'bronze',
+  referralCode = 'NAVIGO50'
+}) => {
+  const { user } = useAuth();
+  // Try to read real loyalty data from user (future backend integration)
+  // For now use props or defaults; props override for dashboard hardcoding
+  const points = propPoints || 0;
+  const tier = propTier;
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'rewards' | 'challenges' | 'refer'>('rewards');

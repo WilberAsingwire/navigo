@@ -15,6 +15,8 @@ import api from '../../services/api';
 import LoyaltyCard from '../../components/LoyaltyCard';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import Skeleton from '../../components/Skeleton';
+import OnboardingBanner from '../../components/OnboardingBanner';
+import SafeRender from '../../components/SafeRender';
 import './CustomerDashboard.css';
 
 const POPULAR_DESTINATIONS = [
@@ -72,7 +74,7 @@ const CustomerDashboard: React.FC = () => {
           <div style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
             <div className="rider-header">
               <div>
-                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0]} 👋</h2>
+                <h2 className="welcome-text">Hello, {((user?.fullName || 'there') || 'Guest').split(' ')[0] || 'Guest'} 👋</h2>
                 <p className="welcome-subtitle">Ready for your next ride?</p>
               </div>
               <IonAvatar
@@ -95,6 +97,9 @@ const CustomerDashboard: React.FC = () => {
 
         <div style={{ padding: '0 12px', maxWidth: 500, margin: '0 auto' }}>
 
+          {/* ONBOARDING: First-time user banner */}
+          <OnboardingBanner />
+
           {/* 1. PRIMARY HERO: Request a Ride */}
           <div className="ride-cta-card">
             <button
@@ -107,6 +112,7 @@ const CustomerDashboard: React.FC = () => {
             <span className="ride-cta-subtitle">Cars & Boda nearby</span>
           </div>
 
+          <SafeRender>
           {/* Real stats only — no fake numbers */}
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -125,9 +131,15 @@ const CustomerDashboard: React.FC = () => {
                   {walletBalance === null ? '—' : `UGX ${(walletBalance / 1000).toFixed(0)}k`}
                 </h3>
                 <p className="stat-label">Wallet</p>
+                {walletBalance === null && (
+                  <span style={{ fontSize: 10, color: '#FF6B35', marginTop: 4, textAlign: 'center' }}>
+                    Gateway not configured
+                  </span>
+                )}
               </div>
             </div>
           )}
+          </SafeRender>
 
           {/* 2. QUICK ACTIONS */}
           <h3 className="quick-actions-header">Quick Actions</h3>
@@ -150,7 +162,9 @@ const CustomerDashboard: React.FC = () => {
           </div>
 
           {/* 3. ZAWADI REWARDS */}
-          {user && <LoyaltyCard points={280} tier="silver" />}
+          <SafeRender>
+            {user && <LoyaltyCard points={280} tier="silver" />}
+          </SafeRender>
 
           {/* 4. POPULAR DESTINATIONS (real Kampala shortcuts → booking) */}
           <div className="drivers-section-header">

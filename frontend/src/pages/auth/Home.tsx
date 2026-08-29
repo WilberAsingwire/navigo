@@ -24,6 +24,19 @@ const Home: React.FC = () => {
   const [activeRide, setActiveRide] = useState('boda');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.nav-links') && !target.closest('.mobile-menu-toggle')) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [isMenuOpen]);
+
   const rideOptions = [
     {
       id: 'boda',
@@ -116,9 +129,8 @@ const Home: React.FC = () => {
           {/* HERO SECTION */}
           <section className="hero-section">
             <div className="hero-bg" style={{ backgroundImage: `url(${HERO_FALLBACK_IMAGE})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-              <video autoPlay muted loop playsInline className="hero-video">
+              <video autoPlay muted loop playsInline className="hero-video" style={{ objectFit: 'cover' }} onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; }}>
                 <source src={HERO_BG_VIDEO} type="video/mp4" />
-                Your browser does not support the video tag.
               </video>
               <div className="hero-overlay"></div>
             </div>
