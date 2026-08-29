@@ -179,7 +179,7 @@ const Home: React.FC = () => {
                   <div className="preview-route-line"></div>
                   <div className="route-stop">
                     <div className="stop-dot destination"></div>
-                    <span className="stop-text">Kampala Central</span>
+                    <span className="stop-text">Uganda Central</span>
                   </div>
                 </div>
 
@@ -352,7 +352,7 @@ const Home: React.FC = () => {
             </div>
             <div className="footer-bottom">
               <p>© 2026 NAVIGO Technologies Uganda. All rights reserved.</p>
-              <p>🇺🇬 Proudly Ugandan • Made in Kampala</p>
+              <p>🇺🇬 Proudly Ugandan • Made for Uganda</p>
             </div>
           </footer>
 

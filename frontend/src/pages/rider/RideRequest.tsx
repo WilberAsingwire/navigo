@@ -25,10 +25,10 @@ interface FareEstimate { distance: number; duration: number; baseFare: number; d
 enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
 
 const POPULAR_PLACES: Location[] = [
-  { name: 'Kampala City Square', lat: 0.3136, lng: 32.5811, address: 'Kampala Central' },
+  { name: 'Uganda Central Square', lat: 0.3136, lng: 32.5811, address: 'Uganda Central' },
   { name: 'Entebbe Airport', lat: 0.0437, lng: 32.4369, address: 'Entebbe' },
   { name: ' Acacia Mall', lat: 0.3348, lng: 32.5873, address: 'Kololo, Kampala' },
-  { name: 'Makerere University', lat: 0.3361, lng: 32.5711, address: 'Kampala' },
+  { name: 'Uganda University', lat: 0.3361, lng: 32.5711, address: 'Kampala' },
 ];
 
 const RIDE_OPTIONS: RideOption[] = [
