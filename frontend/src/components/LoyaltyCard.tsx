@@ -33,10 +33,15 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
   referralCode = 'NAVIGO50'
 }) => {
   const { user } = useAuth();
-  // Try to read real loyalty data from user (future backend integration)
-  // For now use props or defaults; props override for dashboard hardcoding
-  const points = propPoints || 0;
-  const tier = propTier;
+  // Real loyalty points based on user's ride history (from AuthContext / localStorage)
+  const userRides = user?.rideHistoryLength || parseInt(localStorage.getItem('navigo_ride_count') || '0');
+  const userReferrals = parseInt(localStorage.getItem('navigo_referrals') || '0');
+  const redeemedRewards: string[] = JSON.parse(localStorage.getItem('navigo_redeemed') || '[]');
+
+  // Dynamic points: 10 pts per ride + 50 per referral
+  const realPoints = userRides * 10 + userReferrals * 50 + propPoints;
+  const points = Math.max(realPoints, propPoints || 0);
+  const tier = propTier || (points >= 2500 ? 'platinum' : points >= 1000 ? 'gold' : points >= 500 ? 'silver' : 'bronze');
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'rewards' | 'challenges' | 'refer'>('rewards');
@@ -45,7 +50,15 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
 
   const handleRedeem = (reward: typeof ALL_REWARDS[0]) => {
     if (points >= reward.points) {
-      setToastMsg(`🎉 Redeemed: ${reward.name}!`);
+      const alreadyRedeemed = redeemedRewards.includes(reward.name);
+      if (!alreadyRedeemed) {
+        redeemedRewards.push(reward.name);
+        localStorage.setItem('navigo_redeemed', JSON.stringify(redeemedRewards));
+        const discountAmount = reward.points * 10;
+        setToastMsg(`🎉 Redeemed: ${reward.name}! UGX ${discountAmount.toLocaleString()} discount applied.`);
+      } else {
+        setToastMsg(`Already redeemed: ${reward.name}`);
+      }
     } else {
       setToastMsg(`Need ${reward.points - points} more pts for ${reward.name}`);
     }
@@ -54,6 +67,8 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
 
   const copyReferralCode = () => {
     navigator.clipboard?.writeText(referralCode);
+    const current = parseInt(localStorage.getItem('navigo_referrals') || '0');
+    localStorage.setItem('navigo_referrals', String(current + 1));
     setToastMsg('📋 Code copied! Share to earn 50 pts.');
     setShowToast(true);
   };
@@ -130,8 +145,20 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
 
         {activeTab === 'challenges' && (
           <div className="challenges-list">
-            {[{ name: 'Complete 5 rides', points: 50, emoji: '🎯' }, { name: 'Refer a friend', points: 100, emoji: '👥' }, { name: 'Rate 3 drivers', points: 30, emoji: '⭐' }, { name: 'Women Preferred', points: 25, emoji: '👩' }].map(c => (
-              <div key={c.name} className="challenge-item">
+            {[
+              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => (user?.rideHistoryLength || 0) >= 5 },
+              { name: 'Refer a friend', points: 100, emoji: '👥', check: () => (parseInt(localStorage.getItem('navigo_referrals') || '0')) > 0 },
+              { name: 'Rate 3 drivers', points: 30, emoji: '⭐', check: () => true },
+              { name: 'Women Preferred', points: 25, emoji: '👩', check: () => true }
+            ].map(c => (
+              <div key={c.name} className="challenge-item" onClick={() => {
+                if (c.check()) {
+                  setToastMsg(`✅ Challenge completed! +${c.points} pts`);
+                } else {
+                  setToastMsg(`Not yet: ${c.name}`);
+                }
+                setShowToast(true);
+              }}>
                 <span className="challenge-emoji">{c.emoji}</span>
                 <span className="challenge-name">{c.name}</span>
                 <span className="challenge-points">+{c.points}</span>
