@@ -24,8 +24,63 @@ interface PayoutResponse {
   error?: string;
 }
 
+interface InitiatePaymentRequest {
+  amount: number;
+  reference: string;
+  email: string;
+  name: string;
+  phone?: string;
+  redirectUrl: string;
+}
+
+interface InitiatePaymentResponse {
+  mode: 'gateway' | 'simulation';
+  checkoutUrl?: string;
+  error?: string;
+}
+
 class PaymentService {
   private readonly secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+
+  /**
+   * Start a real, hosted Flutterwave checkout for a wallet top-up.
+   * The rider is redirected to `checkoutUrl`; Flutterwave later redirects back
+   * to `redirectUrl` with a real `transaction_id` we verify server-side before
+   * crediting the wallet (see verifyTransaction below).
+   *
+   * Without FLUTTERWAVE_SECRET_KEY (dev/demo), returns 'simulation' mode; the
+   * caller (POST /wallet/topup/verify) then trusts the server-created
+   * topup_intents row directly instead of calling out to a real gateway —
+   * this keeps local development and CI working without payment credentials.
+   */
+  async initiateTopUp(req: InitiatePaymentRequest): Promise<InitiatePaymentResponse> {
+    if (!this.secretKey) {
+      console.warn('⚠️ FLUTTERWAVE_SECRET_KEY not set. Top-up will run in simulation mode.');
+      return { mode: 'simulation' };
+    }
+
+    try {
+      const response = await axios.post(
+        'https://api.flutterwave.com/v3/payments',
+        {
+          tx_ref: req.reference,
+          amount: req.amount,
+          currency: 'UGX',
+          redirect_url: req.redirectUrl,
+          customer: { email: req.email, phonenumber: req.phone, name: req.name },
+          customizations: { title: 'NAVIGO Wallet Top-up', description: 'Add money to your NAVIGO wallet' },
+        },
+        { headers: { Authorization: `Bearer ${this.secretKey}`, 'Content-Type': 'application/json' } }
+      );
+
+      const link = response.data?.data?.link;
+      if (!link) return { mode: 'gateway', error: 'Gateway did not return a checkout link' };
+      return { mode: 'gateway', checkoutUrl: link };
+    } catch (error: any) {
+      console.error('Top-up initiation error:', error.response?.data || error.message);
+      return { mode: 'gateway', error: error.response?.data?.message || 'Could not start payment' };
+    }
+  }
 
   async verifyTransaction(transactionId: string): Promise<PaymentVerificationResponse> {
     if (!this.secretKey) {

@@ -139,65 +139,135 @@ router.get('/payouts', authenticate, async (req: AuthRequest, res: Response) => 
   }
 });
 
-router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
+// ─── Start a wallet top-up ────────────────────────────────
+// Creates a tracked intent and, if a real payment gateway is configured,
+// a hosted Flutterwave checkout link. Without gateway keys (dev/demo), it
+// returns 'simulation' mode so local development keeps working end-to-end.
+router.post('/topup/initiate', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const { amount, paymentReference } = req.body;
+    const { amount } = req.body;
     const userId = req.user?.userId;
     const db = getDB();
 
-    if (!paymentReference) {
-      return res.status(400).json({ ok: false, message: 'Payment reference is required for verification' });
+    const amt = parseInt(amount, 10);
+    if (!amt || amt < 1000) {
+      return res.status(400).json({ ok: false, message: 'Minimum top-up is UGX 1,000' });
+    }
+    if (amt > 5000000) {
+      return res.status(400).json({ ok: false, message: 'Maximum top-up is UGX 5,000,000 per transaction' });
     }
 
-    const verification = await paymentService.verifyTransaction(paymentReference);
-    if (verification.status !== 'success') {
-      return res.status(400).json({
-        ok: false,
-        message: `Payment verification failed: ${verification.error || 'Transaction not found'}`
-      });
-    }
+    const user = await db.get('SELECT fullName, email, phone FROM users WHERE id = ?', [userId]);
+    const reference = `topup_${Date.now()}_${Math.floor(Math.random() * 1e6)}`;
 
-    const existingTx = await db.get(
-      'SELECT id FROM wallet_transactions WHERE reference = ?',
-      [paymentReference]
+    await db.run(
+      'INSERT INTO topup_intents (id, userId, amount, status) VALUES (?, ?, ?, ?)',
+      [reference, userId, amt, 'pending']
     );
-    if (existingTx) {
-      return res.status(400).json({
-        ok: false,
-        message: 'This payment reference has already been processed.'
-      });
+
+    const publicUrl = process.env.PUBLIC_FRONTEND_URL || 'https://navigo-five.vercel.app';
+    const result = await paymentService.initiateTopUp({
+      amount: amt,
+      reference,
+      email: user?.email || `${user?.phone || userId}@navigo.app`,
+      name: user?.fullName || 'NAVIGO Rider',
+      phone: user?.phone,
+      redirectUrl: `${publicUrl}/customer/payments?topup_ref=${reference}`,
+    });
+
+    if (result.mode === 'gateway' && !result.checkoutUrl) {
+      return res.status(502).json({ ok: false, message: result.error || 'Could not start payment' });
     }
 
-    if (verification.amount && verification.amount !== amount) {
-      return res.status(400).json({
-        ok: false,
-        message: `Amount mismatch. Verified: ${verification.amount}, Requested: ${amount}`
-      });
+    res.json({
+      ok: true,
+      mode: result.mode,
+      reference,
+      checkoutUrl: result.checkoutUrl || null,
+    });
+  } catch (error) {
+    console.error('Topup initiate error:', error);
+    res.status(500).json({ ok: false, message: 'Could not start top-up. Try again.' });
+  }
+});
+
+// ─── Verify + credit a wallet top-up ───────────────────────
+router.post('/topup/verify', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { reference, transactionId } = req.body;
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    if (!reference) {
+      return res.status(400).json({ ok: false, message: 'Missing top-up reference' });
     }
 
-    const transactionId = 'tx_topup_' + Date.now();
+    const intent = await db.get(
+      'SELECT * FROM topup_intents WHERE id = ? AND userId = ?',
+      [reference, userId]
+    );
+    if (!intent) return res.status(404).json({ ok: false, message: 'Top-up not found' });
+    if (intent.status === 'success') {
+      return res.json({ ok: true, message: 'This top-up was already credited to your wallet.' });
+    }
+
+    // In gateway mode we must verify the real transaction with Flutterwave using
+    // the numeric transaction_id it redirected back with. In simulation mode
+    // (no gateway configured) the intent itself is the source of truth.
+    const usingGateway = !!process.env.FLUTTERWAVE_SECRET_KEY;
+    if (usingGateway) {
+      if (!transactionId) {
+        return res.status(400).json({ ok: false, message: 'Missing transaction id from payment provider' });
+      }
+      const verification = await paymentService.verifyTransaction(transactionId);
+      if (verification.status !== 'success') {
+        await db.run('UPDATE topup_intents SET status = ? WHERE id = ?', ['failed', reference]);
+        return res.status(400).json({ ok: false, message: `Payment verification failed: ${verification.error || 'Transaction not successful'}` });
+      }
+      if (verification.tx_ref !== reference) {
+        return res.status(400).json({ ok: false, message: 'Transaction reference mismatch' });
+      }
+      if (verification.amount && verification.amount !== intent.amount) {
+        return res.status(400).json({ ok: false, message: 'Amount mismatch — payment not credited' });
+      }
+    }
+
+    const transactionRowId = 'tx_topup_' + Date.now();
     const tx = await db.getTransactionClient();
     try {
       await tx.query('BEGIN');
+
+      const claimRes = await tx.query(
+        "UPDATE topup_intents SET status = 'success' WHERE id = ? AND status != 'success'",
+        [reference]
+      );
+      if (claimRes.rowCount === 0) throw new Error('ALREADY_CREDITED');
+
+      // Upsert: a wallet row may not exist yet for a brand-new user.
       await tx.query(
-        'UPDATE wallets SET balance = balance + ?, updatedAt = CURRENT_TIMESTAMP WHERE userId = ?',
-        [amount, userId]
+        `INSERT INTO wallets (userId, balance) VALUES (?, ?)
+         ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance, updatedAt = CURRENT_TIMESTAMP`,
+        [userId, intent.amount]
       );
       await tx.query(
         'INSERT INTO wallet_transactions (id, userId, kind, amount, reference, note) VALUES (?, ?, ?, ?, ?, ?)',
-        [transactionId, userId, 'topup', amount, paymentReference, `Wallet top-up (Ref: ${paymentReference})`]
+        [transactionRowId, userId, 'topup', intent.amount, reference, `Wallet top-up (Ref: ${reference})`]
       );
+
       await tx.query('COMMIT');
       tx.release();
-      res.json({ ok: true, message: 'Wallet top-up successful!' });
-    } catch (e) {
+      res.json({ ok: true, message: 'Wallet top-up successful!', amount: intent.amount });
+    } catch (e: any) {
       await tx.query('ROLLBACK');
       tx.release();
+      if (e.message === 'ALREADY_CREDITED') {
+        return res.json({ ok: true, message: 'This top-up was already credited to your wallet.' });
+      }
       throw e;
     }
   } catch (error) {
-    console.error('Topup error:', error);
-    res.status(500).json({ ok: false, message: 'Top-up request failed. Try again.' });
+    console.error('Topup verify error:', error);
+    res.status(500).json({ ok: false, message: 'Top-up verification failed. Try again.' });
   }
 });
 

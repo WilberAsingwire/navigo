@@ -9,7 +9,7 @@ import {
   callOutline, chatbubbleOutline, starOutline,
   cashOutline, checkmarkCircleOutline, closeOutline,
   shieldCheckmarkOutline, locationOutline, flagOutline,
-  carOutline, paperPlaneOutline
+  carOutline, paperPlaneOutline, navigateOutline
 } from 'ionicons/icons';
 import ChatBox from '../../components/ChatBox';
 import SOSButton from '../../components/SOSButton';
@@ -129,6 +129,20 @@ const ActiveRide: React.FC = () => {
       setShowToast(true);
     } finally {
       setIsTipping(false);
+    }
+  };
+
+  const handleRate = async () => {
+    if (!ride || rating === 0) return;
+    try {
+      await api.post(`/rides/${ride.id}/rate`, { rating });
+      setToastMsg('Thanks for rating your driver!');
+      setShowToast(true);
+      setShowRating(false);
+      setTimeout(() => history.push('/customer/home'), 1200);
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Failed to save rating');
+      setShowToast(true);
     }
   };
 

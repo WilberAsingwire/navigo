@@ -18,22 +18,56 @@ import BodaSafeScore from '../../components/BodaSafeBadges';
 import LoyaltyCard from '../../components/LoyaltyCard';
 import './DriverHome.css';
 
+interface WalletTx {
+  id: string;
+  kind: string;
+  amount: number;
+  createdAt: string;
+}
+
 const DriverHome: React.FC = () => {
   const ionRouter = useIonRouter();
   const { user } = useAuth();
   const [isOnline, setIsOnline] = useState(false);
+  const [profileStats, setProfileStats] = useState({ rating: 5, totalTrips: 0 });
+  const [transactions, setTransactions] = useState<WalletTx[]>([]);
 
   useEffect(() => {
     const fetchStatus = async () => {
       try {
         const res = await api.get('/drivers/profile');
         setIsOnline(res.data.user?.isOnline || false);
+        if (res.data.profile) {
+          setProfileStats({
+            rating: Number(res.data.profile.rating) || 5,
+            totalTrips: Number(res.data.profile.totalTrips) || 0,
+          });
+        }
       } catch (e) {
         console.error('Failed to fetch driver status:', e);
       }
     };
     fetchStatus();
+
+    const fetchEarnings = async () => {
+      try {
+        const res = await api.get('/wallet/transactions');
+        setTransactions(res.data?.transactions || []);
+      } catch (e) {
+        console.error('Failed to fetch earnings:', e);
+      }
+    };
+    fetchEarnings();
   }, []);
+
+  // Driver income = wallet payouts + cash-trip earnings + tips (see DriverEarnings.tsx)
+  const earnings = transactions.filter(t => t.kind === 'payout' || t.kind === 'cash_trip' || t.kind === 'tip');
+  const sumSince = (days: number) => {
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return earnings.filter(t => new Date(t.createdAt).getTime() >= cutoff).reduce((s, t) => s + t.amount, 0);
+  };
+  const todayEarnings = sumSince(1);
+  const weeklyEarnings = sumSince(7);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -44,25 +78,29 @@ const DriverHome: React.FC = () => {
   useEffect(() => {
     const status = user?.verificationStatus || 'unverified';
     if (status === 'unverified' || status === 'rejected') {
-      ionRouter.replace('/driver/documents');
+      // 'replace' swaps the current history entry instead of pushing a new one,
+      // so the back button can't return an unverified driver to this screen.
+      ionRouter.push('/driver/documents', 'root', 'replace');
     }
   }, [user, ionRouter]);
 
-  const [stats] = useState({
-    earnings: 85000,
-    rating: 4.8,
-    completedRides: 156,
-    acceptanceRate: 94,
-    todayEarnings: 45000,
-    weeklyEarnings: 320000
+  // Real recent activity, built from the driver's own wallet transactions.
+  const recentActivity = transactions.slice(0, 4).map(t => {
+    const isPositive = t.amount >= 0;
+    const label =
+      t.kind === 'payout' ? 'Ride earnings credited' :
+      t.kind === 'cash_trip' ? 'Cash ride completed' :
+      t.kind === 'tip' ? 'Tip received' :
+      t.kind === 'withdrawal' ? 'Payout sent to Mobile Money' :
+      t.kind === 'refund' ? 'Payout refunded' : 'Wallet activity';
+    return {
+      id: t.id,
+      text: `${label} — UGX ${Math.abs(t.amount).toLocaleString()}`,
+      time: new Date(t.createdAt).toLocaleDateString('en-UG', { month: 'short', day: 'numeric' }),
+      icon: t.kind === 'withdrawal' ? cashOutline : checkmarkCircleOutline,
+      color: isPositive ? '#2D6A4F' : '#FF6B35',
+    };
   });
-
-  const [recentActivity] = useState([
-    { id: '1', text: 'Ride completed with Alice N. — UGX 8,500', time: '10 min ago', icon: checkmarkCircleOutline, color: '#2D6A4F' },
-    { id: '2', text: 'New ride request from Kololo', time: '25 min ago', icon: carOutline, color: '#4da6ff' },
-    { id: '3', text: 'Payout of UGX 200,000 processed', time: '2 hours ago', icon: cashOutline, color: '#FF6B35' },
-    { id: '4', text: 'Your rating increased to 4.8 ⭐', time: '1 day ago', icon: trendingUpOutline, color: '#FFC107' },
-  ]);
 
   const handleStatusToggle = async (online: boolean) => {
     if (user?.verificationStatus !== 'approved') {
@@ -118,21 +156,21 @@ const DriverHome: React.FC = () => {
           <div className="kpi-grid">
             <div className="kpi-card">
               <IonIcon icon={walletOutline} className="kpi-icon" style={{ color: '#00e676' }} />
-              <h3 className="kpi-value">UGX {stats.todayEarnings.toLocaleString()}</h3>
+              <h3 className="kpi-value">UGX {todayEarnings.toLocaleString()}</h3>
               <p className="kpi-label">Today's Earnings</p>
             </div>
             <div className="kpi-card">
               <IonIcon icon={starOutline} className="kpi-icon" style={{ color: '#FFC107' }} />
-              <h3 className="kpi-value">{stats.rating}</h3>
+              <h3 className="kpi-value">{profileStats.rating.toFixed(1)}</h3>
               <p className="kpi-label">Your Rating</p>
             </div>
           </div>
 
           {/* Boda Safe Score */}
-          <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={stats.rating} totalRides={stats.completedRides} />
+          <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={profileStats.rating} totalRides={profileStats.totalTrips} />
 
           {/* Zawadi Loyalty */}
-          <LoyaltyCard points={450} tier="gold" />
+          <LoyaltyCard ridesCount={profileStats.totalTrips} />
 
           {/* Quick Actions */}
           <h3 className="actions-header">Quick Actions</h3>
@@ -152,26 +190,32 @@ const DriverHome: React.FC = () => {
 
           {/* Recent Activity */}
           <h3 className="activity-header">Recent Activity</h3>
-          {recentActivity.map(activity => (
-            <div key={activity.id} className="activity-item">
-              <IonIcon icon={activity.icon} className="activity-icon" style={{ color: activity.color }} />
-              <span className="activity-text">{activity.text}</span>
-              <span className="activity-time">{activity.time}</span>
-            </div>
-          ))}
+          {recentActivity.length === 0 ? (
+            <p style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', padding: '10px 0' }}>
+              No activity yet — complete your first ride to see it here.
+            </p>
+          ) : (
+            recentActivity.map(activity => (
+              <div key={activity.id} className="activity-item">
+                <IonIcon icon={activity.icon} className="activity-icon" style={{ color: activity.color }} />
+                <span className="activity-text">{activity.text}</span>
+                <span className="activity-time">{activity.time}</span>
+              </div>
+            ))
+          )}
 
           {/* Stats Row */}
           <div className="bottom-stats-grid">
             <div className="bottom-stat-card">
-              <p className="bottom-stat-value">{stats.completedRides}</p>
+              <p className="bottom-stat-value">{profileStats.totalTrips}</p>
               <span className="bottom-stat-label">Total Rides</span>
             </div>
             <div className="bottom-stat-card">
-              <p className="bottom-stat-value">{stats.acceptanceRate}%</p>
-              <span className="bottom-stat-label">Acceptance</span>
+              <p className="bottom-stat-value">{profileStats.rating.toFixed(1)} ⭐</p>
+              <span className="bottom-stat-label">Rating</span>
             </div>
             <div className="bottom-stat-card">
-              <p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p>
+              <p className="bottom-stat-value">UGX {Math.round(weeklyEarnings/1000)}K</p>
               <span className="bottom-stat-label">This Week</span>
             </div>
           </div>

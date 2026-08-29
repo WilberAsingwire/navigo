@@ -27,6 +27,32 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// ─── USER: GET MY TICKETS (with replies) ────────────
+router.get('/mine', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const userId = req.user?.userId;
+
+    const tickets = await db.all(
+      'SELECT * FROM support_tickets WHERE userId = ? ORDER BY createdAt DESC',
+      [userId]
+    );
+
+    const ticketsWithReplies = await Promise.all(tickets.map(async (t) => {
+      const replies = await db.all(
+        'SELECT fromUser as from, message as text, createdAt as time FROM support_replies WHERE ticketId = ? ORDER BY createdAt ASC',
+        [t.id]
+      );
+      return { ...t, replies };
+    }));
+
+    res.json(ticketsWithReplies);
+  } catch (error) {
+    console.error('Fetch my tickets error:', error);
+    res.status(500).json({ message: 'Failed to fetch your tickets' });
+  }
+});
+
 // ─── ADMIN: GET ALL TICKETS ─────────────────────────
 router.get('/admin/tickets', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {

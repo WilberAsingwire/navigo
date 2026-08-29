@@ -163,7 +163,7 @@ const CustomerDashboard: React.FC = () => {
 
           {/* 3. ZAWADI REWARDS */}
           <SafeRender>
-            {user && <LoyaltyCard points={280} tier="silver" />}
+            {user && <LoyaltyCard ridesCount={totalRides ?? 0} />}
           </SafeRender>
 
           {/* 4. POPULAR DESTINATIONS (real Uganda routes → booking) */}

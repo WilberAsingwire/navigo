@@ -497,7 +497,7 @@ const RideRequest: React.FC = () => {
                 <p className="section-label">Popular Destinations</p>
                 <div className="popular-places-grid">
                   {POPULAR_PLACES.map(p => (
-                    <div key={p.name} className="place-chip" onClick={() => { setDestination(p); setDestSearch(p.name); setStep(BookingStep.LOCATION); }}>
+                    <div key={p.name} className="place-chip" onClick={() => { setDestination(p); setDestSearch(p.name || ''); setStep(BookingStep.LOCATION); }}>
                       {p.name}
                     </div>
                   ))}
@@ -705,7 +705,7 @@ const RideRequest: React.FC = () => {
         <NavigoMap
           userLocation={pickup}
           destination={destination}
-          driverType={selectedRide.vehicleType}
+          driverType={selectedRide.vehicleType as 'boda' | 'go' | 'comfort' | 'xl'}
           height="100%"
           showControls={true}
           searchResults={searchResults.map(r => ({ lat: r.lat, lng: r.lng, name: r.name || r.address.split(',')[0], address: r.address }))}

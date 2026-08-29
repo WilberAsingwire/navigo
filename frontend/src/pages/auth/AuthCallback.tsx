@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 const AuthCallback: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
-  const { socialLogin } = useAuth();
+  const { loginWithToken } = useAuth();
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -19,10 +19,18 @@ const AuthCallback: React.FC = () => {
     const provider = params.get('provider');
 
     if (status === 'existing' && token) {
-      // User already exists, just save token and go to home
-      localStorage.setItem('navigo_token', token);
-      // Note: In a real app, we'd fetch the user profile here via /auth/me
-      history.push('/customer/home');
+      // User already exists — fetch their profile and load it into AuthContext
+      // (not just localStorage) so ProtectedContent recognizes them right away.
+      loginWithToken(token)
+        .then((user) => {
+          const redirectPath = user.role === 'admin' ? '/admin/dashboard' :
+                                user.role === 'driver' ? '/driver/home' : '/customer/home';
+          history.push(redirectPath);
+        })
+        .catch(() => {
+          setError('Could not complete sign-in');
+          setTimeout(() => history.push('/login'), 2000);
+        });
     } else if (status === 'new' && name && socialId && provider) {
       // New user, redirect to complete registration page
       localStorage.setItem('temp_social_user', JSON.stringify({ name, email, socialId, provider }));

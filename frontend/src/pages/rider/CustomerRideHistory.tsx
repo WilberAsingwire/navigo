@@ -65,7 +65,7 @@ const CustomerRideHistory: React.FC = () => {
     total: rides.length,
     completed: rides.filter(r => r.status === 'completed' || r.status === 'Completed').length,
     cancelled: rides.filter(r => r.status === 'cancelled' || r.status === 'Cancelled').length,
-    totalSpent: rides.filter(r => r.status === 'completed' || r.status === 'Completed').reduce((sum, r) => sum + (Number(r.fare) || 0), 0),
+    totalSpent: rides.filter(r => r.status === 'completed' || r.status === 'Completed').reduce((sum, r) => sum + (Number(r.fareFinal) || 0), 0),
   };
 
   return (
@@ -135,7 +135,7 @@ const CustomerRideHistory: React.FC = () => {
                 </div>
                 <div className="ride-footer">
                   <span className="ride-meta">🚗 {ride.paymentMethod}</span>
-                  <span className="ride-fare">UGX {(Number(ride.fare) || 0).toLocaleString()}</span>
+                  <span className="ride-fare">UGX {(Number(ride.fareFinal) || 0).toLocaleString()}</span>
                 </div>
               </div>
             ))
@@ -187,7 +187,7 @@ const CustomerRideHistory: React.FC = () => {
 
               <div className="fare-highlight-card">
                 <span className="fare-highlight-label">Total Fare</span>
-                <h2 className="fare-highlight-value">UGX {(Number(selectedRide.fare) || 0).toLocaleString()}</h2>
+                <h2 className="fare-highlight-value">UGX {(Number(selectedRide.fareFinal) || 0).toLocaleString()}</h2>
               </div>
 
               {(selectedRide.status === 'completed' || selectedRide.status === 'Completed') && (

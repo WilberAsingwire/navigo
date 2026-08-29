@@ -34,11 +34,10 @@ const AdminAnalytics: React.FC = () => {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      // These endpoints are designed to return synthesized analytics data
       const [statsRes, dailyRes, topRes] = await Promise.all([
-        api.get('/admin/analytics/summary'),
-        api.get('/admin/analytics/daily'),
-        api.get('/admin/analytics/top-drivers')
+        api.get('/auth/admin/analytics/summary'),
+        api.get('/auth/admin/analytics/daily'),
+        api.get('/auth/admin/analytics/top-drivers')
       ]);
 
       setStats(statsRes.data);

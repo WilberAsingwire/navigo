@@ -7,6 +7,45 @@ const convertPlaceholders = (query: string) => {
   return query.replace(/\?/g, () => `$${index++}`);
 };
 
+// ─── camelCase column recovery ──────────────────────────────
+// Postgres folds *unquoted* identifiers to lowercase, so a column declared as
+// `fullName` is actually stored (and returned in query results) as `fullname`.
+// The rest of this codebase (routes, sockets, and the frontend's TS types)
+// reads/writes the camelCase spelling everywhere (e.g. `user.fullName`,
+// `ride.pickupLat`), so every raw query result needs the original camelCase
+// key restored alongside the lowercase one Postgres actually gives us.
+// This list is every camelCase column/alias used anywhere in the schema or
+// queries — keep it in sync when adding new camelCase columns.
+const CAMEL_COLUMNS = [
+  'acceptedAt', 'arrivedAt', 'cancelledAt', 'completedAt', 'createdAt',
+  'currentLat', 'currentLng', 'distanceKm', 'driverDocs', 'driverId',
+  'driverName', 'driverRating', 'driverStartLat', 'driverStartLng',
+  'dropLat', 'dropLng', 'dropName', 'durationMin', 'etaAccepted',
+  'etaArrive', 'etaComplete', 'etaStart', 'expiresAt', 'fareFinal',
+  'fareOffered', 'fareRecommended', 'fromUser', 'fullName', 'gatewayRef',
+  'isAvailable', 'isBot', 'isOnline', 'packageDetails', 'paymentMethod',
+  'phoneVerified', 'pickupLat', 'pickupLng', 'pickupName', 'ratingCount',
+  'receiverName', 'receiverPhone', 'rejectionReason', 'requestedAt',
+  'rideId', 'riderRating', 'riderTags', 'serviceType', 'socialId',
+  'socialProvider', 'startedAt', 'ticketId', 'totalTrips', 'updatedAt',
+  'userId', 'userName', 'userRole', 'vehicleType', 'verificationStatus',
+];
+const LOWER_TO_CAMEL: Record<string, string> = {};
+for (const c of CAMEL_COLUMNS) LOWER_TO_CAMEL[c.toLowerCase()] = c;
+
+const restoreCamelCase = <T = any>(row: T): T => {
+  if (!row || typeof row !== 'object') return row;
+  const out: any = { ...row };
+  for (const key of Object.keys(row as any)) {
+    const camel = LOWER_TO_CAMEL[key];
+    if (camel && !(camel in out)) {
+      out[camel] = (row as any)[key];
+    }
+  }
+  return out;
+};
+const restoreRows = (rows: any[]) => rows.map(restoreCamelCase);
+
 export const initDB = async () => {
   if (pool) return pool;
 
@@ -171,6 +210,20 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS topup_intents (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          amount INTEGER NOT NULL,
+          status TEXT NOT NULL DEFAULT 'pending', -- pending | success | failed
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS platform_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
         CREATE TABLE IF NOT EXISTS payouts (
           id TEXT PRIMARY KEY,
           userId TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -208,6 +261,17 @@ export const initDB = async () => {
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='currentlng') THEN
             ALTER TABLE users ADD COLUMN currentLng DECIMAL;
           END IF;
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='driver_profiles' AND lower(column_name)='model') THEN
+            ALTER TABLE driver_profiles ADD COLUMN model TEXT;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='driver_profiles' AND lower(column_name)='color') THEN
+            ALTER TABLE driver_profiles ADD COLUMN color TEXT;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='driver_profiles' AND lower(column_name)='year') THEN
+            ALTER TABLE driver_profiles ADD COLUMN year TEXT;
+          END IF;
         END $$;
       `);
       console.log('✅ Database tables initialized');
@@ -234,7 +298,9 @@ export const getDB = () => {
       return {
         query: async (query: string, params: any[] = []) => {
           const convertedQuery = convertPlaceholders(query);
-          return client.query(convertedQuery, params);
+          const res = await client.query(convertedQuery, params);
+          if (Array.isArray(res.rows)) res.rows = restoreRows(res.rows);
+          return res;
         },
         release: () => client.release(),
       };
@@ -242,16 +308,17 @@ export const getDB = () => {
     get: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res.rows[0];
+      return res.rows[0] ? restoreCamelCase(res.rows[0]) : res.rows[0];
     },
     all: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res.rows;
+      return restoreRows(res.rows);
     },
     run: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
+      if (Array.isArray(res.rows)) res.rows = restoreRows(res.rows);
       return res;
     },
     exec: async (query: string) => {

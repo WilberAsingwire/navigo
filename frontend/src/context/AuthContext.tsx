@@ -26,6 +26,7 @@ interface AuthContextType {
   login: (phone: string, password: string) => Promise<any>;
   register: (name: string, phone: string, password: string, email?: string, role?: string) => Promise<void>;
   socialLogin: (provider: string, socialId: string, name: string, email?: string, phone?: string) => Promise<any>;
+  loginWithToken: (authToken: string) => Promise<User>;
   logout: () => void;
   forgotPassword: (phone: string) => Promise<string>;
   resetPassword: (phone: string, code: string, newPassword: string) => Promise<void>;
@@ -143,6 +144,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Used by OAuth callback flows (e.g. Google login for an existing user): the
+  // server hands back a bare JWT, so we fetch the profile it belongs to and
+  // save it into context/localStorage exactly like a normal login would.
+  const loginWithToken = useCallback(async (authToken: string): Promise<User> => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      const userData = response.data.user;
+      saveSession(userData, authToken);
+      return userData;
+    } catch (err: any) {
+      throw handleApiError(err, 'Could not complete sign-in. Please try logging in again.');
+    }
+  }, [saveSession]);
+
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
@@ -197,7 +214,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider
       value={{
         user, token, isAuthenticated: !!user, isGuest, isLoading, error,
-        login, register, socialLogin, logout, forgotPassword, resetPassword,
+        login, register, socialLogin, loginWithToken, logout, forgotPassword, resetPassword,
         continueAsGuest, updateUser, clearError
       }}>
       {children}
