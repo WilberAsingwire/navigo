@@ -15,7 +15,8 @@ import goImg from '../../assets/vehicles/go.png';
 import comfortImg from '../../assets/vehicles/comfort.png';
 import xlImg from '../../assets/vehicles/xl.png';
 
-const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-city-traffic-at-night-1103-large.mp4'; // High-quality urban time-lapse loop
+const HERO_BG_VIDEO = 'https://video-preview.mixkit.co/video-preview/mixkit-time-lapse-of-city-traffic-at-night-1103.mp4'; // Reliable urban loop
+const HERO_BG_VIDEO_2 = 'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-city-traffic-at-night-1103-large.mp4'; // Fallback
 const HERO_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1542291026-7e91ecfa746d?q=80&w=2070&auto=format&fit=crop'; // High-res urban traffic fallback
 
 const Home: React.FC = () => {
@@ -129,8 +130,9 @@ const Home: React.FC = () => {
           {/* HERO SECTION */}
           <section className="hero-section">
             <div className="hero-bg" style={{ backgroundImage: `url(${HERO_FALLBACK_IMAGE})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-              <video autoPlay muted loop playsInline className="hero-video" style={{ objectFit: 'cover' }} onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; }}>
+              <video autoPlay muted loop playsInline preload="auto" className="hero-video" style={{ objectFit: 'cover', width: '100%', height: '100%', display: 'block' }}>
                 <source src={HERO_BG_VIDEO} type="video/mp4" />
+                <source src={HERO_BG_VIDEO_2} type="video/mp4" />
               </video>
               <div className="hero-overlay"></div>
             </div>
@@ -138,10 +140,10 @@ const Home: React.FC = () => {
               <div className="hero-badge">
                 <IonIcon icon={flashOutline} /> Uganda's #1 Ride-Hailing App
               </div>
-              <h1 className="hero-title">
+              <h1 className="hero-title" style={{ animation: 'fadeInUp 1s ease-out' }}>
                 Move Smart.<br/>
                 Pay Less.<br/>
-                <span className="highlight">Arrive Safe.</span>
+                <span className="highlight" style={{ animation: 'pulse-soft 3s ease-in-out infinite' }}>Arrive Safe.</span>
               </h1>
               <p className="hero-desc">
                 Uganda's smartest way to move. Boda Safe™ verified drivers, women-preferred mode, and offline USSD booking. Ride with confidence across every corner of the city.
