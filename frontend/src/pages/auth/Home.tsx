@@ -15,8 +15,7 @@ import goImg from '../../assets/vehicles/go.png';
 import comfortImg from '../../assets/vehicles/comfort.png';
 import xlImg from '../../assets/vehicles/xl.png';
 
-const HERO_BG_VIDEO = 'https://video-preview.mixkit.co/video-preview/mixkit-time-lapse-of-city-traffic-at-night-1103.mp4'; // Reliable urban loop
-const HERO_BG_VIDEO_2 = 'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-city-traffic-at-night-1103-large.mp4'; // Fallback
+const HERO_BG_VIDEO = 'https://assets.mixkit.co/videos/preview/mixkit-time-lapse-of-city-traffic-at-night-1103-large.mp4';
 const HERO_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1542291026-7e91ecfa746d?q=80&w=2070&auto=format&fit=crop'; // High-res urban traffic fallback
 
 const Home: React.FC = () => {
@@ -130,9 +129,9 @@ const Home: React.FC = () => {
           {/* HERO SECTION */}
           <section className="hero-section">
             <div className="hero-bg" style={{ backgroundImage: `url(${HERO_FALLBACK_IMAGE})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-              <video autoPlay muted loop playsInline preload="auto" className="hero-video" style={{ objectFit: 'cover', width: '100%', height: '100%', display: 'block' }}>
+              <video autoPlay muted loop playsInline preload="auto" className="hero-video" style={{ objectFit: 'cover', width: '100%', height: '100%', display: 'block', background: `url(${HERO_FALLBACK_IMAGE}) center/cover no-repeat` }}>
                 <source src={HERO_BG_VIDEO} type="video/mp4" />
-                <source src={HERO_BG_VIDEO_2} type="video/mp4" />
+                Your browser does not support HTML5 video.
               </video>
               <div className="hero-overlay"></div>
             </div>
