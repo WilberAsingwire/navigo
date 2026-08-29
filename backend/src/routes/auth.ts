@@ -197,6 +197,16 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
     }
 
+    // An admin may have suspended/banned this account (AdminUsers.tsx) —
+    // block the login outright rather than issuing a token that would only
+    // get rejected on the next API call.
+    if (user.status === 'banned') {
+      return res.status(403).json({ message: 'This account has been banned. Contact support if you believe this is a mistake.' });
+    }
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'This account is suspended. Contact support for help restoring access.' });
+    }
+
     let message = `Welcome back, ${user.fullName}!`;
     if (user.verificationStatus === 'pending') {
       message += ' Your documents are under review.';
@@ -267,8 +277,11 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    if (user.role !== 'driver' && user.role !== 'motorist') {
-      return res.status(400).json({ message: 'Only drivers and motorists can upload documents.' });
+    // users.role is only ever 'rider' | 'driver' | 'admin' — 'motorist' has
+    // never been a real value (a boda/motorcycle driver is just role='driver'
+    // with driver_profiles.vehicleType = 'boda').
+    if (user.role !== 'driver') {
+      return res.status(400).json({ message: 'Only drivers can upload documents.' });
     }
 
     if (!drivingLicense) {
@@ -329,7 +342,23 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
 router.get('/admin/users', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
-    const users = await db.all('SELECT * FROM users');
+    // 'motorist' has never been a real value of users.role (registration
+    // only ever accepts 'rider' or 'driver' — see POST /register); a boda
+    // driver is just a 'driver' whose driver_profiles.vehicleType is
+    // 'boda'. Joining that in here (instead of the admin UI trying to
+    // read a role value that can never exist) is what actually lets the
+    // admin tell boda drivers apart from car drivers.
+    // driver_profiles.totalTrips is never written anywhere in the codebase
+    // (only rating/ratingCount get updated, in POST /rides/:id/rate) so it
+    // is always 0/NULL — counting the driver's own completed rides instead
+    // gives the admin a real trip count, the same fix already applied to
+    // the rider's trip count in GET /rides/:id.
+    const users = await db.all(`
+      SELECT u.*, dp.vehicleType as driverVehicleType, dp.rating as driverRating,
+             (SELECT COUNT(*) FROM rides r WHERE r.driverId = u.id AND r.status = 'completed') as driverTotalTrips
+      FROM users u
+      LEFT JOIN driver_profiles dp ON dp.userId = u.id
+    `);
     res.json(users.map(sanitizeUser));
   } catch (error) {
     console.error('Fetch users error:', error);
@@ -343,8 +372,19 @@ router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthR
     const db = getDB();
 
     const [totalUsers] = await db.all('SELECT COUNT(*) as count FROM users');
-    const [totalDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'driver'");
-    const [totalMotorists] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'motorist'");
+    // 'motorist' has never been a real value of users.role — every driver
+    // (boda or car) registers as role='driver'; which vehicle they drive
+    // lives in driver_profiles.vehicleType, which is only created once
+    // they upload documents. LEFT JOIN so drivers who haven't uploaded
+    // documents yet still count as "Active Drivers" rather than vanishing
+    // from both buckets, and only actual boda drivers land in "Motorists"
+    // — this used to always read 0 because no user ever has role='motorist'.
+    const [totalDrivers] = await db.all(
+      "SELECT COUNT(*) as count FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id WHERE u.role = 'driver' AND COALESCE(dp.vehicleType, '') != 'boda'"
+    );
+    const [totalMotorists] = await db.all(
+      "SELECT COUNT(*) as count FROM users u JOIN driver_profiles dp ON dp.userId = u.id WHERE u.role = 'driver' AND dp.vehicleType = 'boda'"
+    );
     const [activeRides] = await db.all("SELECT COUNT(*) as count FROM rides WHERE status NOT IN ('completed', 'cancelled')");
     // NAVIGO's actual revenue is the commission ledger, accrued on every completed
     // ride (cash or wallet) — see settleRidePayment(). "Today" = since local midnight.
@@ -364,7 +404,6 @@ router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthR
       avgRating: parseFloat(avgRating?.avg || '0').toFixed(1),
       pendingApprovals: pending?.count || 0,
       supportTickets: openTickets?.count || 0,
-      disputes: 0, // No dispute-tracking table exists yet — left at 0 rather than a fake number.
     });
   } catch (error) {
     console.error('Stats error:', error);
@@ -574,7 +613,9 @@ router.get('/admin/analytics/summary', authenticate, authorize(['admin']), async
     // NAVIGO's revenue is the commission ledger (see settleRidePayment) — same
     // metric used on the main dashboard, just all-time here rather than "today".
     const [totalRevenue] = await db.all("SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE kind = 'commission'");
-    const [activeDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role IN ('driver','motorist') AND isOnline = TRUE");
+    // 'motorist' is not a real users.role value — boda drivers are
+    // role='driver' too (see /admin/stats above for the full explanation).
+    const [activeDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'driver' AND isOnline = TRUE");
     const [avgRating] = await db.all('SELECT AVG(rating) as avg FROM driver_profiles');
 
     // Month-over-month growth in completed rides. If there were zero rides
@@ -642,7 +683,7 @@ router.get('/admin/analytics/top-drivers', authenticate, authorize(['admin']), a
        LEFT JOIN driver_profiles dp ON dp.userId = u.id
        LEFT JOIN rides r ON r.driverId = u.id
        LEFT JOIN wallet_transactions wt ON wt.userId = u.id
-       WHERE u.role IN ('driver', 'motorist')
+       WHERE u.role = 'driver'
        GROUP BY u.id, u.fullName, u.city, dp.vehicleType
        ORDER BY "completedRides" DESC
        LIMIT 10`
@@ -664,10 +705,15 @@ router.get('/admin/analytics/top-drivers', authenticate, authorize(['admin']), a
 router.get('/admin/live-locations', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
-    // Only get users who are online and have a location
-    const users = await db.all(
-      'SELECT id, fullName, role, currentLat, currentLng, isOnline FROM users WHERE isOnline = TRUE AND currentLat IS NOT NULL AND currentLng IS NOT NULL'
-    );
+    // Only get users who are online and have a location. vehicleType is
+    // joined in so the map can tell boda drivers apart from car drivers —
+    // there's no 'motorist' users.role to filter on (see /admin/stats).
+    const users = await db.all(`
+      SELECT u.id, u.fullName, u.role, u.currentLat, u.currentLng, u.isOnline, dp.vehicleType as driverVehicleType
+      FROM users u
+      LEFT JOIN driver_profiles dp ON dp.userId = u.id
+      WHERE u.isOnline = TRUE AND u.currentLat IS NOT NULL AND u.currentLng IS NOT NULL
+    `);
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch live locations' });
@@ -676,18 +722,27 @@ router.get('/admin/live-locations', authenticate, authorize(['admin']), async (r
 
 // ─── ADMIN: GET PENDING DRIVERS ──────────────────────
 // Despite the route name (kept for backward compatibility with the admin
-// frontend), this now returns ALL drivers/motorists, not just pending ones.
+// frontend), this now returns ALL drivers, not just pending ones.
 // AdminApprovals.tsx has "All / Pending / Approved / Rejected" filter tabs
 // that filter this list client-side by verificationStatus — previously the
 // query hardcoded verificationStatus = 'pending', so every tab except
 // "Pending" silently showed zero drivers.
+//
+// 'motorist' is not (and has never been) a real users.role value —
+// registration only issues 'rider' or 'driver' — so a WHERE role =
+// 'motorist' clause always matched zero rows. Boda drivers are
+// role='driver' with driver_profiles.vehicleType = 'boda'; that's joined
+// in below so the admin UI can label/tell them apart from car drivers.
 router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
-    const drivers = await db.all(
-      'SELECT * FROM users WHERE (role = ? OR role = ?) ORDER BY createdAt DESC',
-      ['driver', 'motorist']
-    );
+    const drivers = await db.all(`
+      SELECT u.*, dp.vehicleType as driverVehicleType
+      FROM users u
+      LEFT JOIN driver_profiles dp ON dp.userId = u.id
+      WHERE u.role = 'driver'
+      ORDER BY u.createdAt DESC
+    `);
     res.json({ count: drivers.length, drivers: drivers.map(sanitizeUser) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch pending drivers.' });

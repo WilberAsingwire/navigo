@@ -22,12 +22,20 @@ interface User {
   fullName: string;
   email?: string;
   phone: string;
-  role: 'rider' | 'driver' | 'motorist' | 'admin';
+  role: 'rider' | 'driver' | 'admin';
   status: 'active' | 'suspended' | 'banned';
-  rating?: number;
-  totalRides?: number;
   createdAt: string;
   verificationStatus?: string;
+  /** From driver_profiles.vehicleType (only set once a driver has uploaded
+   * documents) — 'boda' means a motorbike driver; anything else (or
+   * missing) is a car/comfort/XL driver. There is no separate 'motorist'
+   * user role — registration only ever issues 'rider' or 'driver'. */
+  driverVehicleType?: string;
+  /** Driver's real rating/trip count from driver_profiles — undefined for
+   * riders (a rider's own trip history isn't fetched in this bulk list,
+   * so we show "—" rather than a fake 0). */
+  driverRating?: number;
+  driverTotalTrips?: number;
 }
 
 const AdminUsers: React.FC = () => {
@@ -37,9 +45,10 @@ const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [presentToast] = useIonToast();
-  const [activeFilter, setActiveFilter] = useState<'all' | 'rider' | 'driver' | 'motorist'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'rider' | 'driver' | 'boda'>('all');
   const [showDetail, setShowDetail] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'banned'>('all');
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -56,11 +65,17 @@ const AdminUsers: React.FC = () => {
     fetchUsers();
   }, []);
 
+  // Boda drivers aren't a separate user role — they're role='driver' with
+  // driver_profiles.vehicleType === 'boda' (joined in by the backend as
+  // driverVehicleType). There is no 'motorist' role; filtering on it here
+  // used to always match zero users.
+  const isBoda = (u: User) => u.role === 'driver' && u.driverVehicleType === 'boda';
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchText.toLowerCase()) ||
       user.phone.includes(searchText);
-    const matchesRole = activeFilter === 'all' || user.role === activeFilter;
+    const matchesRole = activeFilter === 'all' || (activeFilter === 'boda' ? isBoda(user) : user.role === activeFilter);
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -68,8 +83,8 @@ const AdminUsers: React.FC = () => {
   const stats = {
     total: users.length,
     riders: users.filter(u => u.role === 'rider').length,
-    drivers: users.filter(u => u.role === 'driver').length,
-    motorists: users.filter(u => u.role === 'motorist').length,
+    drivers: users.filter(u => u.role === 'driver' && !isBoda(u)).length,
+    motorists: users.filter(isBoda).length,
     suspended: users.filter(u => u.status === 'suspended').length,
     banned: users.filter(u => u.status === 'banned').length,
   };
@@ -98,12 +113,25 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const getRoleIcon = (role: string) => {
-    switch (role) { case 'rider': return personOutline; case 'driver': return carOutline; case 'motorist': return bicycleOutline; case 'admin': return shieldCheckmarkOutline; default: return personOutline; }
+  const getRoleIcon = (user: User) => {
+    if (user.role === 'rider') return personOutline;
+    if (user.role === 'admin') return shieldCheckmarkOutline;
+    if (user.role === 'driver') return isBoda(user) ? bicycleOutline : carOutline;
+    return personOutline;
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) { case 'rider': return '#00e676'; case 'driver': return '#4da6ff'; case 'motorist': return '#ffab40'; case 'admin': return '#ff5252'; default: return '#888'; }
+  const getRoleColor = (user: User) => {
+    if (user.role === 'rider') return '#00e676';
+    if (user.role === 'admin') return '#ff5252';
+    if (user.role === 'driver') return isBoda(user) ? '#ffab40' : '#4da6ff';
+    return '#888';
+  };
+
+  const getRoleLabel = (user: User) => {
+    if (user.role === 'rider') return 'Customer';
+    if (user.role === 'admin') return 'Admin';
+    if (user.role === 'driver') return isBoda(user) ? 'Motorist (Boda)' : 'Driver';
+    return user.role;
   };
 
   const getStatusColor = (status: string) => {
@@ -148,7 +176,7 @@ const AdminUsers: React.FC = () => {
             <IonSegmentButton value="all"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>All</IonLabel></IonSegmentButton>
             <IonSegmentButton value="rider"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
             <IonSegmentButton value="driver"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="motorist"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Motorists</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="boda"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Motorists (Boda)</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* Status Filter */}
@@ -174,7 +202,7 @@ const AdminUsers: React.FC = () => {
                 <div style={{flex: 1}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
                     <span style={{color: '#fff', fontSize: 13, fontWeight: 600}}>{user.fullName}</span>
-                    <IonIcon icon={getRoleIcon(user.role)} style={{color: getRoleColor(user.role), fontSize: 14}} />
+                    <IonIcon icon={getRoleIcon(user)} style={{color: getRoleColor(user), fontSize: 14}} />
                   </div>
                   <p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{user.email || user.phone} • Joined {new Date(user.createdAt).toLocaleDateString()}</p>
                 </div>
@@ -208,9 +236,13 @@ const AdminUsers: React.FC = () => {
               <div style={{background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 16}}>
                 <p>📞 {selectedUser.phone}</p>
                 <p>📧 {selectedUser.email || 'No email'}</p>
-                <p>🔄 Role: {selectedUser.role}</p>
-                <p>⭐ Rating: {selectedUser.rating || 'N/A'}</p>
-                <p>🚗 Rides: {selectedUser.totalRides || 0}</p>
+                <p>🔄 Role: {getRoleLabel(selectedUser)}</p>
+                {selectedUser.role === 'driver' && (
+                  <>
+                    <p>⭐ Rating: {selectedUser.driverRating != null ? Number(selectedUser.driverRating).toFixed(1) : '—'}</p>
+                    <p>🚗 Completed Rides: {selectedUser.driverTotalTrips ?? '—'}</p>
+                  </>
+                )}
                 <p>📅 Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
               </div>
               <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>

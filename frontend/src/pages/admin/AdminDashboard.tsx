@@ -15,9 +15,27 @@ const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState({
     totalUsers: 0, totalDrivers: 0, totalMotorists: 0,
     activeRides: 0, revenue: '0', rating: '0',
-    pendingApprovals: 0, supportTickets: 0, disputes: 0
+    pendingApprovals: 0, supportTickets: 0
   });
   const [revenueTrend, setRevenueTrend] = useState<{ day: string; amount: number }[]>([]);
+  // Was previously hardcoded to "System is running normally" / "● Online"
+  // regardless of whether the backend actually responded — now reflects
+  // the real GET /api/health endpoint.
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await api.get('/health');
+        setApiOnline(res.data?.status === 'ok');
+      } catch (e) {
+        setApiOnline(false);
+      }
+    };
+    checkHealth();
+    const interval = setInterval(checkHealth, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -55,12 +73,19 @@ const AdminDashboard: React.FC = () => {
     { label: 'Avg Rating', value: String(stats.rating ?? '0'), icon: starOutline, color: '#F59E0B', change: '★' },
   ];
 
+  // "Disputes" used to sit here pointing at /admin/approve (AdminUserReview,
+  // a second, largely-redundant driver-approval screen — not a real dispute
+  // system; there is no dispute-tracking table). There's no real dispute
+  // feature to link to, so this tile now points at Analytics instead, which
+  // is a real, working page (AdminAnalytics.tsx / GET /admin/analytics/*)
+  // that had no navigation entry point anywhere in the app.
   const quickActions = [
     { label: 'Approvals', icon: checkmarkCircleOutline, path: '/admin/approvals', badge: stats.pendingApprovals, color: 'warning' },
     { label: 'Users', icon: peopleOutline, path: '/admin/users', color: 'primary' },
     { label: 'Live Map', icon: mapOutline, path: '/admin/map', color: 'success' },
     { label: 'Support', icon: callOutline, path: '/admin/support', badge: stats.supportTickets, color: 'danger' },
-    { label: 'Disputes', icon: alertCircleOutline, path: '/admin/approve', badge: stats.disputes, color: 'warning' },
+    { label: 'Analytics', icon: statsChartOutline, path: '/admin/analytics', color: 'tertiary' },
+    { label: 'Payouts', icon: cashOutline, path: '/admin/payouts', color: 'success' },
     { label: 'Settings', icon: settingsOutline, path: '/admin/settings', color: 'medium' },
   ];
 
@@ -110,9 +135,15 @@ const AdminDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
               <h2 style={{ color: '#fff', margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, Admin 🛡️</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: '4px 0 0' }}>System is running normally</p>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: '4px 0 0' }}>
+                {apiOnline === null ? 'Checking system status…' : apiOnline ? 'System is running normally' : 'API is unreachable'}
+              </p>
             </div>
-            <IonBadge style={{ background: 'rgba(16,185,129,0.2)', color: '#10B981', padding: '6px 14px', borderRadius: 20, fontSize: 12 }}>● Online</IonBadge>
+            <IonBadge style={{
+              background: apiOnline === false ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)',
+              color: apiOnline === false ? '#EF4444' : '#10B981',
+              padding: '6px 14px', borderRadius: 20, fontSize: 12
+            }}>{apiOnline === null ? '● Checking' : apiOnline ? '● Online' : '● Offline'}</IonBadge>
           </div>
 
           {/* KPI Cards */}

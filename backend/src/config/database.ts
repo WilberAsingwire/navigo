@@ -34,6 +34,8 @@ const CAMEL_COLUMNS = [
   'referralCode', 'referredBy', 'referredUserId', 'referrerId',
   'rewardName', 'pointsCost', 'voucherCode', 'redeemedAt', 'usedAt',
   'usedOnRideId', 'discountAmount', 'creditedAt',
+  // Admin: driver_profiles fields joined onto users rows
+  'driverVehicleType', 'driverRating', 'driverTotalTrips',
 ];
 const LOWER_TO_CAMEL: Record<string, string> = {};
 for (const c of CAMEL_COLUMNS) LOWER_TO_CAMEL[c.toLowerCase()] = c;

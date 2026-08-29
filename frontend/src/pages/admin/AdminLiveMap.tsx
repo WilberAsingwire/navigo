@@ -36,43 +36,19 @@ const FlyToButton: React.FC<{ center: [number, number] }> = ({ center }) => {
   );
 };
 
-const DemandLayer: React.FC = () => {
-  const map = useMap();
-  const demandPoints = [
-    { lat: 0.3136, lng: 32.5811, intensity: 0.9, label: 'City Center' },
-    { lat: 0.3333, lng: 32.5922, intensity: 0.7, label: 'Kololo' },
-    { lat: 0.3234, lng: 32.5888, intensity: 0.8, label: 'Nakasero' },
-    { lat: 0.3000, lng: 32.5700, intensity: 0.5, label: 'Kiwatule' },
-    { lat: 0.3400, lng: 32.5600, intensity: 0.6, label: 'Kazo' },
-  ];
-
-  useEffect(() => {
-    const layers: L.Layer[] = [];
-    demandPoints.forEach(p => {
-      const circle = L.circle([p.lat, p.lng], {
-        radius: 500 * p.intensity,
-        color: p.intensity > 0.7 ? '#ef4444' : p.intensity > 0.5 ? '#f97316' : '#facc15',
-        fillColor: p.intensity > 0.7 ? '#ef4444' : p.intensity > 0.5 ? '#f97316' : '#facc15',
-        fillOpacity: 0.4,
-        weight: 0
-      }).addTo(map);
-      layers.push(circle);
-    });
-
-    return () => {
-      layers.forEach(l => map.removeLayer(l));
-    };
-  }, [map]);
-
-  return null;
-};
-
 const AdminLiveMap: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   const [userLocation, setUserLocation] = useState<[number, number]>([0.3476, 32.5825]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'drivers' | 'motorists' | 'riders' | 'heatmap'>('all');
+  // 'motorists' isn't a real users.role value (see /admin/stats) — a
+  // motorist/boda driver is role='driver' with driver_profiles.vehicleType
+  // === 'boda' (returned here as driverVehicleType). There used to be a
+  // 'heatmap' option too, backed by a DemandLayer component that was never
+  // actually mounted in the map and only ever drew 5 hardcoded fake demand
+  // points — removed instead of shipping a "Demand" toggle that both did
+  // nothing and would have shown fabricated data if it had been wired up.
+  const [activeFilter, setActiveFilter] = useState<'all' | 'drivers' | 'motorists' | 'riders'>('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [mapKey, setMapKey] = useState(0);
   const [mapStyle] = useState<'standard' | 'dark'>('dark');
@@ -104,9 +80,10 @@ const AdminLiveMap: React.FC = () => {
         status: u.isOnline ? 'active' : 'idle'
       }));
       setUsers(fetchedUsers);
+      const isBoda = (u: any) => u.role === 'driver' && u.driverVehicleType === 'boda';
       setStats({
-        drivers: fetchedUsers.filter((u: any) => u.role === 'driver').length,
-        motorists: fetchedUsers.filter((u: any) => u.role === 'motorist').length,
+        drivers: fetchedUsers.filter((u: any) => u.role === 'driver' && !isBoda(u)).length,
+        motorists: fetchedUsers.filter(isBoda).length,
         riders: fetchedUsers.filter((u: any) => u.role === 'rider').length,
         activeTrips: 0 // Requires more complex join with rides table
       });
@@ -146,13 +123,15 @@ const AdminLiveMap: React.FC = () => {
     return () => { socket.disconnect(); };
   }, [autoRefresh]);
 
+  const isBoda = (u: any) => u.role === 'driver' && u.driverVehicleType === 'boda';
+
   useEffect(() => {
     if (activeFilter === 'all') setFilteredUsers(users);
-    else setFilteredUsers(users.filter(u => activeFilter === 'drivers' ? u.role === 'driver' : activeFilter === 'motorists' ? u.role === 'motorist' : u.role === 'rider'));
+    else setFilteredUsers(users.filter(u => activeFilter === 'drivers' ? (u.role === 'driver' && !isBoda(u)) : activeFilter === 'motorists' ? isBoda(u) : u.role === 'rider'));
   }, [users, activeFilter]);
 
-  const getIcon = (role: string) => role === 'driver' ? carIcon : role === 'motorist' ? bikeIcon : riderIcon;
-  const getRoleIcon = (role: string) => role === 'driver' ? carOutline : role === 'motorist' ? bicycleOutline : personOutline;
+  const getIcon = (u: any) => u.role === 'driver' ? (isBoda(u) ? bikeIcon : carIcon) : riderIcon;
+  const getRoleIcon = (u: any) => u.role === 'driver' ? (isBoda(u) ? bicycleOutline : carOutline) : personOutline;
 
   return (
     <IonPage>
@@ -185,7 +164,6 @@ const AdminLiveMap: React.FC = () => {
           <IonSegmentButton value="drivers"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
           <IonSegmentButton value="motorists"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Boda</IonLabel></IonSegmentButton>
           <IonSegmentButton value="riders"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="heatmap"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Demand</IonLabel></IonSegmentButton>
         </IonSegment>
 
         {loading ? (
@@ -199,7 +177,7 @@ const AdminLiveMap: React.FC = () => {
               <FlyToButton center={userLocation} />
               <Marker position={userLocation} icon={riderIcon}><Popup>📍 Your Location</Popup></Marker>
               {filteredUsers.map(u => (
-                <Marker key={u.id} position={[u.lat, u.lng]} icon={getIcon(u.role)}><Popup><strong style={{color: '#000'}}>{u.fullName}</strong><br/><span style={{color: '#666'}}>Role: {u.role}</span><br/><span style={{color: '#666'}}>Status: {u.status}</span></Popup></Marker>
+                <Marker key={u.id} position={[u.lat, u.lng]} icon={getIcon(u)}><Popup><strong style={{color: '#000'}}>{u.fullName}</strong><br/><span style={{color: '#666'}}>Role: {isBoda(u) ? 'motorist' : u.role}</span><br/><span style={{color: '#666'}}>Status: {u.status}</span></Popup></Marker>
               ))}
             </MapContainer>
           </div>
@@ -212,7 +190,7 @@ const AdminLiveMap: React.FC = () => {
           </div>
           {filteredUsers.map(u => (
             <div key={u.id} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10}}>
-              <IonIcon icon={getRoleIcon(u.role)} style={{color: u.role === 'driver' ? '#4da6ff' : u.role === 'motorist' ? '#ffab40' : '#00e676', fontSize: 18}} />
+              <IonIcon icon={getRoleIcon(u)} style={{color: u.role === 'driver' ? (isBoda(u) ? '#ffab40' : '#4da6ff') : '#00e676', fontSize: 18}} />
               <div style={{flex: 1}}><span style={{color: '#fff', fontSize: 13}}>{u.fullName}</span><p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{u.lat?.toFixed(4)}, {u.lng?.toFixed(4)}</p></div>
               <IonBadge style={{background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: 10}}>{u.status === 'active' ? 'Active' : 'Idle'}</IonBadge>
             </div>

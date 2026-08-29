@@ -22,7 +22,12 @@ interface Driver {
   fullName: string;
   phone: string;
   email?: string;
-  role: 'driver' | 'motorist';
+  role: 'driver';
+  // users.role is only ever 'rider' | 'driver' | 'admin' — never
+  // 'motorist'. Whether a driver is a car driver or boda (motorcycle)
+  // rider lives in driver_profiles.vehicleType, exposed here as
+  // driverVehicleType by GET /admin/pending-drivers.
+  driverVehicleType?: string;
   verificationStatus: 'unverified' | 'pending' | 'approved' | 'rejected';
   driverDocs?: {
     nationalId?: string;
@@ -197,8 +202,8 @@ const AdminUserReview: React.FC = () => {
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <h3 style={{ color: '#fff', margin: 0, fontSize: 14 }}>{driver.fullName}</h3>
-                      <IonBadge color={driver.role === 'driver' ? 'primary' : 'warning'} style={{ fontSize: 9 }}>
-                        {driver.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}
+                      <IonBadge color={driver.driverVehicleType === 'boda' ? 'warning' : 'primary'} style={{ fontSize: 9 }}>
+                        {driver.driverVehicleType === 'boda' ? '🏍️ Motorist' : '🚗 Driver'}
                       </IonBadge>
                     </div>
                     <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '3px 0' }}>
@@ -232,7 +237,7 @@ const AdminUserReview: React.FC = () => {
                   <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Phone</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📞 {selectedUser.phone}</p></div>
                   <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Email</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📧 {selectedUser.email || 'N/A'}</p></div>
                   <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Vehicle</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>🚗 {selectedUser.driverDocs?.vehiclePlate || 'N/A'} • {selectedUser.driverDocs?.vehicleModel || '—'} ({selectedUser.driverDocs?.vehicleColor || 'N/A'})</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Role</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Role</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.driverVehicleType === 'boda' ? '🏍️ Motorist' : '🚗 Driver'}</p></div>
                   <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>NIN</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>🆔 {selectedUser.driverDocs?.nationalId || 'N/A'}</p></div>
                   <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>License</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📋 {selectedUser.driverDocs?.drivingLicense || 'N/A'}</p></div>
                 </div>

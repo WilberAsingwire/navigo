@@ -27,7 +27,7 @@ async function isRideMember(userId: string, rideId: string): Promise<boolean> {
 
 export const setupSocketHandlers = (io: Server) => {
   // ─── Authentication Middleware ──────────────────────────
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth.token || socket.handshake.query.token;
     if (!token) {
       return next(new Error('Authentication error: Token is required'));
@@ -36,6 +36,21 @@ export const setupSocketHandlers = (io: Server) => {
     const decoded = verifyToken(token);
     if (!decoded) {
       return next(new Error('Authentication error: Invalid or expired token'));
+    }
+
+    // A suspended/banned account (see AdminUsers.tsx) must be cut off from
+    // live ride matching, location updates, and chat too — not just REST
+    // calls — otherwise an already-connected driver/rider could keep
+    // riding/driving for as long as their socket stays open.
+    try {
+      const db = getDB();
+      const user = await db.get('SELECT status FROM users WHERE id = ?', [decoded.id]);
+      if (!user) return next(new Error('Authentication error: Account no longer exists'));
+      if (user.status === 'banned') return next(new Error('Authentication error: Account banned'));
+      if (user.status === 'suspended') return next(new Error('Authentication error: Account suspended'));
+    } catch (e) {
+      console.error('Socket auth status check error:', e);
+      return next(new Error('Authentication error: Status check failed'));
     }
 
     // Attach user info to socket for use in handlers
@@ -111,13 +126,16 @@ export const setupSocketHandlers = (io: Server) => {
       const ride = await db.get('SELECT vehicleType FROM rides WHERE id = ?', [rideId]);
       const requestedType = normalizeVehicleType(ride?.vehicleType);
 
-      // Find approved, online, and available drivers with a matching vehicle type
+      // Find approved, online, and available drivers with a matching vehicle
+      // type. 'motorist' is not a real users.role value — boda drivers are
+      // role='driver' with driver_profiles.vehicleType = 'boda', already
+      // covered by the vehicle-type filter below.
       const drivers = await db.all(
         `SELECT u.id, u.fullName, dp.vehicleType FROM users u
          LEFT JOIN driver_profiles dp ON dp.userId = u.id
-         WHERE (u.role = ? OR u.role = ?) AND u.verificationStatus = ?
+         WHERE u.role = ? AND u.verificationStatus = ?
            AND u.isOnline = TRUE AND u.isAvailable = TRUE`,
-        ['driver', 'motorist', 'approved']
+        ['driver', 'approved']
       );
       const matchingDrivers = drivers.filter((d: any) => normalizeVehicleType(d.vehicleType) === requestedType);
 
@@ -153,7 +171,7 @@ export const setupSocketHandlers = (io: Server) => {
     socket.on('accept-ride', async (data: { driverId: string; rideId: string; riderId: string }) => {
       const { driverId, rideId } = data;
 
-      if (userRole !== 'driver' && userRole !== 'motorist') {
+      if (userRole !== 'driver') {
         return socket.emit('error', { message: 'Unauthorized: Only drivers can accept rides' });
       }
       if (driverId !== userId) {

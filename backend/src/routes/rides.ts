@@ -355,7 +355,10 @@ router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Respo
     // Security check: the rider or the assigned driver can always view a ride.
     // Pending ('requested') rides are broadcast to drivers, so any driver may
     // view those in order to decide whether to accept.
-    const isDriver = req.user?.role === 'driver' || req.user?.role === 'motorist';
+    // users.role is only ever 'rider' | 'driver' | 'admin' — a boda driver
+    // is still role='driver' (see driver_profiles.vehicleType), so the
+    // 'motorist' half of this check was always dead.
+    const isDriver = req.user?.role === 'driver';
     const allowed =
       ride.userId === userId ||
       ride.driverId === userId ||

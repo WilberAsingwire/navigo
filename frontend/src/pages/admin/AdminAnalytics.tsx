@@ -5,7 +5,7 @@ import {
   IonIcon, IonSpinner, IonText, IonButton
 } from '@ionic/react';
 import {
-  trendingUpOutline, peopleOutline, walletOutline,
+  trendingUpOutline, trendingDownOutline, peopleOutline, walletOutline,
   starOutline, analyticsOutline, arrowUpOutline,
   downloadOutline, refreshOutline
 } from 'ionicons/icons';
@@ -94,9 +94,13 @@ const AdminAnalytics: React.FC = () => {
               <h2 style={{ color: '#fff', margin: 0 }}>Market Overview</h2>
               <p style={{ color: '#94A3B8', fontSize: 13 }}>Real-time performance tracking for Kampala</p>
             </div>
-            <div className="growth-badge">
-              <IonIcon icon={trendingUpOutline} />
-              <span>+{stats?.monthlyGrowth}% this month</span>
+            {/* monthlyGrowth can be negative (fewer completed rides than
+                last month) — "+{negativeNumber}%" used to render as the
+                nonsensical "+-15% this month" with a misleading "up" arrow
+                regardless of direction. */}
+            <div className="growth-badge" style={(stats?.monthlyGrowth ?? 0) < 0 ? { background: 'rgba(239,68,68,0.1)', color: '#EF4444', borderColor: 'rgba(239,68,68,0.2)' } : undefined}>
+              <IonIcon icon={(stats?.monthlyGrowth ?? 0) < 0 ? trendingDownOutline : trendingUpOutline} />
+              <span>{(stats?.monthlyGrowth ?? 0) > 0 ? '+' : ''}{stats?.monthlyGrowth ?? 0}% this month</span>
             </div>
           </div>
 

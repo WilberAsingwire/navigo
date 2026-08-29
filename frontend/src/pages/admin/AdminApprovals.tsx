@@ -21,6 +21,11 @@ interface Driver {
   phone: string;
   email?: string;
   role: string;
+  // users.role is only ever 'rider' | 'driver' | 'admin' — it can never be
+  // 'motorist'. Whether a driver is a car driver or a boda (motorcycle)
+  // rider lives in driver_profiles.vehicleType, exposed here as
+  // driverVehicleType by GET /admin/pending-drivers.
+  driverVehicleType?: string;
   verificationStatus: string;
   isFemaleDriver?: boolean;
   driverDocs?: {
@@ -148,7 +153,7 @@ const AdminApprovals: React.FC = () => {
                     <div className="driver-info">
                       <h3>{driver.fullName} {driver.isFemaleDriver && '👩'}</h3>
                       <div style={{display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4}}>
-                        <IonBadge style={{background: '#1E1E1E', color: '#fff'}}>{driver.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}</IonBadge>
+                        <IonBadge style={{background: '#1E1E1E', color: '#fff'}}>{driver.driverVehicleType === 'boda' ? '🏍️ Motorist' : '🚗 Driver'}</IonBadge>
                         <IonBadge style={{
                           background: driver.verificationStatus === 'approved' ? 'rgba(16,185,129,0.15)' : driver.verificationStatus === 'pending' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)',
                           color: driver.verificationStatus === 'approved' ? '#10B981' : driver.verificationStatus === 'pending' ? '#F59E0B' : '#EF4444',
