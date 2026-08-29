@@ -60,7 +60,7 @@ const poiIcon = (emoji: string) => L.divIcon({
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
   boda: { url: bodaImg, color: '#ffab40' },
-  go: { url: goImg, color: '#FF6B35' },
+  go: { url: goImg, color: '#4285F4' },
   comfort: { url: comfortImg, color: '#4CAF50' },
   xl: { url: xlImg, color: '#2196F3' },
 };
@@ -211,7 +211,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       locateControl.onAdd = function() {
         const btn = L.DomUtil.create('a', 'leaflet-control-locate');
         btn.innerHTML = '📍 My Location';
-        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#FF6B35; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
+        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#4285F4; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
         btn.onclick = () => {
           map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
         };
@@ -256,8 +256,9 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       maxZoom: mapStyle === 'satellite' ? 22 : 22,
       maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
     });
-    tileLayer.on('tileload', () => { setTilesHealthy(true); });
+    tileLayer.on('tileload', () => { setTilesHealthy(true); console.log('Tile loaded successfully'); });
     tileLayer.on('tileerror', () => {
+      console.error('Tile load failed');
       tileErrors.count += 1;
       if (tileErrors.count >= 3) setTilesHealthy(false);
     });
@@ -357,7 +358,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             const points = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
 
             if (!markersRef.current['route']) {
-              markersRef.current['route'] = L.polyline(points, { color: '#FF6B35', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
+              markersRef.current['route'] = L.polyline(points, { color: '#4285F4', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
             } else {
               (markersRef.current['route'] as L.Polyline).setLatLngs(points);
             }
@@ -380,7 +381,7 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
             map.removeLayer(markersRef.current['route'] as any);
             delete markersRef.current['route'];
           }
-          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 5, opacity: 0.8 }).addTo(map);
+          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#4285F4', weight: 5, opacity: 0.8 }).addTo(map);
           markersRef.current['route'] = fallbackLine;
           const d = Math.round(map.distance([userLocation.lat, userLocation.lng], [destination.lat, destination.lng]) / 100) / 10;
           const t = Math.max(1, Math.round((d / 22) * 60));
