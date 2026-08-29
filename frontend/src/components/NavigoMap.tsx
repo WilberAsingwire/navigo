@@ -253,7 +253,11 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       // MOVE ZOOM CONTROL TO BOTTOM RIGHT
       L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      const locateControl = L.control({ position: 'topright' });
+      // L.control() is a real runtime factory for a generic base control, but
+      // @types/leaflet only types `control` as a namespace of specific
+      // factories (zoom/attribution/layers/scale) — so we build the same
+      // object via the properly-typed `Control` class instead.
+      const locateControl = new L.Control({ position: 'topright' });
       locateControl.onAdd = function() {
         const btn = L.DomUtil.create('a', 'leaflet-control-locate');
         btn.innerHTML = '📍 My Location';

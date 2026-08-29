@@ -57,6 +57,14 @@ export const setupSocketHandlers = (io: Server) => {
       console.log(`👤 User ${userId} joined their private room`);
     });
 
+    // Admins join a dedicated room so live-location broadcasts (which include
+    // every online user's raw GPS coordinates) never reach riders/drivers —
+    // previously this was sent with io.emit(), leaking every user's location
+    // to any authenticated socket connection, admin or not.
+    if (userRole === 'admin') {
+      socket.join('admins');
+    }
+
     // Securely join a ride room for real-time tracking
     socket.on('join-ride-room', async (data: { rideId: string }) => {
       const { rideId } = data;
@@ -100,10 +108,16 @@ export const setupSocketHandlers = (io: Server) => {
       );
 
       if (drivers.length > 0) {
-        io.emit('ride-requested', {
-          rideId,
-          riderId: userId,
-        });
+        // Target only the actually-eligible drivers' personal rooms (joined via
+        // the 'join' event) — this used to be io.emit(), which broadcast every
+        // ride request (with the rider's id) to *every* connected socket,
+        // including riders and offline/unavailable drivers.
+        for (const d of drivers) {
+          io.to(d.id).emit('ride-requested', {
+            rideId,
+            riderId: userId,
+          });
+        }
         console.log(`🚕 Broadcasted ride ${rideId} to ${drivers.length} drivers`);
       } else {
         socket.emit('no-drivers-found', { message: 'No drivers available at the moment.' });
@@ -179,7 +193,9 @@ export const setupSocketHandlers = (io: Server) => {
           lng
         });
 
-        io.emit('admin-location-updated', {
+        // Scoped to admins only — this carries every driver/rider's raw GPS
+        // position and must never reach other riders/drivers' sockets.
+        io.to('admins').emit('admin-location-updated', {
           userId,
           lat,
           lng
@@ -221,6 +237,12 @@ export const setupSocketHandlers = (io: Server) => {
           } else {
             console.error(`❌ Settlement failed for ride ${rideId}: ${settlement.message}`);
           }
+
+          // Free the driver back up for the next ride (only if they're still online).
+          await db.run(
+            'UPDATE users SET isAvailable = TRUE WHERE id = ? AND isOnline = TRUE',
+            [userId]
+          );
         }
 
         // Notify the rider (from the DB, never client-supplied) + the ride room

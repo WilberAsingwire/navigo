@@ -66,6 +66,38 @@ const RiderPayments: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
+  // After returning from a Flutterwave-hosted checkout, the redirect URL carries
+  // back `topup_ref` (our reference) + `transaction_id`/`status` (Flutterwave's).
+  // Verify + credit the wallet exactly once on landing here.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get('topup_ref');
+    const transactionId = params.get('transaction_id');
+    const status = params.get('status');
+    if (!reference) return;
+
+    // Strip the query params immediately so a refresh doesn't re-verify.
+    window.history.replaceState({}, '', window.location.pathname);
+
+    if (status === 'cancelled') {
+      presentToast({ message: 'Top-up cancelled.', color: 'medium', duration: 2500 });
+      return;
+    }
+
+    api.post('/wallet/topup/verify', { reference, transactionId })
+      .then((res) => {
+        presentToast({ message: res.data?.message || 'Top-up successful!', color: 'success', duration: 3000 });
+        loadData();
+      })
+      .catch((e) => {
+        presentToast({
+          message: e.response?.data?.message || 'Could not verify your top-up. Contact support if you were charged.',
+          color: 'danger',
+          duration: 4500,
+        });
+      });
+  }, []);
+
   const handleTopUp = async () => {
     const amount = parseInt(topUpAmount, 10);
     if (!amount || amount < 1000) {
@@ -74,16 +106,20 @@ const RiderPayments: React.FC = () => {
     }
     setIsProcessing(true);
     try {
-      // Gateway-verified top-up: the backend checks this reference with the
-      // payment provider before crediting the wallet.
-      const reference = `NAV-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-      const res = await api.post('/wallet/topup', {
-        amount,
-        paymentReference: reference,
-        provider: 'mtn',
-        phone: user?.phone,
-      });
-      presentToast({ message: res.data?.message || 'Top-up successful!', color: 'success', duration: 3000 });
+      const initRes = await api.post('/wallet/topup/initiate', { amount });
+      const { mode, reference, checkoutUrl } = initRes.data;
+
+      if (mode === 'gateway' && checkoutUrl) {
+        // Real payment: send the rider to the hosted Flutterwave checkout.
+        // They'll be redirected back here (see the effect above) to verify + credit.
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      // Simulation mode (no gateway configured) — verify immediately so
+      // local development / demos still complete the flow end-to-end.
+      const verifyRes = await api.post('/wallet/topup/verify', { reference });
+      presentToast({ message: verifyRes.data?.message || 'Top-up successful!', color: 'success', duration: 3000 });
       setShowTopUp(false);
       setTopUpAmount('');
       loadData();

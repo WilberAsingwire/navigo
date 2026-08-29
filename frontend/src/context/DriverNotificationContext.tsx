@@ -17,11 +17,11 @@ export const DriverNotificationProvider: React.FC<{ children: React.ReactNode }>
   const [activeRequest, setActiveRequest] = useState<any | null>(null);
 
   useEffect(() => {
-    if (!user || user.role !== 'driver' && user.role !== 'motorist') return;
+    if (!user || user.role !== 'driver') return;
 
     const socket = socketService.connect(user.id);
 
-    socket.on('ride-requested', (data) => {
+    socket.on('ride-requested', (data: any) => {
       console.log('🚨 Global Driver Notification: Ride Requested!', data);
       setActiveRequest(data);
     });
@@ -32,16 +32,20 @@ export const DriverNotificationProvider: React.FC<{ children: React.ReactNode }>
   }, [user]);
 
   const acceptRequest = () => {
+    if (!activeRequest || !user) return;
     Haptic.success();
-    console.log('✅ Driver accepted ride:', activeRequest?.id);
-    // In a real app, we'd call api.post('/rides/accept', { rideId: activeRequest.id })
+    const rideId = activeRequest.rideId || activeRequest.id;
+    const socket = socketService.connect(user.id);
+    // The backend accepts rides over the socket (socketHandler.ts `accept-ride`),
+    // which atomically claims the ride and flips the driver's availability.
+    socket.emit('accept-ride', { driverId: user.id, rideId, riderId: activeRequest.riderId });
+    console.log('✅ Driver accepted ride:', rideId);
     setActiveRequest(null);
   };
 
   const rejectRequest = () => {
     Haptic.error();
-    console.log('❌ Driver rejected ride:', activeRequest?.id);
-    // In a real app, we'd call api.post('/rides/reject', { rideId: activeRequest.id })
+    console.log('❌ Driver rejected ride:', activeRequest?.rideId || activeRequest?.id);
     setActiveRequest(null);
   };
 

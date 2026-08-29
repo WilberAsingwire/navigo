@@ -17,6 +17,7 @@ const AdminDashboard: React.FC = () => {
     activeRides: 0, revenue: '0', rating: '0',
     pendingApprovals: 0, supportTickets: 0, disputes: 0
   });
+  const [revenueTrend, setRevenueTrend] = useState<{ day: string; amount: number }[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -33,16 +34,25 @@ const AdminDashboard: React.FC = () => {
         setLoading(false);
       }
     };
+    const fetchTrend = async () => {
+      try {
+        const res = await api.get('/auth/admin/revenue-trend');
+        setRevenueTrend(res.data.days || []);
+      } catch (e) {
+        console.error('Failed to fetch revenue trend:', e);
+      }
+    };
+    fetchTrend();
     fetchStats();
   }, []);
 
   const kpiCards = [
-    { label: 'Total Users', value: (stats.totalUsers ?? 0).toLocaleString(), icon: peopleOutline, color: '#4da6ff', change: '+12%' },
-    { label: 'Active Drivers', value: (stats.totalDrivers ?? 0).toLocaleString(), icon: carOutline, color: '#2D6A4F', change: '+8%' },
-    { label: 'Motorists', value: (stats.totalMotorists ?? 0).toLocaleString(), icon: bicycleOutline, color: '#ffab40', change: '+15%' },
+    { label: 'Total Users', value: (stats.totalUsers ?? 0).toLocaleString(), icon: peopleOutline, color: '#4da6ff' },
+    { label: 'Active Drivers', value: (stats.totalDrivers ?? 0).toLocaleString(), icon: carOutline, color: '#2D6A4F' },
+    { label: 'Motorists', value: (stats.totalMotorists ?? 0).toLocaleString(), icon: bicycleOutline, color: '#ffab40' },
     { label: 'Active Rides', value: (stats.activeRides ?? 0).toString(), icon: mapOutline, color: '#FF6B35', change: 'Now' },
-    { label: 'Revenue Today', value: String(stats.revenue ?? '0'), icon: walletOutline, color: '#10B981', change: '+22%' },
-    { label: 'Avg Rating', value: String(stats.avgRating ?? stats.rating ?? '0'), icon: starOutline, color: '#F59E0B', change: '★' },
+    { label: 'Revenue Today', value: String(stats.revenue ?? '0'), icon: walletOutline, color: '#10B981' },
+    { label: 'Avg Rating', value: String(stats.rating ?? '0'), icon: starOutline, color: '#F59E0B', change: '★' },
   ];
 
   const quickActions = [
@@ -54,12 +64,19 @@ const AdminDashboard: React.FC = () => {
     { label: 'Settings', icon: settingsOutline, path: '/admin/settings', color: 'medium' },
   ];
 
+  // Real, derived from the stats we just fetched — no fabricated activity feed.
   const alerts = [
-    { icon: alertCircleOutline, text: '3 new driver applications pending review', color: '#F59E0B', time: '2 min ago' },
-    { icon: checkmarkCircleOutline, text: 'Driver John K. approved successfully', color: '#10B981', time: '15 min ago' },
-    { icon: starOutline, text: 'Rider dispute #1042 needs attention', color: '#EF4444', time: '1 hour ago' },
-    { icon: trendingUpOutline, text: 'Revenue up 22% this week', color: '#4da6ff', time: '3 hours ago' },
+    ...(stats.pendingApprovals > 0
+      ? [{ icon: alertCircleOutline, text: `${stats.pendingApprovals} driver application${stats.pendingApprovals === 1 ? '' : 's'} pending review`, color: '#F59E0B' }]
+      : []),
+    ...(stats.supportTickets > 0
+      ? [{ icon: callOutline, text: `${stats.supportTickets} open support ticket${stats.supportTickets === 1 ? '' : 's'}`, color: '#EF4444' }]
+      : []),
+    ...(stats.activeRides > 0
+      ? [{ icon: mapOutline, text: `${stats.activeRides} ride${stats.activeRides === 1 ? '' : 's'} in progress right now`, color: '#4da6ff' }]
+      : []),
   ];
+
 
   if (loading) {
     return (
@@ -106,7 +123,7 @@ const AdminDashboard: React.FC = () => {
                   <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 14, marginBottom: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <IonIcon icon={kpi.icon} style={{ fontSize: 22, color: kpi.color }} />
-                      <span style={{ fontSize: 10, color: kpi.color, fontWeight: 600 }}>{kpi.change}</span>
+                      {kpi.change && <span style={{ fontSize: 10, color: kpi.color, fontWeight: 600 }}>{kpi.change}</span>}
                     </div>
                     <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: '6px 0' }}>{kpi.value}</div>
                     <div style={{ fontSize: 11, color: '#D1D5DB' }}>{kpi.label}</div>
@@ -136,27 +153,37 @@ const AdminDashboard: React.FC = () => {
           {/* Revenue Chart */}
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(255,255,255,0.06)' }}>
             <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>📈 Revenue Overview</h3>
-            <p style={{ color: '#D1D5DB', fontSize: 12, margin: '0 0 16px' }}>Last 7 days</p>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80 }}>
-              {[40, 55, 35, 70, 60, 85, 95].map((h, i) => (
-                <div key={i} style={{ flex: 1, background: '#FF6B35', height: `${h}%`, borderRadius: '4px 4px 0 0', opacity: 0.7 + (i * 0.04) }} />
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-              {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => <span key={d} style={{ fontSize: 9, color: '#D1D5DB' }}>{d}</span>)}
-            </div>
+            <p style={{ color: '#D1D5DB', fontSize: 12, margin: '0 0 16px' }}>Commission earned, last 7 days</p>
+            {revenueTrend.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>No revenue data yet.</p>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80 }}>
+                  {(() => {
+                    const max = Math.max(...revenueTrend.map(d => d.amount), 1);
+                    return revenueTrend.map((d, i) => (
+                      <div key={i} title={`UGX ${d.amount.toLocaleString()}`} style={{ flex: 1, background: '#FF6B35', height: `${Math.max((d.amount / max) * 100, 2)}%`, borderRadius: '4px 4px 0 0', opacity: 0.7 + (i * 0.04) }} />
+                    ));
+                  })()}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                  {revenueTrend.map((d, i) => <span key={i} style={{ fontSize: 9, color: '#D1D5DB' }}>{d.day}</span>)}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Recent Alerts */}
           <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>🔔 Recent Activity</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 30 }}>
-            {alerts.map((alert, i) => (
+            {alerts.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>All clear — nothing needs attention right now.</p>
+            ) : alerts.map((alert, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${alert.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <IonIcon icon={alert.icon} style={{ color: alert.color, fontSize: 14 }} />
                 </div>
                 <span style={{ color: '#D1D5DB', fontSize: 13, flex: 1 }}>{alert.text}</span>
-                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, whiteSpace: 'nowrap' }}>{alert.time}</span>
               </div>
             ))}
           </div>

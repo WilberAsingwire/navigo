@@ -175,6 +175,14 @@ router.post('/:rideId/cancel', authenticate, async (req: AuthRequest, res: Respo
       ['cancelled', new Date().toISOString(), rideId]
     );
 
+    // If a driver had already been assigned, free them back up (still online = available).
+    if (ride.driverId) {
+      await db.run(
+        'UPDATE users SET isAvailable = TRUE WHERE id = ? AND isOnline = TRUE',
+        [ride.driverId]
+      );
+    }
+
     // Tell the other party in real time (fire & forget).
     notifyRide(String(rideId), ride.userId, ride.driverId, 'ride-cancelled', {
       rideId,
@@ -232,6 +240,64 @@ router.post('/:rideId/rate', authenticate, async (req: AuthRequest, res: Respons
   } catch (error) {
     console.error('Rate ride error:', error);
     res.status(500).json({ message: 'Failed to save rating' });
+  }
+});
+
+// ─── Tip Driver (rider only, during or after the ride) ──────
+router.post('/:rideId/tip', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { rideId } = req.params;
+    const { amount } = req.body;
+    const userId = req.user?.userId;
+    const db = getDB();
+
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 1000000) {
+      return res.status(400).json({ message: 'Tip amount must be a positive number (max UGX 1,000,000)' });
+    }
+
+    const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
+    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    if (ride.userId !== userId) return res.status(403).json({ message: 'Only the rider can tip on this ride' });
+    if (!ride.driverId) return res.status(400).json({ message: 'No driver was assigned to this ride' });
+    if (!['ongoing', 'completed'].includes(ride.status)) {
+      return res.status(400).json({ message: 'You can only tip during or after a ride' });
+    }
+
+    const roundedAmount = Math.round(amount);
+
+    if (!ride.settled) {
+      // Ride hasn't been settled yet — just accumulate the tip; it will be
+      // paid out to the driver (100%) when settleRidePayment() runs.
+      await db.run('UPDATE rides SET tip = COALESCE(tip, 0) + ? WHERE id = ?', [roundedAmount, rideId]);
+      return res.json({ message: 'Tip added — it will be paid to your driver with the ride settlement.', tip: (ride.tip || 0) + roundedAmount });
+    }
+
+    // Ride already settled (cash or wallet) — credit the driver's wallet immediately, 100% to driver.
+    const tx = await db.getTransactionClient();
+    try {
+      await tx.query('BEGIN');
+      await tx.query('UPDATE rides SET tip = COALESCE(tip, 0) + ? WHERE id = ?', [roundedAmount, rideId]);
+      await tx.query(
+        `INSERT INTO wallets (userId, balance) VALUES (?, ?)
+         ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance`,
+        [ride.driverId, roundedAmount]
+      );
+      await tx.query(
+        'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+        [`tx_tip_${Date.now()}_${ride.driverId}`, ride.driverId, 'tip', roundedAmount, `Tip for ride ${rideId} (100% to driver)`, rideId]
+      );
+      await tx.query('COMMIT');
+      tx.release();
+    } catch (e) {
+      await tx.query('ROLLBACK');
+      tx.release();
+      throw e;
+    }
+
+    res.json({ message: 'Tip sent to your driver!', tip: (ride.tip || 0) + roundedAmount });
+  } catch (error) {
+    console.error('Tip error:', error);
+    res.status(500).json({ message: 'Failed to send tip' });
   }
 });
 

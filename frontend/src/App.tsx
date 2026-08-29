@@ -23,7 +23,6 @@ import RideRequest from './pages/rider/RideRequest';
 import CustomerRideHistory from './pages/rider/CustomerRideHistory';
 import CustomerSavedPlaces from './pages/rider/CustomerSavedPlaces';
 import CustomerSupport from './pages/rider/CustomerSupport';
-import CustomerPayments from './pages/rider/CustomerPayments';
 import Profile from './pages/rider/Profile';
 import ActiveRide from './pages/rider/ActiveRide';
 import RiderPayments from './pages/rider/RiderPayments';
@@ -47,6 +46,9 @@ import AdminApprovals from './pages/admin/AdminApprovals';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminPayouts from './pages/admin/AdminPayouts';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
+import Terms from './pages/legal/Terms';
+import Privacy from './pages/legal/Privacy';
+import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 
 /* Core CSS */
@@ -80,7 +82,7 @@ const HomeRedirect: React.FC = () => {
       const user = JSON.parse(savedUser);
       const role = user.role || 'customer';
       if (role === 'admin') return <Redirect to="/admin/dashboard" />;
-      if (role === 'driver' || role === 'motorist') return <Redirect to="/driver/home" />;
+      if (role === 'driver') return <Redirect to="/driver/home" />;
       return <Redirect to="/customer/home" />;
     } catch { return <Redirect to="/login" />; }
   }
@@ -138,6 +140,8 @@ const AppContent: React.FC = () => {
           <Route path="/ussd" component={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} exact />
           <Route path="/auth/callback" component={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} exact />
           <Route path="/auth/complete-social-reg" component={() => <ErrorBoundary><CompleteSocialRegistration /></ErrorBoundary>} exact />
+          <Route path="/terms" component={() => <ErrorBoundary><Terms /></ErrorBoundary>} exact />
+          <Route path="/privacy" component={() => <ErrorBoundary><Privacy /></ErrorBoundary>} exact />
 
           {/* Customer Routes (primary — NAVIGO customers book rides & deliveries) */}
           <Route path="/customer/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} /></ErrorBoundary>} />
@@ -150,12 +154,12 @@ const AppContent: React.FC = () => {
           <Route path="/customer/profile" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={Profile} /></ErrorBoundary>} />
 
           {/* Driver Routes */}
-          <Route path="/driver/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverHome} /></ErrorBoundary>} />
-          <Route path="/driver/requests" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={IncomingRequest} /></ErrorBoundary>} />
-          <Route path="/driver/earnings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverEarnings} /></ErrorBoundary>} />
-          <Route path="/driver/vehicle" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} /></ErrorBoundary>} />
-          <Route path="/driver/documents" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} /></ErrorBoundary>} />
-          <Route path="/driver/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverActiveRide} /></ErrorBoundary>} />
+          <Route path="/driver/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverHome} /></ErrorBoundary>} />
+          <Route path="/driver/requests" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={IncomingRequest} /></ErrorBoundary>} />
+          <Route path="/driver/earnings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverEarnings} /></ErrorBoundary>} />
+          <Route path="/driver/vehicle" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverVehicle} /></ErrorBoundary>} />
+          <Route path="/driver/documents" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverDocuments} /></ErrorBoundary>} />
+          <Route path="/driver/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverActiveRide} /></ErrorBoundary>} />
 
           {/* Admin Routes */}
           <Route path="/admin/dashboard" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminDashboard} /></ErrorBoundary>} />
@@ -171,6 +175,9 @@ const AppContent: React.FC = () => {
 
           {/* Default */}
           <Route path="/" component={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
+
+          {/* Catch-all: any unknown URL gets a real 404 instead of a blank page */}
+          <Route render={() => <ErrorBoundary><NotFound /></ErrorBoundary>} />
 
         </IonRouterOutlet>
       </IonReactRouter>

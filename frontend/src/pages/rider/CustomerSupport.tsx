@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonBackButton, IonSegment, IonSegmentButton, IonLabel, IonList,
   IonItem, IonIcon, IonText, IonAccordion, IonAccordionGroup,
   IonTextarea, IonButton, IonSelect, IonSelectOption, useIonToast,
-  IonBadge, IonCard, IonCardContent
+  IonBadge, IonCard, IonCardContent, IonSpinner
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import {
@@ -13,24 +13,68 @@ import {
   checkmarkCircleOutline, documentTextOutline, starOutline,
   shieldCheckmarkOutline, timeOutline, cardOutline
 } from 'ionicons/icons';
+import api from '../../services/api';
+import EmptyState from '../../components/EmptyState';
 import './CustomerSupport.css';
+
+interface TicketReply { from: string; text: string; time: string; }
+interface Ticket {
+  id: number;
+  type: string;
+  description: string;
+  priority: string;
+  status: 'open' | 'in-progress' | 'resolved';
+  createdAt: string;
+  replies: TicketReply[];
+}
 
 const RiderSupport: React.FC = () => {
   const history = useHistory();
-  const [segment, setSegment] = useState<'faq' | 'report' | 'contact'>('faq');
+  const [segment, setSegment] = useState<'faq' | 'report' | 'contact' | 'tickets'>('faq');
   const [reportType, setReportType] = useState('');
   const [reportDescription, setReportDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
   const [presentToast] = useIonToast();
 
-  const handleReportSubmit = () => {
+  const loadTickets = async () => {
+    setLoadingTickets(true);
+    try {
+      const res = await api.get('/support/mine');
+      setTickets(res.data || []);
+    } catch (e) {
+      console.error('Failed to load tickets:', e);
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (segment === 'tickets') loadTickets();
+  }, [segment]);
+
+  const handleReportSubmit = async () => {
     if (!reportType) {
       presentToast({ message: 'Please select an issue type', color: 'warning', duration: 2000 });
       return;
     }
-    presentToast({ message: '✅ Ticket #NT-' + Math.floor(Math.random() * 9000 + 1000) + ' submitted! We\'ll respond within 2 hours.', duration: 3000, color: 'success' });
-    setReportType('');
-    setReportDescription('');
-    setSegment('faq');
+    if (!reportDescription.trim()) {
+      presentToast({ message: 'Please describe what happened', color: 'warning', duration: 2000 });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await api.post('/support', { type: reportType, description: reportDescription.trim() });
+      presentToast({ message: `✅ Ticket #${res.data?.ticketId} submitted! We'll respond within 2 hours.`, duration: 3000, color: 'success' });
+      setReportType('');
+      setReportDescription('');
+      setSegment('tickets');
+    } catch (e: any) {
+      presentToast({ message: e.response?.data?.message || 'Failed to submit ticket. Try again.', duration: 3000, color: 'danger' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const faqs = [
@@ -55,6 +99,7 @@ const RiderSupport: React.FC = () => {
           <IonSegment value={segment} onIonChange={e => setSegment(e.detail.value as any)}>
             <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📖 FAQs</IonLabel></IonSegmentButton>
             <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>🚨 Report</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="tickets"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>🎫 My Tickets</IonLabel></IonSegmentButton>
             <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📞 Contact</IonLabel></IonSegmentButton>
           </IonSegment>
         </IonToolbar>
@@ -110,9 +155,51 @@ const RiderSupport: React.FC = () => {
                 className="support-textarea"
               />
 
-              <IonButton expand="block" onClick={handleReportSubmit} className="support-submit-btn">
-                <IonIcon icon={alertCircleOutline} slot="start" /> Submit Ticket
+              <IonButton expand="block" onClick={handleReportSubmit} disabled={submitting} className="support-submit-btn">
+                {submitting ? <IonSpinner name="crescent" /> : (<><IonIcon icon={alertCircleOutline} slot="start" /> Submit Ticket</>)}
               </IonButton>
+            </div>
+          )}
+
+          {segment === 'tickets' && (
+            <div className="report-form">
+              <h3 className="report-title">🎫 My Tickets</h3>
+              <p className="report-subtitle">Track your support requests and replies</p>
+
+              {loadingTickets ? (
+                <div style={{ textAlign: 'center', padding: 30 }}><IonSpinner name="crescent" color="warning" /></div>
+              ) : tickets.length === 0 ? (
+                <EmptyState
+                  icon={<IonIcon icon={documentTextOutline} style={{ fontSize: 26 }} />}
+                  title="No tickets yet"
+                  subtitle="When you report an issue, it will show up here with our replies."
+                  actionLabel="Report an issue"
+                  onAction={() => setSegment('report')}
+                />
+              ) : (
+                tickets.map(t => (
+                  <IonCard key={t.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', margin: '0 0 12px' }}>
+                    <IonCardContent>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <IonText style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>#{t.id} — {t.type}</IonText>
+                        <IonBadge color={t.status === 'resolved' ? 'success' : t.status === 'in-progress' ? 'warning' : 'medium'}>
+                          {t.status}
+                        </IonBadge>
+                      </div>
+                      <p style={{ color: '#94A3B8', fontSize: 13, margin: '0 0 8px' }}>{t.description}</p>
+                      {t.replies?.length > 0 && (
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 8, marginTop: 4 }}>
+                          {t.replies.map((r, i) => (
+                            <p key={i} style={{ fontSize: 12, color: '#D1D5DB', margin: '4px 0' }}>
+                              <strong style={{ color: '#FF6B35' }}>{r.from}:</strong> {r.text}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </IonCardContent>
+                  </IonCard>
+                ))
+              )}
             </div>
           )}
 

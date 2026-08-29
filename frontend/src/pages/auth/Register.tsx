@@ -28,7 +28,6 @@ const Register: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [countryCode] = useState('+256');
 
   const formatPhone = (value: string) => {
     return value.replace(/\D/g, '');
@@ -61,7 +60,7 @@ const Register: React.FC = () => {
 
     const cleanPhone = formatPhone(phone);
     if (!cleanPhone) return setError('Please enter your phone number');
-    if (cleanPhone.length < 10) return setError('Please enter a valid 10-digit phone number');
+    if (!/^0\d{9}$/.test(cleanPhone)) return setError('Please enter a valid Ugandan number, e.g. 0772 000 000');
 
     if (!password) return setError('Please enter a password');
     if (password.length < 6) return setError('Password must be at least 6 characters');
@@ -70,8 +69,11 @@ const Register: React.FC = () => {
 
     setIsLoading(true);
     try {
+      // register() already logs the new user in (saves token + user into
+      // AuthContext), so send them straight into the app instead of bouncing
+      // them back to the login screen.
       await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
-      history.push('/login');
+      history.push(role === 'driver' ? '/driver/home' : '/customer/home');
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
     } finally {
@@ -144,15 +146,14 @@ const Register: React.FC = () => {
                     fontSize: '14px', zIndex: 1, pointerEvents: 'none'
                   }}>
                     <IonIcon icon={globeOutline} />
-                    <span>{countryCode}</span>
                   </div>
                   <input
                     className="input-field"
-                    style={{ paddingLeft: '85px' }}
+                    style={{ paddingLeft: '40px' }}
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    placeholder="700 000 000"
+                    placeholder="0772 000 000"
                     maxLength={10}
                   />
                 </div>

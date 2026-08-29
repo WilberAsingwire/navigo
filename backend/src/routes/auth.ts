@@ -272,12 +272,13 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
     // 1. Update user verification status and docs
     await db.run('UPDATE users SET driverDocs = ?, verificationStatus = ? WHERE id = ?', [driverDocs, 'pending', userId]);
 
-    // 2. Upsert driver profile with vehicle type and plate
+    // 2. Upsert driver profile with vehicle type, plate, model and color
     await db.run(
-      `INSERT INTO driver_profiles (userId, vehicleType, plate)
-       VALUES (?, ?, ?)
-       ON CONFLICT (userId) DO UPDATE SET vehicleType = EXCLUDED.vehicleType, plate = EXCLUDED.plate`,
-      [userId, vehicleType, vehiclePlate.toUpperCase()]
+      `INSERT INTO driver_profiles (userId, vehicleType, plate, model, color)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (userId) DO UPDATE SET vehicleType = EXCLUDED.vehicleType, plate = EXCLUDED.plate,
+         model = EXCLUDED.model, color = EXCLUDED.color`,
+      [userId, vehicleType, vehiclePlate.toUpperCase(), vehicleModel || null, vehicleColor || null]
     );
 
     res.json({
@@ -311,9 +312,14 @@ router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthR
     const [totalDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'driver'");
     const [totalMotorists] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'motorist'");
     const [activeRides] = await db.all("SELECT COUNT(*) as count FROM rides WHERE status NOT IN ('completed', 'cancelled')");
-    const [revenue] = await db.all("SELECT SUM(amount) as total FROM wallet_transactions WHERE kind = 'ride_payment' AND amount > 0");
+    // NAVIGO's actual revenue is the commission ledger, accrued on every completed
+    // ride (cash or wallet) — see settleRidePayment(). "Today" = since local midnight.
+    const [revenue] = await db.all(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE kind = 'commission' AND createdAt >= CURRENT_DATE"
+    );
     const [avgRating] = await db.all('SELECT AVG(rating) as avg FROM driver_profiles');
     const [pending] = await db.all("SELECT COUNT(*) as count FROM users WHERE verificationStatus = 'pending'");
+    const [openTickets] = await db.all("SELECT COUNT(*) as count FROM support_tickets WHERE status != 'resolved'");
 
     res.json({
       totalUsers: totalUsers?.count || 0,
@@ -323,8 +329,8 @@ router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthR
       revenue: revenue?.total || 0,
       avgRating: parseFloat(avgRating?.avg || '0').toFixed(1),
       pendingApprovals: pending?.count || 0,
-      supportTickets: 0, // Mocked
-      disputes: 0 // Mocked
+      supportTickets: openTickets?.count || 0,
+      disputes: 0, // No dispute-tracking table exists yet — left at 0 rather than a fake number.
     });
   } catch (error) {
     console.error('Stats error:', error);
@@ -386,6 +392,241 @@ router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req:
 });
 
 // ─── ADMIN: LIVE LOCATIONS ──────────────────
+// ─── ADMIN: 7-DAY REVENUE TREND (for the dashboard chart) ──
+router.get('/admin/revenue-trend', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const rows = await db.all(
+      `SELECT DATE(createdAt) as day, COALESCE(SUM(amount), 0) as total
+       FROM wallet_transactions
+       WHERE kind = 'commission' AND createdAt >= CURRENT_DATE - INTERVAL '6 days'
+       GROUP BY DATE(createdAt)
+       ORDER BY day ASC`
+    );
+
+    const byDay: Record<string, number> = {};
+    for (const r of rows) byDay[new Date(r.day).toISOString().slice(0, 10)] = Number(r.total);
+
+    const days: { day: string; amount: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ day: d.toLocaleDateString('en', { weekday: 'short' }), amount: byDay[key] || 0 });
+    }
+
+    res.json({ days });
+  } catch (error) {
+    console.error('Revenue trend error:', error);
+    res.status(500).json({ message: 'Failed to fetch revenue trend' });
+  }
+});
+
+// ─── ADMIN: PLATFORM SETTINGS ────────────────────────
+const DEFAULT_SETTINGS = {
+  appName: 'NAVIGO',
+  currency: 'UGX',
+  supportPhone: '+256 800 100 200',
+  supportEmail: 'support@navigo.ug',
+  driverCommission: '10',
+  bodaBaseFare: '800',
+  carBaseFare: '1500',
+  comfortBaseFare: '2500',
+  xlBaseFare: '4000',
+  autoApproveDrivers: 'false',
+  maintenanceMode: 'false',
+};
+
+router.get('/admin/settings', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const rows = await db.all('SELECT key, value FROM platform_settings');
+    const stored: Record<string, string> = {};
+    for (const r of rows) stored[r.key] = r.value;
+    const merged = { ...DEFAULT_SETTINGS, ...stored };
+    res.json({
+      ...merged,
+      autoApproveDrivers: merged.autoApproveDrivers === 'true',
+      maintenanceMode: merged.maintenanceMode === 'true',
+    });
+  } catch (error) {
+    console.error('Admin settings fetch error:', error);
+    res.status(500).json({ message: 'Failed to fetch settings' });
+  }
+});
+
+router.put('/admin/settings', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const allowedKeys = Object.keys(DEFAULT_SETTINGS);
+    const updates = Object.entries(req.body || {}).filter(([k]) => allowedKeys.includes(k));
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: 'No valid settings provided.' });
+    }
+
+    for (const [key, value] of updates) {
+      await db.run(
+        `INSERT INTO platform_settings (key, value, updatedAt) VALUES (?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updatedAt = CURRENT_TIMESTAMP`,
+        [key, String(value)]
+      );
+    }
+
+    res.json({ message: 'Settings saved.' });
+  } catch (error) {
+    console.error('Admin settings save error:', error);
+    res.status(500).json({ message: 'Failed to save settings' });
+  }
+});
+
+// ─── ADMIN: LIST DRIVER PAYOUTS (for manual/no-gateway processing) ──
+router.get('/admin/payouts', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const status = req.query.status as string | undefined;
+
+    let query = `
+      SELECT p.*, u.fullName
+      FROM payouts p
+      LEFT JOIN users u ON u.id = p.userId
+    `;
+    const params: any[] = [];
+    if (status) {
+      query += ' WHERE p.status = ?';
+      params.push(status);
+    }
+    query += ' ORDER BY p.createdAt DESC LIMIT 100';
+
+    const payouts = await db.all(query, params);
+    res.json({ payouts });
+  } catch (error) {
+    console.error('Admin payouts list error:', error);
+    res.status(500).json({ message: 'Failed to fetch payouts' });
+  }
+});
+
+// ─── ADMIN: MARK A PAYOUT AS PAID (manual/no-gateway flow) ──
+router.post('/admin/payouts/:id/complete', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+    const db = getDB();
+
+    const payout = await db.get('SELECT * FROM payouts WHERE id = ?', [id]);
+    if (!payout) return res.status(404).json({ message: 'Payout not found' });
+    if (payout.status === 'completed') {
+      return res.status(400).json({ message: 'This payout is already marked as completed.' });
+    }
+
+    await db.run(
+      "UPDATE payouts SET status = 'completed', note = ?, completedAt = CURRENT_TIMESTAMP WHERE id = ?",
+      [note || payout.note, id]
+    );
+
+    res.json({ message: 'Payout marked as paid.' });
+  } catch (error) {
+    console.error('Admin payout complete error:', error);
+    res.status(500).json({ message: 'Failed to update payout' });
+  }
+});
+
+// ─── ADMIN: ANALYTICS — SUMMARY KPIs ────────────────
+router.get('/admin/analytics/summary', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+
+    const [totalRides] = await db.all("SELECT COUNT(*) as count FROM rides WHERE status = 'completed'");
+    // NAVIGO's revenue is the commission ledger (see settleRidePayment) — same
+    // metric used on the main dashboard, just all-time here rather than "today".
+    const [totalRevenue] = await db.all("SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE kind = 'commission'");
+    const [activeDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role IN ('driver','motorist') AND isOnline = TRUE");
+    const [avgRating] = await db.all('SELECT AVG(rating) as avg FROM driver_profiles');
+
+    // Month-over-month growth in completed rides. If there were zero rides
+    // last month, growth is undefined — reported as 0 rather than Infinity/NaN.
+    const [thisMonth] = await db.all(
+      "SELECT COUNT(*) as count FROM rides WHERE status = 'completed' AND requestedAt >= DATE_TRUNC('month', CURRENT_DATE)"
+    );
+    const [lastMonth] = await db.all(
+      "SELECT COUNT(*) as count FROM rides WHERE status = 'completed' AND requestedAt >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') AND requestedAt < DATE_TRUNC('month', CURRENT_DATE)"
+    );
+    const thisCount = Number(thisMonth?.count || 0);
+    const lastCount = Number(lastMonth?.count || 0);
+    const monthlyGrowth = lastCount > 0 ? Math.round(((thisCount - lastCount) / lastCount) * 100) : (thisCount > 0 ? 100 : 0);
+
+    res.json({
+      totalRides: Number(totalRides?.count || 0),
+      totalRevenue: Number(totalRevenue?.total || 0),
+      activeDrivers: Number(activeDrivers?.count || 0),
+      avgRating: parseFloat(avgRating?.avg || '0').toFixed(1),
+      monthlyGrowth,
+    });
+  } catch (error) {
+    console.error('Analytics summary error:', error);
+    res.status(500).json({ message: 'Failed to fetch analytics summary' });
+  }
+});
+
+// ─── ADMIN: ANALYTICS — DAILY RIDE VOLUME (last 14 days) ──
+router.get('/admin/analytics/daily', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const rows = await db.all(
+      `SELECT DATE(requestedAt) as day, COUNT(*) as count
+       FROM rides
+       WHERE requestedAt >= CURRENT_DATE - INTERVAL '13 days'
+       GROUP BY DATE(requestedAt)
+       ORDER BY day ASC`
+    );
+    const byDay: Record<string, number> = {};
+    for (const r of rows) byDay[new Date(r.day).toISOString().slice(0, 10)] = Number(r.count);
+
+    const days: { date: string; count: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ date: key, count: byDay[key] || 0 });
+    }
+    res.json(days);
+  } catch (error) {
+    console.error('Analytics daily error:', error);
+    res.status(500).json({ message: 'Failed to fetch daily ride volume' });
+  }
+});
+
+// ─── ADMIN: ANALYTICS — TOP PERFORMING DRIVERS ──────
+router.get('/admin/analytics/top-drivers', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+  try {
+    const db = getDB();
+    const rows = await db.all(
+      `SELECT u.id, u.fullName, u.city, dp.vehicleType,
+              COUNT(r.id) FILTER (WHERE r.status = 'completed') as "completedRides",
+              COALESCE(SUM(wt.amount) FILTER (WHERE wt.kind IN ('payout', 'cash_trip')), 0) as earnings
+       FROM users u
+       LEFT JOIN driver_profiles dp ON dp.userId = u.id
+       LEFT JOIN rides r ON r.driverId = u.id
+       LEFT JOIN wallet_transactions wt ON wt.userId = u.id
+       WHERE u.role IN ('driver', 'motorist')
+       GROUP BY u.id, u.fullName, u.city, dp.vehicleType
+       ORDER BY "completedRides" DESC
+       LIMIT 10`
+    );
+    res.json(rows.map((r: any) => ({
+      id: r.id,
+      fullName: r.fullName,
+      city: r.city,
+      vehicleType: r.vehicleType,
+      completedRides: Number(r.completedRides || 0),
+      earnings: Number(r.earnings || 0),
+    })));
+  } catch (error) {
+    console.error('Analytics top-drivers error:', error);
+    res.status(500).json({ message: 'Failed to fetch top drivers' });
+  }
+});
+
 router.get('/admin/live-locations', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
@@ -487,8 +728,6 @@ router.get('/_dev/users', authenticate, authorize(['admin']), (_req: AuthRequest
   }
 });
 
-export default router;
-
 router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
@@ -500,3 +739,5 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Error fetching profile' });
   }
 });
+
+export default router;

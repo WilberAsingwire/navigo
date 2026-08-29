@@ -8,6 +8,8 @@ interface LoyaltyCardProps {
   points?: number;
   tier?: 'bronze' | 'silver' | 'gold' | 'platinum';
   referralCode?: string;
+  /** Completed ride/trip count — pass the real number fetched from the backend. */
+  ridesCount?: number;
 }
 
 const TIER_CONFIG = {
@@ -31,11 +33,13 @@ const ALL_REWARDS = [
 const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
   points: propPoints = 0,
   tier: propTier = 'bronze',
-  referralCode = 'NAVIGO50'
+  referralCode = 'NAVIGO50',
+  ridesCount = 0
 }) => {
   const { user } = useAuth();
-  // Real loyalty points based on user's ride history (from AuthContext / localStorage)
-  const userRides = user?.rideHistoryLength || parseInt(localStorage.getItem('navigo_ride_count') || '0');
+  // Real loyalty points based on the caller-supplied ride count (fetched from
+  // the backend), falling back to a locally cached count if unavailable.
+  const userRides = ridesCount || parseInt(localStorage.getItem('navigo_ride_count') || '0');
   const userReferrals = parseInt(localStorage.getItem('navigo_referrals') || '0');
   const redeemedRewards: string[] = JSON.parse(localStorage.getItem('navigo_redeemed') || '[]');
 
@@ -72,9 +76,11 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
   const copyReferralCode = () => {
     Haptic.tick();
     navigator.clipboard?.writeText(referralCode);
-    const current = parseInt(localStorage.getItem('navigo_referrals') || '0');
-    localStorage.setItem('navigo_referrals', String(current + 1));
-    setToastMsg('📋 Code copied! Share to earn 50 pts.');
+    // NOTE: referral points are only credited when a referred friend actually
+    // signs up and completes their first ride (server-side) — merely copying
+    // your own code must never bump your own counter, or anyone could farm
+    // unlimited points by clicking "Copy Code" repeatedly.
+    setToastMsg('📋 Code copied! You\'ll earn 50 pts once your friend completes their first ride.');
     setShowToast(true);
   };
 
@@ -151,7 +157,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         {activeTab === 'challenges' && (
           <div className="challenges-list">
             {[
-              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => (user?.rideHistoryLength || 0) >= 5 },
+              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => userRides >= 5 },
               { name: 'Refer a friend', points: 100, emoji: '👥', check: () => (parseInt(localStorage.getItem('navigo_referrals') || '0')) > 0 },
               { name: 'Rate 3 drivers', points: 30, emoji: '⭐', check: () => true },
               { name: 'Women Preferred', points: 25, emoji: '👩', check: () => true }

@@ -105,9 +105,9 @@ const AdminLiveMap: React.FC = () => {
       }));
       setUsers(fetchedUsers);
       setStats({
-        drivers: fetchedUsers.filter(u => u.role === 'driver').length,
-        motorists: fetchedUsers.filter(u => u.role === 'motorist').length,
-        riders: fetchedUsers.filter(u => u.role === 'rider').length,
+        drivers: fetchedUsers.filter((u: any) => u.role === 'driver').length,
+        motorists: fetchedUsers.filter((u: any) => u.role === 'motorist').length,
+        riders: fetchedUsers.filter((u: any) => u.role === 'rider').length,
         activeTrips: 0 // Requires more complex join with rides table
       });
     } catch (e) {

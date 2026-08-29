@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonButton, IonAvatar,
@@ -53,10 +53,40 @@ const Profile: React.FC = () => {
     history.push('/login');
   };
 
+  const [totalRides, setTotalRides] = useState<number | null>(null);
+  const [driverRating, setDriverRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        if (user.role === 'driver') {
+          const res = await axios.get(`${API_URL}/drivers/profile`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('navigo_token')}` }
+          });
+          setTotalRides(res.data?.profile?.totalTrips ?? 0);
+          setDriverRating(Number(res.data?.profile?.rating) || 5);
+        } else {
+          const res = await axios.get(`${API_URL}/rides/history/${user.id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('navigo_token')}` }
+          });
+          setTotalRides(Array.isArray(res.data) ? res.data.length : 0);
+        }
+      } catch {
+        // leave null — UI shows a dash rather than a fake number
+      }
+    })();
+  }, [user?.id, user?.role]);
+
+  // Zawadi points: 10 pts per completed ride (kept in sync with LoyaltyCard's own formula)
+  const points = (totalRides ?? 0) * 10;
+
   const stats = [
-    { label: 'Total Rides', value: '45', icon: carOutline },
-    { label: 'Rating', value: '4.8 ⭐', icon: starOutline },
-    { label: 'Points', value: '280', icon: giftOutline },
+    { label: 'Total Rides', value: totalRides === null ? '—' : String(totalRides), icon: carOutline },
+    ...(user?.role === 'driver'
+      ? [{ label: 'Rating', value: driverRating === null ? '—' : `${driverRating.toFixed(1)} ⭐`, icon: starOutline }]
+      : []),
+    { label: 'Points', value: String(points), icon: giftOutline },
   ];
 
   return (

@@ -3,7 +3,8 @@ import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonBackButton, IonIcon, IonText, IonButton, IonProgressBar,
   IonRefresher, IonRefresherContent, IonSegment, IonSegmentButton,
-  IonLabel, IonBadge, IonSpinner
+  IonLabel, IonBadge, IonSpinner, IonModal, IonInput, IonSelect, IonSelectOption,
+  useIonToast
 } from '@ionic/react';
 import {
   trendingUpOutline, arrowDownOutline, receiptOutline,
@@ -18,7 +19,7 @@ import './DriverEarnings.css';
 
 interface WalletTx {
   id: string;
-  kind: 'topup' | 'ride_payment' | 'payout' | 'tip';
+  kind: 'topup' | 'ride_payment' | 'payout' | 'tip' | 'cash_trip' | 'commission' | 'withdrawal' | 'refund';
   amount: number;
   note: string;
   rideId?: string;
@@ -36,18 +37,27 @@ const DriverEarnings: React.FC = () => {
   const [transactions, setTransactions] = useState<WalletTx[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'payouts'>('overview');
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [showPayout, setShowPayout] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutProvider, setPayoutProvider] = useState<'mtn' | 'airtel'>('mtn');
+  const [payoutPhone, setPayoutPhone] = useState('');
+  const [isPayingOut, setIsPayingOut] = useState(false);
+  const [presentToast] = useIonToast();
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [balRes, txRes, profRes] = await Promise.all([
+      const [balRes, txRes, profRes, payoutsRes] = await Promise.all([
         api.get('/wallet/balance').catch(() => null),
         api.get('/wallet/transactions').catch(() => null),
         api.get('/drivers/profile').catch(() => null),
+        api.get('/wallet/payouts').catch(() => null),
       ]);
       if (balRes?.data?.ok) setBalance(balRes.data.balance);
       setTransactions(txRes?.data?.transactions || []);
       setProfile(profRes?.data || null);
+      setPayouts(payoutsRes?.data?.payouts || []);
     } finally {
       setLoading(false);
     }
@@ -55,8 +65,45 @@ const DriverEarnings: React.FC = () => {
 
   useEffect(() => { loadData(); }, []);
 
-  // Driver income = payout + tip transactions from ride settlement
-  const earnings = useMemo(() => transactions.filter(t => t.kind === 'payout' || t.kind === 'tip'), [transactions]);
+  useEffect(() => {
+    if (user?.phone) setPayoutPhone(user.phone);
+  }, [user]);
+
+  const handleRequestPayout = async () => {
+    const amount = parseInt(payoutAmount, 10);
+    if (!amount || amount < 10000) {
+      presentToast({ message: 'Minimum payout is UGX 10,000', color: 'warning', duration: 2500 });
+      return;
+    }
+    if (balance !== null && amount > balance) {
+      presentToast({ message: 'You cannot withdraw more than your available balance', color: 'warning', duration: 2500 });
+      return;
+    }
+    if (!/^07\d{8}$/.test(payoutPhone.replace(/\D/g, '').replace(/^256/, '0'))) {
+      presentToast({ message: 'Enter a valid Ugandan mobile number (07XXXXXXXXX)', color: 'warning', duration: 2500 });
+      return;
+    }
+    setIsPayingOut(true);
+    try {
+      const res = await api.post('/wallet/payout', { amount, provider: payoutProvider, phone: payoutPhone });
+      presentToast({ message: res.data?.message || 'Payout requested!', color: 'success', duration: 3500 });
+      setShowPayout(false);
+      setPayoutAmount('');
+      loadData();
+    } catch (e: any) {
+      presentToast({ message: e.response?.data?.message || 'Payout failed. Try again.', color: 'danger', duration: 4000 });
+    } finally {
+      setIsPayingOut(false);
+    }
+  };
+
+  // Driver income = wallet payouts (cashless rides), cash-trip earnings (cash
+  // rides — the driver already holds the cash, this is just the record of it),
+  // and tips from either payment method.
+  const earnings = useMemo(
+    () => transactions.filter(t => t.kind === 'payout' || t.kind === 'cash_trip' || t.kind === 'tip'),
+    [transactions]
+  );
 
   const sumSince = (days: number) => {
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
@@ -126,11 +173,11 @@ const DriverEarnings: React.FC = () => {
             <p className="balance-label">Available Balance</p>
             <h1 className="balance-amount">{balance === null ? 'UGX —' : `UGX ${balance.toLocaleString()}`}</h1>
             <div className="payout-actions">
-              <IonButton expand="block" disabled className="payout-btn">
+              <IonButton expand="block" disabled={!balance || balance < 10000} className="payout-btn" onClick={() => setShowPayout(true)}>
                 <IonIcon icon={arrowDownOutline} slot="start" /> Request Payout
               </IonButton>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>Payouts to Mobile Money are coming soon</p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>Minimum payout UGX 10,000 · Sent to your Mobile Money</p>
           </div>
 
           {/* Quick Stats */}
@@ -205,11 +252,31 @@ const DriverEarnings: React.FC = () => {
           {activeTab === 'payouts' && (
             <div className="payouts-section">
               <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Payout History</h3>
-              <EmptyState
-                icon={<IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 26 }} />}
-                title="No payouts yet"
-                subtitle="Payouts to Mobile Money are coming soon. Your balance keeps accumulating in the meantime."
-              />
+              {payouts.length === 0 ? (
+                <EmptyState
+                  icon={<IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 26 }} />}
+                  title="No payouts yet"
+                  subtitle="Request a payout above once your balance reaches UGX 10,000."
+                />
+              ) : (
+                payouts.map(p => (
+                  <div key={p.id} className="earnings-history-card">
+                    <div className="history-header">
+                      <div className="history-rider-info">
+                        <IonIcon icon={arrowDownOutline} style={{ color: '#4da6ff' }} />
+                        <div>
+                          <span className="history-rider-name">{p.provider?.toUpperCase()} • {p.phone}</span>
+                          <p className="history-ride-meta">{p.status}</p>
+                        </div>
+                      </div>
+                      <span className="history-amount">UGX {Number(p.amount).toLocaleString()}</span>
+                    </div>
+                    <div className="history-footer">
+                      <span>{new Date(p.createdAt).toLocaleDateString('en-UG', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
 
@@ -220,7 +287,7 @@ const DriverEarnings: React.FC = () => {
                 { label: 'Total Trips', value: totalTrips, icon: receiptOutline },
                 { label: 'Avg Rating', value: Number(rating).toFixed(1), icon: trendingUpOutline },
                 { label: 'You Keep', value: '90%', icon: cashOutline },
-                { label: 'Payout Method', value: 'Coming soon', icon: arrowDownOutline },
+                { label: 'Payout Method', value: 'Mobile Money', icon: arrowDownOutline },
               ].map(s => (
                 <div key={s.label} className="earnings-overview-card">
                   <IonIcon icon={s.icon} className="overview-icon" />
@@ -231,6 +298,53 @@ const DriverEarnings: React.FC = () => {
             </div>
           )}
         </div>
+
+        <IonModal isOpen={showPayout} onDidDismiss={() => setShowPayout(false)}>
+          <div style={{ padding: 24, background: '#0d1117', color: '#fff', height: '100%' }}>
+            <h2 style={{ margin: '12px 0 4px' }}>💸 Request Payout</h2>
+            <p style={{ color: '#94A3B8', fontSize: 13, marginBottom: 20 }}>
+              Available balance: UGX {(balance || 0).toLocaleString()}
+            </p>
+
+            <IonSelect
+              label="Provider"
+              labelPlacement="stacked"
+              interface="popover"
+              value={payoutProvider}
+              onIonChange={e => setPayoutProvider(e.detail.value)}
+              style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 14, padding: '4px 8px' }}
+            >
+              <IonSelectOption value="mtn">MTN Mobile Money</IonSelectOption>
+              <IonSelectOption value="airtel">Airtel Money</IonSelectOption>
+            </IonSelect>
+
+            <IonInput
+              label="Phone number"
+              labelPlacement="stacked"
+              placeholder="07XXXXXXXX"
+              value={payoutPhone}
+              onIonInput={e => setPayoutPhone(e.detail.value || '')}
+              style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 14, padding: '4px 8px' }}
+            />
+
+            <IonInput
+              type="number"
+              label="Amount (UGX)"
+              labelPlacement="stacked"
+              placeholder="10000"
+              value={payoutAmount}
+              onIonInput={e => setPayoutAmount(e.detail.value || '')}
+              style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 20, padding: '4px 8px' }}
+            />
+
+            <IonButton expand="block" color="warning" onClick={handleRequestPayout} disabled={isPayingOut} style={{ borderRadius: 12 }}>
+              {isPayingOut ? <IonSpinner name="crescent" /> : 'Request Payout'}
+            </IonButton>
+            <IonButton expand="block" fill="clear" color="medium" style={{ marginTop: 8 }} onClick={() => setShowPayout(false)}>
+              Cancel
+            </IonButton>
+          </div>
+        </IonModal>
       </IonContent>
     </IonPage>
   );

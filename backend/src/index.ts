@@ -1,6 +1,12 @@
+// dotenv must be configured before any other module reads process.env at import time.
+// NOTE: ES module `import` statements are hoisted and evaluated in dependency order
+// BEFORE any top-level statements in this file run (even ones written earlier in the
+// file, like a bare `dotenv.config()` call). To guarantee env vars are loaded first,
+// the loading itself must happen inside an imported module.
+import './config/loadEnv';
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { createServer } from 'http';
@@ -12,11 +18,10 @@ import userRoutes from './routes/users';
 import walletRoutes from './routes/wallet';
 import poiRoutes from './routes/poi';
 import supportRoutes from './routes/support';
-import { initDB } from './config/database';
+import { initDB, getDB } from './config/database';
 import { setupSocketHandlers, setIO } from './socket/socketHandler';
 import { generalLimiter } from './middleware/rateLimit';
-
-dotenv.config();
+import { generateToken, hashPassword } from './utils/auth';
 
 const app = express();
 app.set('trust proxy', 1); // Trust Render's proxy to ensure HTTPS is detected correctly
@@ -69,7 +74,7 @@ app.get('/auth/google/callback',
     const email = user?.emails?.[0]?.value || '';
     const googleId = user?.id || '';
 
-    const db = require('./config/database').getDB();
+    const db = getDB();
     const existingUser = await db.get(
       'SELECT * FROM users WHERE email = ? OR (socialProvider = ? AND socialId = ?)',
       [email.toLowerCase().trim(), 'google', googleId]
@@ -79,7 +84,7 @@ app.get('/auth/google/callback',
 
     if (existingUser) {
       // User exists, redirect with status existing
-      const token = require('./utils/auth').generateToken({ id: existingUser.id, role: existingUser.role });
+      const token = generateToken({ id: existingUser.id, role: existingUser.role });
       res.redirect(`${redirectUrl}?status=existing&token=${token}`);
     } else {
       // New user, redirect with status new and their info
@@ -124,8 +129,7 @@ const PORT = process.env.PORT || 5000;
 // Initialize DB before starting the server
 initDB().then(async () => {
   try {
-    const db = require('./config/database').getDB();
-    const { hashPassword } = require('./utils/auth');
+    const db = getDB();
 
     const adminEmail = process.env.ADMIN_EMAIL;
 

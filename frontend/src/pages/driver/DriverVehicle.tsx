@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonBackButton, IonCard, IonCardContent, IonIcon, IonBadge, IonList,
   IonItem, IonLabel, IonButton, IonGrid, IonRow, IonCol, IonModal,
-  IonInput, IonToast, IonTextarea
+  IonInput, IonToast, IonTextarea, IonSpinner
 } from '@ionic/react';
 import {
   carOutline, cardOutline, shieldCheckmarkOutline, timeOutline,
@@ -11,42 +11,104 @@ import {
   createOutline, closeOutline, calendarOutline, colorPaletteOutline,
   speedometerOutline, peopleOutline
 } from 'ionicons/icons';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import './DriverVehicle.css';
 
+interface Vehicle {
+  model: string;
+  plate: string;
+  color: string;
+  year: string;
+  vehicleType: string;
+  status: string;
+}
+
 const DriverVehicle: React.FC = () => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const [vehicle, setVehicle] = useState({
-    model: 'Toyota Prius',
-    plate: 'UBA 123A',
-    color: 'White',
-    year: '2020',
-    seats: 4,
-    type: 'Sedan',
-    status: 'active',
-    mileage: '45,000 km',
-    lastService: 'June 2026',
-    insuranceExpiry: 'March 2027',
-    permitExpiry: 'December 2026',
+  const [vehicle, setVehicle] = useState<Vehicle>({
+    model: '', plate: '', color: '', year: '', vehicleType: 'boda', status: 'pending',
   });
-
   const [editForm, setEditForm] = useState({ ...vehicle });
 
-  const handleSave = () => {
-    setVehicle({ ...editForm });
-    setShowEdit(false);
-    setToastMsg('Vehicle details updated successfully! ✅');
-    setShowToast(true);
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/drivers/profile');
+        const profile = res.data?.profile || {};
+        const loaded: Vehicle = {
+          model: profile.model || '',
+          plate: profile.plate || '',
+          color: profile.color || '',
+          year: profile.year || '',
+          vehicleType: profile.vehicleType || 'boda',
+          status: res.data?.user?.verificationStatus === 'approved' ? 'active' : 'pending',
+        };
+        setVehicle(loaded);
+        setEditForm(loaded);
+      } catch (e) {
+        console.error('Failed to load vehicle profile:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    if (!editForm.model.trim() || !editForm.plate.trim()) {
+      setToastMsg('Model and plate number are required');
+      setShowToast(true);
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.put('/drivers/vehicle', {
+        model: editForm.model.trim(),
+        plate: editForm.plate.trim(),
+        color: editForm.color.trim(),
+        year: editForm.year.trim(),
+      });
+      setVehicle({ ...editForm });
+      setShowEdit(false);
+      setToastMsg('Vehicle details updated successfully! ✅');
+      setShowToast(true);
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Failed to update vehicle details');
+      setShowToast(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
+  // Document expiry tracking isn't implemented yet on the backend — the
+  // permit itself (uploaded at registration) is verified by an admin, but we
+  // don't have per-document expiry dates to show here honestly.
   const documents = [
-    { name: 'Driving Permit', icon: cardOutline, expiry: vehicle.permitExpiry, status: 'valid', color: '#2D6A4F' },
-    { name: 'Vehicle Insurance', icon: shieldCheckmarkOutline, expiry: vehicle.insuranceExpiry, status: 'valid', color: '#2D6A4F' },
-    { name: 'Vehicle Registration', icon: documentTextOutline, expiry: 'June 2027', status: 'valid', color: '#2D6A4F' },
-    { name: 'Roadworthiness Certificate', icon: checkmarkCircleOutline, expiry: 'September 2026', status: 'expiring', color: '#FFC107' },
+    { name: 'Driving Permit', icon: cardOutline, status: vehicle.status === 'active' ? 'valid' : 'pending', color: vehicle.status === 'active' ? '#2D6A4F' : '#FFC107' },
+    { name: 'Vehicle Registration', icon: documentTextOutline, status: vehicle.status === 'active' ? 'valid' : 'pending', color: vehicle.status === 'active' ? '#2D6A4F' : '#FFC107' },
   ];
+
+  if (loading) {
+    return (
+      <IonPage>
+        <IonHeader className="ion-no-border">
+          <IonToolbar>
+            <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" /></IonButtons>
+            <IonTitle>Vehicle & Safety</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent style={{ '--background': '#080c14' } as any}>
+          <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><IonSpinner name="crescent" color="warning" /></div>
+        </IonContent>
+      </IonPage>
+    );
+  }
 
   return (
     <IonPage>
@@ -86,33 +148,19 @@ const DriverVehicle: React.FC = () => {
           <IonCard style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', borderRadius: 18, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 16 }}>
             <IonCardContent style={{ textAlign: 'center', padding: 24 }}>
               <div style={{ fontSize: 48, marginBottom: 10 }}>🚗</div>
-              <h2 style={{ color: '#fff', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>{vehicle.model}</h2>
-              <IonBadge color="warning" style={{ fontSize: 13, padding: '6px 14px', marginTop: 6 }}>{vehicle.plate}</IonBadge>
-              
+              <h2 style={{ color: '#fff', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>{vehicle.model || 'No vehicle on file'}</h2>
+              <IonBadge color="warning" style={{ fontSize: 13, padding: '6px 14px', marginTop: 6 }}>{vehicle.plate || '—'}</IonBadge>
+
               <IonGrid style={{ marginTop: 16 }}>
                 <IonRow>
-                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Color</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.color}</div></IonCol>
-                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Year</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.year}</div></IonCol>
-                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Seats</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.seats}</div></IonCol>
-                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Type</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.type}</div></IonCol>
+                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Color</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.color || '—'}</div></IonCol>
+                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Year</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.year || '—'}</div></IonCol>
+                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Type</div><div style={{ color: '#fff', fontSize: 13, textTransform: 'capitalize' }}>{vehicle.vehicleType}</div></IonCol>
+                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Status</div><div style={{ color: '#fff', fontSize: 13, textTransform: 'capitalize' }}>{vehicle.status}</div></IonCol>
                 </IonRow>
               </IonGrid>
             </IonCardContent>
           </IonCard>
-
-          {/* Vehicle Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-              <IonIcon icon={speedometerOutline} style={{ color: '#4da6ff', fontSize: 20, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 14, fontWeight: 600, margin: 2 }}>{vehicle.mileage}</p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Mileage</span>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-              <IonIcon icon={calendarOutline} style={{ color: '#FFC107', fontSize: 20, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 14, fontWeight: 600, margin: 2 }}>{vehicle.lastService}</p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Last Service</span>
-            </div>
-          </div>
 
           {/* Documents */}
           <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>📄 Documents</h3>
@@ -126,12 +174,13 @@ const DriverVehicle: React.FC = () => {
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ color: '#fff', fontSize: 13 }}>{doc.name}</span>
-                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>Expires: {doc.expiry}</p>
+                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>
+                  {doc.status === 'valid' ? 'Verified by admin' : 'Awaiting admin review'}
+                </p>
               </div>
               <IonBadge color={doc.status === 'valid' ? 'success' : 'warning'} style={{ fontSize: 9 }}>
                 {doc.status}
               </IonBadge>
-              <IonIcon icon={cameraOutline} style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16 }} />
             </div>
           ))}
 
@@ -165,8 +214,8 @@ const DriverVehicle: React.FC = () => {
               <IonLabel position="stacked">Year</IonLabel>
               <IonInput value={editForm.year} onIonInput={e => setEditForm({ ...editForm, year: e.detail.value! })} />
             </IonItem>
-            <IonButton expand="block" onClick={handleSave} style={{ '--background': '#FF6B35', '--border-radius': 12, marginTop: 16, fontWeight: 700 } as any}>
-              Save Changes
+            <IonButton expand="block" onClick={handleSave} disabled={saving} style={{ '--background': '#FF6B35', '--border-radius': 12, marginTop: 16, fontWeight: 700 } as any}>
+              {saving ? <IonSpinner name="crescent" /> : 'Save Changes'}
             </IonButton>
           </div>
         </IonModal>
