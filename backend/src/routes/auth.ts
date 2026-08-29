@@ -4,6 +4,7 @@ import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 import { notificationService } from '../services/notificationService';
 import { authLimiter, smsLimiter } from '../middleware/rateLimit';
+import { normalizeVehicleType } from '../utils/fare';
 
 const router = express.Router();
 
@@ -237,7 +238,7 @@ router.post('/google-register', async (req: Request, res: Response) => {
 // ─── UPLOAD DRIVER DOCUMENTS ─────────────────────────
 router.post('/upload-documents', async (req: Request, res: Response) => {
   try {
-    const { userId, nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle, vehicleType } = req.body;
+    const { userId, nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle, vehicleType, isFemaleDriver } = req.body;
     const db = getDB();
 
     const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
@@ -259,6 +260,11 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Vehicle type is required.' });
     }
 
+    // Store the canonical vehicle type ("standard" from the onboarding form
+    // and "go" from the rider app both mean "economy") so ride matching and
+    // fare calculation always agree with what's on file for this driver.
+    const normalizedVehicleType = normalizeVehicleType(vehicleType);
+
     const driverDocs = JSON.stringify({
       nationalId,
       drivingLicense,
@@ -269,8 +275,15 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       selfieWithVehicle
     });
 
-    // 1. Update user verification status and docs
-    await db.run('UPDATE users SET driverDocs = ?, verificationStatus = ? WHERE id = ?', [driverDocs, 'pending', userId]);
+    // 1. Update user verification status and docs (isFemaleDriver is now
+    // persisted server-side — previously it was only ever written to
+    // localStorage on the submitting device, so it silently reset to false
+    // for the driver on every fresh login/new device and was never visible
+    // to admins reviewing the driver in AdminApprovals).
+    await db.run(
+      'UPDATE users SET driverDocs = ?, verificationStatus = ?, isFemaleDriver = ? WHERE id = ?',
+      [driverDocs, 'pending', !!isFemaleDriver, userId]
+    );
 
     // 2. Upsert driver profile with vehicle type, plate, model and color
     await db.run(
@@ -278,7 +291,7 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
        VALUES (?, ?, ?, ?, ?)
        ON CONFLICT (userId) DO UPDATE SET vehicleType = EXCLUDED.vehicleType, plate = EXCLUDED.plate,
          model = EXCLUDED.model, color = EXCLUDED.color`,
-      [userId, vehicleType, vehiclePlate.toUpperCase(), vehicleModel || null, vehicleColor || null]
+      [userId, normalizedVehicleType, vehiclePlate.toUpperCase(), vehicleModel || null, vehicleColor || null]
     );
 
     res.json({
@@ -641,10 +654,19 @@ router.get('/admin/live-locations', authenticate, authorize(['admin']), async (r
 });
 
 // ─── ADMIN: GET PENDING DRIVERS ──────────────────────
+// Despite the route name (kept for backward compatibility with the admin
+// frontend), this now returns ALL drivers/motorists, not just pending ones.
+// AdminApprovals.tsx has "All / Pending / Approved / Rejected" filter tabs
+// that filter this list client-side by verificationStatus — previously the
+// query hardcoded verificationStatus = 'pending', so every tab except
+// "Pending" silently showed zero drivers.
 router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
   try {
     const db = getDB();
-    const drivers = await db.all('SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ?', ['driver', 'motorist', 'pending']);
+    const drivers = await db.all(
+      'SELECT * FROM users WHERE (role = ? OR role = ?) ORDER BY createdAt DESC',
+      ['driver', 'motorist']
+    );
     res.json({ count: drivers.length, drivers: drivers.map(sanitizeUser) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch pending drivers.' });

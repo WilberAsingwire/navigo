@@ -285,6 +285,14 @@ export const initDB = async () => {
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='driver_profiles' AND lower(column_name)='year') THEN
             ALTER TABLE driver_profiles ADD COLUMN year TEXT;
           END IF;
+
+          -- The "Female Driver / Women Preferred" toggle on the driver
+          -- documents form used to only write to localStorage, so it was
+          -- lost on every fresh login/device and never actually visible to
+          -- admins or usable for real "Women Preferred" matching.
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='isfemaledriver') THEN
+            ALTER TABLE users ADD COLUMN isFemaleDriver BOOLEAN DEFAULT FALSE;
+          END IF;
         END $$;
       `);
       console.log('✅ Database tables initialized');

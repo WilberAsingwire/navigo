@@ -15,6 +15,10 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import './DriverVehicle.css';
 
+const VEHICLE_TYPE_LABELS: Record<string, string> = {
+  boda: 'Boda Boda', go: 'NAVIGO Go', economy: 'NAVIGO Go', standard: 'NAVIGO Go', comfort: 'Comfort', xl: 'XL',
+};
+
 interface Vehicle {
   model: string;
   plate: string;
@@ -155,7 +159,7 @@ const DriverVehicle: React.FC = () => {
                 <IonRow>
                   <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Color</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.color || '—'}</div></IonCol>
                   <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Year</div><div style={{ color: '#fff', fontSize: 13 }}>{vehicle.year || '—'}</div></IonCol>
-                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Type</div><div style={{ color: '#fff', fontSize: 13, textTransform: 'capitalize' }}>{vehicle.vehicleType}</div></IonCol>
+                  <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Type</div><div style={{ color: '#fff', fontSize: 13 }}>{VEHICLE_TYPE_LABELS[vehicle.vehicleType] || vehicle.vehicleType}</div></IonCol>
                   <IonCol size="6"><div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Status</div><div style={{ color: '#fff', fontSize: 13, textTransform: 'capitalize' }}>{vehicle.status}</div></IonCol>
                 </IonRow>
               </IonGrid>

@@ -13,7 +13,6 @@ import {
 } from 'ionicons/icons';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import api from '../../services/api';
-import BodaSafeScore from '../../components/BodaSafeBadges';
 import './AdminApprovals.css';
 
 interface Driver {
@@ -193,7 +192,11 @@ const AdminApprovals: React.FC = () => {
                 <h2 style={{color: '#fff', margin: 0}}>Driver Details</h2>
                 <IonButton fill="clear" onClick={() => setSelectedDriver(null)}><IonIcon icon={closeOutline} style={{color: '#fff', fontSize: 24}} /></IonButton>
               </div>
-              <BodaSafeScore badges={['helmet','sanitized','idverified']} rating={4.5} totalRides={50} />
+              {/* A "Boda Safe Score" with a hardcoded 4.5 rating / 50 rides was
+                  shown here for every single pending driver regardless of
+                  their actual (nonexistent, since they haven't driven yet)
+                  history — removed rather than fabricate trust signals for
+                  a driver an admin hasn't approved yet. */}
               <div style={{background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: 16, marginBottom: 16}}>
                 <h3 style={{color: '#fff', margin: '0 0 12px'}}>{selectedDriver.fullName} {selectedDriver.isFemaleDriver && '👩'}</h3>
                 <p style={{color: '#D1D5DB'}}>📞 {selectedDriver.phone}</p>

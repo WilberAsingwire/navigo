@@ -16,23 +16,27 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import './DriverDocuments.css';
 
+// ids must match the canonical vehicle types used everywhere else in the
+// app (fare.ts's normalizeVehicleType, the rider's ride-option picker, and
+// ride dispatch matching) — this previously used 'standard' here only,
+// which the backend now normalizes but is clearer to keep consistent.
 const VEHICLE_TYPES = [
   { id: 'boda', label: 'Boda Boda', icon: bicycleOutline, desc: 'Fast & affordable' },
-  { id: 'standard', label: 'NAVIGO Go', icon: carOutline, desc: 'Everyday rides' },
+  { id: 'economy', label: 'NAVIGO Go', icon: carOutline, desc: 'Everyday rides' },
   { id: 'comfort', label: 'Comfort', icon: starOutline, desc: 'Premium cars' },
   { id: 'xl', label: 'XL', icon: diamondOutline, desc: 'Spacious for 6+' },
 ];
 
 const DriverDocuments: React.FC = () => {
   const history = useHistory();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [nationalId, setNationalId] = useState('');
   const [drivingLicense, setDrivingLicense] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
   const [vehicleColor, setVehicleColor] = useState('');
-  const [vehicleType, setVehicleType] = useState('standard');
+  const [vehicleType, setVehicleType] = useState('economy');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -66,10 +70,11 @@ const DriverDocuments: React.FC = () => {
       setSuccess('Documents submitted! Admin will review within 24-48 hours.');
       setShowToast(true);
 
-      const savedUser = JSON.parse(localStorage.getItem('navigo_user') || '{}');
-      savedUser.verificationStatus = 'pending';
-      savedUser.isFemaleDriver = isFemaleDriver;
-      localStorage.setItem('navigo_user', JSON.stringify(savedUser));
+      // Go through AuthContext's updateUser (keeps context state and
+      // localStorage in sync) instead of hand-editing localStorage directly
+      // — isFemaleDriver is now also persisted server-side by
+      // /auth/upload-documents, so it survives a fresh login on any device.
+      updateUser({ verificationStatus: 'pending', isFemaleDriver });
 
       setTimeout(() => history.push('/driver/home'), 2000);
     } catch (err: any) {

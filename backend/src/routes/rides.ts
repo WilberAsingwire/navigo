@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
-import { fareQuote, clampOffer } from '../utils/fare';
+import { fareQuote, clampOffer, normalizeVehicleType } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
 
@@ -44,9 +44,15 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
       return res.status(400).json({ message: 'Missing required ride details.' });
     }
 
+    // Normalize once so every downstream consumer (fare calc, driver
+    // matching in socketHandler, earnings/history displays) agrees on the
+    // vehicle type — the rider app sends "go" for economy, older driver
+    // records use "standard"; all must resolve to the same canonical value.
+    const normalizedRideType = normalizeVehicleType(rideType);
+
     // Professional Fare Calculation
-    const fareRecommended = fareQuote(rideType, distanceKm || 0, durationMin || 0);
-    const finalFareOffered = clampOffer(rideType, distanceKm || 0, durationMin || 0, fareOffered || fareRecommended);
+    const fareRecommended = fareQuote(normalizedRideType, distanceKm || 0, durationMin || 0);
+    const finalFareOffered = clampOffer(normalizedRideType, distanceKm || 0, durationMin || 0, fareOffered || fareRecommended);
 
     // Server-side balance validation for wallet payments
     if (paymentMethod === 'wallet') {
@@ -72,7 +78,7 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
         rideId,
         userId,
         serviceType,
-        rideType,
+        normalizedRideType,
         'requested',
         paymentMethod || 'cash',
         pickup.address, pickup.lat, pickup.lng,

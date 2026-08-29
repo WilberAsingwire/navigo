@@ -6,15 +6,15 @@ import {
 } from '@ionic/react';
 import {
   carOutline, starOutline, leafOutline, timeOutline, walletOutline,
-  documentTextOutline, peopleOutline, trendingUpOutline, mapOutline,
-  chevronDownCircleOutline, settingsOutline, personOutline,
+  documentTextOutline, trendingUpOutline,
+  chevronDownCircleOutline, helpCircleOutline,
   checkmarkCircleOutline, cashOutline
 } from 'ionicons/icons';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
-import BodaSafeScore from '../../components/BodaSafeBadges';
+import DriverTrustCard from '../../components/BodaSafeBadges';
 import LoyaltyCard from '../../components/LoyaltyCard';
 import './DriverHome.css';
 
@@ -125,7 +125,7 @@ const DriverHome: React.FC = () => {
         <IonToolbar className="driver-toolbar">
           <div className="header-content">
             <div className="user-profile-group">
-              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => ionRouter.push('/driver/vehicle')}>
+              <IonAvatar style={{ width: 36, height: 36, cursor: 'pointer' }} onClick={() => ionRouter.push('/driver/profile')}>
                 <InitialsAvatar name={user?.fullName || 'D'} size={36} />
               </IonAvatar>
               <div>
@@ -166,8 +166,8 @@ const DriverHome: React.FC = () => {
             </div>
           </div>
 
-          {/* Boda Safe Score */}
-          <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={profileStats.rating} totalRides={profileStats.totalTrips} />
+          {/* Driver Trust Status — real, verifiable data only (see BodaSafeBadges.tsx) */}
+          <DriverTrustCard isVerified={user?.verificationStatus === 'approved'} rating={profileStats.rating} totalRides={profileStats.totalTrips} />
 
           {/* Zawadi Loyalty */}
           <LoyaltyCard ridesCount={profileStats.totalTrips} />
@@ -179,7 +179,11 @@ const DriverHome: React.FC = () => {
               { label: 'Earnings', icon: walletOutline, path: '/driver/earnings', color: '#00e676' },
               { label: 'Vehicle', icon: carOutline, path: '/driver/vehicle', color: '#4da6ff' },
               { label: 'Documents', icon: documentTextOutline, path: '/driver/documents', color: '#b47fff' },
-              { label: 'Live Map', icon: mapOutline, path: '/admin/map', color: '#FF6B35' },
+              // 'Live Map' used to link to /admin/map, an admin-only route —
+              // any driver tapping it was immediately bounced back to
+              // /driver/home by ProtectedContent's role check. Support is a
+              // page drivers can actually use.
+              { label: 'Support', icon: helpCircleOutline, path: '/driver/support', color: '#FF6B35' },
             ].map(action => (
               <div key={action.label} onClick={() => ionRouter.push(action.path)} className="action-card">
                 <IonIcon icon={action.icon} style={{ color: action.color }} />

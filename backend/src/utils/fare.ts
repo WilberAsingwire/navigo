@@ -98,8 +98,22 @@ export const COMMISSION_RATE: number = Math.min(
 
 export const FREE_FIRST_KM = 0.5;
 
+/**
+ * Canonical vehicle-type ids are "boda" | "economy" | "comfort" | "xl".
+ * A few historical synonyms exist across the app/DB ("go" from the rider's
+ * ride-option picker, "standard" from an older driver-onboarding form) —
+ * normalize them all here so fare calculation AND driver/ride matching
+ * always agree on what a given driver/ride actually is.
+ */
+export function normalizeVehicleType(type?: string | null): VehicleType {
+  const t = (type || "").toLowerCase().trim();
+  if (t === "go" || t === "standard" || t === "economy") return "economy";
+  if (t === "boda" || t === "comfort" || t === "xl") return t as VehicleType;
+  return "economy";
+}
+
 export function getVehicle(type: string): VehicleSpec {
-  const normalizedType = type === "go" ? "economy" : type;
+  const normalizedType = normalizeVehicleType(type);
   return VEHICLES.find((v) => v.type === normalizedType) ?? VEHICLES[0];
 }
 

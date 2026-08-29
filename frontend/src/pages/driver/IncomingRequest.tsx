@@ -35,6 +35,32 @@ const IncomingRequest: React.FC = () => {
 
     const socket = socketService.connect(user.id);
 
+    // If the ride was claimed by another driver (or any other server-side
+    // rejection) between us pressing Accept and the server processing it,
+    // the backend emits a plain 'error' event — without listening for it we
+    // used to optimistically show "Ride accepted!" and navigate to the
+    // active-ride screen regardless, leaving the driver stuck on a screen
+    // with no actual ride.
+    const onSocketError = (err: { message?: string }) => {
+      setIsAccepting(false);
+      presentToast({ message: err?.message || 'Could not accept this ride — it may have been taken.', color: 'danger', duration: 3500 });
+      setRequestData(null);
+      history.replace('/driver/home');
+    };
+    socket.on('error', onSocketError);
+
+    // Navigate only once the server actually confirms acceptance —
+    // previously handleAccept() below optimistically pushed to the
+    // active-ride screen 800ms after emitting 'accept-ride' regardless of
+    // whether the server accepted it, so a rejected/expired ride still sent
+    // the driver to a trip screen with nothing to show.
+    const onRideAccepted = () => {
+      setIsAccepting(false);
+      presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
+      history.push('/driver/active-ride');
+    };
+    socket.on('ride-accepted', onRideAccepted);
+
     socket.on('ride-requested', async (data: any) => {
       console.log('🔔 New ride request received!', data);
       // Start (or restart) the decision timer only when a request actually arrives
@@ -61,7 +87,11 @@ const IncomingRequest: React.FC = () => {
       }
     });
 
-    return () => socket.off('ride-requested');
+    return () => {
+      socket.off('ride-requested');
+      socket.off('error', onSocketError);
+      socket.off('ride-accepted', onRideAccepted);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -77,6 +107,7 @@ const IncomingRequest: React.FC = () => {
   }, [timeLeft, requestData, history]);
 
   const handleAccept = async () => {
+    if (isAccepting) return;
     setIsAccepting(true);
     try {
       const socket = socketService.getSocket();
@@ -87,10 +118,10 @@ const IncomingRequest: React.FC = () => {
         rideId: requestData?.id,
         riderId: requestData?.userId || requestData?.rider?.id || 'unknown'
       });
-
-      presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
-      setTimeout(() => history.push('/driver/active-ride'), 800);
+      // Navigation/toast now happens in the 'ride-accepted' listener above,
+      // once the server actually confirms the accept.
     } catch (e: any) {
+      setIsAccepting(false);
       presentToast({ message: 'Ride no longer available', color: 'danger', duration: 3000 });
       history.replace('/driver/home');
     }

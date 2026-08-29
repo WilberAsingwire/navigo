@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
+import { normalizeVehicleType } from '../utils/fare';
 
 let ioInstance: Server | null = null;
 
@@ -101,26 +102,38 @@ export const setupSocketHandlers = (io: Server) => {
       const { rideId } = data;
       const db = getDB();
 
-      // Find approved, online, and available drivers
+      // Only dispatch to drivers whose registered vehicle actually matches
+      // what the rider booked — previously every online+available driver
+      // (any vehicle type) received every request, so a boda rider could get
+      // matched with a car driver (and vice versa), and a driver's own
+      // earnings/vehicle screens would show the wrong ride type entirely.
+      const ride = await db.get('SELECT vehicleType FROM rides WHERE id = ?', [rideId]);
+      const requestedType = normalizeVehicleType(ride?.vehicleType);
+
+      // Find approved, online, and available drivers with a matching vehicle type
       const drivers = await db.all(
-        'SELECT id, fullName FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = TRUE AND isAvailable = TRUE',
+        `SELECT u.id, u.fullName, dp.vehicleType FROM users u
+         LEFT JOIN driver_profiles dp ON dp.userId = u.id
+         WHERE (u.role = ? OR u.role = ?) AND u.verificationStatus = ?
+           AND u.isOnline = TRUE AND u.isAvailable = TRUE`,
         ['driver', 'motorist', 'approved']
       );
+      const matchingDrivers = drivers.filter((d: any) => normalizeVehicleType(d.vehicleType) === requestedType);
 
-      if (drivers.length > 0) {
+      if (matchingDrivers.length > 0) {
         // Target only the actually-eligible drivers' personal rooms (joined via
         // the 'join' event) — this used to be io.emit(), which broadcast every
         // ride request (with the rider's id) to *every* connected socket,
         // including riders and offline/unavailable drivers.
-        for (const d of drivers) {
+        for (const d of matchingDrivers) {
           io.to(d.id).emit('ride-requested', {
             rideId,
             riderId: userId,
           });
         }
-        console.log(`🚕 Broadcasted ride ${rideId} to ${drivers.length} drivers`);
+        console.log(`🚕 Broadcasted ${requestedType} ride ${rideId} to ${matchingDrivers.length} matching drivers`);
       } else {
-        socket.emit('no-drivers-found', { message: 'No drivers available at the moment.' });
+        socket.emit('no-drivers-found', { message: 'No drivers available for this vehicle type at the moment.' });
       }
     });
 

@@ -35,6 +35,7 @@ import DriverEarnings from './pages/driver/DriverEarnings';
 import DriverVehicle from './pages/driver/DriverVehicle';
 import DriverDocuments from './pages/driver/DriverDocuments';
 import DriverActiveRide from './pages/driver/DriverActiveRide';
+import DriverProfile from './pages/driver/DriverProfile';
 
 /* --- ADMIN PAGES --- */
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -101,9 +102,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <DriverNotificationProvider>
-          <AppContent />
-        </DriverNotificationProvider>
+        <AppContent />
       </ThemeProvider>
     </AuthProvider>
   );
@@ -129,6 +128,12 @@ const AppContent: React.FC = () => {
     <IonApp>
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <IonReactRouter>
+        {/* Mounted inside the router so accepting a ride from the global
+            incoming-request overlay can actually navigate to the active-ride
+            screen (previously this lived above IonReactRouter with no
+            history/router access, so accepting silently left the driver
+            stuck wherever they were). */}
+        <DriverNotificationProvider>
         <IonRouterOutlet>
 
           {/* Public Routes */}
@@ -160,6 +165,8 @@ const AppContent: React.FC = () => {
           <Route path="/driver/vehicle" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverVehicle} /></ErrorBoundary>} />
           <Route path="/driver/documents" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverDocuments} /></ErrorBoundary>} />
           <Route path="/driver/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverActiveRide} /></ErrorBoundary>} />
+          <Route path="/driver/profile" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={DriverProfile} /></ErrorBoundary>} />
+          <Route path="/driver/support" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver']} component={CustomerSupport} /></ErrorBoundary>} />
 
           {/* Admin Routes */}
           <Route path="/admin/dashboard" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminDashboard} /></ErrorBoundary>} />
@@ -180,6 +187,7 @@ const AppContent: React.FC = () => {
           <Route render={() => <ErrorBoundary><NotFound /></ErrorBoundary>} />
 
         </IonRouterOutlet>
+        </DriverNotificationProvider>
       </IonReactRouter>
     </IonApp>
   );

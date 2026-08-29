@@ -117,7 +117,8 @@ const DriverActiveRide: React.FC = () => {
     };
   }, [ride?.id, ride?.status, user]);
 
-  // Rider cancellations while on this screen
+  // Rider cancellations, plus the server's confirmation/rejection of our own
+  // status changes, while on this screen.
   useEffect(() => {
     if (!user) return;
     const socket = socketService.connect(user.id);
@@ -127,9 +128,38 @@ const DriverActiveRide: React.FC = () => {
       setShowToast(true);
       setRide(prev => (prev ? { ...prev, status: 'cancelled' } : prev));
     };
+
+    // Previously the UI flipped to the new status optimistically the moment
+    // we emitted 'update-status', with no listener for the server's reply —
+    // if the transition was rejected (e.g. stale status, network hiccup) the
+    // driver's screen silently showed a phase the backend never recorded,
+    // and "Complete Trip" always navigated home even on failure.
+    const onStatusChanged = (data: { rideId: string; status: string }) => {
+      if (data.rideId !== rideIdRef.current) return;
+      setSendingStatus(false);
+      setRide(prev => (prev ? { ...prev, status: data.status as Ride['status'] } : prev));
+      if (data.status === 'completed') {
+        setToastMsg('✅ Trip completed — settling payment');
+        setShowToast(true);
+        setTimeout(() => history.push('/driver/home'), 2600);
+      }
+    };
+
+    const onSocketError = (err: { message?: string }) => {
+      setSendingStatus(false);
+      setToastMsg(err?.message || 'That action failed — please try again.');
+      setShowToast(true);
+    };
+
     socket.on('ride-cancelled', onCancelled);
-    return () => socket.off('ride-cancelled', onCancelled);
-  }, [user]);
+    socket.on('status-changed', onStatusChanged);
+    socket.on('error', onSocketError);
+    return () => {
+      socket.off('ride-cancelled', onCancelled);
+      socket.off('status-changed', onStatusChanged);
+      socket.off('error', onSocketError);
+    };
+  }, [user, history]);
 
   const sendStatus = (status: 'arrived' | 'ongoing' | 'completed') => {
     if (!ride || sendingStatus) return;
@@ -141,14 +171,8 @@ const DriverActiveRide: React.FC = () => {
     }
     setSendingStatus(true);
     socket.emit('update-status', { rideId: ride.id, status });
-    setRide(prev => (prev ? { ...prev, status } : prev));
-    setSendingStatus(false);
-
-    if (status === 'completed') {
-      setToastMsg('✅ Trip completed — settling payment');
-      setShowToast(true);
-      setTimeout(() => history.push('/driver/home'), 2600);
-    }
+    // The UI now updates only once the server confirms via 'status-changed'
+    // (see the listener above) — not optimistically here.
   };
 
   const openNavigation = () => {

@@ -1,160 +1,92 @@
 import React from 'react';
-import { IonBadge, IonIcon, IonChip, IonLabel, IonProgressBar } from '@ionic/react';
-import { 
-  shieldCheckmarkOutline, starOutline, waterOutline, 
-  cardOutline, schoolOutline, ribbonOutline, 
-  checkmarkCircleOutline, lockClosedOutline 
+import { IonIcon, IonProgressBar } from '@ionic/react';
+import {
+  shieldCheckmarkOutline, starOutline,
+  cardOutline, checkmarkCircleOutline, timeOutline
 } from 'ionicons/icons';
 
-interface BadgeProps {
-  type: 'helmet' | 'sanitized' | 'toprated' | 'idverified' | 'trained';
-  earned: boolean;
-  count?: number;
-}
-
-const badgeConfig = {
-  helmet: { label: 'Helmet Verified', icon: shieldCheckmarkOutline, color: '#4da6ff', desc: 'Uses approved safety helmet' },
-  sanitized: { label: 'Sanitized', icon: waterOutline, color: '#2D6A4F', desc: 'Vehicle cleaned regularly' },
-  toprated: { label: 'Top Rated', icon: starOutline, color: '#FFC107', desc: '4.5+ average rating' },
-  idverified: { label: 'ID Verified', icon: cardOutline, color: '#00e676', desc: 'Government ID confirmed' },
-  trained: { label: 'Safety Trained', icon: schoolOutline, color: '#b47fff', desc: 'Completed safety course' },
-};
-
-const BodaSafeBadge: React.FC<BadgeProps> = ({ type, earned, count }) => {
-  const config = badgeConfig[type];
-  
-  return (
-    <div style={{ 
-      display: 'flex', alignItems: 'center', gap: 8, 
-      padding: '8px 12px', borderRadius: 10,
-      background: earned ? `${config.color}18` : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${earned ? config.color + '40' : 'rgba(255,255,255,0.05)'}`,
-      opacity: earned ? 1 : 0.5,
-      transition: 'all 0.3s ease',
-      flex: '1 1 calc(50% - 8px)',
-      minWidth: 140
-    }}>
-      <div style={{
-        width: 36, height: 36, borderRadius: '50%',
-        background: earned ? `${config.color}30` : 'rgba(255,255,255,0.05)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0
-      }}>
-        <IonIcon icon={earned ? checkmarkCircleOutline : config.icon} style={{ fontSize: 18, color: earned ? config.color : 'rgba(255,255,255,0.3)' }} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: earned ? config.color : 'rgba(255,255,255,0.4)' }}>
-          {config.label}
-        </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-          {earned ? 'Verified ✓' : 'Pending'}
-        </div>
-      </div>
-      {count !== undefined && (
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>+{count}</span>
-      )}
-    </div>
-  );
-};
-
-interface BodaSafeScoreProps {
-  badges: string[];
+/**
+ * Trust indicators shown here MUST be backed by real data the backend can
+ * verify — this component previously showed "Helmet Verified", "Sanitized"
+ * and "Safety Trained" badges as always-earned for every single driver
+ * (the props were hardcoded ['helmet','sanitized','idverified','trained']
+ * at every call site), which is fabricated trust signaling with no
+ * verification behind it. We only show things that are actually true:
+ *   - ID Verified: the driver's account has verificationStatus === 'approved'
+ *     (an admin actually reviewed their documents — see AdminApprovals.tsx)
+ *   - Rating: the driver's real average rating from completed rides
+ *   - Completed Rides: the driver's real totalTrips count
+ * If NAVIGO adds real helmet-compliance or safety-training checks later,
+ * badges for those can be reintroduced backed by an actual data source.
+ */
+interface DriverTrustCardProps {
+  isVerified: boolean;
   rating: number;
   totalRides: number;
-  completedRides?: number;
-  joinDate?: string;
 }
 
-const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({ 
-  badges, rating, totalRides, 
-  completedRides = totalRides, 
-  joinDate = '2024' 
-}) => {
-  const earnedBadges = badges.length;
-  const maxBadges = 5;
-  const score = Math.min(100, Math.round((earnedBadges / maxBadges * 40) + (rating / 5 * 40) + Math.min(totalRides / 500 * 20, 20)));
-  
-  const getLevel = () => {
-    if (score >= 90) return { name: 'Elite', color: '#00e676', emoji: '💎' };
-    if (score >= 75) return { name: 'Diamond', color: '#4da6ff', emoji: '🔷' };
-    if (score >= 60) return { name: 'Gold', color: '#FFC107', emoji: '🥇' };
-    if (score >= 40) return { name: 'Silver', color: '#c0c0c0', emoji: '🥈' };
-    if (score >= 20) return { name: 'Bronze', color: '#cd7f32', emoji: '🥉' };
-    return { name: 'New', color: '#ff5252', emoji: '🔴' };
-  };
-
-  const level = getLevel();
+const DriverTrustCard: React.FC<DriverTrustCardProps> = ({ isVerified, rating, totalRides }) => {
+  const ratingOk = rating >= 4.5;
 
   return (
-    <div style={{ 
+    <div style={{
       background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
       borderRadius: 20,
       padding: 20,
       marginBottom: 16,
       border: '1px solid rgba(255,255,255,0.08)'
     }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: 26, color: isVerified ? '#00e676' : '#94A3B8' }} />
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 28 }}>{level.emoji}</span>
-            <div>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: 16, fontWeight: 700 }}>Boda Safe™ Score</h3>
-              <span style={{ color: level.color, fontSize: 12, fontWeight: 600 }}>{level.name} Driver</span>
-            </div>
+          <h3 style={{ color: '#fff', margin: 0, fontSize: 15, fontWeight: 700 }}>Driver Trust Status</h3>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>Based on verified account data only</span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {/* ID Verified — real, backed by admin approval */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10,
+          background: isVerified ? 'rgba(0,230,118,0.1)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${isVerified ? 'rgba(0,230,118,0.25)' : 'rgba(255,255,255,0.05)'}`,
+          flex: '1 1 calc(50% - 8px)', minWidth: 140
+        }}>
+          <IonIcon icon={isVerified ? checkmarkCircleOutline : cardOutline} style={{ fontSize: 18, color: isVerified ? '#00e676' : 'rgba(255,255,255,0.35)' }} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: isVerified ? '#00e676' : 'rgba(255,255,255,0.4)' }}>ID Verified</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{isVerified ? 'Approved by NAVIGO admin' : 'Awaiting admin review'}</div>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 36, fontWeight: 800, color: level.color, lineHeight: 1 }}>{score}%</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Safety Score</div>
+
+        {/* Top Rated — real, from actual rider ratings */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10,
+          background: ratingOk ? 'rgba(255,193,7,0.1)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${ratingOk ? 'rgba(255,193,7,0.25)' : 'rgba(255,255,255,0.05)'}`,
+          flex: '1 1 calc(50% - 8px)', minWidth: 140
+        }}>
+          <IonIcon icon={starOutline} style={{ fontSize: 18, color: ratingOk ? '#FFC107' : 'rgba(255,255,255,0.35)' }} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: ratingOk ? '#FFC107' : 'rgba(255,255,255,0.4)' }}>Top Rated</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{ratingOk ? '4.5+ average rating' : `${rating.toFixed(1)} avg so far`}</div>
+          </div>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <IonProgressBar 
-        value={score / 100} 
-        style={{ height: 8, borderRadius: 4, marginBottom: 16 }}
-        color={score >= 60 ? 'success' : score >= 40 ? 'warning' : 'danger'}
-      />
-      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '0 0 16px', textAlign: 'center' }}>
-        {level.name === 'Elite' ? '🏆 Maximum safety level achieved!' : 
-         `${Math.max(0, 90 - score)}% to next level • ${maxBadges - earnedBadges} more badges needed`}
-      </p>
-
-      {/* Badges Grid */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-        <BodaSafeBadge type="helmet" earned={badges.includes('helmet')} />
-        <BodaSafeBadge type="sanitized" earned={badges.includes('sanitized')} />
-        <BodaSafeBadge type="toprated" earned={rating >= 4.5} />
-        <BodaSafeBadge type="idverified" earned={badges.includes('idverified')} />
-        <BodaSafeBadge type="trained" earned={badges.includes('trained')} />
-      </div>
-
-      {/* Stats */}
-      <div style={{ 
-        display: 'flex', justifyContent: 'space-around', 
-        padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.06)',
-        marginTop: 4
-      }}>
+      {/* Real stats */}
+      <div style={{ display: 'flex', justifyContent: 'space-around', padding: '14px 0 2px', borderTop: '1px solid rgba(255,255,255,0.06)', marginTop: 14 }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{completedRides}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Safe Rides</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{totalRides}</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Completed Rides</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{rating.toFixed(1)}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Rating</div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{earnedBadges}/{maxBadges}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Badges</div>
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{joinDate}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Member Since</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{rating.toFixed(1)} ⭐</div>
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Average Rating</div>
         </div>
       </div>
     </div>
   );
 };
 
-export default BodaSafeScore;
+export default DriverTrustCard;

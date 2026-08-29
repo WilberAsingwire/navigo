@@ -15,6 +15,7 @@ import {
 } from 'ionicons/icons';
 import api from '../../services/api';
 import EmptyState from '../../components/EmptyState';
+import { useAuth } from '../../context/AuthContext';
 import './CustomerSupport.css';
 
 interface TicketReply { from: string; text: string; time: string; }
@@ -30,6 +31,8 @@ interface Ticket {
 
 const RiderSupport: React.FC = () => {
   const history = useHistory();
+  const { user } = useAuth();
+  const homePath = user?.role === 'driver' ? '/driver/home' : '/customer/home';
   const [segment, setSegment] = useState<'faq' | 'report' | 'contact' | 'tickets'>('faq');
   const [reportType, setReportType] = useState('');
   const [reportDescription, setReportDescription] = useState('');
@@ -92,7 +95,7 @@ const RiderSupport: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref={homePath} style={{color: '#fff'}} /></IonButtons>
           <IonTitle style={{color: '#fff'}}>Support Center</IonTitle>
         </IonToolbar>
         <IonToolbar style={{'--background': '#080c14'} as any}>
