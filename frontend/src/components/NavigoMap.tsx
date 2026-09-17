@@ -8,7 +8,7 @@ import goNew from '../assets/vehicles/go-new.png';
 import comfortNew from '../assets/vehicles/comfort-new.png';
 import xlNew from '../assets/vehicles/xl-new.png';
 
-// Fix default icon URLs - use CDN to avoid Vite bundling issues
+// Fix default icon URLs
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -16,7 +16,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-// Premium icons without <style> tags
 const pickupIcon = L.divIcon({
   className: 'navigo-pickup',
   html: `<div class="np-wrap"><div class="np-dot"></div><div class="np-pulse"></div></div>`,
@@ -59,89 +58,6 @@ const isValidLatLng = (ll: { lat: number; lng: number } | null | undefined): boo
   return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 };
 
-// Tile providers - ordered by reliability (least blocked first)
-// OSM is NEVER blocked by adblock, Google is rarely blocked, Carto/Esri often blocked
-const TILE_PROVIDERS = {
-  standard: [
-    {
-      id: 'osm',
-      name: 'OpenStreetMap',
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      subdomains: ['a', 'b', 'c'],
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    },
-    {
-      id: 'google-roadmap',
-      name: 'Google',
-      url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google Maps',
-      maxZoom: 20,
-    },
-    {
-      id: 'esri-street',
-      name: 'Esri Street',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-      subdomains: [],
-      attribution: '&copy; Esri',
-      maxZoom: 19,
-    },
-  ],
-  satellite: [
-    {
-      id: 'esri-sat',
-      name: 'Esri Satellite',
-      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      subdomains: [],
-      attribution: '&copy; Esri, Maxar',
-      maxZoom: 19,
-    },
-    {
-      id: 'google-hybrid',
-      name: 'Google Satellite',
-      url: 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google',
-      maxZoom: 20,
-    },
-    {
-      id: 'osm', // fallback
-      name: 'OpenStreetMap',
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      subdomains: ['a', 'b', 'c'],
-      attribution: '&copy; OpenStreetMap',
-      maxZoom: 19,
-    },
-  ],
-  terrain: [
-    {
-      id: 'opentopo',
-      name: 'OpenTopo',
-      url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-      subdomains: ['a', 'b', 'c'],
-      attribution: '&copy; OpenTopoMap',
-      maxZoom: 17,
-    },
-    {
-      id: 'google-terrain',
-      name: 'Google Terrain',
-      url: 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '&copy; Google',
-      maxZoom: 20,
-    },
-    {
-      id: 'osm',
-      name: 'OSM',
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      subdomains: ['a', 'b', 'c'],
-      attribution: '&copy; OpenStreetMap',
-      maxZoom: 19,
-    },
-  ],
-};
-
 const MapEvents: React.FC<{
   onMapClick?: (ll: [number, number]) => void;
   userLocation: { lat: number; lng: number } | null;
@@ -165,16 +81,13 @@ const MapEvents: React.FC<{
     if (followUser && isValidLatLng(userLocation)) {
       try {
         map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 });
-      } catch (e) {
-        console.warn('flyTo failed:', e);
-      }
+      } catch {}
     }
   }, [userLocation, followUser, map]);
   useEffect(() => {
-    const t = setTimeout(() => {
-      try { map.invalidateSize(); } catch {}
-    }, 200);
-    return () => clearTimeout(t);
+    const t = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 300);
+    const t2 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 1000);
+    return () => { clearTimeout(t); clearTimeout(t2); };
   }, [map]);
   return null;
 };
@@ -199,7 +112,7 @@ interface MapProps {
 
 const NavigoMap: React.FC<MapProps> = ({
   userLocation, destination, driverLocation, driverType = 'go',
-  height = '100%', interactive = true, showRoute = true,
+  height = '100%', showRoute = true,
   showControls = true, followUser = true, showNearbyDrivers = false,
   searchResults = [], onDistanceChange, onMapClick, onPickupDrag, onDestDrag
 }) => {
@@ -210,38 +123,13 @@ const NavigoMap: React.FC<MapProps> = ({
   const [routeDuration, setRouteDuration] = useState(0);
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
-  const [tileProviderIndex, setTileProviderIndex] = useState(0);
-  const [tileErrors, setTileErrors] = useState(0);
 
   const getValidCenter = (): [number, number] => {
     if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
     if (isValidLatLng({ lat: mapCenter[0], lng: mapCenter[1] })) return mapCenter;
     return [0.3476, 32.5825];
   };
-
   const center = getValidCenter();
-
-  // Reset provider index when mapStyle changes
-  useEffect(() => {
-    setTileProviderIndex(0);
-    setTileErrors(0);
-  }, [mapStyle]);
-
-  const providers = TILE_PROVIDERS[mapStyle];
-  const currentProvider = providers[Math.min(tileProviderIndex, providers.length - 1)];
-
-  const handleTileError = useCallback(() => {
-    setTileErrors(prev => {
-      const next = prev + 1;
-      // If more than 3 tile errors, switch provider
-      if (next > 3 && tileProviderIndex < providers.length - 1) {
-        console.warn(`Tiles failing for ${currentProvider.id}, switching to ${providers[tileProviderIndex + 1].id}`);
-        setTileProviderIndex(i => i + 1);
-        return 0;
-      }
-      return next;
-    });
-  }, [tileProviderIndex, providers, currentProvider]);
 
   useEffect(() => {
     if (!showNearbyDrivers || !isValidLatLng(userLocation)) return;
@@ -300,43 +188,61 @@ const NavigoMap: React.FC<MapProps> = ({
     }
   };
 
-  // Determine filter for dark mode - OSM light needs invert, satellite should not be inverted
-  const getTileFilter = () => {
-    if (theme !== 'dark') return 'none';
-    if (mapStyle === 'satellite') return 'brightness(0.9) contrast(1.1) saturate(1.1)';
-    // For standard OSM, invert to dark mode but keep readable
-    if (currentProvider.id === 'osm') return 'invert(0.92) hue-rotate(180deg) brightness(0.9) contrast(1.1) saturate(0.8)';
-    // Google and others
-    return 'brightness(0.9) contrast(1.1)';
+  // TILE URLS - absolutely simplest, no filter that can hide tiles
+  // OSM official is most reliable, no subdomains needed
+  const getTileConfig = () => {
+    if (mapStyle === 'satellite') {
+      return {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: '&copy; Esri &mdash; Source: Esri, Maxar',
+        label: 'Satellite',
+      };
+    }
+    if (mapStyle === 'terrain') {
+      return {
+        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        subdomains: ['a','b','c'],
+        attribution: '&copy; OpenTopoMap',
+        label: 'Terrain',
+      };
+    }
+    // STANDARD - use Carto Light (beautiful, light, works) + OSM as backup via second layer
+    return {
+      url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      subdomains: ['a','b','c','d'],
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      label: 'Standard',
+      fallback: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    };
   };
 
+  const tileCfg = getTileConfig();
+
   return (
-    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#0F172A' }}>
-      {/* Base background that shows if tiles fail - visible grid */}
-      <div style={{ position: 'absolute', inset: 0, background: theme === 'dark' ? '#1E293B' : '#E2E8F0', backgroundImage: `radial-gradient(circle at 1px 1px, ${theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'} 1px, transparent 0)`, backgroundSize: '24px 24px', zIndex: 0 }} />
-      
+    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#E5E7EB' }}>
       <MapContainer
         center={center}
         zoom={15}
-        style={{ height: '100%', width: '100%', zIndex: 1, background: 'transparent' }}
+        style={{ height: '100%', width: '100%', background: '#E5E7EB' }}
         zoomControl={true}
         attributionControl={true}
       >
-        {/* Primary tile layer - with auto fallback on error */}
+        {/* Fallback OSM layer underneath - always visible if primary fails */}
         <TileLayer
-          key={`${mapStyle}-${currentProvider.id}`}
-          url={currentProvider.url}
-          attribution={currentProvider.attribution}
-          subdomains={currentProvider.subdomains.length ? currentProvider.subdomains : undefined}
-          maxZoom={currentProvider.maxZoom}
-          maxNativeZoom={currentProvider.maxZoom}
-          eventHandlers={{
-            tileerror: handleTileError,
-          }}
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; OpenStreetMap'
+          maxZoom={19}
         />
-
-        {/* For satellite, add labels overlay if using Esri satellite */}
-        {mapStyle === 'satellite' && currentProvider.id === 'esri-sat' && (
+        {/* Primary layer on top */}
+        <TileLayer
+          key={mapStyle}
+          url={tileCfg.url}
+          subdomains={(tileCfg as any).subdomains}
+          attribution={tileCfg.attribution}
+          maxZoom={19}
+          maxNativeZoom={19}
+        />
+        {mapStyle === 'satellite' && (
           <TileLayer
             url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
             attribution=""
@@ -349,8 +255,8 @@ const NavigoMap: React.FC<MapProps> = ({
         {isValidLatLng(userLocation) && (
           <>
             <Marker position={[userLocation!.lat, userLocation!.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]); } catch {} } }} />
-            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.04, weight: 1, dashArray: '8 8', opacity: 0.35 }} />
-            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.2, weight: 2 }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.06, weight: 1, dashArray: '8 8', opacity: 0.5 }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.25, weight: 2 }} />
           </>
         )}
 
@@ -388,7 +294,6 @@ const NavigoMap: React.FC<MapProps> = ({
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
-          <div className="map-badge" style={{ fontSize: '9px', opacity: 0.7 }}>{currentProvider.name} {tileErrors > 0 ? `(${tileErrors} err)` : ''}</div>
         </div>
         <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
       </div>
@@ -396,12 +301,13 @@ const NavigoMap: React.FC<MapProps> = ({
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: transparent !important; }
-        .navigo-map-root .leaflet-tile-pane { filter: ${getTileFilter()}; transition: filter 0.3s ease; }
-        .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: #E5E7EB !important; }
+        /* NO FILTER - show real tiles light and clear */
+        .navigo-map-root .leaflet-tile-pane { filter: none !important; }
+        .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
         .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; backdrop-filter: blur(16px); }
         .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
-        .navigo-map-root .leaflet-control-attribution { background: rgba(15,23,42,0.85) !important; color: #94A3B8 !important; font-size: 10px !important; border-radius: 8px 0 0 0 !important; backdrop-filter: blur(8px); }
+        .navigo-map-root .leaflet-control-attribution { background: rgba(255,255,255,0.9) !important; color: #64748B !important; font-size: 10px !important; border-radius: 8px 0 0 0 !important; }
         .navigo-map-root .leaflet-control-attribution a { color: #FF6B35 !important; }
         .np-wrap, .nd-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
         .np-dot { width: 18px; height: 18px; background: #FF6B35; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(255,107,53,0.5); z-index: 2; position: relative; }
@@ -414,19 +320,19 @@ const NavigoMap: React.FC<MapProps> = ({
         .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
         .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
         .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }
-        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .map-badge.live { background: rgba(16,185,129,0.18); color: #10B981; border-color: rgba(16,185,129,0.3); }
-        .map-badge.rt { background: rgba(245,158,11,0.18); color: #F59E0B; }
+        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.15); background: rgba(255,255,255,0.92); color: #0F172A; }
+        .map-badge.live { background: rgba(16,185,129,0.15); color: #059669; border-color: rgba(16,185,129,0.25); }
+        .map-badge.rt { background: rgba(245,158,11,0.15); color: #D97706; }
         .map-badge.route { background: rgba(15,23,42,0.9); color: white; }
-        .map-badge.drv { background: rgba(14,165,233,0.18); color: #0EA5E9; }
+        .map-badge.drv { background: rgba(14,165,233,0.15); color: #0284C7; }
         .bdot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: bdot 1.5s infinite; }
         @keyframes bdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        .map-style-toggle { display: flex; background: rgba(15,23,42,0.9); border: 1px solid rgba(255,255,255,0.12); border-radius: 9999px; padding: 3px; }
-        .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #94A3B8; cursor: pointer; }
+        .map-style-toggle { display: flex; background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+        .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; }
         .ms-btn.active { background: #FF6B35; color: white; }
         .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); }
         .my-location-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
-        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(15,23,42,0.9); border: 1px solid rgba(255,107,53,0.25); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; backdrop-filter: blur(12px); }
+        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.92); border: 1px solid rgba(255,107,53,0.25); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; backdrop-filter: blur(12px); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         @media (max-width: 768px) { .map-controls-top { flex-direction: column; } }
       `}</style>
     </div>
