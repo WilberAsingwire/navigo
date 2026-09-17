@@ -124,15 +124,18 @@ const NavigoMap: React.FC<MapProps> = ({
 
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
-  // Premium tile URLs - Carto is most reliable, no API key needed
+  // Premium tile URLs - OSM direct is most reliable (no subdomains, no {r}), Carto as styled alt
+  // Using tile.openstreetmap.org (no {s}) guarantees load even with adblock/CORS issues
   const tileUrl = mapStyle === 'standard'
     ? theme === 'dark'
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
     : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
   const tileAttribution = mapStyle === 'standard'
-    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+    ? theme === 'dark'
+      ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     : '&copy; Esri &mdash; Source: Esri';
 
   // Fetch route

@@ -460,7 +460,7 @@ const RideRequest: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent>
+      <IonContent fullscreen scrollY={false} className="ride-request-content">
         <div className="booking-page-container">
           <div className="booking-form-panel">
             <button className="back-nav-btn" onClick={() => ionRouter.push('/customer/home')}>
