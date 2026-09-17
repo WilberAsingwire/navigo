@@ -5,17 +5,18 @@ import {
   phonePortraitOutline, mapOutline,
   arrowForwardOutline, callOutline,
   checkmarkCircleOutline, locationOutline,
-  flashOutline, menuOutline, closeOutline
+  flashOutline, menuOutline, closeOutline,
+  timeOutline, peopleOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './Home.css';
 import useHaptic from '../../hooks/useHaptic';
 import ThemeToggle from '../../components/ThemeToggle';
 import Logo from '../../components/Logo';
-import bodaImg from '../../assets/vehicles/boda.png';
-import goImg from '../../assets/vehicles/go.png';
-import comfortImg from '../../assets/vehicles/comfort.png';
-import xlImg from '../../assets/vehicles/xl.png';
+import bodaNew from '../../assets/vehicles/boda-new.png';
+import goNew from '../../assets/vehicles/go-new.png';
+import comfortNew from '../../assets/vehicles/comfort-new.png';
+import xlNew from '../../assets/vehicles/xl-new.png';
 
 const Home: React.FC = () => {
   const history = useHistory();
@@ -27,15 +28,10 @@ const Home: React.FC = () => {
     if (!isMenuOpen) return;
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('.home-nav')) {
-        setIsMenuOpen(false);
-      }
+      if (!target.closest('.home-nav')) setIsMenuOpen(false);
     };
     const t = setTimeout(() => document.addEventListener('click', handleClick), 100);
-    return () => {
-      clearTimeout(t);
-      document.removeEventListener('click', handleClick);
-    };
+    return () => { clearTimeout(t); document.removeEventListener('click', handleClick); };
   }, [isMenuOpen]);
 
   const navigate = (path: string) => {
@@ -48,72 +44,61 @@ const Home: React.FC = () => {
     {
       id: 'boda',
       name: 'Boda Boda',
-      image: bodaImg,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
-          <path d="M8 15h8M10 12h4M12 9v6" strokeLinecap="round" />
-          <path d="M12 15v3M9 18h6" />
-        </svg>
-      ),
+      short: 'Boda',
+      image: bodaNew,
       price: '1,500',
       desc: 'Zip through traffic',
-      features: ['Helmet included', 'Trained rider']
+      eta: '2 min',
+      seats: '1',
+      features: ['Helmet included', 'Boda Safe™ verified'],
+      color: '#FF6B35',
+      popular: true,
     },
     {
       id: 'go',
       name: 'NAVIGO Go',
-      image: goImg,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="7" rx="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          <circle cx="7" cy="18" r="2" />
-          <circle cx="17" cy="18" r="2" />
-        </svg>
-      ),
+      short: 'Go',
+      image: goNew,
       price: '3,000',
       desc: 'Affordable car rides',
-      features: ['4 seats', 'AC comfort']
+      eta: '4 min',
+      seats: '4',
+      features: ['4 seats', 'AC comfort'],
+      color: '#0EA5E9',
     },
     {
       id: 'comfort',
       name: 'Comfort',
-      image: comfortImg,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="10" width="20" height="8" rx="3" />
-          <path d="M6 10V6a6 6 0 0 1 12 0v4" />
-          <circle cx="6" cy="18" r="2" />
-          <circle cx="18" cy="18" r="2" />
-        </svg>
-      ),
+      short: 'Comfort',
+      image: comfortNew,
       price: '5,000',
       desc: 'Premium cars',
-      features: ['4.8+ rated', 'Professional']
+      eta: '5 min',
+      seats: '4',
+      features: ['4.8+ rated', 'Professional drivers'],
+      color: '#111827',
     },
     {
       id: 'xl',
       name: 'NAVIGO XL',
-      image: xlImg,
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="10" width="20" height="8" rx="2" />
-          <path d="M4 10V6a6 6 0 0 1 12 0v4" />
-          <circle cx="6" cy="18" r="2" />
-          <circle cx="18" cy="18" r="2" />
-        </svg>
-      ),
+      short: 'XL',
+      image: xlNew,
       price: '8,000',
       desc: 'Group travel',
-      features: ['6 seats', 'Luggage space']
+      eta: '6 min',
+      seats: '6',
+      features: ['6 seats', 'Luggage space'],
+      color: '#6366F1',
     },
   ];
+
+  const active = rideOptions.find(r => r.id === activeRide) || rideOptions[0];
 
   return (
     <IonPage>
       <IonContent className="home-content">
         <main className="main-wrapper">
+          {/* NAV */}
           <nav className="home-nav">
             <Logo variant="full" size="medium" onClick={() => navigate('/')} className="nav-logo-real" />
             <div className="nav-right">
@@ -121,72 +106,140 @@ const Home: React.FC = () => {
                 <div className="nav-link-text" onClick={() => navigate('/explore')}>Explore</div>
                 <div className="nav-link-text" onClick={() => navigate('/login')}>Sign In</div>
                 <ThemeToggle size="medium" />
-                <IonButton size="small" className="nav-signup-btn" onClick={() => navigate('/register')}>Sign Up</IonButton>
+                <button className="nav-signup-pill" onClick={() => navigate('/register')}>Sign Up</button>
               </div>
-              <div className="mobile-menu-toggle" onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}>
+              <button className="mobile-menu-toggle" onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}>
                 <IonIcon icon={isMenuOpen ? closeOutline : menuOutline} />
-              </div>
+              </button>
             </div>
           </nav>
 
+          {/* HERO */}
           <section className="hero-section">
-            <div className="hero-bg"><div className="hero-overlay"></div></div>
+            <div className="hero-bg">
+              <div className="hero-gradient-mesh" />
+              <div className="hero-overlay" />
+            </div>
+
             <div className="hero-text">
-              <div className="hero-badge"><IonIcon icon={flashOutline} /> Uganda's #1 Ride-Hailing App</div>
+              <div className="hero-badge">
+                <span className="badge-dot" />
+                <IonIcon icon={flashOutline} className="badge-icon" />
+                Uganda's #1 Ride-Hailing App
+              </div>
+
               <h1 className="hero-title">
-                Move Smart.<br/>Pay Less.<br/>
+                Move Smart.<br />
+                Pay Less.<br />
                 <span className="highlight">Arrive Safe.</span>
               </h1>
+
               <p className="hero-desc">
-                Uganda's smartest way to move. Boda Safe™ verified drivers, women-preferred mode, and offline USSD booking. Ride with confidence across every corner of the city.
+                Uganda's smartest way to move. <strong>Boda Safe™</strong> verified drivers,
+                women-preferred mode, and offline USSD booking. Ride with confidence
+                across every corner of the city.
               </p>
+
               <div className="hero-buttons">
-                <IonButton expand="block" className="hero-btn primary" onClick={() => navigate('/register')}>
-                  Get Started Free <IonIcon icon={arrowForwardOutline} slot="end" />
-                </IonButton>
-                <IonButton expand="block" className="hero-btn secondary" fill="outline" onClick={() => navigate('/explore')}>
-                  <IonIcon icon={mapOutline} slot="start" /> See Prices Near You
-                </IonButton>
+                <button className="hero-btn primary" onClick={() => navigate('/register')}>
+                  <span>Get Started Free</span>
+                  <IonIcon icon={arrowForwardOutline} />
+                </button>
+                <button className="hero-btn secondary" onClick={() => navigate('/explore')}>
+                  <IonIcon icon={mapOutline} />
+                  <span>See Prices Near You</span>
+                </button>
+              </div>
+
+              <div className="hero-trust">
+                <div className="trust-avatars">
+                  <span>🇺🇬</span><span>⭐</span><span>🛡️</span>
+                </div>
+                <span className="trust-text"><strong>50k+</strong> rides • <strong>4.9</strong> rating • <strong>2k+</strong> drivers</span>
               </div>
             </div>
 
+            {/* RIDE PREVIEW CARD - FIXED */}
             <div className="hero-ride-preview">
-              <div className="ride-preview-card" onClick={() => navigate('/register')}>
+              <div className="ride-preview-card">
                 <div className="preview-header">
                   <span className="preview-title">Where to?</span>
-                  <IonIcon icon={locationOutline} className="preview-icon" />
+                  <div className="preview-icon-wrap">
+                    <IonIcon icon={locationOutline} />
+                  </div>
                 </div>
-                <div className="preview-vehicle-container">
-                  <img src={rideOptions.find(r => r.id === activeRide)?.image} alt={rideOptions.find(r => r.id === activeRide)?.name} className="preview-vehicle-img" />
+
+                <div className="preview-main">
+                  <div className="preview-route">
+                    <div className="route-stop">
+                      <div className="stop-dot-wrap"><div className="stop-dot"></div></div>
+                      <div className="stop-info">
+                        <span className="stop-label">Pickup</span>
+                        <span className="stop-text">Current Location</span>
+                      </div>
+                    </div>
+                    <div className="preview-route-line"></div>
+                    <div className="route-stop">
+                      <div className="stop-dot-wrap"><div className="stop-dot destination"></div></div>
+                      <div className="stop-info">
+                        <span className="stop-label">Dropoff</span>
+                        <span className="stop-text">Uganda Central</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="preview-vehicle">
+                    <div className="vehicle-glow" style={{ background: `radial-gradient(circle, ${active.color}18 0%, transparent 70%)` }} />
+                    <img src={active.image} alt={active.name} className="preview-vehicle-img" />
+                    <div className="vehicle-meta">
+                      <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
+                      <span className="vehicle-seats"><IonIcon icon={peopleOutline} /> {active.seats}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="preview-route">
-                  <div className="route-stop"><div className="stop-dot"></div><span className="stop-text">Current Location</span></div>
-                  <div className="preview-route-line"></div>
-                  <div className="route-stop"><div className="stop-dot destination"></div><span className="stop-text">Uganda Central</span></div>
-                </div>
+
                 <div className="ride-selection-pills">
                   {rideOptions.map(ride => (
-                    <div key={ride.id} className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`} onClick={(e) => { e.stopPropagation(); light(); setActiveRide(ride.id); }}>
-                      {ride.icon} {ride.name}
-                    </div>
+                    <button
+                      key={ride.id}
+                      className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
+                      onClick={() => { light(); setActiveRide(ride.id); }}
+                    >
+                      <img src={ride.image} alt="" className="pill-img" />
+                      <span>{ride.short}</span>
+                    </button>
                   ))}
                 </div>
+
                 <div className="fare-preview">
-                  <span className="fare-label">Estimated Fare</span>
-                  <span className="fare-amount">UGX {rideOptions.find(r => r.id === activeRide)?.price}</span>
+                  <div className="fare-left">
+                    <span className="fare-label">Estimated Fare</span>
+                    <span className="fare-sub">{active.desc}</span>
+                  </div>
+                  <span className="fare-amount">UGX {active.price}</span>
                 </div>
+
+                <button className="preview-book-btn" onClick={() => navigate('/register')}>
+                  Book {active.short} Now <IonIcon icon={arrowForwardOutline} />
+                </button>
               </div>
             </div>
           </section>
 
+          {/* CHOOSE RIDE */}
           <section className="section">
-            <h2 className="section-title">Choose Your Ride</h2>
-            <p className="section-sub">From quick boda trips to luxury group rides — we've got you covered</p>
+            <div className="section-head">
+              <h2 className="section-title">Choose Your Ride</h2>
+              <p className="section-sub">From quick boda trips to luxury group rides — we've got you covered</p>
+            </div>
             <div className="ride-carousel">
-              {rideOptions.map((ride, idx) => (
-                <div key={ride.id} className={`ride-card ${idx === 0 ? 'featured' : ''}`} onClick={() => navigate('/register')}>
-                  {idx === 0 && <div className="ride-badge">Most Popular</div>}
-                  <img src={ride.image} alt={ride.name} className="card-vehicle-img" />
+              {rideOptions.map((ride) => (
+                <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
+                  {ride.popular && <div className="ride-badge">Most Popular</div>}
+                  <div className="card-img-wrap">
+                    <div className="card-img-glow" style={{ background: `radial-gradient(circle, ${ride.color}15 0%, transparent 70%)` }} />
+                    <img src={ride.image} alt={ride.name} className="card-vehicle-img" />
+                  </div>
                   <h3 className="card-title">{ride.name}</h3>
                   <p className="card-desc">{ride.desc}</p>
                   <div className="ride-features">
@@ -194,60 +247,143 @@ const Home: React.FC = () => {
                       <div key={i} className="feature-item"><IonIcon icon={checkmarkCircleOutline} /> {f}</div>
                     ))}
                   </div>
-                  <span className="ride-rate">UGX {ride.price}<span className="per-km">/km</span></span>
+                  <div className="card-footer">
+                    <span className="ride-rate">UGX {ride.price}<span className="per-km">/km</span></span>
+                    <span className="ride-eta-chip"><IonIcon icon={timeOutline} /> {ride.eta}</span>
+                  </div>
                 </div>
               ))}
             </div>
           </section>
 
-          <section className="section">
+          {/* HOW IT WORKS */}
+          <section className="section alt">
             <div className="how-it-works">
               <h2 className="section-title">How It Works</h2>
               <p className="section-sub">Get where you're going in three simple steps</p>
               <div className="timeline">
-                <div className="step"><div className="step-number">1</div><h3 className="step-title">Request</h3><p className="step-text">Set your destination and choose your ride preference.</p></div>
-                <div className="step"><div className="step-number">2</div><h3 className="step-title">Match</h3><p className="step-text">We connect you with the nearest Boda Safe™ verified driver.</p></div>
-                <div className="step"><div className="step-number">3</div><h3 className="step-title">Arrive</h3><p className="step-text">Enjoy a safe, affordable trip to your destination.</p></div>
+                <div className="step">
+                  <div className="step-number">1</div>
+                  <div className="step-connector" />
+                  <h3 className="step-title">Request</h3>
+                  <p className="step-text">Set your destination and choose your ride preference.</p>
+                </div>
+                <div className="step">
+                  <div className="step-number">2</div>
+                  <div className="step-connector" />
+                  <h3 className="step-title">Match</h3>
+                  <p className="step-text">We connect you with the nearest Boda Safe™ verified driver.</p>
+                </div>
+                <div className="step">
+                  <div className="step-number">3</div>
+                  <h3 className="step-title">Arrive</h3>
+                  <p className="step-text">Enjoy a safe, affordable trip to your destination.</p>
+                </div>
               </div>
             </div>
           </section>
 
+          {/* SAFETY */}
           <section className="section">
             <h2 className="section-title">Safety First</h2>
             <p className="section-sub">Your security is our non-negotiable priority</p>
             <div className="safety-grid">
-              <div className="safety-item"><IonIcon icon={shieldCheckmarkOutline} className="safety-icon" /><h4 className="safety-title">ID Verified</h4><p className="safety-desc">Every driver undergoes mandatory government ID verification.</p></div>
-              <div className="safety-item"><IonIcon icon={starOutline} className="safety-icon" /><h4 className="safety-title">4.5+ Rating</h4><p className="safety-desc">Only the highest-rated drivers remain on our platform.</p></div>
-              <div className="safety-item"><IonIcon icon={locationOutline} className="safety-icon" /><h4 className="safety-title">Live Tracking</h4><p className="safety-desc">Share your ride progress in real-time with loved ones.</p></div>
-              <div className="safety-item"><IonIcon icon={callOutline} className="safety-icon" /><h4 className="safety-title">24/7 Support</h4><p className="safety-desc">Emergency SOS and support available every second of the day.</p></div>
+              <div className="safety-item">
+                <div className="safety-icon-wrap"><IonIcon icon={shieldCheckmarkOutline} className="safety-icon" /></div>
+                <h4 className="safety-title">ID Verified</h4>
+                <p className="safety-desc">Every driver undergoes mandatory government ID verification.</p>
+              </div>
+              <div className="safety-item">
+                <div className="safety-icon-wrap"><IonIcon icon={starOutline} className="safety-icon" /></div>
+                <h4 className="safety-title">4.5+ Rating</h4>
+                <p className="safety-desc">Only the highest-rated drivers remain on our platform.</p>
+              </div>
+              <div className="safety-item">
+                <div className="safety-icon-wrap"><IonIcon icon={locationOutline} className="safety-icon" /></div>
+                <h4 className="safety-title">Live Tracking</h4>
+                <p className="safety-desc">Share your ride progress in real-time with loved ones.</p>
+              </div>
+              <div className="safety-item">
+                <div className="safety-icon-wrap"><IonIcon icon={callOutline} className="safety-icon" /></div>
+                <h4 className="safety-title">24/7 Support</h4>
+                <p className="safety-desc">Emergency SOS and support available every second of the day.</p>
+              </div>
             </div>
           </section>
 
-          <section className="section">
+          {/* REWARDS */}
+          <section className="section alt">
             <h2 className="section-title">Zawadi Rewards</h2>
             <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
             <div className="rewards-grid">
-              <div className="tier-card bronze"><div className="tier-icon-container"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg></div><h3 className="tier-title">Bronze</h3><p className="tier-pts">0 - 500 pts</p><div className="tier-benefit">Basic Rewards</div></div>
-              <div className="tier-card silver"><div className="tier-icon-container"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg></div><h3 className="tier-title">Silver</h3><p className="tier-pts">500 - 1k pts</p><div className="tier-benefit">5% Discount</div></div>
-              <div className="tier-card gold"><div className="tier-icon-container"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg></div><h3 className="tier-title">Gold</h3><p className="tier-pts">1k - 2.5k pts</p><div className="tier-benefit">Priority Booking</div></div>
-              <div className="tier-card platinum"><div className="tier-icon-container"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 12 17 15.79 13.89"/><line x1="12" y1="17" x2="12" y2="22"/></svg></div><h3 className="tier-title">Platinum</h3><p className="tier-pts">2.5k+ pts</p><div className="tier-benefit">VIP Experience</div></div>
+              <div className="tier-card bronze">
+                <div className="tier-icon-container">🥉</div>
+                <h3 className="tier-title">Bronze</h3>
+                <p className="tier-pts">0 - 500 pts</p>
+                <div className="tier-benefit">Basic Rewards</div>
+              </div>
+              <div className="tier-card silver">
+                <div className="tier-icon-container">🥈</div>
+                <h3 className="tier-title">Silver</h3>
+                <p className="tier-pts">500 - 1k pts</p>
+                <div className="tier-benefit">5% Discount</div>
+              </div>
+              <div className="tier-card gold">
+                <div className="tier-icon-container">🥇</div>
+                <h3 className="tier-title">Gold</h3>
+                <p className="tier-pts">1k - 2.5k pts</p>
+                <div className="tier-benefit">Priority Booking</div>
+              </div>
+              <div className="tier-card platinum">
+                <div className="tier-icon-container">💎</div>
+                <h3 className="tier-title">Platinum</h3>
+                <p className="tier-pts">2.5k+ pts</p>
+                <div className="tier-benefit">VIP Experience</div>
+              </div>
             </div>
           </section>
 
+          {/* FOOTER */}
           <footer className="footer">
             <div className="footer-grid">
-              <div className="footer-col"><div style={{ marginBottom: 12 }}><Logo variant="full" size="medium" onClick={() => navigate('/')} /></div><p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone.</p></div>
-              <div className="footer-col"><h4 className="footer-col-title">Ride</h4><span className="footer-link" onClick={() => navigate('/explore')}>Book a Ride</span><span className="footer-link" onClick={() => navigate('/customer/history')}>Ride History</span><span className="footer-link" onClick={() => navigate('/ussd')}>Offline Booking</span></div>
-              <div className="footer-col"><h4 className="footer-col-title">Drive</h4><span className="footer-link" onClick={() => navigate('/register')}>Become a Driver</span><span className="footer-link" onClick={() => navigate('/driver/earnings')}>Earnings Calculator</span></div>
-              <div className="footer-col"><h4 className="footer-col-title">Company</h4><span className="footer-link">About Us</span><span className="footer-link" onClick={() => navigate('/customer/support')}>Support</span><span className="footer-link">Privacy Policy</span><span className="footer-link">Terms of Service</span></div>
+              <div className="footer-col brand">
+                <div style={{ marginBottom: 16 }}><Logo variant="full" size="medium" onClick={() => navigate('/')} /></div>
+                <p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone. Boda Safe™ verified.</p>
+                <div className="footer-badges">
+                  <span className="footer-badge">🇺🇬 Made in Uganda</span>
+                  <span className="footer-badge">🛡️ Boda Safe™</span>
+                </div>
+              </div>
+              <div className="footer-col">
+                <h4 className="footer-col-title">Ride</h4>
+                <span className="footer-link" onClick={() => navigate('/explore')}>Book a Ride</span>
+                <span className="footer-link" onClick={() => navigate('/customer/history')}>Ride History</span>
+                <span className="footer-link" onClick={() => navigate('/ussd')}>Offline Booking</span>
+              </div>
+              <div className="footer-col">
+                <h4 className="footer-col-title">Drive</h4>
+                <span className="footer-link" onClick={() => navigate('/register')}>Become a Driver</span>
+                <span className="footer-link" onClick={() => navigate('/driver/earnings')}>Earnings Calculator</span>
+              </div>
+              <div className="footer-col">
+                <h4 className="footer-col-title">Company</h4>
+                <span className="footer-link">About Us</span>
+                <span className="footer-link" onClick={() => navigate('/customer/support')}>Support</span>
+                <span className="footer-link">Privacy Policy</span>
+                <span className="footer-link">Terms of Service</span>
+              </div>
             </div>
-            <div className="footer-bottom"><p>© 2026 NAVIGO Technologies Uganda. All rights reserved.</p><p>🇺🇬 Proudly Ugandan • Made for Uganda</p></div>
+            <div className="footer-bottom">
+              <p>© 2026 NAVIGO Technologies Uganda. All rights reserved.</p>
+              <p>🇺🇬 Proudly Ugandan • Made for Uganda • Boda Safe™ Certified</p>
+            </div>
           </footer>
 
           <div className="sticky-bottom-bar">
-            <div className="ussd-pill" onClick={() => navigate('/ussd')}>
-              <IonIcon icon={phonePortraitOutline} /><span className="ussd-text">Book via USSD: <strong style={{color: 'white'}}>*284*624#</strong></span>
-            </div>
+            <button className="ussd-pill" onClick={() => navigate('/ussd')}>
+              <IonIcon icon={phonePortraitOutline} />
+              <span>Book via USSD: <strong>*284*624#</strong></span>
+            </button>
           </div>
         </main>
       </IonContent>
