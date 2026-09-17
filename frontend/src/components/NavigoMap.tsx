@@ -53,6 +53,12 @@ const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
   economy: { url: goNew, color: '#0EA5E9' },
 };
 
+const isValidLatLng = (ll: { lat: number; lng: number } | null | undefined): boolean => {
+  if (!ll) return false;
+  const { lat, lng } = ll;
+  return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+};
+
 const MapEvents: React.FC<{
   onMapClick?: (ll: [number, number]) => void;
   userLocation: { lat: number; lng: number } | null;
@@ -61,16 +67,30 @@ const MapEvents: React.FC<{
 }> = ({ onMapClick, userLocation, followUser, onMove }) => {
   const map = useMap();
   useMapEvents({
-    click(e) { onMapClick?.([e.latlng.lat, e.latlng.lng]); },
-    moveend() { const c = map.getCenter(); onMove?.([c.lat, c.lng], map.getZoom()); },
+    click(e) { 
+      const ll = e.latlng;
+      if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]); 
+    },
+    moveend() { 
+      try {
+        const c = map.getCenter();
+        if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom());
+      } catch {}
+    },
   });
   useEffect(() => {
-    if (followUser && userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], 15, { duration: 1 });
+    if (followUser && isValidLatLng(userLocation)) {
+      try {
+        map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 });
+      } catch (e) {
+        console.warn('flyTo failed:', e);
+      }
     }
   }, [userLocation, followUser, map]);
   useEffect(() => {
-    const t = setTimeout(() => map.invalidateSize(), 200);
+    const t = setTimeout(() => {
+      try { map.invalidateSize(); } catch {}
+    }, 200);
     return () => clearTimeout(t);
   }, [map]);
   return null;
@@ -108,28 +128,34 @@ const NavigoMap: React.FC<MapProps> = ({
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
 
-  const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : mapCenter;
+  const getValidCenter = (): [number, number] => {
+    if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
+    if (isValidLatLng({ lat: mapCenter[0], lng: mapCenter[1] })) return mapCenter;
+    return [0.3476, 32.5825];
+  };
+
+  const center = getValidCenter();
 
   useEffect(() => {
-    if (!showNearbyDrivers || !userLocation) return;
+    if (!showNearbyDrivers || !isValidLatLng(userLocation)) return;
     setNearbyDrivers([
-      { id: '1', lat: userLocation.lat + 0.005, lng: userLocation.lng + 0.003, type: 'boda' },
-      { id: '2', lat: userLocation.lat - 0.003, lng: userLocation.lng + 0.005, type: 'go' },
-      { id: '3', lat: userLocation.lat + 0.002, lng: userLocation.lng - 0.004, type: 'comfort' },
-      { id: '4', lat: userLocation.lat - 0.006, lng: userLocation.lng - 0.002, type: 'boda' },
+      { id: '1', lat: userLocation!.lat + 0.005, lng: userLocation!.lng + 0.003, type: 'boda' },
+      { id: '2', lat: userLocation!.lat - 0.003, lng: userLocation!.lng + 0.005, type: 'go' },
+      { id: '3', lat: userLocation!.lat + 0.002, lng: userLocation!.lng - 0.004, type: 'comfort' },
+      { id: '4', lat: userLocation!.lat - 0.006, lng: userLocation!.lng - 0.002, type: 'boda' },
     ]);
   }, [showNearbyDrivers, userLocation]);
 
   useEffect(() => {
-    if (!showRoute || !userLocation || !destination) { setRoutePoints([]); return; }
+    if (!showRoute || !isValidLatLng(userLocation) || !isValidLatLng(destination as any)) { setRoutePoints([]); return; }
     const fetchRoute = async () => {
       try {
-        const from = `${userLocation.lng},${userLocation.lat}`;
-        const to = `${destination.lng},${destination.lat}`;
+        const from = `${userLocation!.lng},${userLocation!.lat}`;
+        const to = `${destination!.lng},${destination!.lat}`;
         const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: AbortSignal.timeout(8000) });
         const data = await res.json();
         if (data.routes?.length) {
-          const pts = data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
+          const pts = data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]).filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng));
           setRoutePoints(pts);
           const d = Math.round(data.routes[0].distance / 100) / 10;
           const t = Math.round(data.routes[0].duration / 60);
@@ -139,11 +165,15 @@ const NavigoMap: React.FC<MapProps> = ({
         }
         throw new Error('no route');
       } catch {
-        setRoutePoints([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]]);
-        const dist = Math.round(L.latLng(userLocation.lat, userLocation.lng).distanceTo(L.latLng(destination.lat, destination.lng)) / 100) / 10;
-        const t = Math.max(1, Math.round((dist / 22) * 60));
-        setRouteDistance(dist); setRouteDuration(t);
-        onDistanceChange?.(dist, t);
+        if (isValidLatLng(userLocation) && isValidLatLng(destination as any)) {
+          setRoutePoints([[userLocation!.lat, userLocation!.lng], [destination!.lat, destination!.lng]]);
+          try {
+            const dist = Math.round(L.latLng(userLocation!.lat, userLocation!.lng).distanceTo(L.latLng(destination!.lat, destination!.lng)) / 100) / 10;
+            const t = Math.max(1, Math.round((dist / 22) * 60));
+            setRouteDistance(dist); setRouteDuration(t);
+            onDistanceChange?.(dist, t);
+          } catch {}
+        }
       }
     };
     fetchRoute();
@@ -203,34 +233,34 @@ const NavigoMap: React.FC<MapProps> = ({
           />
         )}
 
-        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c) => setMapCenter(c)} />
+        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c) => { if (!isNaN(c[0]) && !isNaN(c[1])) setMapCenter(c); }} />
 
-        {userLocation && (
+        {isValidLatLng(userLocation) && (
           <>
-            <Marker position={[userLocation.lat, userLocation.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { const ll = e.target.getLatLng(); onPickupDrag?.([ll.lat, ll.lng]); } }} />
-            <Circle center={[userLocation.lat, userLocation.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.04, weight: 1, dashArray: '8 8', opacity: 0.35 }} />
-            <Circle center={[userLocation.lat, userLocation.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.2, weight: 2 }} />
+            <Marker position={[userLocation!.lat, userLocation!.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]); } catch {} } }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.04, weight: 1, dashArray: '8 8', opacity: 0.35 }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.2, weight: 2 }} />
           </>
         )}
 
-        {destination && (
-          <Marker position={[destination.lat, destination.lng]} icon={destIcon} draggable={!!onDestDrag} eventHandlers={{ dragend: (e: any) => { const ll = e.target.getLatLng(); onDestDrag?.([ll.lat, ll.lng]); } }} />
+        {isValidLatLng(destination as any) && (
+          <Marker position={[destination!.lat, destination!.lng]} icon={destIcon} draggable={!!onDestDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onDestDrag?.([ll.lat, ll.lng]); } catch {} } }} />
         )}
 
-        {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={createVehicleIcon(VEHICLE_ICONS[driverType]?.url || goNew, VEHICLE_ICONS[driverType]?.color || '#0EA5E9')} />}
+        {isValidLatLng(driverLocation as any) && <Marker position={[driverLocation!.lat, driverLocation!.lng]} icon={createVehicleIcon(VEHICLE_ICONS[driverType]?.url || goNew, VEHICLE_ICONS[driverType]?.color || '#0EA5E9')} />}
 
-        {nearbyDrivers.map(d => (
+        {nearbyDrivers.filter(d => isValidLatLng(d as any)).map(d => (
           <Marker key={d.id} position={[d.lat, d.lng]} icon={createVehicleIcon(VEHICLE_ICONS[d.type]?.url || goNew, VEHICLE_ICONS[d.type]?.color || '#0EA5E9')} />
         ))}
 
-        {routePoints.length > 0 && (
+        {routePoints.length > 0 && routePoints.every(([lat, lng]) => !isNaN(lat) && !isNaN(lng)) && (
           <>
             <Polyline positions={routePoints} pathOptions={{ color: '#0F172A', weight: 8, opacity: 0.25, lineJoin: 'round', lineCap: 'round' }} />
             <Polyline positions={routePoints} pathOptions={{ color: '#FF6B35', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }} />
           </>
         )}
 
-        {searchResults.map((r, i) => (
+        {searchResults.filter(r => isValidLatLng(r as any)).map((r, i) => (
           <Marker key={`${r.lat}-${r.lng}-${i}`} position={[r.lat, r.lng]} icon={createSearchIcon(i+1)} />
         ))}
       </MapContainer>
