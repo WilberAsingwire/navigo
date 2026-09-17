@@ -6,9 +6,9 @@
 .verification-status ion-icon { font-size: 24px; }
 .verification-status h3 { color: #fff; margin: 0; font-size: 14px; }
 .verification-status p { color: rgba(255,255,255,0.5); font-size: 11px; margin: 2px 0 0; }
-.vehicle-main-card { background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); }
+.vehicle-main-card { background: var(--nav-card-soft); border-radius: 16px; border: 1px solid var(--nav-card-hover); }
 .vehicle-icon { font-size: 48px; margin-bottom: 8px; }
 .doc-list { background: transparent; }
-.doc-item { --background: rgba(255,255,255,0.03); margin-bottom: 6px; border-radius: 10px; --padding-start: 12px; }
+.doc-item { --background: var(--nav-card-glass); margin-bottom: 6px; border-radius: 10px; --padding-start: 12px; }
 .doc-item h4 { color: #fff; font-size: 13px; margin: 0; }
 .doc-item p { color: rgba(255,255,255,0.4); font-size: 10px; margin: 2px 0 0; }

@@ -1,0 +1,501 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGO LIGHT MODE — Perfect light theme, every component
+   Ensures WCAG AA contrast, premium feel, tactile
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Base — Light ─────────────────────────────────────────── */
+body.light {
+  background: var(--nav-bg);
+  color: var(--nav-text);
+}
+
+body.light ion-content {
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+}
+
+body.light .main-wrapper,
+body.light .home-content,
+body.light .rider-page-container,
+body.light .driver-page-container,
+body.light .booking-page-container {
+  background: var(--nav-bg) !important;
+}
+
+body.light .main-wrapper::before,
+body.light .rider-page-container::before,
+body.light .driver-page-container::before {
+  background: radial-gradient(circle at 20% 20%, rgba(255,107,53,0.04) 0%, transparent 45%),
+              radial-gradient(circle at 80% 80%, rgba(45,106,79,0.03) 0%, transparent 40%) !important;
+}
+
+/* ── Nav — Light Glass ────────────────────────────────────── */
+body.light .home-nav {
+  background: rgba(248,250,252,0.85) !important;
+  backdrop-filter: blur(24px) saturate(1.2) !important;
+  border-bottom: 1px solid var(--nav-border) !important;
+}
+
+body.light .nav-logo {
+  background: linear-gradient(45deg, #0F172A, var(--navigo-orange)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+body.light .nav-link-text {
+  color: var(--nav-text-secondary) !important;
+}
+body.light .nav-link-text:hover {
+  color: var(--nav-text) !important;
+}
+
+body.light .theme-toggle {
+  background: rgba(0,0,0,0.04) !important;
+  border-color: var(--nav-border) !important;
+  color: var(--nav-text) !important;
+}
+body.light .theme-toggle:hover {
+  background: rgba(0,0,0,0.06) !important;
+  border-color: var(--nav-border-strong) !important;
+}
+
+body.light .mobile-menu-toggle {
+  background: rgba(0,0,0,0.04) !important;
+  border-color: var(--nav-border) !important;
+  color: var(--nav-text) !important;
+}
+
+body.light .nav-links {
+  background: rgba(248,250,252,0.98) !important;
+  border-bottom: 1px solid var(--nav-border) !important;
+}
+
+/* ── Hero — Light ─────────────────────────────────────────── */
+body.light .hero-bg {
+  background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 40%, #FFF7ED 70%, #FFEDD5 100%) !important;
+}
+body.light .hero-bg::before {
+  background: radial-gradient(circle at 30% 30%, rgba(255,107,53,0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 70%, rgba(255,130,60,0.06) 0%, transparent 40%) !important;
+}
+body.light .hero-overlay {
+  background: linear-gradient(to bottom, rgba(248,250,252,0.3) 0%, rgba(248,250,252,0.85) 100%) !important;
+}
+body.light .hero-title {
+  color: #0F172A !important;
+}
+body.light .hero-desc {
+  color: #475569 !important;
+}
+body.light .hero-badge {
+  background: rgba(255,107,53,0.08) !important;
+  border-color: rgba(255,107,53,0.15) !important;
+}
+body.light .hero-btn.secondary {
+  --background: rgba(255,255,255,0.8) !important;
+  --color: #0F172A !important;
+  border: 1px solid var(--nav-border) !important;
+  background: rgba(255,255,255,0.8) !important;
+  color: #0F172A !important;
+}
+
+/* ── Cards — Light Perfect ────────────────────────────────── */
+body.light .ride-preview-card,
+body.light .ride-card,
+body.light .safety-item,
+body.light .tier-card,
+body.light .how-it-works {
+  background: rgba(255,255,255,0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--nav-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+body.light .ride-preview-card:hover,
+body.light .ride-card:hover,
+body.light .safety-item:hover,
+body.light .tier-card:hover {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border-orange) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+
+body.light .preview-title,
+body.light .card-title,
+body.light .safety-title,
+body.light .tier-title,
+body.light .step-title {
+  color: var(--nav-text) !important;
+}
+body.light .stop-text,
+body.light .card-desc,
+body.light .safety-desc,
+body.light .step-text,
+body.light .tier-pts {
+  color: var(--nav-text-secondary) !important;
+}
+
+/* ── Ride Pills — Light ───────────────────────────────────── */
+body.light .ride-pill {
+  background: rgba(0,0,0,0.04) !important;
+  border-color: var(--nav-border) !important;
+  color: var(--nav-text-secondary) !important;
+}
+body.light .ride-pill:hover {
+  background: rgba(0,0,0,0.06) !important;
+  color: var(--nav-text) !important;
+}
+body.light .ride-pill.active {
+  background: var(--navigo-orange) !important;
+  color: #FFFFFF !important;
+  border-color: var(--navigo-orange) !important;
+}
+
+/* ── Fare — Light ─────────────────────────────────────────── */
+body.light .fare-preview {
+  border-top-color: var(--nav-border) !important;
+}
+body.light .fare-label {
+  color: var(--nav-text-secondary) !important;
+}
+body.light .fare-amount,
+body.light .ride-rate {
+  color: var(--nav-text) !important;
+}
+
+/* ── Sections — Light ─────────────────────────────────────── */
+body.light .section-title {
+  color: #0F172A !important;
+}
+body.light .section-sub {
+  color: #475569 !important;
+}
+
+body.light .how-it-works {
+  background: rgba(255,255,255,0.6) !important;
+  border: 1px solid var(--nav-border) !important;
+}
+
+/* ── Footer — Light ───────────────────────────────────────── */
+body.light .footer {
+  background: #F1F5F9 !important;
+  border-top: 1px solid var(--nav-border) !important;
+}
+body.light .footer-logo,
+body.light .footer-col-title {
+  color: #0F172A !important;
+}
+body.light .footer-col p {
+  color: #475569 !important;
+}
+body.light .footer-link {
+  color: #334155 !important;
+}
+body.light .footer-link:hover {
+  color: var(--navigo-orange) !important;
+}
+body.light .footer-bottom {
+  border-top-color: var(--nav-border) !important;
+  color: #64748B !important;
+}
+
+/* ── USSD Pill — Light ────────────────────────────────────── */
+body.light .ussd-pill {
+  background: rgba(255,255,255,0.9) !important;
+  border-color: rgba(255,107,53,0.2) !important;
+  color: var(--navigo-orange) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+body.light .ussd-pill:hover {
+  background: #FFFFFF !important;
+  color: var(--navigo-orange) !important;
+  border-color: var(--navigo-orange) !important;
+}
+body.light .ussd-pill strong {
+  color: #0F172A !important;
+}
+
+/* ── Auth — Light ─────────────────────────────────────────── */
+body.light .auth-container {
+  background: linear-gradient(rgba(248,250,252,0.85), rgba(248,250,252,0.92)), url('https://images.unsplash.com/photo-1449824913935-59a10b5d7a98?q=80&w=2070&auto=format&fit=crop') !important;
+}
+body.light .auth-card {
+  background: rgba(255,255,255,0.9) !important;
+  border: 1px solid var(--nav-border) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+body.light .auth-title {
+  color: #0F172A !important;
+}
+body.light .auth-copy {
+  color: #475569 !important;
+}
+body.light .method-toggle {
+  background: #F1F5F9 !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .method-btn {
+  color: #475569 !important;
+}
+body.light .method-btn:hover {
+  color: #0F172A !important;
+  background: rgba(0,0,0,0.04) !important;
+}
+body.light .input-label {
+  color: #475569 !important;
+}
+body.light .input-field {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  color: #0F172A !important;
+}
+body.light .input-field::placeholder {
+  color: #94A3B8 !important;
+}
+body.light .trust-label {
+  color: #64748B !important;
+}
+body.light .trust-icon {
+  background: #F8FAFC !important;
+  border-color: var(--nav-border) !important;
+}
+
+/* ── Booking — Light ──────────────────────────────────────── */
+body.light .booking-page-container {
+  background: #F8FAFC !important;
+}
+body.light .booking-form-panel {
+  background: rgba(255,255,255,0.9) !important;
+  border: 1px solid var(--nav-border) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+body.light .booking-form-panel::before {
+  background: rgba(0,0,0,0.15) !important;
+}
+body.light .glass-booking-card {
+  background: #FFFFFF !important;
+  border: 1px solid var(--nav-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+body.light .card-title {
+  color: #0F172A !important;
+}
+body.light .section-label {
+  color: #475569 !important;
+}
+body.light .location-input-wrapper {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .location-input-wrapper:hover {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border-strong) !important;
+}
+body.light .input-icon {
+  color: #64748B !important;
+}
+body.light .location-input {
+  color: #0F172A !important;
+}
+body.light .location-input::placeholder {
+  color: #94A3B8 !important;
+}
+body.light .search-results-list {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+body.light .search-result-item {
+  border-bottom-color: var(--nav-border) !important;
+}
+body.light .search-result-item:hover {
+  background: #F8FAFC !important;
+}
+body.light .result-name {
+  color: #0F172A !important;
+}
+body.light .result-addr {
+  color: #475569 !important;
+}
+body.light .vehicle-option-card {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .vehicle-option-card:hover {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border-orange) !important;
+}
+body.light .vehicle-emoji {
+  background: #F8FAFC !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .vehicle-type-name {
+  color: #0F172A !important;
+}
+body.light .vehicle-type-desc {
+  color: #475569 !important;
+}
+body.light .fare-summary-box {
+  background: #F8FAFC !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .fare-label {
+  color: #64748B !important;
+}
+body.light .fare-value {
+  color: #0F172A !important;
+}
+body.light .back-nav-btn {
+  background: rgba(255,255,255,0.9) !important;
+  border-color: var(--nav-border) !important;
+  color: #0F172A !important;
+}
+body.light .back-nav-btn:hover {
+  background: #0F172A !important;
+  color: #FFFFFF !important;
+}
+
+/* ── Dashboard — Light ────────────────────────────────────── */
+body.light .rider-header {
+  background: rgba(248,250,252,0.8) !important;
+}
+body.light .welcome-text {
+  color: #0F172A !important;
+}
+body.light .welcome-subtitle {
+  color: #475569 !important;
+}
+body.light .ride-cta-card {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+body.light .ride-cta-subtitle {
+  color: #64748B !important;
+}
+body.light .stat-pill {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body.light .stat-value {
+  color: #0F172A !important;
+}
+body.light .stat-label {
+  color: #475569 !important;
+}
+body.light .quick-actions-header,
+body.light .drivers-title {
+  color: #0F172A !important;
+}
+body.light .action-btn {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body.light .action-label {
+  color: #475569 !important;
+}
+body.light .driver-row {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body.light .driver-name {
+  color: #0F172A !important;
+}
+body.light .driver-vehicle {
+  color: #475569 !important;
+}
+body.light .view-map-link {
+  background: rgba(255,107,53,0.08) !important;
+  color: var(--navigo-orange) !important;
+}
+
+/* ── Driver — Light ───────────────────────────────────────── */
+body.light .driver-welcome-text,
+body.light .kpi-value,
+body.light .actions-header,
+body.light .activity-header,
+body.light .bottom-stat-value {
+  color: #0F172A !important;
+}
+body.light .driver-status-text,
+body.light .kpi-label,
+body.light .bottom-stat-label,
+body.light .activity-time {
+  color: #64748B !important;
+}
+body.light .status-banner.offline {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .status-banner.online {
+  background: rgba(16,185,129,0.08) !important;
+  border-color: rgba(16,185,129,0.15) !important;
+}
+body.light .kpi-card,
+body.light .action-card,
+body.light .activity-item,
+body.light .bottom-stat-card {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body.light .activity-text {
+  color: #0F172A !important;
+}
+
+/* ── Admin — Light ────────────────────────────────────────── */
+body.light .admin-kpi-card,
+body.light .settings-section-card,
+body.light .support-accordion,
+body.light .admin-quick-action-card {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body.light .admin-kpi-value {
+  color: #0F172A !important;
+}
+body.light .admin-kpi-label {
+  color: #475569 !important;
+}
+body.light .settings-section-title {
+  color: #0F172A !important;
+}
+body.light .setting-info label {
+  color: #0F172A !important;
+}
+body.light .setting-info p {
+  color: #475569 !important;
+}
+
+/* ── Components — Light ───────────────────────────────────── */
+body.light .loyalty-card {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+body.light .chat-box {
+  background: #FFFFFF !important;
+}
+body.light .onboarding-container {
+  background: #FFFFFF !important;
+}
+
+/* ── Smooth Transition — All ──────────────────────────────── */
+body.light * {
+  transition-property: background-color, color, border-color, box-shadow !important;
+  transition-duration: var(--duration-normal) !important;
+  transition-timing-function: var(--ease-out) !important;
+}
+
+/* ── Light Mode: Ensure orange stays vibrant ──────────────── */
+body.light .btn-primary,
+body.light .btn-continue,
+body.light .btn-request-ride,
+body.light .nav-signup-btn {
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange-active) 100%) !important;
+  color: #FFFFFF !important;
+}

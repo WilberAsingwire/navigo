@@ -4,13 +4,13 @@ import {
   shieldCheckmarkOutline, starOutline,
   phonePortraitOutline, mapOutline,
   arrowForwardOutline, callOutline,
-  checkmarkCircleOutline, locationOutline, moonOutline, sunnyOutline,
+  checkmarkCircleOutline, locationOutline,
   flashOutline, menuOutline, closeOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './Home.css';
-import { useTheme } from '../../context/ThemeContext';
 import useHaptic from '../../hooks/useHaptic';
+import ThemeToggle from '../../components/ThemeToggle';
 import bodaImg from '../../assets/vehicles/boda.png';
 import goImg from '../../assets/vehicles/go.png';
 import comfortImg from '../../assets/vehicles/comfort.png';
@@ -18,7 +18,6 @@ import xlImg from '../../assets/vehicles/xl.png';
 
 const Home: React.FC = () => {
   const history = useHistory();
-  const { theme, toggleTheme } = useTheme();
   const { light } = useHaptic();
   const [activeRide, setActiveRide] = useState('boda');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,11 +41,6 @@ const Home: React.FC = () => {
     light();
     setIsMenuOpen(false);
     setTimeout(() => history.push(path), 80);
-  };
-
-  const handleThemeToggle = () => {
-    light();
-    toggleTheme();
   };
 
   const rideOptions = [
@@ -125,9 +119,7 @@ const Home: React.FC = () => {
               <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
                 <div className="nav-link-text" onClick={() => navigate('/explore')}>Explore</div>
                 <div className="nav-link-text" onClick={() => navigate('/login')}>Sign In</div>
-                <div className="theme-toggle" onClick={handleThemeToggle}>
-                  <IonIcon icon={theme === 'light' ? moonOutline : sunnyOutline} />
-                </div>
+                <ThemeToggle size="medium" />
                 <IonButton size="small" className="nav-signup-btn" onClick={() => navigate('/register')}>Sign Up</IonButton>
               </div>
               <div className="mobile-menu-toggle" onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}>

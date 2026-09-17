@@ -451,7 +451,7 @@ const RideRequest: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#080c14', color: '#fff', gap: 16 }}>
+      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--nav-bg)', color: '#fff', gap: 16 }}>
         <IonSpinner name="crescent" color="warning" />
         <p>Initializing NAVIGO...</p>
       </div>

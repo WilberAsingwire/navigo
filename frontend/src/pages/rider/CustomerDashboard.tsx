@@ -18,6 +18,7 @@ import Skeleton from '../../components/Skeleton';
 import OnboardingBanner from '../../components/OnboardingBanner';
 import SafeRender from '../../components/SafeRender';
 import useHaptic from '../../hooks/useHaptic';
+import ThemeToggle from '../../components/ThemeToggle';
 import './CustomerDashboard.css';
 
 const POPULAR_DESTINATIONS = [
@@ -117,14 +118,17 @@ const CustomerDashboard: React.FC = () => {
                 <h2 className="welcome-text">Hello, {((user?.fullName || 'there') || 'Guest').split(' ')[0] || 'Guest'} 👋</h2>
                 <p className="welcome-subtitle">Ready for your next ride?</p>
               </div>
-              <IonAvatar
-                className="profile-avatar"
-                onClick={() => navWithHaptic('/customer/profile', 'medium')}
-              >
-                <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
-                  <InitialsAvatar name={user?.fullName || 'N'} size={40} />
-                </div>
-              </IonAvatar>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <ThemeToggle size="small" />
+                <IonAvatar
+                  className="profile-avatar"
+                  onClick={() => navWithHaptic('/customer/profile', 'medium')}
+                >
+                  <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
+                    <InitialsAvatar name={user?.fullName || 'N'} size={40} />
+                  </div>
+                </IonAvatar>
+              </div>
             </div>
           </div>
         </IonToolbar>

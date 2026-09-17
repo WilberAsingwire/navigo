@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    NAVIGO INTERACTIVE — Global micro-interactions, animations, and polish
    Every button, card, input, and page benefits from this.
+   Now fully supports dark + light — both perfect.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Page Transitions ─────────────────────────────────────── */
@@ -55,11 +56,28 @@ ion-page {
   overflow: hidden;
 }
 
-/* Hover */
+/* Hover — dark mode */
 [class*="card"]:hover, [class*="pill"]:hover, .action-btn:hover, .action-card:hover, .stat-pill:hover, .kpi-card:hover, .driver-row:hover, .place-chip:hover, .recent-trip-item:hover, .vehicle-option-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255,107,53,0.25) !important;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,107,53,0.08);
+}
+
+/* Hover — light mode */
+body.light [class*="card"]:hover,
+body.light [class*="pill"]:hover,
+body.light .action-btn:hover,
+body.light .action-card:hover,
+body.light .stat-pill:hover,
+body.light .kpi-card:hover,
+body.light .driver-row:hover,
+body.light .place-chip:hover,
+body.light .recent-trip-item:hover,
+body.light .vehicle-option-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,107,53,0.25) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,107,53,0.06);
+  background: #FFFFFF !important;
 }
 
 /* Active / Tap */
@@ -152,6 +170,11 @@ input:focus, .input-field:focus, .location-input:focus {
   border-radius: var(--radius-md);
 }
 
+body.light .skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+  background-size: 200% 100%;
+}
+
 /* ── Live Pulse Dots ──────────────────────────────────────── */
 .live-dot {
   width: 8px;
@@ -203,6 +226,9 @@ ion-toast, ion-modal {
   box-shadow: 0 0 0 2px var(--navigo-orange-soft), 0 8px 24px rgba(255,107,53,0.2) !important;
   animation: navigo-glow 2s ease-in-out infinite;
 }
+body.light .vehicle-option-card.selected {
+  background: rgba(255,107,53,0.08) !important;
+}
 .vehicle-option-card.selected .vehicle-price-badge {
   background: var(--navigo-orange);
   color: #fff;
@@ -233,6 +259,9 @@ ion-toast, ion-modal {
   width: 100%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
   animation: navigo-shimmer 2s infinite;
+}
+body.light .loyalty-progress-bar::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
 }
 
 /* ── Map Controls — Hover Lift ────────────────────────────── */
@@ -274,6 +303,10 @@ body {
   background: radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%);
   animation: navigo-fade-in 0.4s ease;
 }
+body.light .loading-screen,
+body.light [class*="loading"] {
+  background: radial-gradient(120% 90% at 50% 0%, #F8FAFC 0%, #F1F5F9 55%, #E2E8F0 100%);
+}
 
 /* ── Quick Actions — Stagger In ───────────────────────────── */
 @keyframes navigo-stagger-in {
@@ -295,5 +328,12 @@ body {
 .driver-row:hover, .activity-item:hover, .ticket-item:hover, .place-item:hover {
   background: rgba(255,255,255,0.06) !important;
   transform: translateX(2px);
+  border-color: rgba(255,107,53,0.15) !important;
+}
+body.light .driver-row:hover,
+body.light .activity-item:hover,
+body.light .ticket-item:hover,
+body.light .place-item:hover {
+  background: rgba(0,0,0,0.03) !important;
   border-color: rgba(255,107,53,0.15) !important;
 }

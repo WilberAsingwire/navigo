@@ -143,7 +143,7 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
       </IonButton>
 
       <IonModal isOpen={showModal} onDidDismiss={() => setShowModal(false)}>
-        <div style={{ padding: 24, background: '#0d1117', color: '#fff8f0', height: '100%', overflow: 'auto' }}>
+        <div style={{ padding: 24, background: 'var(--nav-bg-soft)', color: '#fff8f0', height: '100%', overflow: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ color: '#ff5252', margin: 0, fontSize: 22 }}>🚨 Emergency Help</h2>
             <IonButton fill="clear" onClick={() => setShowModal(false)}><IonIcon icon={closeOutline} style={{ color: '#fff' }} /></IonButton>

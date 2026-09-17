@@ -24,6 +24,7 @@ import '@ionic/react/css/display.css';
 import './theme/variables.css';
 import './theme/interactive.css';
 import './theme/polish.css';
+import './theme/light-mode.css';
 
 setupIonicReact({ mode: 'md' });
 
@@ -65,10 +66,10 @@ const AdminPayouts = lazy(() => import('./pages/admin/AdminPayouts'));
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 
 const PageLoader: React.FC = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#080c14', color: '#fff', gap: 16 }}>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--nav-bg)', color: 'var(--nav-text)', gap: 16 }}>
     <div style={{ fontSize: 32 }}>🚀</div>
     <IonSpinner name="crescent" color="warning" />
-    <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>Loading NAVIGO...</p>
+    <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13 }}>Loading NAVIGO...</p>
   </div>
 );
 

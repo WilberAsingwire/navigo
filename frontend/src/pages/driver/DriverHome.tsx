@@ -1,26 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import {
-  IonContent, IonPage, IonHeader, IonToolbar, IonTitle,
-  IonGrid, IonRow, IonCol, IonIcon, IonText, IonButton, IonToggle,
-  IonAvatar, IonBadge, IonCard, IonCardContent, IonRefresher, IonRefresherContent, useIonRouter
+  IonContent, IonPage, IonHeader, IonToolbar,
+  IonIcon, IonText, IonToggle,
+  IonAvatar, IonRefresher, IonRefresherContent
 } from '@ionic/react';
 import {
   carOutline, starOutline, leafOutline, timeOutline, walletOutline,
-  documentTextOutline, peopleOutline, trendingUpOutline, mapOutline,
-  chevronDownCircleOutline, settingsOutline, personOutline,
-  checkmarkCircleOutline, cashOutline
+  documentTextOutline, mapOutline,
+  chevronDownCircleOutline,
+  checkmarkCircleOutline, cashOutline, trendingUpOutline
 } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import socketService from '../../services/socketService';
 import BodaSafeScore from '../../components/BodaSafeBadges';
 import LoyaltyCard from '../../components/LoyaltyCard';
+import ThemeToggle from '../../components/ThemeToggle';
+import useHaptic from '../../hooks/useHaptic';
 import './DriverHome.css';
 
 const DriverHome: React.FC = () => {
-  const ionRouter = useIonRouter();
+  const history = useHistory();
   const { user } = useAuth();
+  const { light, medium } = useHaptic();
   const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
@@ -36,17 +39,11 @@ const DriverHome: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
-
-    // Ride requests are now handled by the global DriverNotificationProvider
-  }, [user?.id, ionRouter]);
-
-  useEffect(() => {
     const status = user?.verificationStatus || 'unverified';
     if (status === 'unverified' || status === 'rejected') {
-      ionRouter.push('/driver/documents', 'root', 'replace');
+      history.push('/driver/documents');
     }
-  }, [user, ionRouter]);
+  }, [user, history]);
 
   const [stats] = useState({
     earnings: 85000,
@@ -70,24 +67,29 @@ const DriverHome: React.FC = () => {
       alert('Your account must be approved by an admin before you can go online.');
       return;
     }
-
     try {
+      medium();
       await api.post('/drivers/status/online', { online });
       setIsOnline(online);
     } catch (error) {
       console.error('Failed to update online status:', error);
       alert('Could not update status. Please try again.');
-      setIsOnline(!online); // Revert toggle
+      setIsOnline(!online);
     }
+  };
+
+  const navWithHaptic = (path: string) => {
+    light();
+    history.push(path);
   };
 
   return (
     <IonPage>
       <IonHeader className="ion-no-border">
-        <IonToolbar className="driver-toolbar">
+        <IonToolbar className="driver-toolbar" style={{ '--background': 'var(--nav-bg)' } as any}>
           <div className="header-content">
             <div className="user-profile-group">
-              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => ionRouter.push('/driver/vehicle')}>
+              <IonAvatar style={{ width: 36, height: 36 }} onClick={() => navWithHaptic('/driver/vehicle')}>
                 <InitialsAvatar name={user?.fullName || 'D'} size={36} />
               </IonAvatar>
               <div>
@@ -95,7 +97,10 @@ const DriverHome: React.FC = () => {
                 <p className={`driver-status-text ${isOnline ? 'online' : 'offline'}`}>{isOnline ? '🟢 Online' : '🔴 Offline'}</p>
               </div>
             </div>
-            <IonToggle checked={isOnline} onIonChange={e => handleStatusToggle(e.detail.checked)} color="success" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <ThemeToggle size="small" />
+              <IonToggle checked={isOnline} onIonChange={e => handleStatusToggle(e.detail.checked)} color="success" />
+            </div>
           </div>
         </IonToolbar>
       </IonHeader>
@@ -106,17 +111,15 @@ const DriverHome: React.FC = () => {
         </IonRefresher>
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
-          {/* Status Banner */}
-          <div className={`status-banner ${isOnline ? 'online' : 'offline'}`}>
+          <div className={`status-banner ${isOnline ? 'online' : 'offline'}`} onClick={() => handleStatusToggle(!isOnline)}>
             <IonIcon icon={isOnline ? leafOutline : timeOutline} className="status-icon" style={{ color: isOnline ? '#2D6A4F' : '#888' }} />
             <IonText className="status-text" style={{ color: isOnline ? '#2D6A4F' : '#888' }}>
               {isOnline ? 'You are visible to nearby riders' : 'Go online to start receiving ride requests'}
             </IonText>
           </div>
 
-          {/* KPI Cards */}
           <div className="kpi-grid">
-            <div className="kpi-card">
+            <div className="kpi-card" onClick={() => navWithHaptic('/driver/earnings')}>
               <IonIcon icon={walletOutline} className="kpi-icon" style={{ color: '#00e676' }} />
               <h3 className="kpi-value">UGX {stats.todayEarnings.toLocaleString()}</h3>
               <p className="kpi-label">Today's Earnings</p>
@@ -128,13 +131,9 @@ const DriverHome: React.FC = () => {
             </div>
           </div>
 
-          {/* Boda Safe Score */}
           <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={stats.rating} totalRides={stats.completedRides} />
-
-          {/* Zawadi Loyalty */}
           <LoyaltyCard points={450} tier="gold" />
 
-          {/* Quick Actions */}
           <h3 className="actions-header">Quick Actions</h3>
           <div className="actions-grid">
             {[
@@ -143,37 +142,26 @@ const DriverHome: React.FC = () => {
               { label: 'Documents', icon: documentTextOutline, path: '/driver/documents', color: '#b47fff' },
               { label: 'Live Map', icon: mapOutline, path: '/admin/map', color: '#FF6B35' },
             ].map(action => (
-              <div key={action.label} onClick={() => ionRouter.push(action.path)} className="action-card">
+              <div key={action.label} onClick={() => navWithHaptic(action.path)} className="action-card">
                 <IonIcon icon={action.icon} style={{ color: action.color }} />
                 <p>{action.label}</p>
               </div>
             ))}
           </div>
 
-          {/* Recent Activity */}
           <h3 className="activity-header">Recent Activity</h3>
           {recentActivity.map(activity => (
-            <div key={activity.id} className="activity-item">
+            <div key={activity.id} className="activity-item" onClick={() => light()}>
               <IonIcon icon={activity.icon} className="activity-icon" style={{ color: activity.color }} />
               <span className="activity-text">{activity.text}</span>
               <span className="activity-time">{activity.time}</span>
             </div>
           ))}
 
-          {/* Stats Row */}
           <div className="bottom-stats-grid">
-            <div className="bottom-stat-card">
-              <p className="bottom-stat-value">{stats.completedRides}</p>
-              <span className="bottom-stat-label">Total Rides</span>
-            </div>
-            <div className="bottom-stat-card">
-              <p className="bottom-stat-value">{stats.acceptanceRate}%</p>
-              <span className="bottom-stat-label">Acceptance</span>
-            </div>
-            <div className="bottom-stat-card">
-              <p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p>
-              <span className="bottom-stat-label">This Week</span>
-            </div>
+            <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completedRides}</p><span className="bottom-stat-label">Total Rides</span></div>
+            <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.acceptanceRate}%</p><span className="bottom-stat-label">Acceptance</span></div>
+            <div className="bottom-stat-card"><p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p><span className="bottom-stat-label">This Week</span></div>
           </div>
         </div>
       </IonContent>

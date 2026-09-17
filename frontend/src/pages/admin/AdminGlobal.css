@@ -39,8 +39,8 @@ ion-badge[color="primary"] {
 
 /* Admin KPI Cards - Flat solid colors */
 .admin-kpi-card {
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.06) !important;
+  background: var(--nav-card-soft) !important;
+  border: 1px solid var(--nav-card-hover) !important;
 }
 
 /* Revenue Chart - Solid orange bars */
@@ -50,8 +50,8 @@ ion-badge[color="primary"] {
 
 /* Quick Action Cards - Dark with orange accent */
 .admin-quick-action-card {
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.06) !important;
+  background: var(--nav-card-soft) !important;
+  border: 1px solid var(--nav-card-hover) !important;
 }
 .admin-quick-action-card:hover {
   background: rgba(255,107,53,0.08) !important;

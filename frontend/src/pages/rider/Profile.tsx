@@ -149,7 +149,7 @@ const Profile: React.FC = () => {
 
         {/* Edit Modal */}
         <IonModal isOpen={showEdit} onDidDismiss={() => setShowEdit(false)}>
-          <div style={{ padding: 20, background: '#0d1117', color: '#fff', height: '100%' }}>
+          <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0 }}>Edit Profile</h2>
               <IonButton fill="clear" onClick={() => setShowEdit(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>

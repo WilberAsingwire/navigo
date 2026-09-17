@@ -2,6 +2,7 @@
    NAVIGO POLISH — Deep UX audit fixes for all pages
    Applies interactive polish to every existing component
    without rewriting each file.
+   Now fully supports dark + light — both perfect.
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── Rider: ActiveRide, Payments, History, SavedPlaces, Support ── */
@@ -9,14 +10,33 @@
 .driver-active-container, .admin-dashboard-container, .admin-approvals-container, .admin-settings-container, .admin-live-map, .admin-bg {
   background: var(--nav-bg) !important;
   background-image:
-    radial-gradient(circle at 10% 10%, rgba(255,107,53,0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 90%, rgba(255,107,53,0.05) 0%, transparent 40%) !important;
+    radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%) !important;
   min-height: 100vh;
+}
+
+body.light .active-ride-content,
+body.light .payments-container,
+body.light .ride-history-container,
+body.light .places-bg,
+body.light .support-container,
+body.light .profile-content,
+body.light .payments-content,
+body.light .driver-active-container,
+body.light .admin-dashboard-container,
+body.light .admin-approvals-container,
+body.light .admin-settings-container,
+body.light .admin-live-map,
+body.light .admin-bg {
+  background: var(--nav-bg) !important;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(255, 107, 53, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.03) 0%, transparent 40%) !important;
 }
 
 .driver-card, .rider-info-card, .fare-card, .route-card, .wallet-balance-card, .balance-card,
 .history-stat-card, .stat-card, .settings-section-card, .support-accordion, .admin-kpi-card, .admin-quick-action-card,
-.ticket-item, .place-item, .support-info-banner, .driver-card {
+.ticket-item, .place-item, .support-info-banner {
   background: var(--nav-card-glass) !important;
   backdrop-filter: blur(20px) saturate(1.1) !important;
   -webkit-backdrop-filter: blur(20px) saturate(1.1) !important;
@@ -50,6 +70,42 @@
   transition-duration: 0.1s !important;
 }
 
+/* Light mode cards — solid white, subtle */
+body.light .driver-card,
+body.light .rider-info-card,
+body.light .fare-card,
+body.light .route-card,
+body.light .wallet-balance-card,
+body.light .balance-card,
+body.light .history-stat-card,
+body.light .stat-card,
+body.light .settings-section-card,
+body.light .support-accordion,
+body.light .admin-kpi-card,
+body.light .admin-quick-action-card,
+body.light .ticket-item,
+body.light .place-item,
+body.light .support-info-banner {
+  background: var(--nav-card) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--nav-border) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body.light .driver-card:hover,
+body.light .rider-info-card:hover,
+body.light .fare-card:hover,
+body.light .route-card:hover,
+body.light .wallet-balance-card:hover,
+body.light .history-stat-card:hover,
+body.light .stat-card:hover,
+body.light .settings-section-card:hover,
+body.light .support-accordion:hover,
+body.light .admin-kpi-card:hover {
+  background: #FFFFFF !important;
+  border-color: var(--nav-border-orange) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
 /* ── Wallet Balance — Hero Glow ───────────────────────────── */
 .wallet-balance-card, .balance-card {
   background: linear-gradient(135deg, rgba(27,73,101,0.35), rgba(13,33,55,0.6)) !important;
@@ -58,6 +114,16 @@
   text-align: center;
   padding: 24px !important;
   animation: float 6s ease-in-out infinite;
+}
+body.light .wallet-balance-card,
+body.light .balance-card {
+  background: linear-gradient(135deg, #1B4965 0%, #0D2137 100%) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: #FFFFFF !important;
+}
+body.light .wallet-balance-card *,
+body.light .balance-card * {
+  color: #FFFFFF !important;
 }
 @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .wallet-amount, .balance-amount { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; transition: transform var(--duration-normal) var(--ease-spring); }
@@ -84,6 +150,8 @@ ion-button:active { transform: scale(0.97); }
 .search-result-item:hover { background: var(--nav-card-hover) !important; transform: translateX(2px); }
 .search-result-item:active, .place-chip:active, .recent-trip-item:active { transform: scale(0.96) !important; }
 
+body.light .search-result-item:hover { background: rgba(0,0,0,0.03) !important; }
+
 /* ── Admin — Tables + Cards — Hover Lift ──────────────────── */
 .admin-kpi-grid, .stats-grid, .kpi-grid, .admin-quick-actions-grid { animation: staggerIn 0.5s var(--ease-spring) both; }
 @keyframes staggerIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
@@ -108,6 +176,13 @@ ion-button:active { transform: scale(0.97); }
   border-radius: var(--radius-2xl);
   transition: all var(--duration-normal) var(--ease-spring);
 }
+
+body.light .chat-box {
+  background: #FFFFFF !important;
+  color: var(--nav-text) !important;
+  border-color: var(--nav-border) !important;
+}
+body.light .chat-box .message-text { color: var(--nav-text) !important; }
 
 /* ── Incoming Request — Timer Pulse ───────────────────────── */
 .timer-circle { animation: pulse 1.5s ease-in-out infinite; }
@@ -136,6 +211,9 @@ ion-segment { background: var(--nav-card-glass) !important; border-radius: var(-
 ion-segment-button { --indicator-color: var(--navigo-orange) !important; --color-checked: var(--navigo-orange) !important; --border-radius: var(--radius-pill) !important; transition: all var(--duration-normal) var(--ease-spring) !important; }
 ion-segment-button:hover { transform: scale(1.02); }
 
+body.light ion-segment { background: var(--nav-bg-deep) !important; }
+body.light ion-segment-button { --color: var(--nav-text-secondary) !important; }
+
 /* ── Badges — Muted + Interactive ─────────────────────────── */
 ion-badge { transition: all var(--duration-normal) var(--ease-spring) !important; cursor: default; }
 ion-badge:hover { transform: scale(1.05); }
@@ -146,6 +224,12 @@ ion-badge:hover { transform: scale(1.05); }
   background-size: 200% 100% !important;
   animation: shimmer 1.4s infinite !important;
   border-radius: var(--radius-md) !important;
+}
+body.light .skeleton,
+body.light [class*="skeleton"],
+body.light .loading-shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%) !important;
+  background-size: 200% 100% !important;
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 

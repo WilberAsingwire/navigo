@@ -221,7 +221,7 @@ const RiderPayments: React.FC = () => {
 
         {/* Top-up Modal */}
         <IonModal isOpen={showTopUp} onDidDismiss={() => setShowTopUp(false)}>
-          <div style={{ padding: 20, background: '#0d1117', color: '#fff', height: '100%' }}>
+          <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0 }}>Top Up Wallet</h2>
               <IonButton fill="clear" onClick={() => setShowTopUp(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
