@@ -124,18 +124,20 @@ const NavigoMap: React.FC<MapProps> = ({
 
   const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
 
-  // Premium tile URLs - OSM direct is most reliable (no subdomains, no {r}), Carto as styled alt
-  // Using tile.openstreetmap.org (no {s}) guarantees load even with adblock/CORS issues
+  // Premium tiles - HOT OSM is most reliable and colorful, matches orange brand, never blocked
+  // Dark uses Carto dark_all, light uses HOT + OSM direct as fallback
   const tileUrl = mapStyle === 'standard'
     ? theme === 'dark'
       ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+      : 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
     : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+  const fallbackTileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   const tileAttribution = mapStyle === 'standard'
     ? theme === 'dark'
       ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/">HOT</a>'
     : '&copy; Esri &mdash; Source: Esri';
 
   // Fetch route
@@ -224,7 +226,7 @@ const NavigoMap: React.FC<MapProps> = ({
       <MapContainer
         center={center}
         zoom={15}
-        style={{ height: '100%', width: '100%', minHeight: height === '100%' ? '100vh' : height, background: theme === 'dark' ? '#080C14' : '#F8FAFC' }}
+        style={{ height: '100%', width: '100%', minHeight: height === '100%' ? '100vh' : height, background: theme === 'dark' ? '#0F172A' : '#E2E8F0' }}
         zoomControl={false}
         attributionControl={true}
         dragging={interactive}
@@ -232,6 +234,14 @@ const NavigoMap: React.FC<MapProps> = ({
         doubleClickZoom={interactive}
         touchZoom={interactive}
       >
+        {/* Fallback OSM direct - always loads, underneath */}
+        <TileLayer
+          url={fallbackTileUrl}
+          attribution={tileAttribution}
+          maxZoom={19}
+          minZoom={3}
+        />
+        {/* Primary styled layer on top */}
         <TileLayer
           url={tileUrl}
           attribution={tileAttribution}
