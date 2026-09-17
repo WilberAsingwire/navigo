@@ -701,8 +701,19 @@ const RideRequest: React.FC = () => {
           driverType={selectedRide.vehicleType}
           height="100%"
           showControls={true}
+          showNearbyDrivers={step === BookingStep.HOME}
           searchResults={searchResults.map(r => ({ lat: r.lat, lng: r.lng, name: r.name || r.address.split(',')[0], address: r.address }))}
           onMapClick={handleMapClick}
+          onPickupDrag={(ll) => {
+            const [lat, lng] = ll;
+            setPickup({ lat, lng, address: 'Dragged Pickup', name: 'Pickup' });
+            setPickupSearch('Pickup');
+          }}
+          onDestDrag={(ll) => {
+            const [lat, lng] = ll;
+            setDestination({ lat, lng, address: 'Dragged Destination', name: 'Destination' });
+            setDestSearch('Destination');
+          }}
           onDistanceChange={(d, t) => { setActualRouteDist(d); setActualRouteDur(t); }}
         />
       </div>
