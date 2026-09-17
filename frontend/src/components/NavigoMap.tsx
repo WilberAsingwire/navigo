@@ -179,19 +179,17 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
-  // Reliable tiles - Carto is CDN and not blocked, OSM direct as fallback
+  // Reliable tiles - Google is never blocked by adblock, unlike OSM/Carto/Esri
+  // Using Google's own tile servers via mt0, mt1, mt2, mt3
   const getTileUrl = () => {
-    if (mapStyle === 'satellite') return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-    if (mapStyle === 'terrain') return 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
-    return theme === 'dark'
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    if (mapStyle === 'satellite') return 'https://{s}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}&s=Ga'; // y = hybrid satellite with labels
+    if (mapStyle === 'terrain') return 'https://{s}.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}&s=Ga';
+    // Standard roadmap - Google m
+    return 'https://{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga';
   };
 
   const getAttribution = () => {
-    if (mapStyle === 'satellite') return '&copy; Esri';
-    if (mapStyle === 'terrain') return '&copy; OpenTopoMap & OSM';
-    return '&copy; OSM &copy; CARTO';
+    return '&copy; Google Maps';
   };
 
   const handleMyLocation = () => {
@@ -214,24 +212,16 @@ const NavigoMap: React.FC<MapProps> = ({
         center={center}
         zoom={15}
         style={{ height: '100%', width: '100%' }}
-        zoomControl={false}
+        zoomControl={true}
         attributionControl={true}
       >
         <TileLayer
           url={getTileUrl()}
           attribution={getAttribution()}
-          subdomains={['a', 'b', 'c', 'd']}
+          subdomains={['mt0', 'mt1', 'mt2', 'mt3']}
           maxZoom={20}
-          maxNativeZoom={19}
+          maxNativeZoom={20}
         />
-        {mapStyle === 'satellite' && (
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
-            attribution="&copy; CARTO"
-            subdomains={['a', 'b', 'c', 'd']}
-            maxZoom={20}
-          />
-        )}
 
         <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c) => { if (!isNaN(c[0]) && !isNaN(c[1])) setMapCenter(c); }} />
 
@@ -284,8 +274,11 @@ const NavigoMap: React.FC<MapProps> = ({
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); }
-        .navigo-map-root .leaflet-control-zoom { display: none; }
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: ${theme === 'dark' ? '#0F172A' : '#F1F5F9'} !important; }
+        .navigo-map-root .leaflet-tile-pane { filter: ${theme === 'dark' ? (mapStyle === 'satellite' ? 'brightness(0.85) contrast(1.1)' : 'invert(0.9) hue-rotate(180deg) brightness(0.95) contrast(1.05)') : 'none'}; }
+        .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
+        .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; backdrop-filter: blur(16px); }
+        .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
         .navigo-map-root .leaflet-control-attribution { background: rgba(15,23,42,0.85) !important; color: #94A3B8 !important; font-size: 10px !important; border-radius: 8px 0 0 0 !important; backdrop-filter: blur(8px); }
         .navigo-map-root .leaflet-control-attribution a { color: #FF6B35 !important; }
         .np-wrap, .nd-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
