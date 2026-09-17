@@ -106,9 +106,10 @@ const NavigoMap: React.FC<MapProps> = ({
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
+  const [mapZoom, setMapZoom] = useState(15);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
-  const [tileStatus, setTileStatus] = useState<string>('init');
-  const [useIframeFallback, setUseIframeFallback] = useState(false);
+  const [tileStatus, setTileStatus] = useState<string>('Google Maps');
+  const mapRef = React.useRef<L.Map | null>(null);
 
   const getValidCenter = (): [number, number] => {
     if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
@@ -117,17 +118,7 @@ const NavigoMap: React.FC<MapProps> = ({
   };
   const center = getValidCenter();
 
-  // If tiles fail for 5 seconds, switch to iframe Google Maps embed which NEVER fails
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (tileStatus.includes('error') || tileStatus === 'init' || tileStatus.includes('loading')) {
-        console.warn('Tiles not loaded after 5s, switching to iframe fallback');
-        // Don't auto-switch yet, just show status, but prepare fallback
-        setTileStatus(s => s + ' | trying iframe...');
-      }
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [tileStatus]);
+  // Track zoom changes
 
   useEffect(() => {
     if (!showNearbyDrivers || !isValidLatLng(userLocation)) return;
@@ -179,6 +170,9 @@ const NavigoMap: React.FC<MapProps> = ({
           const ll: [number, number] = [pos.coords.latitude, pos.coords.longitude];
           setMapCenter(ll);
           onMapClick?.(ll);
+          if (mapRef.current) {
+            try { mapRef.current.flyTo(ll, 16, { duration: 1 }); } catch {}
+          }
         },
         () => {},
         { enableHighAccuracy: true, timeout: 8000 }
@@ -186,30 +180,51 @@ const NavigoMap: React.FC<MapProps> = ({
     }
   };
 
-  // ULTIMATE FIX: Use Google Maps Embed as primary visual, Leaflet as overlay for markers
-  // This guarantees map shows even if Leaflet tiles blocked
-  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=15&output=embed&hl=en`;
+  const handleZoomIn = () => {
+    const newZoom = Math.min(mapZoom + 1, 20);
+    setMapZoom(newZoom);
+    if (mapRef.current) {
+      try { mapRef.current.setZoom(newZoom); } catch {}
+    }
+  };
+  const handleZoomOut = () => {
+    const newZoom = Math.max(mapZoom - 1, 5);
+    setMapZoom(newZoom);
+    if (mapRef.current) {
+      try { mapRef.current.setZoom(newZoom); } catch {}
+    }
+  };
+
+  // Google Maps iframe with dynamic style and zoom
+  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
+  const getMapTypeParam = () => {
+    if (mapStyle === 'satellite') return 'k'; // satellite
+    if (mapStyle === 'terrain') return 'p'; // terrain
+    return 'm'; // roadmap standard
+  };
+  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=${getMapTypeParam()}&output=embed&hl=en&iwloc=near`;
 
   return (
     <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#e5e7eb' }}>
-      {/* GOOGLE MAPS IFRAME BACKGROUND - always works, never blocked by adblock */}
+      {/* GOOGLE MAPS IFRAME BACKGROUND - always works, never blocked */}
       <iframe
+        key={`${center[0].toFixed(4)}-${center[1].toFixed(4)}-${mapZoom}-${mapStyle}`}
         src={googleEmbedUrl}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, zIndex: 0 }}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
         title="Google Maps"
-        onLoad={() => setTileStatus('Google iframe loaded')}
-        onError={() => setTileStatus('iframe error')}
+        onLoad={() => setTileStatus(`Google ${mapStyle} z${mapZoom}`)}
       />
 
-      {/* LEAFLET OVERLAY - transparent, only for markers and route, tiles disabled if iframe works */}
+      {/* LEAFLET OVERLAY - transparent, only for markers and route */}
       <MapContainer
         center={center}
-        zoom={15}
+        zoom={mapZoom}
         style={{ height: '100%', width: '100%', background: 'transparent', zIndex: 1 }}
-        zoomControl={true}
+        zoomControl={false}
         attributionControl={false}
+        ref={mapRef as any}
       >
         {/* Transparent tiles - we rely on iframe for base, but keep one TileLayer with opacity 0.01 to keep Leaflet happy */}
         <TileLayer
@@ -218,7 +233,7 @@ const NavigoMap: React.FC<MapProps> = ({
           attribution=""
         />
 
-        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c) => { if (!isNaN(c[0]) && !isNaN(c[1])) setMapCenter(c); }} />
+        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c, z) => { if (!isNaN(c[0]) && !isNaN(c[1])) { setMapCenter(c); setMapZoom(z); } }} />
 
         {isValidLatLng(userLocation) && (
           <>
@@ -261,9 +276,14 @@ const NavigoMap: React.FC<MapProps> = ({
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
-          <div className="map-badge" style={{ fontSize: 9 }}>{tileStatus}</div>
         </div>
-        <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
+        <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
+          <div className="map-zoom-controls">
+            <button className="mz-btn" onClick={handleZoomIn}>+</button>
+            <button className="mz-btn" onClick={handleZoomOut}>−</button>
+          </div>
+          <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
+        </div>
       </div>
 
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
@@ -295,7 +315,11 @@ const NavigoMap: React.FC<MapProps> = ({
         .map-style-toggle { display: flex; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
         .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; }
         .ms-btn.active { background: #FF6B35; color: white; }
-        .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); }
+        .map-zoom-controls { display: flex; flex-direction: column; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .mz-btn { width: 44px; height: 44px; border: none; background: white; color: #0F172A; font-size: 20px; font-weight: 800; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .mz-btn:last-child { border-bottom: none; }
+        .mz-btn:hover { background: #FF6B35; color: white; }
+        .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); align-self: flex-start; }
         .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,107,53,0.2); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
       `}</style>
     </div>
