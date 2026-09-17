@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,7 +8,6 @@ import goNew from '../assets/vehicles/go-new.png';
 import comfortNew from '../assets/vehicles/comfort-new.png';
 import xlNew from '../assets/vehicles/xl-new.png';
 
-// Fix default icon URLs
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -22,21 +21,18 @@ const pickupIcon = L.divIcon({
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
-
 const destIcon = L.divIcon({
   className: 'navigo-dest',
   html: `<div class="nd-wrap"><div class="nd-dot"></div></div>`,
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
-
 const createVehicleIcon = (url: string, color: string) => L.divIcon({
   className: 'navigo-vehicle',
   html: `<div class="nv-wrap"><div class="nv-body" style="border-color:${color}"><img src="${url}" alt=""/></div></div>`,
   iconSize: [40, 40],
   iconAnchor: [20, 20],
 });
-
 const createSearchIcon = (n: number) => L.divIcon({
   className: 'navigo-search',
   html: `<div class="ns-pin">${n}</div>`,
@@ -66,23 +62,11 @@ const MapEvents: React.FC<{
 }> = ({ onMapClick, userLocation, followUser, onMove }) => {
   const map = useMap();
   useMapEvents({
-    click(e) {
-      const ll = e.latlng;
-      if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]);
-    },
-    moveend() {
-      try {
-        const c = map.getCenter();
-        if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom());
-      } catch {}
-    },
+    click(e) { const ll = e.latlng; if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]); },
+    moveend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch {} },
   });
   useEffect(() => {
-    if (followUser && isValidLatLng(userLocation)) {
-      try {
-        map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 });
-      } catch {}
-    }
+    if (followUser && isValidLatLng(userLocation)) { try { map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 }); } catch {} }
   }, [userLocation, followUser, map]);
   useEffect(() => {
     const t = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 300);
@@ -188,75 +172,44 @@ const NavigoMap: React.FC<MapProps> = ({
     }
   };
 
-  // TILE URLS - absolutely simplest, no filter that can hide tiles
-  // OSM official is most reliable, no subdomains needed
-  const getTileConfig = () => {
-    if (mapStyle === 'satellite') {
-      return {
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attribution: '&copy; Esri &mdash; Source: Esri, Maxar',
-        label: 'Satellite',
-      };
-    }
-    if (mapStyle === 'terrain') {
-      return {
-        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-        subdomains: ['a','b','c'],
-        attribution: '&copy; OpenTopoMap',
-        label: 'Terrain',
-      };
-    }
-    // STANDARD - use Carto Light (beautiful, light, works) + OSM as backup via second layer
-    return {
-      url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      subdomains: ['a','b','c','d'],
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      label: 'Standard',
-      fallback: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    };
+  // GOOGLE MAPS TILES - as you had before and liked
+  const getGoogleUrl = () => {
+    if (mapStyle === 'satellite') return 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'; // hybrid satellite with labels
+    if (mapStyle === 'terrain') return 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
+    return 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'; // roadmap - the one you had
   };
 
-  const tileCfg = getTileConfig();
-
   return (
-    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#E5E7EB' }}>
+    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#f0f2f5' }}>
       <MapContainer
         center={center}
         zoom={15}
-        style={{ height: '100%', width: '100%', background: '#E5E7EB' }}
+        style={{ height: '100%', width: '100%', background: '#f0f2f5' }}
         zoomControl={true}
         attributionControl={true}
       >
-        {/* Fallback OSM layer underneath - always visible if primary fails */}
+        {/* OSM fallback underneath - in case Google blocked */}
         <TileLayer
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap'
+          attribution=""
           maxZoom={19}
         />
-        {/* Primary layer on top */}
+        {/* GOOGLE MAPS ON TOP - the one you liked */}
         <TileLayer
           key={mapStyle}
-          url={tileCfg.url}
-          subdomains={(tileCfg as any).subdomains}
-          attribution={tileCfg.attribution}
-          maxZoom={19}
-          maxNativeZoom={19}
+          url={getGoogleUrl()}
+          subdomains={['mt0','mt1','mt2','mt3']}
+          attribution='&copy; Google Maps'
+          maxZoom={20}
         />
-        {mapStyle === 'satellite' && (
-          <TileLayer
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-            attribution=""
-            maxZoom={19}
-          />
-        )}
 
         <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c) => { if (!isNaN(c[0]) && !isNaN(c[1])) setMapCenter(c); }} />
 
         {isValidLatLng(userLocation) && (
           <>
             <Marker position={[userLocation!.lat, userLocation!.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]); } catch {} } }} />
-            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.06, weight: 1, dashArray: '8 8', opacity: 0.5 }} />
-            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.25, weight: 2 }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.05, weight: 1, dashArray: '8 8', opacity: 0.4 }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.2, weight: 2 }} />
           </>
         )}
 
@@ -282,7 +235,6 @@ const NavigoMap: React.FC<MapProps> = ({
         ))}
       </MapContainer>
 
-      {/* Controls */}
       <div className="map-controls-top">
         <div className="map-controls-left">
           <div className="map-badge live"><span className="bdot"></span> LIVE GPS</div>
@@ -301,13 +253,12 @@ const NavigoMap: React.FC<MapProps> = ({
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: #E5E7EB !important; }
-        /* NO FILTER - show real tiles light and clear */
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: #f0f2f5 !important; }
         .navigo-map-root .leaflet-tile-pane { filter: none !important; }
-        .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
-        .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; backdrop-filter: blur(16px); }
+        .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
+        .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
         .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
-        .navigo-map-root .leaflet-control-attribution { background: rgba(255,255,255,0.9) !important; color: #64748B !important; font-size: 10px !important; border-radius: 8px 0 0 0 !important; }
+        .navigo-map-root .leaflet-control-attribution { background: rgba(255,255,255,0.9) !important; color: #64748B !important; font-size: 10px !important; }
         .navigo-map-root .leaflet-control-attribution a { color: #FF6B35 !important; }
         .np-wrap, .nd-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
         .np-dot { width: 18px; height: 18px; background: #FF6B35; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(255,107,53,0.5); z-index: 2; position: relative; }
@@ -320,20 +271,18 @@ const NavigoMap: React.FC<MapProps> = ({
         .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
         .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
         .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }
-        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.15); background: rgba(255,255,255,0.92); color: #0F172A; }
-        .map-badge.live { background: rgba(16,185,129,0.15); color: #059669; border-color: rgba(16,185,129,0.25); }
-        .map-badge.rt { background: rgba(245,158,11,0.15); color: #D97706; }
+        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.12); background: rgba(255,255,255,0.95); color: #0F172A; }
+        .map-badge.live { background: rgba(16,185,129,0.12); color: #059669; }
+        .map-badge.rt { background: rgba(245,158,11,0.12); color: #D97706; }
         .map-badge.route { background: rgba(15,23,42,0.9); color: white; }
-        .map-badge.drv { background: rgba(14,165,233,0.15); color: #0284C7; }
+        .map-badge.drv { background: rgba(14,165,233,0.12); color: #0284C7; }
         .bdot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: bdot 1.5s infinite; }
         @keyframes bdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        .map-style-toggle { display: flex; background: rgba(255,255,255,0.92); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+        .map-style-toggle { display: flex; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
         .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; }
         .ms-btn.active { background: #FF6B35; color: white; }
         .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); }
-        .my-location-btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
-        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.92); border: 1px solid rgba(255,107,53,0.25); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; backdrop-filter: blur(12px); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        @media (max-width: 768px) { .map-controls-top { flex-direction: column; } }
+        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,107,53,0.2); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
       `}</style>
     </div>
   );
