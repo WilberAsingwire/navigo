@@ -3,10 +3,10 @@
 /* ============================================ */
 
 .payments-container {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 
 /* Wallet Balance Card */
@@ -23,7 +23,7 @@
 
 .wallet-icon {
   font-size: 32px;
-  color: #FF6B35;
+  color: var(--navigo-orange);
   margin-bottom: 8px;
 }
 
@@ -56,7 +56,7 @@
 }
 
 .btn-orange {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --color: #fff !important;
 }
 
@@ -87,7 +87,7 @@
 
 .payment-method-card:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 90, 31, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateX(4px);
 }
 
@@ -189,7 +189,7 @@
 }
 
 .payment-add-btn {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --color: #fff !important;
   --border-radius: 16px !important;
   font-weight: 700 !important;

@@ -5,14 +5,14 @@
 /* Fix all admin headers */
 .admin-content ion-header,
 .admin-content ion-toolbar {
-  --background: #080c14 !important;
+  --background: var(--nav-bg) !important;
   --color: #fff !important;
 }
 
 /* Fix tab blue underline -> Orange */
 ion-segment-button {
-  --indicator-color: #FF6B35 !important;
-  --color-checked: #FF6B35 !important;
+  --indicator-color: var(--navigo-orange) !important;
+  --color-checked: var(--navigo-orange) !important;
 }
 ion-segment-button ion-label {
   color: #fff !important;
@@ -45,7 +45,7 @@ ion-badge[color="primary"] {
 
 /* Revenue Chart - Solid orange bars */
 .admin-revenue-bar {
-  background: #FF6B35 !important;
+  background: var(--navigo-orange) !important;
 }
 
 /* Quick Action Cards - Dark with orange accent */
@@ -59,7 +59,7 @@ ion-badge[color="primary"] {
 
 /* Map - Force dark theme */
 .leaflet-container {
-  background: #080c14 !important;
+  background: var(--nav-bg) !important;
 }
 
 /* Map controls - Dark background */

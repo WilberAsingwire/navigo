@@ -1,5 +1,5 @@
-.driver-bg { --background: #080c14; }
-.driver-toolbar { --background: #080c14; }
+.driver-bg { --background: var(--nav-bg); }
+.driver-toolbar { --background: var(--nav-bg); }
 .sora-font { font-family: 'Sora', sans-serif; }
 .verification-status { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; margin-bottom: 14px; }
 .verification-status.active { background: rgba(45,106,79,0.08); border: 1px solid rgba(45,106,79,0.15); }

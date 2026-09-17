@@ -18,7 +18,7 @@
   width: 100%;
   max-width: 400px;
   background: linear-gradient(145deg, #1a2436 0%, #0d1424 100%);
-  border: 2px solid #FF6B35;
+  border: 2px solid var(--navigo-orange);
   border-radius: 32px;
   padding: 40px 24px;
   text-align: center;
@@ -40,7 +40,7 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  border: 4px solid #FF6B35;
+  border: 4px solid var(--navigo-orange);
   border-radius: 50%;
   animation: ringPulse 1.5s infinite;
 }
@@ -48,7 +48,7 @@
 .visual-content {
   width: 80px;
   height: 80px;
-  background: #FF6B35;
+  background: var(--navigo-orange);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -111,7 +111,7 @@
 
 .detail-item ion-icon {
   font-size: 20px;
-  color: #FF6B35;
+  color: var(--navigo-orange);
 }
 
 .detail-item strong {
@@ -134,7 +134,7 @@
 }
 
 .btn-accept {
-  --background: #FF6B35;
+  --background: var(--navigo-orange);
   --color: white;
   height: 56px;
   --border-radius: 16px;

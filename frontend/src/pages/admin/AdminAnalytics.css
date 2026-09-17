@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #080c14;
+  background: var(--nav-bg);
 }
 
 .loading-center {
@@ -127,7 +127,7 @@
 .bar {
   width: 100%;
   max-width: 30px;
-  background: linear-gradient(to top, #FF6B35, #FF9E7D);
+  background: linear-gradient(to top, var(--navigo-orange), #FF9E7D);
   border-radius: 6px 6px 0 0;
   position: relative;
   transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -181,7 +181,7 @@
 }
 
 .rank {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-weight: 800;
   font-size: 16px;
   width: 20px;

@@ -1,1 +1,1 @@
-.profile-content { --background: #080c14; }
+.profile-content { --background: var(--nav-bg); }

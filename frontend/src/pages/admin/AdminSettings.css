@@ -3,10 +3,10 @@
 /* ============================================ */
 
 .admin-settings-container {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 
 /* Setting Card - Glassmorphism */
@@ -21,7 +21,7 @@
 }
 .settings-section-card:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 90, 31, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
 }
 
 .settings-section-title {
@@ -62,7 +62,7 @@
 /* Controls */
 ion-toggle {
   --background: #1A1A1A !important;
-  --background-checked: #FF6B35 !important;
+  --background-checked: var(--navigo-orange) !important;
   --handle-background: #2A2A2A !important;
   --handle-background-checked: #fff !important;
   --border-color: #333 !important;
@@ -78,10 +78,10 @@ ion-toggle {
 }
 
 .settings-save-btn {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --color: #fff !important;
   --border-radius: 14px !important;
   font-weight: 700 !important;
   margin-top: 20px;
-  box-shadow: 0 10px 20px rgba(255, 90, 31, 0.2);
+  box-shadow: 0 10px 20px rgba(255, 107, 53, 0.2);
 }

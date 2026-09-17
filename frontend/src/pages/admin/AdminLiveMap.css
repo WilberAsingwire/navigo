@@ -1,5 +1,5 @@
 .leaflet-container { height: 100% !important; width: 100% !important; z-index: 1; border-radius: 12px; }
-.admin-live-map { --background: #080c14; }
+.admin-live-map { --background: var(--nav-bg); }
 /* ============================================ */
 /* FINAL ADMIN LIVE MAP FIXES                    */
 /* ============================================ */
@@ -12,7 +12,7 @@
   font-size: 11px !important;
 }
 .admin-live-map ion-chip[color="warning"] {
-  background: #FF6B35 !important;
+  background: var(--navigo-orange) !important;
   color: #fff !important;
 }
 
@@ -54,7 +54,7 @@
 }
 .admin-live-map ion-chip[color="warning"],
 .admin-live-map ion-chip[outline="false"] {
-  color: #FF6B35 !important;
+  color: var(--navigo-orange) !important;
   font-weight: 700 !important;
 }
 .admin-live-map ion-chip[color="medium"] {
@@ -151,7 +151,7 @@ ion-badge[color="success"] {
 
 /* 3. Stats numbers -> Brand Orange */
 .admin-live-map .stats-bar div[style*="color"] {
-  color: #FF6B35 !important;
+  color: var(--navigo-orange) !important;
 }
 
 /* Nuke neon green ACTIVE badges */

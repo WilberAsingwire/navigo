@@ -1,0 +1,299 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGO INTERACTIVE — Global micro-interactions, animations, and polish
+   Every button, card, input, and page benefits from this.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Page Transitions ─────────────────────────────────────── */
+@keyframes navigo-page-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes navigo-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes navigo-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes navigo-scale-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes navigo-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes navigo-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.85; }
+}
+@keyframes navigo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes navigo-glow {
+  0%, 100% { box-shadow: 0 0 12px var(--navigo-orange-glow); }
+  50% { box-shadow: 0 0 24px var(--navigo-orange-glow), 0 0 36px rgba(255,107,53,0.15); }
+}
+@keyframes navigo-ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
+ion-page {
+  animation: navigo-page-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Interactive Cards Everywhere ─────────────────────────── */
+[class*="card"], [class*="pill"], [class*="tile"], .action-btn, .action-card, .stat-pill, .kpi-card, .driver-row, .place-chip, .recent-trip-item, .vehicle-option-card, .reward-tile, .challenge-item {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow, background, border-color;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover */
+[class*="card"]:hover, [class*="pill"]:hover, .action-btn:hover, .action-card:hover, .stat-pill:hover, .kpi-card:hover, .driver-row:hover, .place-chip:hover, .recent-trip-item:hover, .vehicle-option-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,107,53,0.25) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,107,53,0.08);
+}
+
+/* Active / Tap */
+[class*="card"]:active, [class*="pill"]:active, .action-btn:active, .action-card:active, .stat-pill:active, .kpi-card:active, .driver-row:active, .place-chip:active, .recent-trip-item:active, .vehicle-option-card:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.1s;
+}
+
+/* Focus Visible — accessibility */
+[class*="card"]:focus-visible, button:focus-visible, [class*="btn"]:focus-visible, input:focus-visible {
+  outline: 2px solid var(--navigo-orange);
+  outline-offset: 2px;
+  border-color: var(--navigo-orange) !important;
+}
+
+/* ── Buttons — Ripple + Glow + Press ──────────────────────── */
+button, .btn-primary, .btn-continue, .btn-request-ride, .btn-copy-code, ion-button {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow, filter;
+}
+
+button:hover, .btn-primary:hover, .btn-continue:hover, .btn-request-ride:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(255,107,53,0.35);
+}
+
+button:active, .btn-primary:active, .btn-continue:active, .btn-request-ride:active {
+  transform: translateY(0) scale(0.97);
+  filter: brightness(0.95);
+  transition-duration: 0.1s;
+}
+
+button:disabled, .btn-primary:disabled, .btn-continue:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Ripple pseudo */
+button::after, .btn-primary::after, .btn-continue::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+  pointer-events: none;
+}
+button:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* ── Inputs — Focus Glow + Shake on Error ─────────────────── */
+@keyframes navigo-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+input, .input-field, .location-input, ion-input input {
+  transition: all 0.25s ease;
+}
+
+input:focus, .input-field:focus, .location-input:focus {
+  border-color: var(--navigo-orange) !important;
+  box-shadow: 0 0 0 3px var(--navigo-orange-soft), 0 0 12px var(--navigo-orange-glow) !important;
+  outline: none;
+}
+
+.input-error, .docs-error, .error-message {
+  animation: navigo-shake 0.4s ease;
+}
+
+/* ── Skeleton Shimmer — Global ────────────────────────────── */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: navigo-shimmer 1.4s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Live Pulse Dots ──────────────────────────────────────── */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nav-success);
+  position: relative;
+  display: inline-block;
+}
+.live-dot::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: var(--nav-success);
+  animation: navigo-pulse 1.5s infinite;
+}
+
+/* ── Scrollbar — Styled Everywhere ────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nav-border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-thumb { background: var(--nav-border-strong); border-radius: var(--radius-pill); }
+*::-webkit-scrollbar-thumb:hover { background: var(--nav-text-muted); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Toast / Modal — Animate In ───────────────────────────── */
+ion-toast, ion-modal {
+  animation: navigo-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Empty States — Interactive ───────────────────────────── */
+.empty-state, [class*="empty"] {
+  animation: navigo-fade-in 0.5s ease;
+  text-align: center;
+  padding: 40px 20px;
+}
+.empty-state ion-icon {
+  animation: navigo-float 3s ease-in-out infinite;
+}
+
+/* ── Vehicle Cards — Selected Glow ────────────────────────── */
+.vehicle-option-card.selected {
+  border-color: var(--navigo-orange) !important;
+  background: rgba(255,107,53,0.08) !important;
+  box-shadow: 0 0 0 2px var(--navigo-orange-soft), 0 8px 24px rgba(255,107,53,0.2) !important;
+  animation: navigo-glow 2s ease-in-out infinite;
+}
+.vehicle-option-card.selected .vehicle-price-badge {
+  background: var(--navigo-orange);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* ── Promo Code — Success Bounce ──────────────────────────── */
+@keyframes navigo-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.promo-applied {
+  animation: navigo-bounce 0.5s ease;
+  border-color: var(--nav-success) !important;
+  background: rgba(16,185,129,0.08) !important;
+}
+
+/* ── Matching — Pulse ─────────────────────────────────────── */
+.matching-emoji.pulse-soft {
+  animation: navigo-pulse 1.2s ease-in-out infinite;
+}
+
+/* ── Loyalty — Progress Shine ─────────────────────────────── */
+.loyalty-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  animation: navigo-shimmer 2s infinite;
+}
+
+/* ── Map Controls — Hover Lift ────────────────────────────── */
+.leaflet-control, .leaflet-control-zoom a, .leaflet-control-locate {
+  transition: all 0.2s ease !important;
+}
+.leaflet-control-zoom a:hover, .leaflet-control-locate:hover {
+  transform: scale(1.05);
+  background: var(--navigo-orange) !important;
+  color: #fff !important;
+}
+
+/* ── Reduced Motion — Accessibility ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Focus Ring for Keyboard Users ────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--navigo-orange);
+  outline-offset: 2px;
+}
+
+/* ── Tap Highlight Removal + Smooth Scroll ────────────────── */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* ── Loading Screen — Branded ─────────────────────────────── */
+.loading-screen, [class*="loading"] {
+  background: radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%);
+  animation: navigo-fade-in 0.4s ease;
+}
+
+/* ── Quick Actions — Stagger In ───────────────────────────── */
+@keyframes navigo-stagger-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.quick-actions-grid > *, .actions-grid > *, .stats-grid > *, .kpi-grid > * {
+  animation: navigo-stagger-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.quick-actions-grid > *:nth-child(1) { animation-delay: 0.05s; }
+.quick-actions-grid > *:nth-child(2) { animation-delay: 0.1s; }
+.quick-actions-grid > *:nth-child(3) { animation-delay: 0.15s; }
+.quick-actions-grid > *:nth-child(4) { animation-delay: 0.2s; }
+
+/* ── Hover Lift for All Interactive Rows ──────────────────── */
+.driver-row, .activity-item, .ticket-item, .place-item, .history-item {
+  transition: all 0.2s ease;
+}
+.driver-row:hover, .activity-item:hover, .ticket-item:hover, .place-item:hover {
+  background: rgba(255,255,255,0.06) !important;
+  transform: translateX(2px);
+  border-color: rgba(255,107,53,0.15) !important;
+}

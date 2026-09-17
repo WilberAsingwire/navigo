@@ -1,52 +1,103 @@
 /* ═══════════════════════════════════════════════════════════════
    NAVIGO DESIGN TOKENS — single source of truth
-   ─────────────────────────────────────────────────────────────
-   Brand:   ember orange on deep navy, glassmorphic cards.
-   Fonts:   Sora (display/headings) + Inter (body) — bundled.
+   Brand: ember orange on deep navy, glassmorphic cards.
+   Fonts: Sora (display/headings) + Inter (body) — bundled.
    Every page MUST use these tokens instead of raw hex values.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
   /* ── Brand ─────────────────────────────────────────────── */
-  --navigo-orange: #FF6B35;            /* THE brand color — use this everywhere */
+  --navigo-orange: #FF6B35;
   --navigo-orange-hover: #FF7E4D;
+  --navigo-orange-active: #E85E2E;
   --navigo-orange-soft: rgba(255, 107, 53, 0.14);
   --navigo-orange-glow: rgba(255, 107, 53, 0.35);
-  --navigo-green: #2D6A4F;             /* secondary brand (boda/success family) */
+  --navigo-orange-ghost: rgba(255, 107, 53, 0.08);
+  --navigo-green: #2D6A4F;
+  --navigo-green-soft: rgba(45, 106, 79, 0.14);
+  --navigo-ember: #FF5A1F; /* legacy alias */
 
   /* ── Backgrounds (dark surface scale) ──────────────────── */
-  --nav-bg: #080C14;                    /* app background */
-  --nav-bg-soft: #0D131F;               /* raised sections */
-  --nav-card: #131B2A;                  /* cards */
-  --nav-card-soft: rgba(255, 255, 255, 0.04);  /* subtle fills */
+  --nav-bg: #080C14;
+  --nav-bg-soft: #0D131F;
+  --nav-bg-raised: #101A2C;
+  --nav-bg-deep: #05070B;
+  --nav-card: #131B2A;
+  --nav-card-hover: rgba(255, 255, 255, 0.06);
+  --nav-card-soft: rgba(255, 255, 255, 0.04);
+  --nav-card-glass: rgba(255, 255, 255, 0.03);
   --nav-border: rgba(255, 255, 255, 0.08);
   --nav-border-strong: rgba(255, 255, 255, 0.14);
+  --nav-border-orange: rgba(255, 107, 53, 0.25);
 
   /* ── Text ──────────────────────────────────────────────── */
   --nav-text: #F5F7FA;
   --nav-text-secondary: #94A3B8;
   --nav-text-muted: #64748B;
+  --nav-text-dim: rgba(255, 255, 255, 0.5);
+  --nav-text-orange: var(--navigo-orange);
 
   /* ── Semantic ──────────────────────────────────────────── */
   --nav-success: #10B981;
+  --nav-success-soft: rgba(16, 185, 129, 0.12);
+  --nav-success-glow: rgba(16, 185, 129, 0.25);
   --nav-warning: #F59E0B;
+  --nav-warning-soft: rgba(245, 158, 11, 0.12);
   --nav-danger: #EF4444;
+  --nav-danger-soft: rgba(239, 68, 68, 0.12);
   --nav-info: #4DA6FF;
+  --nav-info-soft: rgba(77, 166, 255, 0.12);
 
-  /* ── Shape (the only radii we use) ─────────────────────── */
+  /* ── Shape ─────────────────────────────────────────────── */
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 28px;
   --radius-pill: 9999px;
 
+  /* ── Spacing Scale ─────────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
   /* ── Elevation ─────────────────────────────────────────── */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
   --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --shadow-orange: 0 8px 24px rgba(255, 107, 53, 0.25);
+  --shadow-orange-lg: 0 12px 32px rgba(255, 107, 53, 0.35);
+
+  /* ── Motion ────────────────────────────────────────────── */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
 
   /* ── Type ──────────────────────────────────────────────── */
   --font-display: 'Sora', sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Legacy aliases — keep for backward compat */
+  --brand-orange: var(--navigo-orange);
+  --brand-orange-hover: var(--navigo-orange-hover);
+  --brand-green: var(--navigo-green);
+  --bg-deep: var(--nav-bg);
+  --bg-card: var(--nav-card);
+  --text-primary: var(--nav-text);
+  --text-secondary: var(--nav-text-secondary);
+  --text-muted: var(--nav-text-muted);
+  --navigo-ink: var(--nav-bg);
+  --navigo-ink-soft: var(--nav-bg-soft);
+  --navigo-card: var(--nav-card);
+  --navigo-line: var(--nav-border);
 }
 
 /* ── Base ─────────────────────────────────────────────────────── */

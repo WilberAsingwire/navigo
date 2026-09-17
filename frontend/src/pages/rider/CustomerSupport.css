@@ -3,10 +3,10 @@
 /* ============================================ */
 
 .support-container {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 
 /* Help Banner */
@@ -30,7 +30,7 @@
 }
 
 .support-info-link {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   cursor: pointer;
   text-decoration: underline;
   font-weight: 600;
@@ -48,7 +48,7 @@
 
 .support-accordion:hover {
   background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 90, 31, 0.3) !important;
+  border-color: rgba(255, 107, 53, 0.3) !important;
 }
 
 .support-accordion ion-item {
@@ -99,12 +99,12 @@
 }
 
 .support-submit-btn {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --color: #fff !important;
   --border-radius: 16px !important;
   font-weight: 700 !important;
   height: 52px !important;
-  box-shadow: 0 8px 16px rgba(255, 90, 31, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 53, 0.3);
 }
 
 /* Contact Grid */
@@ -128,7 +128,7 @@
 
 .support-contact-card:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 90, 31, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateY(-4px);
 }
 
@@ -155,7 +155,7 @@
 .theme-whatsapp .support-contact-icon { color: #25D366; }
 
 .theme-phone { background: rgba(255, 107, 53, 0.06); border-color: rgba(255, 107, 53, 0.2); }
-.theme-phone .support-contact-icon { color: #FF6B35; }
+.theme-phone .support-contact-icon { color: var(--navigo-orange); }
 
 .theme-email { background: rgba(77, 166, 255, 0.06); border-color: rgba(77, 166, 255, 0.2); }
 .theme-email .support-contact-icon { color: #4da6ff; }

@@ -1,5 +1,5 @@
-.admin-bg { --background: #080c14; }
-.admin-toolbar { --background: #080c14; }
+.admin-bg { --background: var(--nav-bg); }
+.admin-toolbar { --background: var(--nav-bg); }
 .admin-ticket-list { background: transparent; padding: 0; }
 .ticket-item { --background: transparent; --padding-start: 0; margin-bottom: 2px; }
 .priority-indicator { width: 4px; height: 40px; border-radius: 2px; margin-right: 10px; }
@@ -16,7 +16,7 @@
 /* 1. Stats Numbers - All Orange */
 .admin-container .stat-value,
 .admin-support-stats div[style*="color"] {
-  color: #FF6B35 !important;
+  color: var(--navigo-orange) !important;
 }
 
 /* 2. Urgent/High Priority Tags - Translucent */

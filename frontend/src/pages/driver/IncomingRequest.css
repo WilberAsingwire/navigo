@@ -1,4 +1,4 @@
-.request-bg { --background: #080c14; background: linear-gradient(180deg, #0d2137 0%, #080c14 100%); }
+.request-bg { --background: var(--nav-bg); background: linear-gradient(180deg, #0d2137 0%, var(--nav-bg) 100%); }
 .request-container { max-width: 400px; margin: 0 auto; padding: 30px 20px; display: flex; flex-direction: column; height: 100%; justify-content: center; }
 .sora-font { font-family: 'Sora', sans-serif; }
 .timer-section { text-align: center; margin-bottom: 24px; }
