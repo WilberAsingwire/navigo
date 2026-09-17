@@ -79,7 +79,7 @@ const AdminLiveMap: React.FC = () => {
   const [stats, setStats] = useState({ drivers: 0, motorists: 0, riders: 0, activeTrips: 0 });
 
   const tileUrls: Record<string, string> = {
-    standard: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    standard: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   };
 

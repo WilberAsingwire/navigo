@@ -2,7 +2,8 @@
 
 .booking-page-container {
   position: relative;
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
   width: 100vw;
   background-color: var(--nav-bg);
   color: var(--nav-text);
@@ -14,10 +15,20 @@
   position: absolute;
   inset: 0;
   z-index: 0;
+  height: 100dvh;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--nav-bg);
 }
 .booking-map-panel .leaflet-container {
-  filter: brightness(0.85) saturate(1.15);
-  transition: filter var(--duration-normal);
+  height: 100% !important;
+  width: 100% !important;
+  min-height: 100vh;
+  background: transparent !important;
+}
+.booking-map-panel > div {
+  height: 100% !important;
+  min-height: 100vh;
 }
 
 /* Form Panel — Glass + Draggable Feel */

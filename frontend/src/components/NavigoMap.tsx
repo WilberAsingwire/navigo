@@ -5,12 +5,13 @@ import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
-import api from '../services/api';
-import bodaImg from '../assets/vehicles/boda.png';
-import goImg from '../assets/vehicles/go.png';
-import comfortImg from '../assets/vehicles/comfort.png';
-import xlImg from '../assets/vehicles/xl.png';
+import { useTheme } from '../context/ThemeContext';
+import bodaNew from '../assets/vehicles/boda-new.png';
+import goNew from '../assets/vehicles/go-new.png';
+import comfortNew from '../assets/vehicles/comfort-new.png';
+import xlNew from '../assets/vehicles/xl-new.png';
 
+// Fix Leaflet default icons for Vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2xUrl,
@@ -21,50 +22,43 @@ L.Icon.Default.mergeOptions({
 const createPulsingIcon = (color: string, emoji: string, size: number = 28) => {
   return L.divIcon({
     html: `<div style="position:relative;width:${size}px;height:${size}px;">
-            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.6;"></div>
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:${size*0.5}px;z-index:1;">${emoji}</div>
+            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:navigo-pulse 2s infinite;opacity:0.5;"></div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:${size*0.5}px;z-index:1;">${emoji}</div>
            </div>
-           <style>
-            @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2); opacity: 0; } }
-           </style>
-          `,
+           <style>@keyframes navigo-pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.2); opacity: 0; } }</style>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
 };
 
-const createVehicleIcon = (imageUrl: string, color: string, size: number = 32) => {
+const createVehicleIcon = (imageUrl: string, color: string, size: number = 38) => {
   return L.divIcon({
     html: `<div style="position:relative;width:${size}px;height:${size}px;">
-            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.3;"></div>
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
-              <img src="${imageUrl}" style="width:70%; height:70%; object-fit:contain; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));" />
+            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:navigo-pulse 2s infinite;opacity:0.3;"></div>
+            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:white;border-radius:50%;border:2px solid ${color};box-shadow:0 3px 12px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
+              <img src="${imageUrl}" style="width:72%;height:72%;object-fit:contain;" />
             </div>
-          </div>
-          <style>
-            @keyframes pulse { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(2); opacity: 0; } }
-          </style>
-        `,
+          </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
 };
 
-const pickIcon = createPulsingIcon('#2D6A4F', '📍', 30);
-const destIcon = createPulsingIcon('#E85D75', '🎯', 32);
+const pickIcon = createPulsingIcon('#FF6B35', '📍', 32);
+const destIcon = createPulsingIcon('#0F172A', '🎯', 34);
 const poiIcon = (emoji: string) => L.divIcon({
-  html: `<div style="background:#121824; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:24px; height:24px; display:flex; align-items:center;justify-content:center; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${emoji}</div>`,
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
+  html: `<div style="background:#121824; border:1px solid rgba(255,255,255,0.18); border-radius:50%; width:28px; height:28px; display:flex; align-items:center;justify-content:center; font-size:14px; box-shadow:0 2px 8px rgba(0,0,0,0.4);">${emoji}</div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 14],
 });
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
-  boda: { url: bodaImg, color: '#ffab40' },
-  go: { url: goImg, color: '#4285F4' },
-  comfort: { url: comfortImg, color: '#4CAF50' },
-  xl: { url: xlImg, color: '#2196F3' },
+  boda: { url: bodaNew, color: '#FF6B35' },
+  go: { url: goNew, color: '#0EA5E9' },
+  comfort: { url: comfortNew, color: '#0F172A' },
+  xl: { url: xlNew, color: '#6366F1' },
+  economy: { url: goNew, color: '#0EA5E9' },
 };
-
 
 interface MapProps {
   userLocation: { lat: number; lng: number } | null;
@@ -87,290 +81,256 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
   showControls = true, followUser = true, searchResults = [],
   onDistanceChange, onMapClick
 }) => {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
-  const [tilesHealthy, setTilesHealthy] = useState(true);
+  const [tilesError, setTilesError] = useState(false);
+  const [tileProvider, setTileProvider] = useState(0);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker | L.Polyline | L.Circle }>({});
   const poiMarkersRef = useRef<{ [key: string]: L.Marker }>({});
   const animationRef = useRef<number | null>(null);
-  const poiFetchTimeoutRef = useRef<any>(null);
 
-  const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
+  const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825]; // Kampala
 
-  const tileUrls: Record<string, { url: string; attribution: string }> = {
-    standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
-    satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
+  // Premium tile providers - Carto is most reliable, OSM as fallback
+  const getTileConfig = () => {
+    const isDark = theme === 'dark';
+    
+    const providers = [
+      // Primary: CartoDB - most reliable CDN, premium look
+      {
+        standard: {
+          url: isDark 
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+          subdomains: 'abcd',
+        },
+        satellite: {
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attribution: '&copy; Esri &mdash; Source: Esri',
+          subdomains: '',
+        }
+      },
+      // Fallback 1: OSM direct
+      {
+        standard: {
+          url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          attribution: '&copy; OpenStreetMap contributors',
+          subdomains: 'abc',
+        },
+        satellite: {
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attribution: '&copy; Esri',
+          subdomains: '',
+        }
+      },
+      // Fallback 2: Stadia Maps (no API key for light usage)
+      {
+        standard: {
+          url: 'https://tiles.stadiamaps.com/tiles/alidade_smooth{retina}/{z}/{x}/{y}{r}.png',
+          attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; OpenMapTiles &copy; OSM',
+          subdomains: '',
+        },
+        satellite: {
+          url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attribution: '&copy; Esri',
+          subdomains: '',
+        }
+      }
+    ];
+    
+    return providers[Math.min(tileProvider, providers.length - 1)];
   };
 
-  // --- Smooth Movement Logic ---
   const animateMarker = (marker: L.Marker, startPos: [number, number], endPos: [number, number], duration = 1000) => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-
     const startTime = performance.now();
-
     const step = (currentTime: number) => {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-
-      const ease = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
+      const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
       const currentLat = startPos[0] + (endPos[0] - startPos[0]) * ease;
       const currentLng = startPos[1] + (endPos[1] - startPos[1]) * ease;
-
       marker.setLatLng([currentLat, currentLng]);
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(step);
-      }
+      if (progress < 1) animationRef.current = requestAnimationFrame(step);
     };
-
     animationRef.current = requestAnimationFrame(step);
   };
 
-  const fetchNearbyPOIs = async (map: L.Map, radius: number, isPriority: boolean = true) => {
-    const center = map.getCenter();
-
-    if (isPriority) {
-      console.log(`🚀 Priority Fetch: POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)`);
-    } else {
-      console.log(`☁️ Background Fetch: POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)`);
-    }
-
-    const overpassQuery = `
-      [out:json][timeout:30];
-      (
-        node["amenity"](around:${radius},${center.lat},${center.lng});
-        way["amenity"](around:${radius},${center.lat},${center.lng});
-        relation["amenity"](around:${radius},${center.lat},${center.lng});
-        node["shop"](around:${radius},${center.lat},${center.lng});
-        way["shop"](around:${radius},${center.lat},${center.lng});
-        relation["shop"](around:${radius},${center.lat},${center.lng});
-        node["office"](around:${radius},${center.lat},${center.lng});
-        way["office"](around:${radius},${center.lat},${center.lng});
-        node["leisure"](around:${radius},${center.lat},${center.lng});
-        way["leisure"](around:${radius},${center.lat},${center.lng});
-        node["tourism"](around:${radius},${center.lat},${center.lng});
-        way["tourism"](around:${radius},${center.lat},${center.lng});
-        node["building"](around:${radius},${center.lat},${center.lng});
-        way["building"](around:${radius},${center.lat},${center.lng});
-        node["place"](around:${radius},${center.lat},${center.lng});
-        way["place"](around:${radius},${center.lat},${center.lng});
-      );
-      out center;
-    `;
-
-    const queryUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-
-    try {
-      const res = await fetch(queryUrl, { headers: { 'Accept': 'application/json' } });
-      const data = await res.json();
-
-      if (isPriority) {
-        // For priority loads, we clear existing POIs to keep the map clean
-        Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
-        poiMarkersRef.current = {};
-      }
-
-      const poiEmojiMap: Record<string, string> = {
-        restaurant: '🍴', cafe: '☕', bar: '🍺', pub: '🍻', fast_food: '🍔',
-        police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊',
-        school: '🎓', university: '🎓', college: '🎓', library: '📚',
-        supermarket: '🛒', grocery: '🛒', market: '🛒', mall: '🛍️', shop: '🏪',
-        office: '🏢', government: '🏛️', post_office: '📮', townhall: '🏛️',
-        park: '🌳', garden: '🌷', playground: '🎡', stadium: '⚽', sports_centre: '🏋️',
-        hotel: '🏨', hostel: '🏠', guest_house: '🏡', motel: '🏨',
-        museum: '🏛️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭',
-        church: '⛪', mosque: '🕌', temple: '🕉️',
-        bus_station: '🚌', taxi: '🚕', train_station: '🚂', airport: '✈️',
-        fuel: '⛽', parking: '🅿️', charging_station: '⚡',
-        default: '📍'
-      };
-
-      if (data.elements && data.elements.length > 0) {
-        data.elements.forEach((element: any) => {
-          // Avoid duplicate markers
-          if (poiMarkersRef.current[element.id]) return;
-
-          const tags = element.tags || {};
-          const amenity = tags.amenity || tags.shop || tags.office || tags.leisure || tags.tourism || tags.building || tags.place || 'other';
-          const name = tags.name || tags.operator || 'Unnamed Spot';
-          const emoji = poiEmojiMap[amenity] || poiEmojiMap.default || '📍';
-
-          const lat = element.lat || element.center?.lat;
-          const lon = element.lon || element.center?.lon;
-          if (!lat || !lon) return;
-
-          const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
-            .addTo(map)
-            .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
-
-          poiMarkersRef.current[element.id] = marker;
-        });
-      }
-    } catch (e) {
-      console.error('❌ POI Fetch Error (Overpass):', e);
-    }
-  };
-
-  const loadPOIsInRings = async (map: L.Map) => {
-    // Ring 1: Immediate (1km) - High Priority
-    await fetchNearbyPOIs(map, 1000, true);
-
-    // Ring 2: Local (5km) - Background
-    setTimeout(() => fetchNearbyPOIs(map, 5000, false), 1000);
-
-    // Ring 3: Regional (25km) - Background
-    setTimeout(() => fetchNearbyPOIs(map, 25000, false), 3000);
-  };
-
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
+    const t = setTimeout(() => setLoading(false), 400);
     return () => clearTimeout(t);
   }, []);
 
+  // Initialize map once
   useEffect(() => {
     if (!mapContainerRef.current || loading) return;
+    if (mapInstanceRef.current) return;
 
-    // ONLY initialize the map if it doesn't exist
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        zoomControl: false, // We'll add it manually to control position
-        dragging: interactive,
-        scrollWheelZoom: interactive,
-        touchZoom: interactive,
-        attributionControl: true,
-      }).setView(center, 15);
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: false,
+      dragging: interactive,
+      scrollWheelZoom: interactive,
+      touchZoom: interactive,
+      doubleClickZoom: interactive,
+      attributionControl: true,
+      preferCanvas: false,
+    }).setView(center, 15);
 
-      mapInstanceRef.current = map;
+    mapInstanceRef.current = map;
 
-      // MOVE ZOOM CONTROL TO BOTTOM RIGHT
-      (L.control as any).zoom({ position: 'bottomright' }).addTo(map);
+    (L.control as any).zoom({ position: 'bottomright' }).addTo(map);
 
-      const locateControl = (L.control as any)({ position: 'topright' });
-      locateControl.onAdd = function() {
-        const btn = L.DomUtil.create('a', 'leaflet-control-locate');
-        btn.innerHTML = '📍 My Location';
-        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#4285F4; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
-        btn.onclick = () => {
-          map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
-        };
-        return btn;
-      };
-      locateControl.addTo(map);
-
-      // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
-      map.on('moveend', () => {
-        if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
-        poiFetchTimeoutRef.current = setTimeout(() => loadPOIsInRings(map), 1500);
+    // Custom locate control
+    const locateControl = (L.control as any)({ position: 'topright' });
+    locateControl.onAdd = function() {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      const btn = L.DomUtil.create('a', '', container);
+      btn.innerHTML = '📍 My Location';
+      btn.href = '#';
+      btn.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 14px;background:#FF6B35;color:#fff;font-weight:700;font-size:12px;border-radius:8px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;';
+      L.DomEvent.on(btn, 'click', (e: any) => {
+        L.DomEvent.stop(e);
+        map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
       });
+      return container;
+    };
+    locateControl.addTo(map);
 
-      map.on('click', (e) => {
-        if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
-      });
+    map.on('click', (e) => {
+      if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
+    });
 
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 200);
+    // Aggressive invalidateSize to fix 0-height issues
+    const invalidate = () => map.invalidateSize();
+    setTimeout(invalidate, 100);
+    setTimeout(invalidate, 300);
+    setTimeout(invalidate, 600);
+    setTimeout(invalidate, 1200);
 
-      const resizeObserver = new ResizeObserver(() => {
-        map.invalidateSize();
-      });
-      resizeObserver.observe(mapContainerRef.current!);
-    }
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    if (mapContainerRef.current) resizeObserver.observe(mapContainerRef.current);
 
+    return () => {
+      resizeObserver.disconnect();
+      // Don't remove map here, keep instance for style switches
+    };
+  }, [loading, interactive]);
+
+  // Tile layer management - with fallback
+  useEffect(() => {
     const map = mapInstanceRef.current;
-    console.log(`Updating map style to: ${mapStyle}, URL: ${tileUrls[mapStyle].url}`);
+    if (!map || loading) return;
 
-    // UPDATE TILE LAYER WITHOUT RECREATING MAP
-    // Remove existing tile layers first
+    // Remove old tile layer
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
+    }
     map.eachLayer(layer => {
-      if (layer instanceof L.TileLayer) {
-        map.removeLayer(layer);
+      if (layer instanceof L.TileLayer) map.removeLayer(layer);
+    });
+
+    const config = getTileConfig();
+    const currentTileConfig = config[mapStyle];
+    
+    let errorCount = 0;
+    const tileLayer = L.tileLayer(currentTileConfig.url, {
+      attribution: currentTileConfig.attribution,
+      subdomains: currentTileConfig.subdomains as any,
+      maxZoom: 20,
+      maxNativeZoom: 19,
+      minZoom: 3,
+      tileSize: 256,
+      zoomOffset: 0,
+      crossOrigin: true,
+      detectRetina: true,
+    } as any);
+
+    tileLayer.on('tileload', () => {
+      setTilesError(false);
+      errorCount = 0;
+    });
+
+    tileLayer.on('tileerror', (e: any) => {
+      errorCount++;
+      console.warn(`Map tile error ${errorCount}:`, e?.tile?.src || 'unknown');
+      if (errorCount >= 6) {
+        // Try next provider
+        if (tileProvider < 2) {
+          console.log(`Switching to fallback tile provider ${tileProvider + 1}`);
+          setTileProvider(p => p + 1);
+        } else {
+          setTilesError(true);
+        }
       }
     });
 
-    const tileErrors = { count: 0 };
-    const tileLayer = L.tileLayer(tileUrls[mapStyle].url, {
-      attribution: tileUrls[mapStyle].attribution,
-      maxZoom: mapStyle === 'satellite' ? 22 : 22,
-      maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
-    });
-    tileLayer.on('tileload', () => { setTilesHealthy(true); console.log('Tile loaded successfully'); });
-    tileLayer.on('tileerror', () => {
-      console.error('Tile load failed');
-      tileErrors.count += 1;
-      if (tileErrors.count >= 3) setTilesHealthy(false);
-    });
     tileLayer.addTo(map);
-    // If tiles never arrive (offline / CDN blocked), surface a friendly state
-    const fallbackTimer = setTimeout(() => {
-      if (tileErrors.count >= 3) setTilesHealthy(false);
-    }, 6000);
+    tileLayerRef.current = tileLayer;
 
+    // Satellite labels
     if (mapStyle === 'satellite') {
-      // Add a high-contrast labels layer on top of satellite imagery
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        maxZoom: 22,
+      const labels = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20,
         maxNativeZoom: 19,
-        zIndex: 10,
-      }).addTo(map);
+        pane: 'overlayPane',
+      } as any);
+      labels.addTo(map);
     }
 
-    return () => clearTimeout(fallbackTimer);
-  }, [loading, mapStyle, interactive]);
+    // Force refresh after adding tiles
+    setTimeout(() => map.invalidateSize(), 100);
+
+  }, [loading, mapStyle, tileProvider, theme]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (map && followUser && userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
+      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.2 });
     }
   }, [userLocation, followUser]);
 
-  // --- Marker & Route Sync ---
+  // Markers & Route
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // 1. User Location Marker
     if (userLocation) {
       if (!markersRef.current['user']) {
         markersRef.current['user'] = L.marker([userLocation.lat, userLocation.lng], { icon: pickIcon, draggable: interactive }).addTo(map).bindPopup('📍 You');
-        markersRef.current['userCircle'] = L.circle([userLocation.lat, userLocation.lng], { radius: 8, color: '#2D6A4F', fillOpacity: 0.1 }).addTo(map);
+        markersRef.current['userCircle'] = L.circle([userLocation.lat, userLocation.lng], { radius: 12, color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.12, weight: 1 }).addTo(map);
       } else {
         const marker = markersRef.current['user'] as L.Marker;
         const circle = markersRef.current['userCircle'] as L.Circle;
-
-        // Smoothly move user marker if it's a significant jump
         const oldPos = marker.getLatLng();
-        if (Math.abs(oldPos.lat - userLocation.lat) > 0.0001 || Math.abs(oldPos.lng - userLocation.lng) > 0.0001) {
+        if (Math.abs(oldPos.lat - userLocation.lat) > 0.00005 || Math.abs(oldPos.lng - userLocation.lng) > 0.00005) {
           animateMarker(marker, [oldPos.lat, oldPos.lng], [userLocation.lat, userLocation.lng], 800);
         }
         circle.setLatLng([userLocation.lat, userLocation.lng]);
       }
     }
 
-    // 2. Destination Marker
     if (destination) {
       if (!markersRef.current['dest']) {
         markersRef.current['dest'] = L.marker([destination.lat, destination.lng], { icon: destIcon, draggable: interactive }).addTo(map).bindPopup('🎯 Destination');
       } else {
-        const marker = markersRef.current['dest'] as L.Marker;
-        marker.setLatLng([destination.lat, destination.lng]);
+        (markersRef.current['dest'] as L.Marker).setLatLng([destination.lat, destination.lng]);
       }
     } else if (markersRef.current['dest']) {
       map.removeLayer(markersRef.current['dest']);
       delete markersRef.current['dest'];
     }
 
-    // 3. Driver Marker (with Smooth Motion)
     if (driverLocation) {
       const vehicleCfg = VEHICLE_ICONS[driverType] || VEHICLE_ICONS['go'];
       const dIcon = createVehicleIcon(vehicleCfg.url, vehicleCfg.color);
@@ -379,7 +339,6 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       } else {
         const marker = markersRef.current['driver'] as L.Marker;
         const oldPos = marker.getLatLng();
-
         if (oldPos.lat !== driverLocation.lat || oldPos.lng !== driverLocation.lng) {
           animateMarker(marker, [oldPos.lat, oldPos.lng], [driverLocation.lat, driverLocation.lng], 1200);
         }
@@ -389,52 +348,41 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       delete markersRef.current['driver'];
     }
 
-    // 4. Route Visualization & FitBounds
     if (showRoute && userLocation && destination) {
       const fetchRoute = async () => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
         try {
           const from = `${userLocation.lng},${userLocation.lat}`;
           const to = `${destination.lng},${destination.lat}`;
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: controller.signal });
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: AbortSignal.timeout(8000) });
           const data = await res.json();
           if (data.routes?.length > 0) {
             const route = data.routes[0];
             const points = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
-
             if (!markersRef.current['route']) {
-              markersRef.current['route'] = L.polyline(points, { color: '#4285F4', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
+              markersRef.current['route'] = L.polyline(points, { color: '#FF6B35', weight: 5, opacity: 0.85, lineJoin: 'round', lineCap: 'round' }).addTo(map);
             } else {
               (markersRef.current['route'] as L.Polyline).setLatLngs(points);
             }
-
-            // FIT BOUNDS: Ensure both points and route are visible
             const bounds = L.latLngBounds(points);
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16, animate: true });
-
+            map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16, animate: true });
             const d = Math.round(route.distance / 100) / 10;
             const t = Math.round(route.duration / 60);
             setRouteDistance(d); setRouteDuration(t);
             if (onDistanceChange) onDistanceChange(d, t);
             return;
           }
-          throw new Error('No route found');
+          throw new Error('No route');
         } catch {
-          // Route server unavailable — draw a straight line and still report
-          // an (approximate) distance so fares keep working.
           if (markersRef.current['route']) {
             map.removeLayer(markersRef.current['route'] as any);
             delete markersRef.current['route'];
           }
-          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#4285F4', weight: 5, opacity: 0.8 }).addTo(map);
+          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#FF6B35', weight: 4, opacity: 0.6, dashArray: '10 10' }).addTo(map);
           markersRef.current['route'] = fallbackLine;
           const d = Math.round(map.distance([userLocation.lat, userLocation.lng], [destination.lat, destination.lng]) / 100) / 10;
           const t = Math.max(1, Math.round((d / 22) * 60));
           setRouteDistance(d); setRouteDuration(t);
           if (onDistanceChange) onDistanceChange(d, t);
-        } finally {
-          clearTimeout(timeout);
         }
       };
       fetchRoute();
@@ -444,79 +392,84 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
     }
   }, [userLocation, destination, driverLocation, driverType, showRoute, interactive]);
 
-  // --- Search Results Markers — every search shown on the map ---
+  // Search results
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-    // Clear previous temporary search markers
-    const prevSearchMarkers = (mapInstanceRef.current as any)?._searchMarkers || [];
-    prevSearchMarkers.forEach((m: L.Marker) => { if (map && m) map.removeLayer(m); });
-
+    const prev = (mapInstanceRef.current as any)?._searchMarkers || [];
+    prev.forEach((m: L.Marker) => { if (map && m) map.removeLayer(m); });
     const tempMarkers: L.Marker[] = [];
     searchResults.forEach((r, idx) => {
       const marker = L.marker([r.lat, r.lng], {
         icon: L.divIcon({
-          html: `<div style="background:#FF6B35; border:2px solid white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:10px; box-shadow:0 2px 6px rgba(0,0,0,0.5);">${idx + 1}</div>`,
-          iconSize: [22, 22], iconAnchor: [11, 11],
+          html: `<div style="background:#FF6B35; border:2px solid white; border-radius:50%; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:white; box-shadow:0 3px 10px rgba(0,0,0,0.35);">${idx + 1}</div>`,
+          iconSize: [26, 26], iconAnchor: [13, 13],
         })
-      }).addTo(map).bindPopup(`<b>🔍 Search Result ${idx + 1}</b><br/>${r.name || r.address || 'Location'}`);
+      }).addTo(map).bindPopup(`<b>${r.name || r.address || 'Location'}</b>`);
       tempMarkers.push(marker);
     });
     (mapInstanceRef.current as any)._searchMarkers = tempMarkers;
-    return () => {
-      tempMarkers.forEach((m) => { if (map && m) map.removeLayer(m); });
-    };
+    return () => { tempMarkers.forEach((m) => { if (map && m) map.removeLayer(m); }); };
   }, [searchResults]);
 
-  const openInGoogleMaps = () => {
-    if (userLocation && destination) window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination.lat},${destination.lng}`, '_blank');
-  };
-
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div style={{ position: 'relative', height: '100%', width: '100%', background: theme === 'dark' ? '#080C14' : '#F8FAFC' }}>
       {showControls && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center', padding: '0 4px', position: 'absolute', top: 10, left: 10, zIndex: 1000 }}>
-          <IonBadge color="success" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● LIVE GPS</IonBadge>
-          <IonBadge color="warning" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● REAL-TIME ROUTE</IonBadge>
-          {Object.keys(tileUrls).map(style => (
-            <IonChip key={style} outline={mapStyle !== style} color={mapStyle === style ? 'warning' : 'medium'}
-              onClick={() => setMapStyle(style as any)} style={{ fontSize: 10, cursor: 'pointer', padding: '2px 8px', textTransform: 'uppercase' }}>
-              {style === 'standard' ? '🗺️' : style === 'dark' ? '🌙' : '🛰️'} {style}
-            </IonChip>
-          ))}
-          {userLocation && destination && (
-            <>
-              <IonChip outline color="primary" onClick={openInGoogleMaps} style={{ fontSize: 10, cursor: 'pointer' }}>📍 Navigate</IonChip>
-              {routeDistance > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{routeDistance}km • {routeDuration}min (Real OSRM)</IonBadge>}
-            </>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', padding: '0 4px', position: 'absolute', top: 12, left: 12, zIndex: 1000 }}>
+          <IonBadge color="success" style={{ fontSize: 10, padding: '4px 10px', borderRadius: 9999, fontWeight: 800 }}>● LIVE GPS</IonBadge>
+          <IonBadge color="warning" style={{ fontSize: 10, padding: '4px 10px', borderRadius: 9999, fontWeight: 800 }}>● REAL-TIME</IonBadge>
+          <IonChip outline={mapStyle !== 'standard'} color={mapStyle === 'standard' ? 'warning' : 'medium'}
+            onClick={() => setMapStyle('standard')} style={{ fontSize: 11, cursor: 'pointer', '--background': mapStyle === 'standard' ? 'rgba(255,107,53,0.15)' : 'rgba(18,24,36,0.8)', height: 28 }}>
+            🗺️ STANDARD
+          </IonChip>
+          <IonChip outline={mapStyle !== 'satellite'} color={mapStyle === 'satellite' ? 'warning' : 'medium'}
+            onClick={() => setMapStyle('satellite')} style={{ fontSize: 11, cursor: 'pointer', '--background': mapStyle === 'satellite' ? 'rgba(255,107,53,0.15)' : 'rgba(18,24,36,0.8)', height: 28 }}>
+            🛰️ SATELLITE
+          </IonChip>
+          {userLocation && destination && routeDistance > 0 && (
+            <IonBadge color="dark" style={{ fontSize: 11, padding: '4px 10px', borderRadius: 9999 }}>{routeDistance}km • {routeDuration}min</IonBadge>
           )}
         </div>
       )}
+      
       <div
         ref={mapContainerRef}
         style={{
           height: height === '100%' ? '100%' : height,
+          minHeight: height === '100%' ? '100vh' : height,
           width: '100%',
-          borderRadius: 16,
+          borderRadius: showControls ? 0 : 16,
           overflow: 'hidden',
           position: 'relative',
-          border: '2px solid rgba(255,255,255,0.08)',
-          /* Branded backdrop — the map area is never an empty black void */
-          background: 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%)',
+          background: theme === 'dark' 
+            ? 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%)'
+            : 'radial-gradient(120% 90% at 50% 0%, #f1f5f9 0%, #e2e8f0 55%, #cbd5e1 100%)',
         }}
       >
-        {!tilesHealthy && (
-          <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 900, background: 'rgba(13,19,31,0.92)', border: '1px solid rgba(255,107,53,0.35)', borderRadius: 9999, padding: '6px 14px', fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-            🗺️ Map tiles unavailable — locations still work
+        {tilesError && (
+          <div style={{ position: 'absolute', top: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 900, background: 'rgba(13,19,31,0.95)', border: '1px solid rgba(255,107,53,0.4)', borderRadius: 9999, padding: '8px 16px', fontSize: 12, color: '#F5F7FA', display: 'flex', gap: 8, alignItems: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+            <span>🗺️</span> Map tiles slow — retrying...
+            <button onClick={() => { setTileProvider(0); setTilesError(false); }} style={{ background: '#FF6B35', color: 'white', border: 'none', padding: '4px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>Retry</button>
           </div>
         )}
         {loading && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 60%, #070b12 100%)' }}>
-            <IonSpinner name="crescent" color="warning" />
-            <span style={{ fontSize: 11, color: '#64748B', letterSpacing: 1 }}>LOADING MAP</span>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', justifyContent: 'center', background: theme === 'dark' ? 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 60%, #070b12 100%)' : '#F8FAFC' }}>
+            <IonSpinner name="crescent" color="warning" style={{ width: 32, height: 32 }} />
+            <span style={{ fontSize: 12, color: '#94A3B8', letterSpacing: 1, fontWeight: 700 }}>LOADING MAP</span>
           </div>
         )}
       </div>
+
+      <style>{`
+        .leaflet-container { background: transparent !important; font-family: var(--font-body); }
+        .leaflet-tile-pane { filter: ${theme === 'dark' ? 'brightness(0.92) contrast(1.05) saturate(1.1)' : 'none'}; }
+        .leaflet-control-attribution { background: rgba(8,12,20,0.75) !important; color: #94A3B8 !important; font-size: 10px !important; border-radius: 6px 0 0 0; backdrop-filter: blur(8px); }
+        .leaflet-control-attribution a { color: #FF6B35 !important; }
+        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important; border-radius: 12px !important; overflow: hidden; }
+        .leaflet-control-zoom a { background: rgba(18,24,36,0.9) !important; color: white !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 16px !important; }
+        .leaflet-control-zoom a:hover { background: rgba(255,107,53,0.9) !important; }
+        body.light .leaflet-control-zoom a { background: rgba(255,255,255,0.95) !important; color: #0F172A !important; border-bottom: 1px solid rgba(0,0,0,0.06) !important; }
+      `}</style>
     </div>
   );
 });

@@ -13,10 +13,10 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
-import bodaImg from '../../assets/vehicles/boda.png';
-import goImg from '../../assets/vehicles/go.png';
-import comfortImg from '../../assets/vehicles/comfort.png';
-import xlImg from '../../assets/vehicles/xl.png';
+import bodaImg from '../../assets/vehicles/boda-new.png';
+import goImg from '../../assets/vehicles/go-new.png';
+import comfortImg from '../../assets/vehicles/comfort-new.png';
+import xlImg from '../../assets/vehicles/xl-new.png';
 import './RideRequest.css';
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
