@@ -183,8 +183,8 @@ const AppContent: React.FC = () => {
             <Route path="/admin/approve" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminUserReview} /></ErrorBoundary>} />
             <Route path="/admin/settings" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminSettings} /></ErrorBoundary>} />
 
-            {/* Default */}
-            <Route path="/" component={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
+            {/* Default - MUST use render, not component with arrow fn (fixes redirect loop) */}
+            <Route path="/" render={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
 
           </IonRouterOutlet>
         </Suspense>
