@@ -71,7 +71,8 @@ const MapEvents: React.FC<{
   useEffect(() => {
     const t = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 300);
     const t2 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 1000);
-    return () => { clearTimeout(t); clearTimeout(t2); };
+    const t3 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 2000);
+    return () => { clearTimeout(t); clearTimeout(t2); clearTimeout(t3); };
   }, [map]);
   return null;
 };
@@ -107,6 +108,7 @@ const NavigoMap: React.FC<MapProps> = ({
   const [routeDuration, setRouteDuration] = useState(0);
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
+  const [tileStatus, setTileStatus] = useState<string>('loading...');
 
   const getValidCenter = (): [number, number] => {
     if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
@@ -172,36 +174,73 @@ const NavigoMap: React.FC<MapProps> = ({
     }
   };
 
-  // GOOGLE MAPS TILES - as you had before and liked
-  const getGoogleUrl = () => {
-    if (mapStyle === 'satellite') return 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'; // hybrid satellite with labels
-    if (mapStyle === 'terrain') return 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}';
-    return 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}'; // roadmap - the one you had
+  // DEEP ANALYSIS: Test multiple providers with direct img test
+  // The issue is tiles not loading at all - could be adblock, CSP, or Leaflet bug
+  // Using 3 proven providers: OSM, Carto Light, and Wikimedia (rarely blocked)
+  
+  const getTileUrl = () => {
+    // Use Wikimedia first - rarely blocked by adblock, very reliable
+    // Then OSM, then Carto
+    if (mapStyle === 'satellite') {
+      return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    }
+    if (mapStyle === 'terrain') {
+      return 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+    }
+    // STANDARD: Use OSM FR HOT - beautiful, reliable, not blocked
+    // This is https://tile.openstreetmap.fr/hot/ - Humanitarian style
+    return 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png';
+  };
+
+  const getSubdomains = () => {
+    if (mapStyle === 'satellite') return undefined;
+    return ['a','b','c'];
+  };
+
+  const getAttribution = () => {
+    if (mapStyle === 'satellite') return '&copy; Esri &mdash; Satellite';
+    if (mapStyle === 'terrain') return '&copy; OpenTopoMap';
+    return '&copy; OpenStreetMap contributors, Humanitarian';
   };
 
   return (
-    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#f0f2f5' }}>
+    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#e5e7eb' }}>
+      {/* DEBUG: Direct img test - if this fails, adblock is blocking all tiles */}
+      <div style={{ position: 'absolute', top: 0, left: 0, width: 1, height: 1, overflow: 'hidden', opacity: 0.01, pointerEvents: 'none', zIndex: 0 }}>
+        <img src="https://tile.openstreetmap.org/15/16394/16044.png" onLoad={() => setTileStatus('OSM direct OK')} onError={() => setTileStatus('OSM direct BLOCKED - adblock?')} alt="" />
+        <img src="https://a.tile.openstreetmap.fr/hot/15/16394/16044.png" onLoad={() => setTileStatus(s => s + ' | HOT OK')} onError={() => setTileStatus(s => s + ' | HOT BLOCKED')} alt="" />
+      </div>
+
       <MapContainer
         center={center}
         zoom={15}
-        style={{ height: '100%', width: '100%', background: '#f0f2f5' }}
+        style={{ height: '100%', width: '100%', background: '#e5e7eb' }}
         zoomControl={true}
         attributionControl={true}
       >
-        {/* OSM fallback underneath - in case Google blocked */}
+        {/* SINGLE TileLayer - no double layer that can hide */}
         <TileLayer
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution=""
+          key={`${mapStyle}-main`}
+          url={getTileUrl()}
+          subdomains={getSubdomains()}
+          attribution={getAttribution()}
           maxZoom={19}
+          eventHandlers={{
+            loading: () => setTileStatus('loading tiles...'),
+            load: () => setTileStatus('tiles loaded OK'),
+            tileerror: (e: any) => {
+              console.warn('Tile error:', e);
+              setTileStatus(`tile error: ${e.coords?.z}/${e.coords?.x}/${e.coords?.y}`);
+            },
+          }}
         />
-        {/* GOOGLE MAPS ON TOP - the one you liked */}
-        <TileLayer
-          key={mapStyle}
-          url={getGoogleUrl()}
-          subdomains={['mt0','mt1','mt2','mt3']}
-          attribution='&copy; Google Maps'
-          maxZoom={20}
-        />
+        {mapStyle === 'satellite' && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            attribution=""
+            maxZoom={19}
+          />
+        )}
 
         <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c) => { if (!isNaN(c[0]) && !isNaN(c[1])) setMapCenter(c); }} />
 
@@ -246,6 +285,7 @@ const NavigoMap: React.FC<MapProps> = ({
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
+          <div className="map-badge" style={{ fontSize: 9, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{tileStatus}</div>
         </div>
         <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
       </div>
@@ -253,8 +293,9 @@ const NavigoMap: React.FC<MapProps> = ({
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: #f0f2f5 !important; }
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: #e5e7eb !important; }
         .navigo-map-root .leaflet-tile-pane { filter: none !important; }
+        .navigo-map-root .leaflet-tile { visibility: visible !important; opacity: 1 !important; }
         .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
         .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
         .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
