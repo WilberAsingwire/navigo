@@ -51,11 +51,19 @@ const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
   economy: { url: goNew, color: '#0EA5E9' },
 };
 
-const MapEvents: React.FC<{ onMapClick?: (ll: [number, number]) => void; userLocation: { lat: number; lng: number } | null; followUser: boolean }> = ({ onMapClick, userLocation, followUser }) => {
+const MapEvents: React.FC<{ 
+  onMapClick?: (ll: [number, number]) => void; 
+  userLocation: { lat: number; lng: number } | null; 
+  followUser: boolean;
+  onZoomChange?: (zoom: number) => void;
+}> = ({ onMapClick, userLocation, followUser, onZoomChange }) => {
   const map = useMap();
-  useMapEvents({ click(e) { onMapClick?.([e.latlng.lat, e.latlng.lng]); } });
+  useMapEvents({ 
+    click(e) { onMapClick?.([e.latlng.lat, e.latlng.lng]); },
+    zoomend() { onZoomChange?.(map.getZoom()); }
+  });
   useEffect(() => {
-    if (followUser && userLocation) map.flyTo([userLocation.lat, userLocation.lng], 16, { duration: 1 });
+    if (followUser && userLocation) map.flyTo([userLocation.lat, userLocation.lng], map.getZoom(), { duration: 1 });
   }, [userLocation, followUser, map]);
   useEffect(() => {
     const timers = [100, 400, 900, 1600].map(ms => setTimeout(() => map.invalidateSize(), ms));
@@ -89,6 +97,7 @@ const NavigoMap: React.FC<MapProps> = ({
 }) => {
   const { theme } = useTheme();
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
+  const [mapZoom, setMapZoom] = useState(15);
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
@@ -124,8 +133,21 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
-  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=15&ie=UTF8&iwloc=&output=embed`;
-  const googleEmbedUrlSat = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=15&t=k&ie=UTF8&iwloc=&output=embed`;
+  // FIXED: Correct Google embed params - t=m roadmap, t=k satellite
+  // Using explicit t param and correct z from state
+  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=m&ie=UTF8&iwloc=&output=embed`;
+  const googleEmbedUrlSat = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=k&ie=UTF8&iwloc=&output=embed`;
+
+  // FIXED: Correct filter - standard dark needs invert, satellite dark should NOT invert (was causing opposite look)
+  const getIframeFilter = () => {
+    if (theme === 'light') return 'none';
+    if (mapStyle === 'satellite') {
+      // Satellite: keep natural colors, just darken slightly - NO invert
+      return 'brightness(0.88) contrast(1.15) saturate(1.1)';
+    }
+    // Standard roadmap: light -> dark via invert
+    return 'invert(0.88) hue-rotate(180deg) brightness(0.95) contrast(1.1) saturate(1.2)';
+  };
 
   const handleMyLocation = () => {
     if (navigator.geolocation) {
@@ -138,15 +160,19 @@ const NavigoMap: React.FC<MapProps> = ({
     try { if ('vibrate' in navigator) navigator.vibrate(10); } catch {}
   };
 
+  const handleZoomIn = () => setMapZoom(z => Math.min(20, z + 1));
+  const handleZoomOut = () => setMapZoom(z => Math.max(3, z - 1));
+
   return (
     <div style={{ position: 'relative', height: height === '100%' ? '100dvh' : height, minHeight: '100vh', width: '100%', background: '#0F172A', overflow: 'hidden' }}>
-      {/* Google Maps iframe - guaranteed */}
+      {/* Google Maps iframe - guaranteed, zoom synced */}
       <iframe
+        key={`${mapStyle}-${mapZoom}-${center[0]}-${center[1]}`}
         title="Navigo Map"
         src={mapStyle === 'satellite' ? googleEmbedUrlSat : googleEmbedUrl}
         width="100%"
         height="100%"
-        style={{ position: 'absolute', inset: 0, border: 0, filter: theme === 'dark' ? 'invert(0.88) hue-rotate(180deg) brightness(0.95) contrast(1.1) saturate(1.2)' : 'none' }}
+        style={{ position: 'absolute', inset: 0, border: 0, filter: getIframeFilter() }}
         loading="eager"
         referrerPolicy="no-referrer-when-downgrade"
       />
@@ -155,16 +181,16 @@ const NavigoMap: React.FC<MapProps> = ({
       <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
         <MapContainer
           center={center}
-          zoom={15}
+          zoom={mapZoom}
           style={{ height: '100%', width: '100%', background: 'transparent' }}
           zoomControl={false}
           attributionControl={false}
           dragging={interactive}
-          scrollWheelZoom={interactive}
-          doubleClickZoom={interactive}
-          touchZoom={interactive}
+          scrollWheelZoom={true}
+          doubleClickZoom={true}
+          touchZoom={true}
         >
-          <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} />
+          <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onZoomChange={setMapZoom} />
           {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon as any} /><Circle center={[userLocation.lat, userLocation.lng]} radius={18} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.2, weight: 2 }} /></>}
           {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon as any} />}
           {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={createVehicleIcon(VEHICLE_ICONS[driverType]?.url || goNew, VEHICLE_ICONS[driverType]?.color || '#0EA5E9') as any} />}
@@ -181,21 +207,55 @@ const NavigoMap: React.FC<MapProps> = ({
           <div className="map-badge live">● LIVE GPS</div>
           <div className="map-badge realtime">● REAL-TIME</div>
           <div className="map-style-toggle">
-            <button className={`map-style-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => setMapStyle('standard')}>🗺️ STANDARD</button>
-            <button className={`map-style-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => setMapStyle('satellite')}>🛰️ SATELLITE</button>
+            <button className={`map-style-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => { setMapStyle('standard'); try { if ('vibrate' in navigator) navigator.vibrate(8); } catch {} }}>🗺️ STANDARD</button>
+            <button className={`map-style-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => { setMapStyle('satellite'); try { if ('vibrate' in navigator) navigator.vibrate(8); } catch {} }}>🛰️ SATELLITE</button>
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
         </div>
         <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
       </div>
 
+      {/* Custom Zoom Controls - FIXED: Now syncs iframe zoom */}
+      <div className="custom-zoom-controls">
+        <button className="zoom-btn" onClick={handleZoomIn} aria-label="Zoom in">+</button>
+        <button className="zoom-btn" onClick={handleZoomOut} aria-label="Zoom out">−</button>
+      </div>
+
       <style>{`
         .leaflet-container { background: transparent !important; }
         .leaflet-tile-pane { display: none !important; }
         .navigo-icon, .navigo-vehicle, .search-icon { background: transparent !important; border: none !important; }
-        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.32) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 90px 0 !important; }
-        .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; backdrop-filter: blur(16px); }
-        .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
+        .custom-zoom-controls {
+          position: absolute;
+          bottom: 90px;
+          right: 16px;
+          z-index: 1000;
+          display: flex;
+          flex-direction: column;
+          border-radius: 14px;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.32);
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+        .zoom-btn {
+          width: 44px;
+          height: 44px;
+          background: rgba(15,23,42,0.92);
+          color: white;
+          border: none;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          font-size: 22px;
+          font-weight: 800;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(16px);
+          transition: all 0.2s ease;
+        }
+        .zoom-btn:last-child { border-bottom: none; }
+        .zoom-btn:hover { background: #FF6B35 !important; color: white !important; }
+        .zoom-btn:active { transform: scale(0.92); }
       `}</style>
     </div>
   );
