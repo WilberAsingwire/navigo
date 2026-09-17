@@ -145,32 +145,26 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
 
 // ─── LOGIN ───────────────────────────────────────────
 router.post('/login', authLimiter, async (req: Request, res: Response) => {
-// ... existing login logic ...
   try {
     const { identifier, password } = req.body;
+    if (!identifier || !password) {
+      return res.status(400).json({ message: 'Phone/email and password are required.' });
+    }
     const db = getDB();
 
     let user;
-    console.log(`🔑 Login attempt for identifier: ${identifier}`);
     if (identifier.includes('@')) {
-      // Login with email
       user = await db.get('SELECT * FROM users WHERE email = ?', [identifier.toLowerCase().trim()]);
-      console.log(`Searching by email. User found: ${!!user}`);
     } else {
-      // Login with phone
       const cleanPhone = normalizePhone(identifier);
       user = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
-      console.log(`Searching by phone (${cleanPhone}). User found: ${!!user}`);
     }
 
-    if (!user) {
-      console.log(`❌ Login failed: No user found with identifier ${identifier}`);
+    if (!user || !user.password) {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
     }
 
     const passwordMatch = await comparePassword(password, user.password);
-    console.log(`Password check for user ${user.id}: ${passwordMatch ? '✅ MATCH' : '❌ MISMATCH'}`);
-
     if (!passwordMatch) {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
     }
@@ -186,6 +180,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
 
     res.json({ message, user: sanitizeUser(user), token: generateToken({ id: user.id, role: user.role }) });
   } catch (error) {
+    console.error('Login error:', (error as any)?.message);
     res.status(500).json({ message: 'Login failed.' });
   }
 });
@@ -235,10 +230,14 @@ router.post('/google-register', async (req: Request, res: Response) => {
 });
 
 // ─── UPLOAD DRIVER DOCUMENTS ─────────────────────────
-router.post('/upload-documents', async (req: Request, res: Response) => {
+// SECURITY FIX: Requires auth, uses authenticated userId — no body userId spoofing
+router.post('/upload-documents', authenticate, async (req: Request, res: Response) => {
   try {
-    const { userId, nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle, vehicleType } = req.body;
+    const userId = (req as AuthRequest).user?.userId;
+    const { nationalId, drivingLicense, vehiclePhoto, vehiclePlate, vehicleModel, vehicleColor, selfieWithVehicle, vehicleType, isFemaleDriver } = req.body;
     const db = getDB();
+
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
     if (!user) {
@@ -249,49 +248,59 @@ router.post('/upload-documents', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Only drivers and motorists can upload documents.' });
     }
 
-    if (!drivingLicense) {
+    if (!drivingLicense || !drivingLicense.trim()) {
       return res.status(400).json({ message: 'Driving license is required.' });
     }
-    if (!vehiclePlate) {
+    if (!vehiclePlate || !vehiclePlate.trim()) {
       return res.status(400).json({ message: 'Vehicle plate number is required.' });
     }
     if (!vehicleType) {
       return res.status(400).json({ message: 'Vehicle type is required.' });
     }
+    if (!vehicleModel || !vehicleModel.trim()) {
+      return res.status(400).json({ message: 'Vehicle model is required.' });
+    }
+
+    const cleanPlate = vehiclePlate.trim().toUpperCase();
+    // Validate Ugandan plate format loosely: e.g. UAX 123Z or UAX123Z
+    if (cleanPlate.length < 3 || cleanPlate.length > 12) {
+      return res.status(400).json({ message: 'Invalid plate number format.' });
+    }
 
     const driverDocs = JSON.stringify({
-      nationalId,
-      drivingLicense,
-      vehiclePhoto,
-      vehiclePlate: vehiclePlate.toUpperCase(),
-      vehicleModel,
-      vehicleColor,
-      selfieWithVehicle
+      nationalId: nationalId?.trim() || null,
+      drivingLicense: drivingLicense.trim(),
+      vehiclePhoto: vehiclePhoto || 'uploaded',
+      vehiclePlate: cleanPlate,
+      vehicleModel: vehicleModel.trim(),
+      vehicleColor: vehicleColor?.trim() || null,
+      selfieWithVehicle: selfieWithVehicle || 'uploaded',
+      isFemaleDriver: !!isFemaleDriver,
     });
 
     // 1. Update user verification status and docs
-    await db.run('UPDATE users SET driverDocs = ?, verificationStatus = ? WHERE id = ?', [driverDocs, 'pending', userId]);
+    await db.run('UPDATE users SET driverDocs = ?, verificationStatus = ?, rejectionReason = NULL WHERE id = ?', [driverDocs, 'pending', userId]);
 
     // 2. Upsert driver profile with vehicle type and plate
     await db.run(
       `INSERT INTO driver_profiles (userId, vehicleType, plate)
        VALUES (?, ?, ?)
-       ON CONFLICT (userId) DO UPDATE SET vehicleType = EXCLUDED.vehicleType, plate = EXCLUDED.plate`,
-      [userId, vehicleType, vehiclePlate.toUpperCase()]
+       ON CONFLICT (userId) DO UPDATE SET vehicleType = EXCLUDED.vehicleType, plate = EXCLUDED.plate, online = false`,
+      [userId, vehicleType, cleanPlate]
     );
 
     res.json({
       message: 'Documents uploaded! Admin will review within 24-48 hours.',
-      user: { ...user, driverDocs: JSON.parse(driverDocs), verificationStatus: 'pending' }
+      user: { ...sanitizeUser(user), driverDocs: JSON.parse(driverDocs), verificationStatus: 'pending' }
     });
   } catch (error) {
     console.error('Upload documents error:', error);
-    res.status(500).json({ message: 'Upload failed.' });
+    res.status(500).json({ message: 'Upload failed. Please try again.' });
   }
 });
 
 // ─── ADMIN: GET ALL USERS ────────────────────────────
-router.get('/admin/users', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.get('/admin/users', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
     const users = await db.all('SELECT * FROM users');
@@ -303,7 +312,7 @@ router.get('/admin/users', authenticate, authorize(['admin']), async (req: AuthR
 });
 
 // ─── ADMIN: GET DASHBOARD STATS ────────────────────────────
-router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.get('/admin/stats', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
 
@@ -333,7 +342,7 @@ router.get('/admin/stats', authenticate, authorize(['admin']), async (req: AuthR
 });
 
 // ─── ADMIN: VERIFY DRIVER ────────────────────────────
-router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const { driverId, action, reason } = req.body;
     const db = getDB();
@@ -358,7 +367,7 @@ router.post('/admin/verify-driver', authenticate, authorize(['admin']), async (r
 });
 
 // ─── ADMIN: UPDATE USER STATUS ──────────────────────
-router.post('/admin/update-user-status', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.post('/admin/update-user-status', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const { userId, status } = req.body;
     const validStatuses = ['active', 'suspended', 'banned'];
@@ -374,7 +383,7 @@ router.post('/admin/update-user-status', authenticate, authorize(['admin']), asy
 });
 
 // ─── ADMIN: DELETE USER ──────────────────────
-router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const db = getDB();
@@ -386,7 +395,7 @@ router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req:
 });
 
 // ─── ADMIN: LIVE LOCATIONS ──────────────────
-router.get('/admin/live-locations', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.get('/admin/live-locations', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
     // Only get users who are online and have a location
@@ -400,7 +409,7 @@ router.get('/admin/live-locations', authenticate, authorize(['admin']), async (r
 });
 
 // ─── ADMIN: GET PENDING DRIVERS ──────────────────────
-router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
     const drivers = await db.all('SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ?', ['driver', 'motorist', 'pending']);
@@ -476,23 +485,21 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
   }
 });
 
-router.get('/_dev/users', authenticate, authorize(['admin']), (_req: AuthRequest, res: Response) => {
+router.get('/_dev/users', authenticate, authorize(['admin']), async (_req: Request, res: Response) => {
   try {
     const db = getDB();
-    db.all('SELECT * FROM users', [], (err, rows) => {
-      res.json({ count: rows?.length || 0, users: rows?.map(sanitizeUser) || [] });
-    });
+    const rows = await db.all('SELECT * FROM users');
+    res.json({ count: rows?.length || 0, users: rows?.map(sanitizeUser) || [] });
   } catch (e) {
+    console.error('Dev users fetch failed:', e);
     res.status(500).json({ message: 'Dev users fetch failed.' });
   }
 });
 
-export default router;
-
-router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/me', authenticate, async (req: Request, res: Response) => {
   try {
     const db = getDB();
-    const user = await db.get('SELECT * FROM users WHERE id = ?', [req.user?.userId]);
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [(req as AuthRequest).user?.userId]);
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ user: sanitizeUser(user) });
   } catch (error) {
@@ -500,3 +507,6 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Error fetching profile' });
   }
 });
+
+export default router;
+

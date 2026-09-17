@@ -1,11 +1,11 @@
 .admin-users-container {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 .admin-toolbar { --background: #1A1A1A; }
-.admin-search { --background: rgba(255,255,255,0.06); --color: #fff; --placeholder-color: #888; border-radius: 12px; }
+.admin-search { --background: var(--nav-card-hover); --color: #fff; --placeholder-color: #888; border-radius: 12px; }
 
 /* Stats Grid - Premium Glass */
 .stats-grid {
@@ -15,21 +15,21 @@
   margin-bottom: 14px;
 }
 .stat-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 12px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
   transition: all 0.3s ease;
 }
 .stat-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 90, 31, 0.3);
+  background: var(--nav-card-hover);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateY(-2px);
 }
 .stat-value {
-  color: #FF6B35 !important;
+  color: var(--navigo-orange) !important;
   font-weight: 700;
   font-size: 18px;
 }
@@ -40,7 +40,7 @@
 
 /* User Cards - Premium Glass */
 .user-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 12px;
@@ -49,12 +49,12 @@
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--nav-card-hover);
   transition: all 0.2s ease;
 }
 .user-card:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 90, 31, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateX(4px);
 }
 .user-name { color: #fff; font-size: 14px; font-weight: 600; }

@@ -190,7 +190,7 @@ const AdminUserReview: React.FC = () => {
         {/* Detail Modal */}
         <IonModal isOpen={showDetail} onDidDismiss={() => setShowDetail(false)}>
           {selectedUser && (
-            <div style={{ padding: 20, background: '#0d1117', color: '#fff', height: '100%', overflow: 'auto' }}>
+            <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', overflow: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <h2 style={{ margin: 0, fontSize: 18 }}>{selectedUser.name} {selectedUser.isFemaleDriver ? '👩' : ''}</h2>
                 <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>

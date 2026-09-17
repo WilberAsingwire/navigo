@@ -3,10 +3,10 @@
 /* ============================================ */
 
 .ride-history-container {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 
 /* Stats Grid */
@@ -18,18 +18,18 @@
 }
 
 .history-stat-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 12px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
   transition: all 0.3s ease;
 }
 
 .history-stat-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 90, 31, 0.3);
+  background: var(--nav-card-hover);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateY(-2px);
 }
 
@@ -41,7 +41,7 @@
 }
 
 .history-stat-value.completed { color: #00e676; }
-.history-stat-value.spent { color: #FF6B35; }
+.history-stat-value.spent { color: var(--navigo-orange); }
 
 .history-stat-label {
   color: rgba(255, 255, 255, 0.5);
@@ -51,19 +51,19 @@
 
 /* Ride Card */
 .history-ride-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 16px;
   margin-bottom: 12px;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
   transition: all 0.2s ease;
 }
 
 .history-ride-card:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 90, 31, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: scale(1.01);
 }
 
@@ -82,7 +82,7 @@
 
 .ride-type-icon {
   font-size: 20px;
-  color: #FF6B35;
+  color: var(--navigo-orange);
 }
 
 .ride-route {
@@ -109,7 +109,7 @@
 }
 
 .ride-fare {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-weight: 700;
   font-size: 16px;
 }
@@ -125,12 +125,12 @@
 }
 
 .detail-glass-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 16px;
   margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
 }
 
 .detail-grid {
@@ -154,7 +154,7 @@
 }
 
 .fare-highlight-card {
-  background: rgba(255, 107, 53, 0.08);
+  background: var(--navigo-orange-ghost);
   border: 1px solid rgba(255, 107, 53, 0.2);
   border-radius: 20px;
   padding: 20px;
@@ -168,14 +168,14 @@
 }
 
 .fare-highlight-value {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-size: 32px;
   font-weight: 800;
   margin: 4px 0;
 }
 
 .book-similar-btn {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --border-radius: 16px !important;
   font-weight: 700 !important;
   height: 52px !important;

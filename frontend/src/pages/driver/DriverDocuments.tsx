@@ -45,20 +45,23 @@ const DriverDocuments: React.FC = () => {
     setError('');
 
     if (!drivingLicense.trim()) return setError('Driving license number is required');
+    if (drivingLicense.trim().length < 5) return setError('Driving license looks too short');
     if (!vehiclePlate.trim()) return setError('Vehicle plate number is required');
+    if (vehiclePlate.trim().length < 3) return setError('Plate number too short');
     if (!vehicleModel.trim()) return setError('Vehicle model is required');
+    if (!vehicleType) return setError('Please select vehicle type');
 
     setIsLoading(true);
     try {
+      // SECURITY: No userId in body — backend uses authenticated user
       await api.post('/auth/upload-documents', {
-        userId: user?.id,
-        nationalId: nationalId.trim(),
+        nationalId: nationalId.trim() || undefined,
         drivingLicense: drivingLicense.trim(),
         vehiclePlate: vehiclePlate.trim().toUpperCase(),
         vehicleModel: vehicleModel.trim(),
-        vehicleColor: vehicleColor.trim(),
-        vehicleType: vehicleType,
-        isFemaleDriver: isFemaleDriver,
+        vehicleColor: vehicleColor.trim() || undefined,
+        vehicleType: vehicleType === 'standard' ? 'economy' : vehicleType,
+        isFemaleDriver,
         vehiclePhoto: 'uploaded',
         selfieWithVehicle: 'uploaded'
       });
@@ -66,14 +69,16 @@ const DriverDocuments: React.FC = () => {
       setSuccess('Documents submitted! Admin will review within 24-48 hours.');
       setShowToast(true);
 
-      const savedUser = JSON.parse(localStorage.getItem('navigo_user') || '{}');
-      savedUser.verificationStatus = 'pending';
-      savedUser.isFemaleDriver = isFemaleDriver;
-      localStorage.setItem('navigo_user', JSON.stringify(savedUser));
+      try {
+        const savedUser = JSON.parse(localStorage.getItem('navigo_user') || '{}');
+        savedUser.verificationStatus = 'pending';
+        savedUser.isFemaleDriver = isFemaleDriver;
+        localStorage.setItem('navigo_user', JSON.stringify(savedUser));
+      } catch {}
 
       setTimeout(() => history.push('/driver/home'), 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Upload failed');
+      setError(err.response?.data?.message || 'Upload failed. Check your details and try again.');
     } finally {
       setIsLoading(false);
     }

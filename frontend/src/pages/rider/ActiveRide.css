@@ -3,10 +3,10 @@
 /* ============================================ */
 
 .active-ride-content {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 
 .ride-distance-info {
@@ -24,14 +24,14 @@
 }
 
 .driver-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
   transition: all 0.3s ease;
 }
 
@@ -71,20 +71,20 @@
 }
 
 .fare-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1px solid rgba(255, 90, 31, 0.2);
+  border: 1px solid rgba(255, 107, 53, 0.2);
   background-image: linear-gradient(135deg, rgba(255, 107, 53, 0.1), transparent);
 }
 
 .fare-card ion-icon {
   font-size: 28px;
-  color: #FF6B35;
+  color: var(--navigo-orange);
 }
 
 .fare-card ion-label {
@@ -117,12 +117,12 @@
 }
 
 .start-btn, .complete-btn, .rate-btn {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --color: #fff !important;
   --border-radius: 16px !important;
   font-weight: 700 !important;
   height: 52px !important;
-  box-shadow: 0 8px 16px rgba(255, 90, 31, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 53, 0.3);
 }
 
 .complete-btn {
@@ -153,18 +153,18 @@
 }
 
 .payment-modal h1 {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-size: 36px;
   margin: 10px 0 24px;
   font-weight: 800;
 }
 
 .payment-radio-item {
-  --background: rgba(255, 255, 255, 0.05) !important;
+  --background: var(--nav-card-soft) !important;
   --color: #fff !important;
   border-radius: 16px !important;
   margin-bottom: 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
 }
 
 .cash-confirmation {
@@ -172,7 +172,7 @@
 }
 
 .cash-confirmation ion-item {
-  --background: rgba(255, 255, 255, 0.03) !important;
+  --background: var(--nav-card-glass) !important;
   --color: #fff !important;
   border-radius: 16px !important;
   border: 1px solid rgba(255, 255, 255, 0.1);

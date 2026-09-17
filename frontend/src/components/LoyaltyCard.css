@@ -1,7 +1,7 @@
 /* LoyaltyCard.css - Enterprise Design System Implementation */
 
 .loyalty-card {
-  background: #121824;
+  background: var(--nav-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
@@ -76,8 +76,8 @@
   height: 6px !important;
   border-radius: 3px !important;
   margin-bottom: 6px !important;
-  --background: #1A2232 !important;
-  --progress-background: #FF6B35 !important;
+  --background: var(--nav-bg-soft) !important;
+  --progress-background: var(--navigo-orange) !important;
 }
 
 .loyalty-progress-text {
@@ -115,9 +115,9 @@
 }
 
 .loyalty-tab-active {
-  background: #FF6B35;
+  background: var(--navigo-orange);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(255, 90, 31, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
 /* Reward Tiles */
@@ -140,13 +140,13 @@
 }
 
 .reward-tile-available {
-  background: #1A2232;
+  background: var(--nav-bg-soft);
   border: 1px solid rgba(51, 65, 85, 0.8);
   color: #FFFFFF;
 }
 
 .reward-tile-available:hover {
-  border-color: rgba(255, 90, 31, 0.5);
+  border-color: rgba(255, 107, 53, 0.5);
   transform: translateY(-2px);
 }
 
@@ -178,7 +178,7 @@
 }
 
 .action-redeem {
-  color: #FF6B35;
+  color: var(--navigo-orange);
 }
 
 .reward-name-locked {
@@ -215,7 +215,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #1A2232;
+  background: var(--nav-bg-soft);
   border: 1px solid rgba(51, 65, 85, 0.8);
   border-radius: 12px;
   padding: 12px;
@@ -253,7 +253,7 @@
 }
 
 .refer-code-box {
-  background: #1A2232;
+  background: var(--nav-bg-soft);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   padding: 12px;
   border-radius: 12px;
@@ -261,14 +261,14 @@
 }
 
 .refer-code {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-size: 1.125rem;
   font-weight: 800;
   letter-spacing: 2px;
 }
 
 .btn-copy-code {
-  background: #FF6B35;
+  background: var(--navigo-orange);
   color: #FFFFFF;
   border: none;
   border-radius: 12px;
@@ -281,5 +281,5 @@
 }
 
 .btn-copy-code:hover {
-  background: #FF6B35;
+  background: var(--navigo-orange);
 }

@@ -1,0 +1,23 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Navigo Rocket Icon — Orange #FF6B35 on transparent -->
+  <defs>
+    <linearGradient id="rocketGrad" x1="8" y1="24" x2="24" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B35"/>
+      <stop offset="100%" stop-color="#FF8C42"/>
+    </linearGradient>
+    <linearGradient id="trailGrad" x1="6" y1="20" x2="12" y2="28" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B35" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FF6B35" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Rocket body -->
+  <path d="M18.5 6.5C18.5 6.5 20.5 8 22 11C23.5 14 24 18 21 21L11 24L8 21L11 11C11 11 14 8.5 18.5 6.5Z" fill="url(#rocketGrad)" stroke="white" stroke-width="0.5" stroke-opacity="0.2"/>
+  <!-- Rocket window -->
+  <circle cx="18" cy="12" r="2.5" fill="white" fill-opacity="0.9" stroke="#0F172A" stroke-width="0.3" stroke-opacity="0.1"/>
+  <!-- Rocket fins -->
+  <path d="M8 21L6 26L11 24Z" fill="#E85E2E"/>
+  <path d="M11 24L16 26L11 21Z" fill="#E85E2E"/>
+  <!-- Trail / speed lines -->
+  <path d="M6 22C6 22 8 24 10 26C12 28 12 28 12 28" stroke="url(#trailGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M8 19C8 19 9 21 11 23" stroke="white" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+</svg>

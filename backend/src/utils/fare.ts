@@ -10,14 +10,12 @@
  *
  * NAVIGO doctrine ("nobody gets cheated"):
  *  1. NO SURGE — Kampala traffic is compensated by the per-minute component,
- *     so the quoted price is the final price. Customers never face
- *     "quoted low, charged 40k more" (the #1 market complaint).
- *  2. Round DOWN to the nearest 100 (customer-friendly, Tinka-style).
+ *     so the quoted price is the final price.
+ *  2. Round DOWN to the nearest 100 (customer-friendly).
  *  3. First 500m free (covered by the base fare).
- *  4. Flat 10% commission — half of Bolt's, at the Union/Tinka tier.
- *  5. Tips go 100% to the driver. Commission never applies to tips.
- *  6. Mobile-money payout fee is absorbed by NAVIGO — the driver's 90%
- *     lands in full (receiving MoMo is free in Uganda).
+ *  4. Flat 10% commission — half of Bolt's.
+ *  5. Tips go 100% to the driver.
+ *  6. Mobile-money payout fee absorbed by NAVIGO.
  */
 
 export type VehicleType = "boda" | "economy" | "comfort" | "xl";
@@ -26,18 +24,13 @@ export interface VehicleSpec {
   type: VehicleType;
   name: string;
   tagline: string;
-  /** Covers trip start + first 500m (free distance). */
   base: number;
-  /** UGX per billable kilometre (after the first 500m). */
   perKm: number;
-  /** UGX per minute — this is how Kampala traffic pays the driver (no surge needed). */
   perMin: number;
-  /** Added on top when the trip is a delivery (handling fee). */
   deliveryFee: number;
-  /** Never charge below this. */
   min: number;
   seats: string;
-  pickupEtaMin: [number, number]; // display range
+  pickupEtaMin: [number, number];
 }
 
 export const VEHICLES: VehicleSpec[] = [
@@ -98,9 +91,26 @@ export const COMMISSION_RATE: number = Math.min(
 
 export const FREE_FIRST_KM = 0.5;
 
+// Unified alias map — frontend sends go/boda/comfort/xl, backend uses economy as canonical for Go
+const VEHICLE_ALIASES: Record<string, VehicleType> = {
+  boda: "boda",
+  go: "economy",
+  economy: "economy",
+  standard: "economy",
+  car: "economy",
+  van: "xl",
+  comfort: "comfort",
+  xl: "xl",
+};
+
 export function getVehicle(type: string): VehicleSpec {
-  const normalizedType = type === "go" ? "economy" : type;
-  return VEHICLES.find((v) => v.type === normalizedType) ?? VEHICLES[0];
+  const key = (type || "").toLowerCase().trim();
+  const normalized = VEHICLE_ALIASES[key] || (VEHICLES.find(v => v.type === key)?.type as VehicleType) || "economy";
+  return VEHICLES.find(v => v.type === normalized) ?? VEHICLES[1];
+}
+
+export function normalizeVehicleForDB(type: string): string {
+  return getVehicle(type).type;
 }
 
 export interface FareBreakdown {

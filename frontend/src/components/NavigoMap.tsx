@@ -1,524 +1,329 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
-import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
-import { IonSpinner, IonBadge, IonChip } from '@ionic/react';
-import api from '../services/api';
-import bodaImg from '../assets/vehicles/boda.png';
-import goImg from '../assets/vehicles/go.png';
-import comfortImg from '../assets/vehicles/comfort.png';
-import xlImg from '../assets/vehicles/xl.png';
+import { useTheme } from '../context/ThemeContext';
+import bodaNew from '../assets/vehicles/boda-new.png';
+import goNew from '../assets/vehicles/go-new.png';
+import comfortNew from '../assets/vehicles/comfort-new.png';
+import xlNew from '../assets/vehicles/xl-new.png';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: markerIcon2xUrl,
-  iconUrl: markerIconUrl,
-  shadowUrl: markerShadowUrl,
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const createPulsingIcon = (color: string, emoji: string, size: number = 28) => {
-  return L.divIcon({
-    html: `<div style="position:relative;width:${size}px;height:${size}px;">
-            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.6;"></div>
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:${size*0.5}px;z-index:1;">${emoji}</div>
-           </div>
-           <style>
-            @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(2); opacity: 0; } }
-           </style>
-          `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-};
-
-const createVehicleIcon = (imageUrl: string, color: string, size: number = 32) => {
-  return L.divIcon({
-    html: `<div style="position:relative;width:${size}px;height:${size}px;">
-            <div style="position:absolute;width:100%;height:100%;background:${color};border-radius:50%;animation:pulse 2s infinite;opacity:0.3;"></div>
-            <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:${color};border-radius:50%;border:2px solid white;box-shadow:0 0 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1;overflow:hidden;">
-              <img src="${imageUrl}" style="width:70%; height:70%; object-fit:contain; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.5));" />
-            </div>
-          </div>
-          <style>
-            @keyframes pulse { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(2); opacity: 0; } }
-          </style>
-        `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-};
-
-const pickIcon = createPulsingIcon('#2D6A4F', '📍', 30);
-const destIcon = createPulsingIcon('#E85D75', '🎯', 32);
-const poiIcon = (emoji: string) => L.divIcon({
-  html: `<div style="background:#121824; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:24px; height:24px; display:flex; align-items:center;justify-content:center; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.5);">${emoji}</div>`,
+const pickupIcon = L.divIcon({
+  className: 'navigo-pickup',
+  html: `<div class="np-wrap"><div class="np-dot"></div><div class="np-pulse"></div></div>`,
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
+const destIcon = L.divIcon({
+  className: 'navigo-dest',
+  html: `<div class="nd-wrap"><div class="nd-dot"></div></div>`,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+const createVehicleIcon = (url: string, color: string) => L.divIcon({
+  className: 'navigo-vehicle',
+  html: `<div class="nv-wrap"><div class="nv-body" style="border-color:${color}"><img src="${url}" alt=""/></div></div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+});
+const createSearchIcon = (n: number) => L.divIcon({
+  className: 'navigo-search',
+  html: `<div class="ns-pin">${n}</div>`,
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
 
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
-  boda: { url: bodaImg, color: '#ffab40' },
-  go: { url: goImg, color: '#4285F4' },
-  comfort: { url: comfortImg, color: '#4CAF50' },
-  xl: { url: xlImg, color: '#2196F3' },
+  boda: { url: bodaNew, color: '#FF6B35' },
+  go: { url: goNew, color: '#0EA5E9' },
+  comfort: { url: comfortNew, color: '#0F172A' },
+  xl: { url: xlNew, color: '#6366F1' },
+  economy: { url: goNew, color: '#0EA5E9' },
 };
 
+const isValidLatLng = (ll: { lat: number; lng: number } | null | undefined): boolean => {
+  if (!ll) return false;
+  const { lat, lng } = ll;
+  return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+};
+
+const MapEvents: React.FC<{
+  onMapClick?: (ll: [number, number]) => void;
+  userLocation: { lat: number; lng: number } | null;
+  followUser: boolean;
+  onMove?: (c: [number, number], z: number) => void;
+}> = ({ onMapClick, userLocation, followUser, onMove }) => {
+  const map = useMap();
+  useMapEvents({
+    click(e) { const ll = e.latlng; if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]); },
+    moveend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch {} },
+  });
+  useEffect(() => {
+    if (followUser && isValidLatLng(userLocation)) { try { map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 }); } catch {} }
+  }, [userLocation, followUser, map]);
+  useEffect(() => {
+    const t = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 300);
+    const t2 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 1000);
+    const t3 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 2000);
+    return () => { clearTimeout(t); clearTimeout(t2); clearTimeout(t3); };
+  }, [map]);
+  return null;
+};
 
 interface MapProps {
   userLocation: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
   driverLocation?: { lat: number; lng: number } | null;
-  driverType?: 'boda' | 'go' | 'comfort' | 'xl';
+  driverType?: string;
   height?: string;
   interactive?: boolean;
   showRoute?: boolean;
   showControls?: boolean;
   followUser?: boolean;
+  showNearbyDrivers?: boolean;
   searchResults?: { lat: number; lng: number; name?: string; address?: string }[];
-  onDistanceChange?: (distance: number, duration: number) => void;
-  onMapClick?: (latlng: [number, number]) => void;
+  onDistanceChange?: (d: number, t: number) => void;
+  onMapClick?: (ll: [number, number]) => void;
+  onPickupDrag?: (ll: [number, number]) => void;
+  onDestDrag?: (ll: [number, number]) => void;
 }
 
-const NavigoMap: React.FC<MapProps> = React.memo(({
+const NavigoMap: React.FC<MapProps> = ({
   userLocation, destination, driverLocation, driverType = 'go',
-  height = '350px', interactive = true, showRoute = true,
-  showControls = true, followUser = true, searchResults = [],
-  onDistanceChange, onMapClick
+  height = '100%', showRoute = true,
+  showControls = true, followUser = true, showNearbyDrivers = false,
+  searchResults = [], onDistanceChange, onMapClick, onPickupDrag, onDestDrag
 }) => {
-  const [loading, setLoading] = useState(true);
-  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain'>('standard');
+  const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
-  const [tilesHealthy, setTilesHealthy] = useState(true);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
+  const [mapZoom, setMapZoom] = useState(15);
+  const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
+  const [tileStatus, setTileStatus] = useState<string>('Google Maps');
+  const mapRef = React.useRef<L.Map | null>(null);
 
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<{ [key: string]: L.Marker | L.Polyline | L.Circle }>({});
-  const poiMarkersRef = useRef<{ [key: string]: L.Marker }>({});
-  const animationRef = useRef<number | null>(null);
-  const poiFetchTimeoutRef = useRef<any>(null);
-
-  const center: [number, number] = userLocation ? [userLocation.lat, userLocation.lng] : [0.3476, 32.5825];
-
-  const tileUrls: Record<string, { url: string; attribution: string }> = {
-    standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors' },
-    satellite: { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: '&copy; Esri &mdash; Source: Esri' },
+  const getValidCenter = (): [number, number] => {
+    if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
+    if (isValidLatLng({ lat: mapCenter[0], lng: mapCenter[1] })) return mapCenter;
+    return [0.3476, 32.5825];
   };
+  const center = getValidCenter();
 
-  // --- Smooth Movement Logic ---
-  const animateMarker = (marker: L.Marker, startPos: [number, number], endPos: [number, number], duration = 1000) => {
-    if (animationRef.current) cancelAnimationFrame(animationRef.current);
-
-    const startTime = performance.now();
-
-    const step = (currentTime: number) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const ease = progress < 0.5
-        ? 4 * progress * progress * progress
-        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-      const currentLat = startPos[0] + (endPos[0] - startPos[0]) * ease;
-      const currentLng = startPos[1] + (endPos[1] - startPos[1]) * ease;
-
-      marker.setLatLng([currentLat, currentLng]);
-
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(step);
-      }
-    };
-
-    animationRef.current = requestAnimationFrame(step);
-  };
-
-  const fetchNearbyPOIs = async (map: L.Map, radius: number, isPriority: boolean = true) => {
-    const center = map.getCenter();
-
-    if (isPriority) {
-      console.log(`🚀 Priority Fetch: POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)`);
-    } else {
-      console.log(`☁️ Background Fetch: POIs around ${center.lat}, ${center.lng} (Radius: ${radius}m)`);
-    }
-
-    const overpassQuery = `
-      [out:json][timeout:30];
-      (
-        node["amenity"](around:${radius},${center.lat},${center.lng});
-        way["amenity"](around:${radius},${center.lat},${center.lng});
-        relation["amenity"](around:${radius},${center.lat},${center.lng});
-        node["shop"](around:${radius},${center.lat},${center.lng});
-        way["shop"](around:${radius},${center.lat},${center.lng});
-        relation["shop"](around:${radius},${center.lat},${center.lng});
-        node["office"](around:${radius},${center.lat},${center.lng});
-        way["office"](around:${radius},${center.lat},${center.lng});
-        node["leisure"](around:${radius},${center.lat},${center.lng});
-        way["leisure"](around:${radius},${center.lat},${center.lng});
-        node["tourism"](around:${radius},${center.lat},${center.lng});
-        way["tourism"](around:${radius},${center.lat},${center.lng});
-        node["building"](around:${radius},${center.lat},${center.lng});
-        way["building"](around:${radius},${center.lat},${center.lng});
-        node["place"](around:${radius},${center.lat},${center.lng});
-        way["place"](around:${radius},${center.lat},${center.lng});
-      );
-      out center;
-    `;
-
-    const queryUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-
-    try {
-      const res = await fetch(queryUrl, { headers: { 'Accept': 'application/json' } });
-      const data = await res.json();
-
-      if (isPriority) {
-        // For priority loads, we clear existing POIs to keep the map clean
-        Object.values(poiMarkersRef.current).forEach(m => map.removeLayer(m));
-        poiMarkersRef.current = {};
-      }
-
-      const poiEmojiMap: Record<string, string> = {
-        restaurant: '🍴', cafe: '☕', bar: '🍺', pub: '🍻', fast_food: '🍔',
-        police: '👮', bank: '🏦', atm: '🏧', hospital: '🏥', pharmacy: '💊',
-        school: '🎓', university: '🎓', college: '🎓', library: '📚',
-        supermarket: '🛒', grocery: '🛒', market: '🛒', mall: '🛍️', shop: '🏪',
-        office: '🏢', government: '🏛️', post_office: '📮', townhall: '🏛️',
-        park: '🌳', garden: '🌷', playground: '🎡', stadium: '⚽', sports_centre: '🏋️',
-        hotel: '🏨', hostel: '🏠', guest_house: '🏡', motel: '🏨',
-        museum: '🏛️', art_gallery: '🎨', cinema: '🎬', theatre: '🎭',
-        church: '⛪', mosque: '🕌', temple: '🕉️',
-        bus_station: '🚌', taxi: '🚕', train_station: '🚂', airport: '✈️',
-        fuel: '⛽', parking: '🅿️', charging_station: '⚡',
-        default: '📍'
-      };
-
-      if (data.elements && data.elements.length > 0) {
-        data.elements.forEach((element: any) => {
-          // Avoid duplicate markers
-          if (poiMarkersRef.current[element.id]) return;
-
-          const tags = element.tags || {};
-          const amenity = tags.amenity || tags.shop || tags.office || tags.leisure || tags.tourism || tags.building || tags.place || 'other';
-          const name = tags.name || tags.operator || 'Unnamed Spot';
-          const emoji = poiEmojiMap[amenity] || poiEmojiMap.default || '📍';
-
-          const lat = element.lat || element.center?.lat;
-          const lon = element.lon || element.center?.lon;
-          if (!lat || !lon) return;
-
-          const marker = L.marker([lat, lon], { icon: poiIcon(emoji) })
-            .addTo(map)
-            .bindPopup(`<b>${emoji} ${name}</b><br/>${amenity}`);
-
-          poiMarkersRef.current[element.id] = marker;
-        });
-      }
-    } catch (e) {
-      console.error('❌ POI Fetch Error (Overpass):', e);
-    }
-  };
-
-  const loadPOIsInRings = async (map: L.Map) => {
-    // Ring 1: Immediate (1km) - High Priority
-    await fetchNearbyPOIs(map, 1000, true);
-
-    // Ring 2: Local (5km) - Background
-    setTimeout(() => fetchNearbyPOIs(map, 5000, false), 1000);
-
-    // Ring 3: Regional (25km) - Background
-    setTimeout(() => fetchNearbyPOIs(map, 25000, false), 3000);
-  };
+  // Track zoom changes
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
+    if (!showNearbyDrivers || !isValidLatLng(userLocation)) return;
+    setNearbyDrivers([
+      { id: '1', lat: userLocation!.lat + 0.005, lng: userLocation!.lng + 0.003, type: 'boda' },
+      { id: '2', lat: userLocation!.lat - 0.003, lng: userLocation!.lng + 0.005, type: 'go' },
+      { id: '3', lat: userLocation!.lat + 0.002, lng: userLocation!.lng - 0.004, type: 'comfort' },
+      { id: '4', lat: userLocation!.lat - 0.006, lng: userLocation!.lng - 0.002, type: 'boda' },
+    ]);
+  }, [showNearbyDrivers, userLocation]);
 
   useEffect(() => {
-    if (!mapContainerRef.current || loading) return;
-
-    // ONLY initialize the map if it doesn't exist
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        zoomControl: false, // We'll add it manually to control position
-        dragging: interactive,
-        scrollWheelZoom: interactive,
-        touchZoom: interactive,
-        attributionControl: true,
-      }).setView(center, 15);
-
-      mapInstanceRef.current = map;
-
-      // MOVE ZOOM CONTROL TO BOTTOM RIGHT
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-      const locateControl = L.control({ position: 'topright' });
-      locateControl.onAdd = function() {
-        const btn = L.DomUtil.create('a', 'leaflet-control-locate');
-        btn.innerHTML = '📍 My Location';
-        btn.style.cssText = 'cursor:pointer; padding:8px 12px; background:#4285F4; color:#fff; font-weight:bold; font-size:12px; border:none; text-decoration:none; border-radius:4px;';
-        btn.onclick = () => {
-          map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
-        };
-        return btn;
-      };
-      locateControl.addTo(map);
-
-      // POI Auto-Discovery: Fetch nearby businesses whenever the map moves or zooms
-      map.on('moveend', () => {
-        if (poiFetchTimeoutRef.current) clearTimeout(poiFetchTimeoutRef.current);
-        poiFetchTimeoutRef.current = setTimeout(() => loadPOIsInRings(map), 1500);
-      });
-
-      map.on('click', (e) => {
-        if (onMapClick) onMapClick([e.latlng.lat, e.latlng.lng]);
-      });
-
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 200);
-
-      const resizeObserver = new ResizeObserver(() => {
-        map.invalidateSize();
-      });
-      resizeObserver.observe(mapContainerRef.current!);
-    }
-
-    const map = mapInstanceRef.current;
-    console.log(`Updating map style to: ${mapStyle}, URL: ${tileUrls[mapStyle].url}`);
-
-    // UPDATE TILE LAYER WITHOUT RECREATING MAP
-    // Remove existing tile layers first
-    map.eachLayer(layer => {
-      if (layer instanceof L.TileLayer) {
-        map.removeLayer(layer);
-      }
-    });
-
-    const tileErrors = { count: 0 };
-    const tileLayer = L.tileLayer(tileUrls[mapStyle].url, {
-      attribution: tileUrls[mapStyle].attribution,
-      maxZoom: mapStyle === 'satellite' ? 22 : 22,
-      maxNativeZoom: mapStyle === 'satellite' ? 18 : 19,
-    });
-    tileLayer.on('tileload', () => { setTilesHealthy(true); console.log('Tile loaded successfully'); });
-    tileLayer.on('tileerror', () => {
-      console.error('Tile load failed');
-      tileErrors.count += 1;
-      if (tileErrors.count >= 3) setTilesHealthy(false);
-    });
-    tileLayer.addTo(map);
-    // If tiles never arrive (offline / CDN blocked), surface a friendly state
-    const fallbackTimer = setTimeout(() => {
-      if (tileErrors.count >= 3) setTilesHealthy(false);
-    }, 6000);
-
-    if (mapStyle === 'satellite') {
-      // Add a high-contrast labels layer on top of satellite imagery
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        maxZoom: 22,
-        maxNativeZoom: 19,
-        zIndex: 10,
-      }).addTo(map);
-    }
-
-    return () => clearTimeout(fallbackTimer);
-  }, [loading, mapStyle, interactive]);
-
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (map && followUser && userLocation) {
-      map.flyTo([userLocation.lat, userLocation.lng], 16, { animate: true, duration: 1.5 });
-    }
-  }, [userLocation, followUser]);
-
-  // --- Marker & Route Sync ---
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    // 1. User Location Marker
-    if (userLocation) {
-      if (!markersRef.current['user']) {
-        markersRef.current['user'] = L.marker([userLocation.lat, userLocation.lng], { icon: pickIcon, draggable: interactive }).addTo(map).bindPopup('📍 You');
-        markersRef.current['userCircle'] = L.circle([userLocation.lat, userLocation.lng], { radius: 8, color: '#2D6A4F', fillOpacity: 0.1 }).addTo(map);
-      } else {
-        const marker = markersRef.current['user'] as L.Marker;
-        const circle = markersRef.current['userCircle'] as L.Circle;
-
-        // Smoothly move user marker if it's a significant jump
-        const oldPos = marker.getLatLng();
-        if (Math.abs(oldPos.lat - userLocation.lat) > 0.0001 || Math.abs(oldPos.lng - userLocation.lng) > 0.0001) {
-          animateMarker(marker, [oldPos.lat, oldPos.lng], [userLocation.lat, userLocation.lng], 800);
-        }
-        circle.setLatLng([userLocation.lat, userLocation.lng]);
-      }
-    }
-
-    // 2. Destination Marker
-    if (destination) {
-      if (!markersRef.current['dest']) {
-        markersRef.current['dest'] = L.marker([destination.lat, destination.lng], { icon: destIcon, draggable: interactive }).addTo(map).bindPopup('🎯 Destination');
-      } else {
-        const marker = markersRef.current['dest'] as L.Marker;
-        marker.setLatLng([destination.lat, destination.lng]);
-      }
-    } else if (markersRef.current['dest']) {
-      map.removeLayer(markersRef.current['dest']);
-      delete markersRef.current['dest'];
-    }
-
-    // 3. Driver Marker (with Smooth Motion)
-    if (driverLocation) {
-      const vehicleCfg = VEHICLE_ICONS[driverType] || VEHICLE_ICONS['go'];
-      const dIcon = createVehicleIcon(vehicleCfg.url, vehicleCfg.color);
-      if (!markersRef.current['driver']) {
-        markersRef.current['driver'] = L.marker([driverLocation.lat, driverLocation.lng], { icon: dIcon }).addTo(map).bindPopup(`${driverType.toUpperCase()} Driver`);
-      } else {
-        const marker = markersRef.current['driver'] as L.Marker;
-        const oldPos = marker.getLatLng();
-
-        if (oldPos.lat !== driverLocation.lat || oldPos.lng !== driverLocation.lng) {
-          animateMarker(marker, [oldPos.lat, oldPos.lng], [driverLocation.lat, driverLocation.lng], 1200);
-        }
-      }
-    } else if (markersRef.current['driver']) {
-      map.removeLayer(markersRef.current['driver']);
-      delete markersRef.current['driver'];
-    }
-
-    // 4. Route Visualization & FitBounds
-    if (showRoute && userLocation && destination) {
-      const fetchRoute = async () => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-        try {
-          const from = `${userLocation.lng},${userLocation.lat}`;
-          const to = `${destination.lng},${destination.lat}`;
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: controller.signal });
-          const data = await res.json();
-          if (data.routes?.length > 0) {
-            const route = data.routes[0];
-            const points = route.geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]);
-
-            if (!markersRef.current['route']) {
-              markersRef.current['route'] = L.polyline(points, { color: '#4285F4', weight: 5, opacity: 0.8, lineJoin: 'round' }).addTo(map);
-            } else {
-              (markersRef.current['route'] as L.Polyline).setLatLngs(points);
-            }
-
-            // FIT BOUNDS: Ensure both points and route are visible
-            const bounds = L.latLngBounds(points);
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16, animate: true });
-
-            const d = Math.round(route.distance / 100) / 10;
-            const t = Math.round(route.duration / 60);
-            setRouteDistance(d); setRouteDuration(t);
-            if (onDistanceChange) onDistanceChange(d, t);
-            return;
-          }
-          throw new Error('No route found');
-        } catch {
-          // Route server unavailable — draw a straight line and still report
-          // an (approximate) distance so fares keep working.
-          if (markersRef.current['route']) {
-            map.removeLayer(markersRef.current['route'] as any);
-            delete markersRef.current['route'];
-          }
-          const fallbackLine = L.polyline([[userLocation.lat, userLocation.lng], [destination.lat, destination.lng]], { color: '#4285F4', weight: 5, opacity: 0.8 }).addTo(map);
-          markersRef.current['route'] = fallbackLine;
-          const d = Math.round(map.distance([userLocation.lat, userLocation.lng], [destination.lat, destination.lng]) / 100) / 10;
-          const t = Math.max(1, Math.round((d / 22) * 60));
+    if (!showRoute || !isValidLatLng(userLocation) || !isValidLatLng(destination as any)) { setRoutePoints([]); return; }
+    const fetchRoute = async () => {
+      try {
+        const from = `${userLocation!.lng},${userLocation!.lat}`;
+        const to = `${destination!.lng},${destination!.lat}`;
+        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: AbortSignal.timeout(8000) });
+        const data = await res.json();
+        if (data.routes?.length) {
+          const pts = data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]).filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng));
+          setRoutePoints(pts);
+          const d = Math.round(data.routes[0].distance / 100) / 10;
+          const t = Math.round(data.routes[0].duration / 60);
           setRouteDistance(d); setRouteDuration(t);
-          if (onDistanceChange) onDistanceChange(d, t);
-        } finally {
-          clearTimeout(timeout);
+          onDistanceChange?.(d, t);
+          return;
         }
-      };
-      fetchRoute();
-    } else if (markersRef.current['route']) {
-      map.removeLayer(markersRef.current['route']);
-      delete markersRef.current['route'];
-    }
-  }, [userLocation, destination, driverLocation, driverType, showRoute, interactive]);
-
-  // --- Search Results Markers — every search shown on the map ---
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    // Clear previous temporary search markers
-    const prevSearchMarkers = (mapInstanceRef.current as any)?._searchMarkers || [];
-    prevSearchMarkers.forEach((m: L.Marker) => { if (map && m) map.removeLayer(m); });
-
-    const tempMarkers: L.Marker[] = [];
-    searchResults.forEach((r, idx) => {
-      const marker = L.marker([r.lat, r.lng], {
-        icon: L.divIcon({
-          html: `<div style="background:#FF6B35; border:2px solid white; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:10px; box-shadow:0 2px 6px rgba(0,0,0,0.5);">${idx + 1}</div>`,
-          iconSize: [22, 22], iconAnchor: [11, 11],
-        })
-      }).addTo(map).bindPopup(`<b>🔍 Search Result ${idx + 1}</b><br/>${r.name || r.address || 'Location'}`);
-      tempMarkers.push(marker);
-    });
-    (mapInstanceRef.current as any)._searchMarkers = tempMarkers;
-    return () => {
-      tempMarkers.forEach((m) => { if (map && m) map.removeLayer(m); });
+        throw new Error('no route');
+      } catch {
+        if (isValidLatLng(userLocation) && isValidLatLng(destination as any)) {
+          setRoutePoints([[userLocation!.lat, userLocation!.lng], [destination!.lat, destination!.lng]]);
+          try {
+            const dist = Math.round(L.latLng(userLocation!.lat, userLocation!.lng).distanceTo(L.latLng(destination!.lat, destination!.lng)) / 100) / 10;
+            const t = Math.max(1, Math.round((dist / 22) * 60));
+            setRouteDistance(dist); setRouteDuration(t);
+            onDistanceChange?.(dist, t);
+          } catch {}
+        }
+      }
     };
-  }, [searchResults]);
+    fetchRoute();
+  }, [userLocation, destination, showRoute]);
 
-  const openInGoogleMaps = () => {
-    if (userLocation && destination) window.open(`https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${destination.lat},${destination.lng}`, '_blank');
+  const handleMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const ll: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          setMapCenter(ll);
+          onMapClick?.(ll);
+          if (mapRef.current) {
+            try { mapRef.current.flyTo(ll, 16, { duration: 1 }); } catch {}
+          }
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
   };
+
+  const handleZoomIn = () => {
+    const newZoom = Math.min(mapZoom + 1, 20);
+    setMapZoom(newZoom);
+    if (mapRef.current) {
+      try { mapRef.current.setZoom(newZoom); } catch {}
+    }
+  };
+  const handleZoomOut = () => {
+    const newZoom = Math.max(mapZoom - 1, 5);
+    setMapZoom(newZoom);
+    if (mapRef.current) {
+      try { mapRef.current.setZoom(newZoom); } catch {}
+    }
+  };
+
+  // Google Maps iframe with dynamic style and zoom
+  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
+  const getMapTypeParam = () => {
+    if (mapStyle === 'satellite') return 'k'; // satellite
+    if (mapStyle === 'terrain') return 'p'; // terrain
+    return 'm'; // roadmap standard
+  };
+  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=${getMapTypeParam()}&output=embed&hl=en&iwloc=near`;
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
-      {showControls && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap', alignItems: 'center', padding: '0 4px', position: 'absolute', top: 10, left: 10, zIndex: 1000 }}>
-          <IonBadge color="success" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● LIVE GPS</IonBadge>
-          <IonBadge color="warning" style={{ fontSize: 9, padding: '3px 8px', textTransform: 'uppercase', letterSpacing: 0.5 }}>● REAL-TIME ROUTE</IonBadge>
-          {Object.keys(tileUrls).map(style => (
-            <IonChip key={style} outline={mapStyle !== style} color={mapStyle === style ? 'warning' : 'medium'}
-              onClick={() => setMapStyle(style as any)} style={{ fontSize: 10, cursor: 'pointer', padding: '2px 8px', textTransform: 'uppercase' }}>
-              {style === 'standard' ? '🗺️' : style === 'dark' ? '🌙' : '🛰️'} {style}
-            </IonChip>
-          ))}
-          {userLocation && destination && (
-            <>
-              <IonChip outline color="primary" onClick={openInGoogleMaps} style={{ fontSize: 10, cursor: 'pointer' }}>📍 Navigate</IonChip>
-              {routeDistance > 0 && <IonBadge color="warning" style={{ fontSize: 10 }}>{routeDistance}km • {routeDuration}min (Real OSRM)</IonBadge>}
-            </>
-          )}
-        </div>
-      )}
-      <div
-        ref={mapContainerRef}
-        style={{
-          height: height === '100%' ? '100%' : height,
-          width: '100%',
-          borderRadius: 16,
-          overflow: 'hidden',
-          position: 'relative',
-          border: '2px solid rgba(255,255,255,0.08)',
-          /* Branded backdrop — the map area is never an empty black void */
-          background: 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%)',
-        }}
+    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#e5e7eb' }}>
+      {/* GOOGLE MAPS IFRAME BACKGROUND - always works, never blocked */}
+      <iframe
+        key={`${center[0].toFixed(4)}-${center[1].toFixed(4)}-${mapZoom}-${mapStyle}`}
+        src={googleEmbedUrl}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, zIndex: 0 }}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        title="Google Maps"
+        onLoad={() => setTileStatus(`Google ${mapStyle} z${mapZoom}`)}
+      />
+
+      {/* LEAFLET OVERLAY - transparent, only for markers and route */}
+      <MapContainer
+        center={center}
+        zoom={mapZoom}
+        style={{ height: '100%', width: '100%', background: 'transparent', zIndex: 1 }}
+        zoomControl={false}
+        attributionControl={false}
+        ref={mapRef as any}
       >
-        {!tilesHealthy && (
-          <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', zIndex: 900, background: 'rgba(13,19,31,0.92)', border: '1px solid rgba(255,107,53,0.35)', borderRadius: 9999, padding: '6px 14px', fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>
-            🗺️ Map tiles unavailable — locations still work
-          </div>
+        {/* Transparent tiles - we rely on iframe for base, but keep one TileLayer with opacity 0.01 to keep Leaflet happy */}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          opacity={0}
+          attribution=""
+        />
+
+        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c, z) => { if (!isNaN(c[0]) && !isNaN(c[1])) { setMapCenter(c); setMapZoom(z); } }} />
+
+        {isValidLatLng(userLocation) && (
+          <>
+            <Marker position={[userLocation!.lat, userLocation!.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]); } catch {} } }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.06, weight: 1, dashArray: '8 8', opacity: 0.5 }} />
+            <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.25, weight: 2 }} />
+          </>
         )}
-        {loading && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', justifyContent: 'center', background: 'radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 60%, #070b12 100%)' }}>
-            <IonSpinner name="crescent" color="warning" />
-            <span style={{ fontSize: 11, color: '#64748B', letterSpacing: 1 }}>LOADING MAP</span>
-          </div>
+
+        {isValidLatLng(destination as any) && (
+          <Marker position={[destination!.lat, destination!.lng]} icon={destIcon} draggable={!!onDestDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onDestDrag?.([ll.lat, ll.lng]); } catch {} } }} />
         )}
+
+        {isValidLatLng(driverLocation as any) && <Marker position={[driverLocation!.lat, driverLocation!.lng]} icon={createVehicleIcon(VEHICLE_ICONS[driverType]?.url || goNew, VEHICLE_ICONS[driverType]?.color || '#0EA5E9')} />}
+
+        {nearbyDrivers.filter(d => isValidLatLng(d as any)).map(d => (
+          <Marker key={d.id} position={[d.lat, d.lng]} icon={createVehicleIcon(VEHICLE_ICONS[d.type]?.url || goNew, VEHICLE_ICONS[d.type]?.color || '#0EA5E9')} />
+        ))}
+
+        {routePoints.length > 0 && routePoints.every(([lat, lng]) => !isNaN(lat) && !isNaN(lng)) && (
+          <>
+            <Polyline positions={routePoints} pathOptions={{ color: '#0F172A', weight: 8, opacity: 0.35, lineJoin: 'round', lineCap: 'round' }} />
+            <Polyline positions={routePoints} pathOptions={{ color: '#FF6B35', weight: 5, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }} />
+          </>
+        )}
+
+        {searchResults.filter(r => isValidLatLng(r as any)).map((r, i) => (
+          <Marker key={`${r.lat}-${r.lng}-${i}`} position={[r.lat, r.lng]} icon={createSearchIcon(i+1)} />
+        ))}
+      </MapContainer>
+
+      <div className="map-controls-top">
+        <div className="map-controls-left">
+          <div className="map-badge live"><span className="bdot"></span> LIVE GPS</div>
+          <div className="map-badge rt">● REAL-TIME</div>
+          <div className="map-style-toggle">
+            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => setMapStyle('standard')}>STANDARD</button>
+            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => setMapStyle('satellite')}>SATELLITE</button>
+            <button className={`ms-btn ${mapStyle === 'terrain' ? 'active' : ''}`} onClick={() => setMapStyle('terrain')}>TERRAIN</button>
+          </div>
+          {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
+          {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
+        </div>
+        <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
+          <div className="map-zoom-controls">
+            <button className="mz-btn" onClick={handleZoomIn}>+</button>
+            <button className="mz-btn" onClick={handleZoomOut}>−</button>
+          </div>
+          <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
+        </div>
       </div>
+
+      <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
+
+      <style>{`
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: transparent !important; }
+        .navigo-map-root .leaflet-tile-pane { display: none; }
+        .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
+        .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
+        .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
+        .np-wrap, .nd-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+        .np-dot { width: 18px; height: 18px; background: #FF6B35; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(255,107,53,0.5); z-index: 2; position: relative; }
+        .nd-dot { width: 18px; height: 18px; background: #0F172A; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(0,0,0,0.4); z-index: 2; position: relative; }
+        .np-pulse { position: absolute; inset: 0; background: #FF6B35; border-radius: 50%; animation: npPulse 2s infinite; }
+        @keyframes npPulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.8); opacity: 0; } }
+        .nv-wrap { position: relative; width: 40px; height: 40px; }
+        .nv-body { width: 40px; height: 40px; background: white; border-radius: 50%; border: 3px solid; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+        .nv-body img { width: 70%; height: 70%; object-fit: contain; }
+        .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
+        .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
+        .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }
+        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.12); background: rgba(255,255,255,0.95); color: #0F172A; }
+        .map-badge.live { background: rgba(16,185,129,0.12); color: #059669; }
+        .map-badge.rt { background: rgba(245,158,11,0.12); color: #D97706; }
+        .map-badge.route { background: rgba(15,23,42,0.9); color: white; }
+        .map-badge.drv { background: rgba(14,165,233,0.12); color: #0284C7; }
+        .bdot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: bdot 1.5s infinite; }
+        @keyframes bdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .map-style-toggle { display: flex; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+        .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; }
+        .ms-btn.active { background: #FF6B35; color: white; }
+        .map-zoom-controls { display: flex; flex-direction: column; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .mz-btn { width: 44px; height: 44px; border: none; background: white; color: #0F172A; font-size: 20px; font-weight: 800; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .mz-btn:last-child { border-bottom: none; }
+        .mz-btn:hover { background: #FF6B35; color: white; }
+        .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); align-self: flex-start; }
+        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,107,53,0.2); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+      `}</style>
     </div>
   );
-});
+};
 
 export default NavigoMap;

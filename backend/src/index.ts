@@ -23,39 +23,41 @@ app.set('trust proxy', 1); // Trust Render's proxy to ensure HTTPS is detected c
 
 const httpServer = createServer(app);
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : null;
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean) : null;
+
 app.use(cors({
   origin: (origin, callback) => {
-    // If ALLOWED_ORIGINS is not set, allow all origins (safe default for deployment)
-    if (!allowedOrigins) {
-      return callback(null, true);
-    }
-    // Otherwise, only allow origins in the list (or requests with no origin)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (!allowedOrigins) return callback(null, true);
+    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    else callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
-app.use(express.json());
+
+// Request Logger — MUST be before routes to log API hits
+app.use((req, _res, next) => {
+  if (req.url.startsWith('/api')) {
+    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+  }
+  next();
+});
+
+app.use(express.json({ limit: '10mb' }));
 app.use(passport.initialize());
 
-// Google OAuth Strategy - Now Optional to prevent crashing if IDs are missing
-if (process.env.GOOGLE_CLIENT_ID) {
+// Google OAuth Strategy — optional, safe fallback
+const googleCallbackURL = process.env.GOOGLE_CALLBACK_URL || `${process.env.PUBLIC_BACKEND_URL || 'http://localhost:5000'}/auth/google/callback`;
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-      callbackURL: '/auth/google/callback'
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: googleCallbackURL,
     },
-    (_accessToken: any, _refreshToken: any, profile: any, done: any) => {
-      return done(null, profile);
-    }
+    (_accessToken: any, _refreshToken: any, profile: any, done: any) => done(null, profile)
   ));
-  console.log('✅ Google OAuth Strategy initialized');
+  console.log('✅ Google OAuth initialized →', googleCallbackURL);
 } else {
-  console.log('⚠️ Google Client ID missing. Google Login disabled.');
+  console.log('⚠️ Google OAuth disabled — missing GOOGLE_CLIENT_ID / SECRET');
 }
 
 // Google OAuth Routes
@@ -105,17 +107,26 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/poi', poiRoutes);
 app.use('/api/support', supportRoutes);
 
-app.get('/api/health', (_req: any, res: any) => res.json({ status: 'ok', name: 'NAVIGO API' }));
-
-// Request Logger - This tells us exactly what is hitting the server
-app.use((req, res, next) => {
-  console.log(`Incoming Request: ${req.method} ${req.url}`);
-  next();
+app.get('/api/health', async (_req: any, res: any) => {
+  try {
+    const db = require('./config/database').getDB();
+    await db.get('SELECT 1 as ok');
+    res.json({ status: 'ok', name: 'NAVIGO API', db: 'connected', time: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'degraded', name: 'NAVIGO API', db: 'disconnected' });
+  }
 });
 
-
-// Socket.io
-const io = new Server(httpServer, { cors: { origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*' } });
+// Socket.io — use same CORS allowlist as REST, with credentials
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins || '*',
+    credentials: true,
+    methods: ['GET', 'POST'],
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+});
 setIO(io);
 setupSocketHandlers(io);
 
@@ -126,36 +137,47 @@ initDB().then(async () => {
   try {
     const db = require('./config/database').getDB();
     const { hashPassword } = require('./utils/auth');
-
-    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+    const adminPhone = process.env.ADMIN_PHONE || '0770000000'; // Valid Ugandan format for uniqueness
 
     if (!adminEmail) {
-      console.log('⚠️ ADMIN_EMAIL not set in environment. Skipping admin auto-creation.');
+      console.log('⚠️ ADMIN_EMAIL not set — skipping admin auto-creation.');
     } else {
-      // Check if admin already exists
       const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [adminEmail]);
-
       if (!existingAdmin) {
         if (!process.env.ADMIN_PASSWORD) {
-  console.error('❌ CRITICAL: ADMIN_PASSWORD not set in environment. Admin auto-creation aborted.');
-  return;
-}
-const adminPassword = await hashPassword(process.env.ADMIN_PASSWORD);
-        const adminId = 'admin_' + Date.now();
-        await db.run(
-          'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [adminId, 'NAVIGO Admin', 'admin_' + adminId, adminEmail, adminPassword, 'admin', true, 'approved', new Date().toISOString()]
-        );
-        console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId}`);
+          console.error('❌ CRITICAL: ADMIN_PASSWORD not set — admin auto-creation aborted.');
+        } else {
+          const adminPassword = await hashPassword(process.env.ADMIN_PASSWORD);
+          const adminId = 'admin_' + Date.now();
+          // Ensure phone is unique and valid format
+          const existingPhone = await db.get('SELECT id FROM users WHERE phone = ?', [adminPhone]);
+          const finalPhone = existingPhone ? `07${Math.floor(10000000 + Math.random() * 90000000)}` : adminPhone;
+          await db.run(
+            'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [adminId, 'NAVIGO Admin', finalPhone, adminEmail, adminPassword, 'admin', true, 'approved', new Date().toISOString()]
+          );
+          console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId} | Phone: ${finalPhone}`);
+        }
       } else {
-        console.log(`✅ Admin account already exists: ${adminEmail}`);
+        console.log(`✅ Admin account exists: ${adminEmail}`);
       }
     }
   } catch (err) {
     console.error('❌ Critical failure setting up admin:', err);
   }
 
-  httpServer.listen(PORT, () => console.log('NAVIGO API on port ' + PORT));
+  httpServer.listen(PORT, () => console.log(`🚀 NAVIGO API on port ${PORT} | Env: ${process.env.NODE_ENV || 'development'}`));
 }).catch(err => {
   console.error('Failed to initialize database, server not started:', err);
+  process.exit(1);
+});
+
+// Global error handler — must be last
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error('Unhandled error:', err?.message);
+  if (err?.message === 'Not allowed by CORS') {
+    return res.status(403).json({ message: 'CORS: Origin not allowed' });
+  }
+  res.status(500).json({ message: 'Internal server error' });
 });

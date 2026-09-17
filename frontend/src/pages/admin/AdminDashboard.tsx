@@ -9,10 +9,23 @@ import {
 import { useHistory } from 'react-router-dom';
 import api from '../../services/api';
 
+interface AdminStats {
+  totalUsers: number;
+  totalDrivers: number;
+  totalMotorists: number;
+  activeRides: number;
+  revenue: string;
+  rating: string;
+  avgRating?: string;
+  pendingApprovals: number;
+  supportTickets: number;
+  disputes: number;
+}
+
 const AdminDashboard: React.FC = () => {
   const history = useHistory();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0, totalDrivers: 0, totalMotorists: 0,
     activeRides: 0, revenue: '0', rating: '0',
     pendingApprovals: 0, supportTickets: 0, disputes: 0
@@ -23,9 +36,16 @@ const AdminDashboard: React.FC = () => {
       try {
         const res = await api.get('/auth/admin/stats');
         setStats({
-          ...res.data,
+          totalUsers: res.data.totalUsers ?? 0,
+          totalDrivers: res.data.totalDrivers ?? 0,
+          totalMotorists: res.data.totalMotorists ?? 0,
+          activeRides: res.data.activeRides ?? 0,
           revenue: `UGX ${parseInt(res.data.revenue || 0).toLocaleString()}`,
           rating: res.data.avgRating ?? res.data.rating ?? '0',
+          avgRating: res.data.avgRating ?? res.data.rating ?? '0',
+          pendingApprovals: res.data.pendingApprovals ?? 0,
+          supportTickets: res.data.supportTickets ?? 0,
+          disputes: res.data.disputes ?? 0,
         });
       } catch (e) {
         console.error('Failed to fetch admin stats:', e);

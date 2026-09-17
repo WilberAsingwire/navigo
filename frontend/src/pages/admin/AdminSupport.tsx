@@ -206,7 +206,7 @@ const AdminSupport: React.FC = () => {
         {/* Detail Modal */}
         <IonModal isOpen={!!selectedTicket} onDidDismiss={() => setSelectedTicket(null)}>
           {selectedTicket && (
-            <div style={{padding: 20, background: '#0d1117', color: '#fff', height: '100%', overflow: 'auto'}}>
+            <div style={{padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
                 <h2 style={{margin: 0, fontSize: 18}}>#{selectedTicket.id} - {selectedTicket.type}</h2>
                 <IonButton fill="clear" onClick={() => setSelectedTicket(null)}><IonIcon icon={closeCircleOutline} style={{color: '#fff', fontSize: 22}} /></IonButton>

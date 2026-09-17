@@ -1,5 +1,5 @@
 .payments-content {
-  --background: #080c14;
+  --background: var(--nav-bg);
   --color: #fff8f0;
 }
 
@@ -26,7 +26,7 @@
 
 .balance-header ion-icon {
   font-size: 24px;
-  color: #FF6B35;
+  color: var(--navigo-orange);
 }
 
 .balance-header h3 {
@@ -43,7 +43,7 @@
 }
 
 .add-funds-btn {
-  --color: #FF6B35;
+  --color: var(--navigo-orange);
   font-size: 13px;
 }
 
@@ -59,15 +59,15 @@
 }
 
 .payment-item {
-  --background: rgba(255, 255, 255, 0.05);
+  --background: var(--nav-card-soft);
   --color: #fff8f0;
   border-radius: 12px;
   margin-bottom: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
 }
 
 .payment-icon {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-size: 22px;
 }
 
@@ -85,14 +85,14 @@
 /* Add Method Button */
 .add-method-btn {
   --border-color: rgba(255, 107, 53, 0.3);
-  --color: #FF6B35;
+  --color: var(--navigo-orange);
   --border-radius: 12px;
   margin-bottom: 20px;
 }
 
 /* Add Mobile Form */
 .add-mobile-form {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--nav-card-soft);
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 20px;
@@ -111,7 +111,7 @@
 }
 
 .mobile-input {
-  --background: rgba(255, 255, 255, 0.08);
+  --background: var(--nav-border);
   --color: #fff8f0;
   border-radius: 10px;
   margin-top: 12px;

@@ -5,11 +5,11 @@ import { authenticate, authorize, AuthRequest } from '../middleware/authMiddlewa
 const router = express.Router();
 
 // ─── USER: CREATE TICKET ────────────────────────────
-router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/', authenticate, async (req: Request, res: Response) => {
   try {
     const { type, description, priority } = req.body;
     const db = getDB();
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
 
     if (!type || !description) {
       return res.status(400).json({ message: 'Type and description are required' });
@@ -28,7 +28,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // ─── ADMIN: GET ALL TICKETS ─────────────────────────
-router.get('/admin/tickets', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.get('/admin/tickets', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
     const tickets = await db.all(`
@@ -51,7 +51,7 @@ router.get('/admin/tickets', authenticate, authorize(['admin']), async (req: Aut
 });
 
 // ─── ADMIN: REPLY TO TICKET ─────────────────────────
-router.post('/admin/reply', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.post('/admin/reply', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const { ticketId, message } = req.body;
     const db = getDB();
@@ -71,7 +71,7 @@ router.post('/admin/reply', authenticate, authorize(['admin']), async (req: Auth
 });
 
 // ─── ADMIN: RESOLVE TICKET ─────────────────────────
-router.post('/admin/resolve', authenticate, authorize(['admin']), async (req: AuthRequest, res: Response) => {
+router.post('/admin/resolve', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const { ticketId, message } = req.body;
     const db = getDB();

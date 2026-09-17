@@ -1,15 +1,25 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, AuthRequest } from '../middleware/authMiddleware';
+import { payoutLimiter } from '../middleware/rateLimit';
 import { paymentService } from '../services/paymentService';
 
-const MIN_PAYOUT = 10000; // UGX — below this, MoMo fees would eat the transfer
+const MIN_PAYOUT = 10000;
+const MAX_PAYOUT = 2000000;
 
 const router = express.Router();
 
-router.get('/balance', authenticate, async (req: AuthRequest, res: Response) => {
+// Single source of truth for Ugandan phone normalization
+const normalizePhoneStrict = (raw: string): string | null => {
+  let cleaned = raw.replace(/\D/g, '');
+  if (cleaned.startsWith('256')) cleaned = cleaned.slice(3);
+  if (cleaned.length === 9 && cleaned.startsWith('7')) cleaned = '0' + cleaned;
+  return /^07\d{8}$/.test(cleaned) ? cleaned : null;
+};
+
+router.get('/balance', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
     const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
     res.json({ ok: true, balance: wallet?.balance || 0 });
@@ -18,9 +28,9 @@ router.get('/balance', authenticate, async (req: AuthRequest, res: Response) => 
   }
 });
 
-router.get('/transactions', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/transactions', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     const transactions = await db.all(
@@ -35,26 +45,26 @@ router.get('/transactions', authenticate, async (req: AuthRequest, res: Response
   }
 });
 
-router.post('/payout', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/payout', authenticate, payoutLimiter, async (req: Request, res: Response) => {
   try {
     const { amount, provider, phone } = req.body;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     const amt = parseInt(amount, 10);
-    if (!amt || amt < MIN_PAYOUT) {
+    if (!amt || isNaN(amt) || amt < MIN_PAYOUT) {
       return res.status(400).json({ ok: false, message: `Minimum payout is UGX ${MIN_PAYOUT.toLocaleString()}` });
     }
-    if (amt > 2000000) {
-      return res.status(400).json({ ok: false, message: 'Maximum payout is UGX 2,000,000 per request' });
+    if (amt > MAX_PAYOUT) {
+      return res.status(400).json({ ok: false, message: `Maximum payout is UGX ${MAX_PAYOUT.toLocaleString()} per request` });
     }
     if (!['mtn', 'airtel'].includes(provider)) {
       return res.status(400).json({ ok: false, message: 'Provider must be mtn or airtel' });
     }
-    if (!phone || !/^07\d{8}$/.test(phone.replace(/\D/g, '').replace(/^256/, ''))) {
-      return res.status(400).json({ ok: false, message: 'Enter a valid Ugandan mobile number (07XXXXXXXXX)' });
+    const cleanPhone = normalizePhoneStrict(phone || '');
+    if (!cleanPhone) {
+      return res.status(400).json({ ok: false, message: 'Enter a valid Ugandan mobile number (07XXXXXXXX)' });
     }
-    const cleanPhone = phone.replace(/\D/g, '').replace(/^256/, '');
 
     const tx = await db.getTransactionClient();
     try {
@@ -124,9 +134,9 @@ router.post('/payout', authenticate, async (req: AuthRequest, res: Response) => 
   }
 });
 
-router.get('/payouts', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/payouts', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
     const payouts = await db.all(
       'SELECT * FROM payouts WHERE userId = ? ORDER BY createdAt DESC LIMIT 20',
@@ -139,10 +149,10 @@ router.get('/payouts', authenticate, async (req: AuthRequest, res: Response) => 
   }
 });
 
-router.post('/topup', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/topup', authenticate, async (req: Request, res: Response) => {
   try {
     const { amount, paymentReference } = req.body;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (!paymentReference) {

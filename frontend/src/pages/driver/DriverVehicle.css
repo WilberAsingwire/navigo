@@ -1,14 +1,14 @@
-.driver-bg { --background: #080c14; }
-.driver-toolbar { --background: #080c14; }
+.driver-bg { --background: var(--nav-bg); }
+.driver-toolbar { --background: var(--nav-bg); }
 .sora-font { font-family: 'Sora', sans-serif; }
 .verification-status { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 12px; margin-bottom: 14px; }
 .verification-status.active { background: rgba(45,106,79,0.08); border: 1px solid rgba(45,106,79,0.15); }
 .verification-status ion-icon { font-size: 24px; }
 .verification-status h3 { color: #fff; margin: 0; font-size: 14px; }
 .verification-status p { color: rgba(255,255,255,0.5); font-size: 11px; margin: 2px 0 0; }
-.vehicle-main-card { background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(255,255,255,0.06); }
+.vehicle-main-card { background: var(--nav-card-soft); border-radius: 16px; border: 1px solid var(--nav-card-hover); }
 .vehicle-icon { font-size: 48px; margin-bottom: 8px; }
 .doc-list { background: transparent; }
-.doc-item { --background: rgba(255,255,255,0.03); margin-bottom: 6px; border-radius: 10px; --padding-start: 12px; }
+.doc-item { --background: var(--nav-card-glass); margin-bottom: 6px; border-radius: 10px; --padding-start: 12px; }
 .doc-item h4 { color: #fff; font-size: 13px; margin: 0; }
 .doc-item p { color: rgba(255,255,255,0.4); font-size: 10px; margin: 2px 0 0; }

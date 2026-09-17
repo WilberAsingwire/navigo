@@ -22,7 +22,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return (
       <div style={{ 
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
-        height: '100vh', background: '#080c14', color: '#fff', gap: 16 
+        height: '100vh', background: 'var(--nav-bg)', color: '#fff', gap: 16 
       }}>
         <div style={{ fontSize: 40 }}>🚀</div>
         <IonSpinner name="crescent" color="warning" />

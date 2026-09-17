@@ -3,10 +3,10 @@
 /* ============================================ */
 
 .support-container {
-  --background: #080c14;
-  background: #080c14;
-  background-image: radial-gradient(circle at 10% 10%, rgba(255, 90, 31, 0.08) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 90, 31, 0.05) 0%, transparent 40%);
+  --background: var(--nav-bg);
+  background: var(--nav-bg);
+  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
+                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
 }
 
 /* Help Banner */
@@ -30,7 +30,7 @@
 }
 
 .support-info-link {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   cursor: pointer;
   text-decoration: underline;
   font-weight: 600;
@@ -38,17 +38,17 @@
 
 /* FAQs Accordion */
 .support-accordion {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--nav-card-glass) !important;
   backdrop-filter: blur(20px);
   border-radius: 20px !important;
   margin-bottom: 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--nav-border) !important;
   transition: all 0.3s ease;
 }
 
 .support-accordion:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border-color: rgba(255, 90, 31, 0.3) !important;
+  background: var(--nav-card-hover) !important;
+  border-color: rgba(255, 107, 53, 0.3) !important;
 }
 
 .support-accordion ion-item {
@@ -80,31 +80,31 @@
 }
 
 .support-input-field {
-  --background: rgba(255, 255, 255, 0.05) !important;
+  --background: var(--nav-card-soft) !important;
   --color: #fff !important;
   --placeholder-color: #64748B !important;
   border-radius: 16px !important;
   margin-bottom: 16px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
 }
 
 .support-textarea {
-  --background: rgba(255, 255, 255, 0.05) !important;
+  --background: var(--nav-card-soft) !important;
   --color: #fff !important;
   --placeholder-color: #64748B !important;
   border-radius: 16px !important;
   padding: 16px !important;
   margin-bottom: 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
 }
 
 .support-submit-btn {
-  --background: linear-gradient(135deg, #FF6B35 0%, #FF6B35 100%) !important;
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
   --color: #fff !important;
   --border-radius: 16px !important;
   font-weight: 700 !important;
   height: 52px !important;
-  box-shadow: 0 8px 16px rgba(255, 90, 31, 0.3);
+  box-shadow: 0 8px 16px rgba(255, 107, 53, 0.3);
 }
 
 /* Contact Grid */
@@ -116,19 +116,19 @@
 }
 
 .support-contact-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 20px;
   text-align: center;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
   transition: all 0.3s ease;
 }
 
 .support-contact-card:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 90, 31, 0.3);
+  border-color: rgba(255, 107, 53, 0.3);
   transform: translateY(-4px);
 }
 
@@ -155,22 +155,22 @@
 .theme-whatsapp .support-contact-icon { color: #25D366; }
 
 .theme-phone { background: rgba(255, 107, 53, 0.06); border-color: rgba(255, 107, 53, 0.2); }
-.theme-phone .support-contact-icon { color: #FF6B35; }
+.theme-phone .support-contact-icon { color: var(--navigo-orange); }
 
 .theme-email { background: rgba(77, 166, 255, 0.06); border-color: rgba(77, 166, 255, 0.2); }
 .theme-email .support-contact-icon { color: #4da6ff; }
 
-.theme-office { background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.1); }
+.theme-office { background: var(--nav-card-glass); border-color: rgba(255, 255, 255, 0.1); }
 .theme-office .support-contact-icon { color: #fff; }
 
 /* Response Card */
 .support-response-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--nav-card-glass);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 20px;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--nav-border);
 }
 
 .support-response-icon {

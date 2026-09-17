@@ -4,7 +4,7 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle at center, #1a2436 0%, #080c14 100%);
+  background: radial-gradient(circle at center, #1a2436 0%, var(--nav-bg) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,7 +16,7 @@
 .onboarding-card {
   width: 100%;
   max-width: 400px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--nav-card-soft);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -73,7 +73,7 @@
   bottom: -10px;
   right: -10px;
   font-size: 32px;
-  background: #080c14;
+  background: var(--nav-bg);
   border-radius: 50%;
   padding: 8px;
   border: 2px solid white;
@@ -113,7 +113,7 @@
 
 .dot.active {
   width: 24px;
-  background: #FF6B35;
+  background: var(--navigo-orange);
   border-radius: 4px;
 }
 

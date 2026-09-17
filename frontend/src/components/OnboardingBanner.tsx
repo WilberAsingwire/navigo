@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { IonIcon } from '@ionic/react';
 import { rocketOutline, checkmarkCircleOutline } from 'ionicons/icons';
 
-const FIRST_RUN_KEY = 'navigo_first_run';
+// Unified onboarding key — used by App.tsx onboarding flow
+const FIRST_RUN_KEY = 'navigo_onboarding_complete';
 
 export const useFirstRun = (): boolean => {
   const [isFirstRun, setIsFirstRun] = useState(false);
@@ -10,15 +11,26 @@ export const useFirstRun = (): boolean => {
     const seen = localStorage.getItem(FIRST_RUN_KEY);
     if (!seen) {
       setIsFirstRun(true);
-      localStorage.setItem(FIRST_RUN_KEY, 'false');
+      // Don't mark complete here — let user dismiss banner to mark complete
     }
   }, []);
   return isFirstRun;
 };
 
 const OnboardingBanner: React.FC = () => {
+  const [visible, setVisible] = useState(false);
   const isFirstRun = useFirstRun();
-  if (!isFirstRun) return null;
+
+  useEffect(() => {
+    if (isFirstRun) setVisible(true);
+  }, [isFirstRun]);
+
+  const dismiss = () => {
+    setVisible(false);
+    localStorage.setItem(FIRST_RUN_KEY, 'true');
+  };
+
+  if (!visible) return null;
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,107,53,0.05))',
@@ -38,7 +50,10 @@ const OnboardingBanner: React.FC = () => {
           Book your first ride, earn Zawadi points, and enjoy safe, affordable travel across Kampala.
         </p>
       </div>
-      <div style={{ flexShrink: 0 }}><IonIcon icon={checkmarkCircleOutline} style={{ color: '#10B981', fontSize: 20 }} /></div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+        <IonIcon icon={checkmarkCircleOutline} style={{ color: '#10B981', fontSize: 20, cursor: 'pointer' }} onClick={dismiss} />
+        <span onClick={dismiss} style={{ color: '#94A3B8', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}>Dismiss</span>
+      </div>
     </div>
   );
 };

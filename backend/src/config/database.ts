@@ -218,12 +218,81 @@ export const initDB = async () => {
 
     return pool;
   } catch (error) {
-    console.error('❌ PostgreSQL connection failed:', error);
-    process.exit(1);
+    console.error('❌ PostgreSQL connection failed:', (error as any)?.message || error);
+    console.warn('⚠️ Falling back to in-memory mock DB for dev preview (no PG). API will run degraded.');
+    // Create a mock pool that satisfies getDB interface but stores nothing
+    const mockStore: Record<string, any[]> = {
+      users: [
+        { id: 'admin_demo', fullName: 'NAVIGO Admin', email: 'admin@navigo.ug', phone: '0770000000', role: 'admin', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() },
+        { id: 'rider_demo', fullName: 'Demo Rider', email: 'rider@navigo.ug', phone: '0771111111', role: 'rider', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() },
+        { id: 'driver_demo', fullName: 'Demo Driver', email: 'driver@navigo.ug', phone: '0772222222', role: 'driver', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() },
+      ],
+      rides: [],
+      wallets: [],
+      wallet_transactions: [],
+      saved_places: [],
+      support_tickets: [],
+      driver_profiles: [],
+    };
+    // Minimal mock pool object to prevent null checks
+    pool = {
+      query: async () => ({ rows: [], rowCount: 0 }),
+      connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
+    } as any;
+    // Override getDB to use mock
+    (global as any).__NAVIGO_MOCK_DB__ = mockStore;
+    return pool;
   }
 };
 
 export const getDB = () => {
+  const mockStore = (global as any).__NAVIGO_MOCK_DB__;
+  if (mockStore) {
+    // In-memory fallback
+    const findUser = (emailOrPhone: string) => mockStore.users.find((u: any) => u.email === emailOrPhone || u.phone === emailOrPhone);
+    return {
+      getTransactionClient: async () => ({
+        query: async () => ({ rows: [] }),
+        release: () => {},
+      }),
+      get: async (query: string, params: any[] = []) => {
+        const q = query.toLowerCase();
+        if (q.includes('from users')) {
+          if (params[0]) {
+            return mockStore.users.find((u: any) => u.email === params[0] || u.phone === params[0] || u.id === params[0] || u.email === params[0]?.toLowerCase?.());
+          }
+          return mockStore.users[0];
+        }
+        if (q.includes('select 1')) return { ok: 1 };
+        return undefined;
+      },
+      all: async (query: string, params: any[] = []) => {
+        const q = query.toLowerCase();
+        if (q.includes('from users')) return mockStore.users;
+        if (q.includes('from rides')) return mockStore.rides;
+        if (q.includes('from wallets')) return mockStore.wallets;
+        if (q.includes('from support_tickets')) return mockStore.support_tickets;
+        return [];
+      },
+      run: async (query: string, params: any[] = []) => {
+        const q = query.toLowerCase();
+        if (q.includes('insert into users')) {
+          const [id, fullName, phone, email] = params;
+          const existing = mockStore.users.find((u: any) => u.email === email || u.phone === phone);
+          if (!existing) {
+            mockStore.users.push({ id, fullName, phone, email, role: params[5] || 'rider', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() });
+          }
+          return { rowCount: 1 };
+        }
+        if (q.includes('insert into rides')) {
+          mockStore.rides.push({ id: params[0], ...params });
+          return { rowCount: 1 };
+        }
+        return { rowCount: 0 };
+      },
+      exec: async () => {},
+    };
+  }
   if (!pool) {
     throw new Error('Database not initialized. Call initDB() first.');
   }
