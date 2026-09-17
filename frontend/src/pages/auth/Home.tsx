@@ -11,6 +11,7 @@ import { useHistory } from 'react-router-dom';
 import './Home.css';
 import useHaptic from '../../hooks/useHaptic';
 import ThemeToggle from '../../components/ThemeToggle';
+import Logo from '../../components/Logo';
 import bodaImg from '../../assets/vehicles/boda.png';
 import goImg from '../../assets/vehicles/go.png';
 import comfortImg from '../../assets/vehicles/comfort.png';
@@ -114,7 +115,7 @@ const Home: React.FC = () => {
       <IonContent className="home-content">
         <main className="main-wrapper">
           <nav className="home-nav">
-            <div className="nav-logo" onClick={() => navigate('/')}>🚀 NAVIGO</div>
+            <Logo variant="full" size="medium" onClick={() => navigate('/')} className="nav-logo-real" />
             <div className="nav-right">
               <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
                 <div className="nav-link-text" onClick={() => navigate('/explore')}>Explore</div>
@@ -235,7 +236,7 @@ const Home: React.FC = () => {
 
           <footer className="footer">
             <div className="footer-grid">
-              <div className="footer-col"><h4 className="footer-logo" onClick={() => navigate('/')}>🚀 NAVIGO</h4><p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone.</p></div>
+              <div className="footer-col"><div style={{ marginBottom: 12 }}><Logo variant="full" size="medium" onClick={() => navigate('/')} /></div><p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone.</p></div>
               <div className="footer-col"><h4 className="footer-col-title">Ride</h4><span className="footer-link" onClick={() => navigate('/explore')}>Book a Ride</span><span className="footer-link" onClick={() => navigate('/customer/history')}>Ride History</span><span className="footer-link" onClick={() => navigate('/ussd')}>Offline Booking</span></div>
               <div className="footer-col"><h4 className="footer-col-title">Drive</h4><span className="footer-link" onClick={() => navigate('/register')}>Become a Driver</span><span className="footer-link" onClick={() => navigate('/driver/earnings')}>Earnings Calculator</span></div>
               <div className="footer-col"><h4 className="footer-col-title">Company</h4><span className="footer-link">About Us</span><span className="footer-link" onClick={() => navigate('/customer/support')}>Support</span><span className="footer-link">Privacy Policy</span><span className="footer-link">Terms of Service</span></div>

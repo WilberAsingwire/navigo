@@ -108,6 +108,20 @@
 .nav-logo:hover { transform: scale(1.03); filter: brightness(1.1); }
 .nav-logo:active { transform: scale(0.97); }
 
+/* Real logo — new brand mark */
+.nav-logo-real {
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-spring);
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+}
+.nav-logo-real:hover { transform: scale(1.03); filter: brightness(1.1); }
+.nav-logo-real:active { transform: scale(0.97); }
+.navigo-logo-full, .navigo-logo-icon, .navigo-logo-wordmark {
+  transition: all var(--duration-normal) var(--ease-spring);
+}
+
 .nav-links {
   display: flex;
   align-items: center;
