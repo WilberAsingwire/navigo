@@ -70,7 +70,7 @@ interface MapProps {
   userLocation: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number } | null;
   driverLocation?: { lat: number; lng: number } | null;
-  driverType?: 'boda' | 'go' | 'comfort' | 'xl';
+  driverType?: 'boda' | 'go' | 'comfort' | 'xl' | string;
   height?: string;
   interactive?: boolean;
   showRoute?: boolean;
@@ -251,9 +251,9 @@ const NavigoMap: React.FC<MapProps> = React.memo(({
       mapInstanceRef.current = map;
 
       // MOVE ZOOM CONTROL TO BOTTOM RIGHT
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      (L.control as any).zoom({ position: 'bottomright' }).addTo(map);
 
-      const locateControl = L.control({ position: 'topright' });
+      const locateControl = (L.control as any)({ position: 'topright' });
       locateControl.onAdd = function() {
         const btn = L.DomUtil.create('a', 'leaflet-control-locate');
         btn.innerHTML = '📍 My Location';

@@ -44,7 +44,7 @@ const DriverHome: React.FC = () => {
   useEffect(() => {
     const status = user?.verificationStatus || 'unverified';
     if (status === 'unverified' || status === 'rejected') {
-      ionRouter.replace('/driver/documents');
+      ionRouter.push('/driver/documents', 'root', 'replace');
     }
   }, [user, ionRouter]);
 

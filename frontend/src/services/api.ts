@@ -3,40 +3,39 @@ import { API_URL } from '../config';
 
 const api = axios.create({
   baseURL: API_URL,
-  // Never let a slow/dead backend hang the app — fail fast and let the UI show its error state
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor to add JWT token to all requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('navigo_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle global errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response?.status === 401) {
       const token = localStorage.getItem('navigo_token');
       if (token) {
-        // Only logout and redirect if the user actually had a token that is now invalid
-        localStorage.clear();
-        window.location.href = '/login';
+        // Preserve onboarding key, clear only auth
+        const onboarding = localStorage.getItem('navigo_onboarding_complete');
+        localStorage.removeItem('navigo_token');
+        localStorage.removeItem('navigo_user');
+        localStorage.removeItem('navigo_guest');
+        if (onboarding) localStorage.setItem('navigo_onboarding_complete', onboarding);
+        // Avoid redirect loop if already on login
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);
   }
-
 );
 
 export default api;

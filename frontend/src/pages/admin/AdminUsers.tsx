@@ -238,7 +238,7 @@ const AdminUsers: React.FC = () => {
         <IonActionSheet
           isOpen={showActionSheet}
           onDidDismiss={() => setShowActionSheet(false)}
-          header={`Manage ${selectedUser?.name}`}
+          header={`Manage ${selectedUser?.fullName}`}
           buttons={[
             { text: 'Email User', icon: mailOutline, handler: () => { if (selectedUser?.email) window.location.href = `mailto:${selectedUser.email}`; } },
             { text: 'Call User', icon: callOutline, handler: () => { if (selectedUser?.phone) window.open(`tel:${selectedUser.phone}`, '_system'); } },

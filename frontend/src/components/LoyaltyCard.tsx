@@ -34,8 +34,8 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
   referralCode = 'NAVIGO50'
 }) => {
   const { user } = useAuth();
-  // Real loyalty points based on user's ride history (from AuthContext / localStorage)
-  const userRides = user?.rideHistoryLength || parseInt(localStorage.getItem('navigo_ride_count') || '0');
+  // Real loyalty points based on ride history from localStorage (AuthContext no longer has rideHistoryLength)
+  const userRides = parseInt(localStorage.getItem('navigo_ride_count') || localStorage.getItem('navigo_completed_rides') || '0');
   const userReferrals = parseInt(localStorage.getItem('navigo_referrals') || '0');
   const redeemedRewards: string[] = JSON.parse(localStorage.getItem('navigo_redeemed') || '[]');
 
@@ -151,7 +151,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         {activeTab === 'challenges' && (
           <div className="challenges-list">
             {[
-              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => (user?.rideHistoryLength || 0) >= 5 },
+              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => parseInt(localStorage.getItem('navigo_ride_count') || '0') >= 5 },
               { name: 'Refer a friend', points: 100, emoji: '👥', check: () => (parseInt(localStorage.getItem('navigo_referrals') || '0')) > 0 },
               { name: 'Rate 3 drivers', points: 30, emoji: '⭐', check: () => true },
               { name: 'Women Preferred', points: 25, emoji: '👩', check: () => true }

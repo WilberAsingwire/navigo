@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
-import { authenticate, authorize } from '../middleware/authMiddleware';
+import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/status/online', authenticate, async (req: any, res: Response) => {
   try {
     const { online } = req.body;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (typeof online !== 'boolean') {
@@ -30,7 +30,7 @@ router.post('/status/online', authenticate, async (req: any, res: Response) => {
 router.post('/status/available', authenticate, async (req: any, res: Response) => {
   try {
     const { available } = req.body;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (typeof available !== 'boolean') {
@@ -49,7 +49,7 @@ router.post('/status/available', authenticate, async (req: any, res: Response) =
 // ─── Get Driver Profile ───────────────────────────────
 router.get('/profile', authenticate, async (req: any, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     const user = await db.get('SELECT id, fullName, phone, role, isOnline, isAvailable, verificationStatus FROM users WHERE id = ?', [userId]);

@@ -9,7 +9,7 @@ import {
   callOutline, chatbubbleOutline, starOutline,
   cashOutline, checkmarkCircleOutline, closeOutline,
   shieldCheckmarkOutline, locationOutline, flagOutline,
-  carOutline, paperPlaneOutline
+  carOutline, paperPlaneOutline, navigateOutline
 } from 'ionicons/icons';
 import ChatBox from '../../components/ChatBox';
 import SOSButton from '../../components/SOSButton';
@@ -387,7 +387,19 @@ const ActiveRide: React.FC = () => {
                 />
               ))}
             </div>
-            <IonButton expand="block" color="warning" onClick={handleRate} disabled={rating === 0} style={{ borderRadius: 12 }}>
+            <IonButton expand="block" color="warning" onClick={async () => {
+              if (!ride || rating === 0) return;
+              try {
+                await api.post(`/rides/${ride.id}/rate`, { rating, tip });
+                setToastMsg('Thanks for rating!');
+                setShowToast(true);
+                setShowRating(false);
+                setTimeout(() => history.push('/customer/home'), 1500);
+              } catch (e: any) {
+                setToastMsg(e.response?.data?.message || 'Failed to submit rating');
+                setShowToast(true);
+              }
+            }} disabled={rating === 0} style={{ borderRadius: 12 } as any}>
               Submit rating
             </IonButton>
             <IonButton expand="block" fill="clear" color="medium" style={{ marginTop: 8 }} onClick={() => history.push('/customer/home')}>

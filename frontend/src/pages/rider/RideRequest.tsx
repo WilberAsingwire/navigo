@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useIonRouter } from '@ionic/react';
 import {
-  IonIcon, IonSpinner, IonToast, IonModal, IonAvatar, IonPage, IonContent
+  IonIcon, IonSpinner, IonToast, IonModal, IonPage, IonContent
 } from '@ionic/react';
 import {
   locationOutline, carOutline, arrowBackOutline,
   globeOutline, checkmarkCircleOutline, searchOutline,
-  timeOutline, chevronForwardOutline
+  timeOutline
 } from 'ionicons/icons';
 import axios from 'axios';
 import api from '../../services/api';
@@ -20,24 +20,31 @@ import xlImg from '../../assets/vehicles/xl.png';
 import './RideRequest.css';
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
-interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; surgeMultiplier: number; color: string; image: string; }
+interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; dbVehicleType: string; surgeMultiplier: number; color: string; image: string; }
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
 enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
 
 const POPULAR_PLACES: Location[] = [
   { name: 'Uganda Central Square', lat: 0.3136, lng: 32.5811, address: 'Uganda Central' },
   { name: 'Entebbe Airport', lat: 0.0437, lng: 32.4369, address: 'Entebbe' },
-  { name: ' Acacia Mall', lat: 0.3348, lng: 32.5873, address: 'Kololo, Kampala' },
+  { name: 'Acacia Mall', lat: 0.3348, lng: 32.5873, address: 'Kololo, Kampala' },
   { name: 'Uganda University', lat: 0.3361, lng: 32.5711, address: 'Kampala' },
 ];
 
-const RIDE_OPTIONS: RideOption[] = [
-  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', image: bodaImg },
-  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', surgeMultiplier: 1.0, color: '#2D6A4F', image: goImg },
-  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', surgeMultiplier: 1.2, color: '#1B4965', image: comfortImg },
-  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', surgeMultiplier: 1.1, color: '#E8B86D', image: xlImg }
-];
+// Unified promo codes — single source of truth
+const PROMO_CODES: Record<string, { discount: number | 'free', label: string }> = {
+  NAVIGO50: { discount: 2000, label: 'UGX 2,000 off' },
+  FIRSTRIDE: { discount: 'free', label: 'First ride free' },
+  ZAWADI: { discount: 1500, label: 'UGX 1,500 off' },
+};
 
+// Vehicle mapping — frontend vehicleType vs DB canonical type
+const RIDE_OPTIONS: RideOption[] = [
+  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', dbVehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', image: bodaImg },
+  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', dbVehicleType: 'economy', surgeMultiplier: 1.0, color: '#2D6A4F', image: goImg },
+  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', dbVehicleType: 'comfort', surgeMultiplier: 1.0, color: '#1B4965', image: comfortImg },
+  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', dbVehicleType: 'xl', surgeMultiplier: 1.0, color: '#E8B86D', image: xlImg }
+];
 
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -46,6 +53,8 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
+
+const MATCHING_TIMEOUT_MS = 120000; // 2 minutes — auto-cancel if no driver
 
 const RideRequest: React.FC = () => {
   const ionRouter = useIonRouter();
@@ -78,154 +87,170 @@ const RideRequest: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [recentRides, setRecentRides] = useState<any[]>([]);
+  const [matchingSeconds, setMatchingSeconds] = useState(0);
 
-  // Delivery specific state
   const [packageDetails, setPackageDetails] = useState('');
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
 
+  const geoWatchRef = useRef<number | null>(null);
+  const matchingTimeoutRef = useRef<any>(null);
+  const matchingIntervalRef = useRef<any>(null);
+  const searchTimeoutRef = useRef<any>(null);
+
+  const clearMatchingTimers = useCallback(() => {
+    if (matchingTimeoutRef.current) clearTimeout(matchingTimeoutRef.current);
+    if (matchingIntervalRef.current) clearInterval(matchingIntervalRef.current);
+    matchingTimeoutRef.current = null;
+    matchingIntervalRef.current = null;
+    setMatchingSeconds(0);
+  }, []);
+
   useEffect(() => {
-    // Never block the booking UI on slow geolocation or API calls:
-    // render immediately and let the data fill in as it arrives.
-    // (Previously this awaited all three sequentially, so a dead or slow
-    // backend URL left users stuck on "Initializing Experience…" forever.)
     setIsInitializing(false);
     getCurrentLocation();
     fetchWalletBalance();
     fetchRecentRides();
 
-    if (isAuthenticated && user) {
-      const socket = socketService.connect(user.id);
-      socket.on('ride-accepted', (data: any) => {
-        setDriverFound(true);
-        setIsMatching(false);
-        setPendingRideId(null);
-        setMatchedDriver(data);
-        socket.emit('join-ride-room', { rideId: data.rideId });
-        // Redirect to active ride page
-        setTimeout(() => {
-          ionRouter.push('/customer/active-ride');
-        }, 1500);
-      });
-      socket.on('no-drivers-found', (data: any) => {
-        setIsMatching(false);
-        setToastMsg(data.message);
-        setShowToast(true);
-        setStep(BookingStep.LOCATION);
-      });
-      return () => {
-        socket.off('ride-accepted');
-        socket.off('no-drivers-found');
-      };
-    }
-  }, [isAuthenticated, user]);
+    return () => {
+      clearMatchingTimers();
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      if (geoWatchRef.current !== null) {
+        navigator.geolocation.clearWatch(geoWatchRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const socket = socketService.connect(user.id);
+
+    const onAccepted = (data: any) => {
+      clearMatchingTimers();
+      setDriverFound(true);
+      setIsMatching(false);
+      setPendingRideId(null);
+      setMatchedDriver(data);
+      socket.emit('join-ride-room', { rideId: data.rideId });
+      setTimeout(() => ionRouter.push('/customer/active-ride'), 1500);
+    };
+    const onNoDrivers = (data: any) => {
+      clearMatchingTimers();
+      setIsMatching(false);
+      setToastMsg(data.message || 'No drivers available. Try again.');
+      setShowToast(true);
+      setStep(BookingStep.LOCATION);
+      setPendingRideId(null);
+    };
+    const onTaken = (data: any) => {
+      // If our pending ride was taken by another driver? Actually this is for other rides
+      if (pendingRideId && data.rideId !== pendingRideId) return;
+    };
+
+    socket.on('ride-accepted', onAccepted);
+    socket.on('no-drivers-found', onNoDrivers);
+    socket.on('ride-taken', onTaken);
+    return () => {
+      socket.off('ride-accepted', onAccepted);
+      socket.off('no-drivers-found', onNoDrivers);
+      socket.off('ride-taken', onTaken);
+    };
+  }, [isAuthenticated, user, pendingRideId, clearMatchingTimers]);
 
   useEffect(() => {
     if (pickup && destination) calculateFare();
   }, [pickup, destination, selectedRide, discount, actualRouteDist, actualRouteDur]);
 
+  // Matching timer — shows elapsed seconds and auto-cancels after 120s
+  useEffect(() => {
+    if (step === BookingStep.MATCHING && pendingRideId) {
+      setMatchingSeconds(0);
+      matchingIntervalRef.current = setInterval(() => {
+        setMatchingSeconds(s => s + 1);
+      }, 1000);
+      matchingTimeoutRef.current = setTimeout(async () => {
+        setToastMsg('No drivers found within 2 minutes. Try increasing your offer or try again.');
+        setShowToast(true);
+        try {
+          await api.post(`/rides/${pendingRideId}/cancel`);
+        } catch {}
+        setStep(BookingStep.LOCATION);
+        setIsMatching(false);
+        setPendingRideId(null);
+        clearMatchingTimers();
+      }, MATCHING_TIMEOUT_MS);
+    } else {
+      clearMatchingTimers();
+    }
+    return clearMatchingTimers;
+  }, [step, pendingRideId, clearMatchingTimers]);
+
   const fetchWalletBalance = async () => {
     try {
       const res = await api.get(`/wallet/balance`);
-      if (res.data.ok) setWalletBalance(res.data.balance);
-    } catch (e) {
-      console.error('Wallet fetch error:', e);
-    }
+      if (res.data?.ok) setWalletBalance(res.data.balance);
+    } catch {}
   };
 
   const fetchRecentRides = async () => {
     try {
       const res = await api.get(`/rides/recent`);
-      if (res.data) setRecentRides(res.data);
-    } catch (e) {
-      console.error('Recent rides fetch error:', e);
+      if (Array.isArray(res.data)) setRecentRides(res.data);
+    } catch {}
+  };
+
+  const getCurrentLocation = useCallback(() => {
+    if (!('geolocation' in navigator)) {
+      setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
+      return;
     }
-  };
 
-  const getCurrentLocation = () => {
-    return new Promise<void>((resolve) => {
-      if ('geolocation' in navigator) {
-        let bestLat = 0, bestLng = 0, bestAcc = Infinity, bestName = '📍 Your Precise Location';
-        // CONTINUOUS HIGH-ACCURACY TRACKING — 100% accuracy focus
-        const watchId = navigator.geolocation.watchPosition(
-          async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            const accuracy = pos.coords.accuracy;
-            // Only accept very high accuracy (< 15 meters) for 100% reliability
-            if (accuracy < bestAcc) {
-              bestAcc = accuracy;
-              bestLat = lat;
-              bestLng = lng;
-              console.log(`📍 100% Accurate GPS: lat=${lat.toFixed(6)}, lng=${lng.toFixed(6)}, accuracy=${accuracy}m (BEST)`);
-            }
-            setPickup({ lat, lng, address: `100% Accurate Location (±${Math.round(accuracy)}m)`, name: '📍 100% Precise Location' });
-            setPickupSearch('100% Precise Location');
-
-            // Reverse geocode at zoom 18 for maximum street-level detail
-            try {
-              const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(6)}&lon=${lng.toFixed(6)}&zoom=18&addressdetails=1`, { timeout: 8000 });
-              const data = res.data;
-              const addr = data.display_name || '';
-              const address = data.address || {};
-              const houseNumber = address.house_number || '';
-              const road = address.road || address.pedestrian || address.footway || address.path || '';
-              const suburb = address.suburb || address.neighbourhood || address.village || address.hamlet || '';
-              const city = address.city || address.town || address.municipality || address.county || '';
-              let preciseName = '';
-              if (houseNumber && road) preciseName = `${houseNumber} ${road}`;
-              else if (road) preciseName = road;
-              else if (suburb) preciseName = suburb;
-              else if (city) preciseName = city;
-              else preciseName = addr.split(',')[0] || addr;
-              setPickup({ lat, lng, address: addr, name: '📍 ' + preciseName + ` (±${Math.round(accuracy)}m)` });
-              setPickupSearch(preciseName || '100% Precise Location');
-            } catch {
-              // Keep high-accuracy GPS data
-            }
-          },
-          (err) => {
-            console.error('GPS Watch Error:', err.message);
-            setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
-            resolve();
-          },
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-        );
-        // Resolve after we have high accuracy (< 15m) or after 5 seconds max
-        const interval = setInterval(() => {
-          if (bestAcc < 15 || bestAcc === Infinity) {
-            // If we have good accuracy, resolve; otherwise keep watching briefly
-            if (bestAcc < 50) {
-              clearInterval(interval);
-              navigator.geolocation.clearWatch(watchId);
-              resolve();
-            }
-          }
-        }, 500);
-        // Force resolve after 5 seconds regardless
-        setTimeout(() => {
-          clearInterval(interval);
-          navigator.geolocation.clearWatch(watchId);
-          resolve();
-        }, 5000);
-      } else {
-        setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: '📍 Kampala' });
-        resolve();
-      }
-    });
-  };
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
+        if (lat < -1.5 || lat > 4.5 || lng < 29.5 || lng > 35.5) {
+          setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: 'Kampala' });
+          setPickupSearch('Kampala');
+          return;
+        }
+        setPickup({ lat, lng, address: `Current Location (±${Math.round(accuracy)}m)`, name: 'Current Location' });
+        setPickupSearch('Current Location');
+        try {
+          const res = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+            params: { format: 'json', lat, lon: lng, zoom: 18, addressdetails: 1 },
+            timeout: 8000
+          });
+          const data = res.data;
+          const addr = data.display_name || '';
+          const address = data.address || {};
+          const road = address.road || address.pedestrian || address.footway || '';
+          const suburb = address.suburb || address.neighbourhood || address.village || '';
+          const city = address.city || address.town || '';
+          const shortName = road || suburb || city || addr.split(',')[0] || 'Current Location';
+          setPickup({ lat, lng, address: addr || 'Current Location', name: shortName });
+          setPickupSearch(shortName);
+        } catch {}
+      },
+      () => {
+        setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
+        setPickupSearch('Kampala');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+    );
+  }, []);
 
   const searchLocation = async (query: string) => {
     if (query.length < 2) return [];
     const UGANDA_BBOX = { minLat: -1.5, maxLat: 4.2, minLon: 29.5, maxLon: 35.0 };
     try {
-      // BROAD NOMINATIM: include everything — shops, businesses, buildings, landmarks
       const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
           q: `${query}, Uganda`,
           format: 'json',
           addressdetails: 1,
-          limit: 20,
+          limit: 15,
           viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
           bounded: 1
         },
@@ -236,80 +261,25 @@ const RideRequest: React.FC = () => {
         lng: parseFloat(item.lon),
         address: item.display_name,
         name: item.display_name.split(',')[0]
-      }));
+      })).filter((r: any) => !isNaN(r.lat) && !isNaN(r.lng));
 
-      // BROAD OVERPASS SEARCH — everything shown on the map should appear here
-      if (results.length < 15) {
-        const overpassQuery = `
-          [out:json][timeout:25];
-          (
-            node["name"~"${query}",i](around:30000,0.3476,32.5825);
-            way["name"~"${query}",i](around:30000,0.3476,32.5825);
-            relation["name"~"${query}",i](around:30000,0.3476,32.5825);
-            node["amenity"~"${query}",i](around:30000,0.3476,32.5825);
-          );
-          out center;
-        `;
-        try {
-          const overpassRes = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`, { headers: { 'Accept': 'application/json' } });
-          const overpassData = await overpassRes.json();
-          if (overpassData.elements && overpassData.elements.length > 0) {
-            const overpassResults = overpassData.elements.map((el: any) => {
-              const lat = el.lat || el.center?.lat;
-              const lng = el.lon || el.center?.lon;
-              const tags = el.tags || {};
-              const name = tags.name || tags.amenity || tags.shop || tags.office || 'Unknown Place';
-              return { lat, lng, address: name, name: '📍 ' + name };
-            }).filter((r: any) => r.lat && r.lng);
-            results = results.concat(overpassResults);
-          }
-        } catch (e) {
-          console.log('Overpass search fallback failed:', e);
-        }
-      }
-
-      // PHOTON BROADER FALLBACK
-      if (results.length === 0) {
-        const photonRes = await axios.get('https://photon.komoot.io/api/', {
-          params: { q: query, limit: 15, lat: pickup?.lat || 0.3476, lon: pickup?.lng || 32.5825, reprioritize: 1 },
-          timeout: 8000
-        });
-        let photonResults = photonRes.data?.features?.map((item: any) => {
-          const props = item.properties;
-          const geom = item.geometry.coordinates;
-          return { lat: geom[1], lng: geom[0], address: props.name || props.city || props.street || props.state || props.osm_value || 'Unknown Location', name: props.name || props.city || props.street || props.osm_value || 'Unknown Location' };
-        }) || [];
-        results = photonResults.filter((r: any) => r.lat >= UGANDA_BBOX.minLat && r.lat <= UGANDA_BBOX.maxLat && r.lng >= UGANDA_BBOX.minLon && r.lng <= UGANDA_BBOX.maxLon);
-      }
-
-      // Deduplicate by lat/lng (rounded to 4 decimals)
       const unique = new Map();
       results.forEach((r: any) => {
         const key = `${Math.round(r.lat * 10000)}-${Math.round(r.lng * 10000)}`;
         if (!unique.has(key)) unique.set(key, r);
       });
-      const finalResults = Array.from(unique.values());
+      const finalResults = Array.from(unique.values()) as Location[];
 
-      // OUT OF BOUNDS CHECK — Uganda only
-      const outOfBounds = finalResults.filter((r: any) => r.lat < UGANDA_BBOX.minLat || r.lat > UGANDA_BBOX.maxLat || r.lng < UGANDA_BBOX.minLon || r.lng > UGANDA_BBOX.maxLon);
-      if (outOfBounds.length > 0 && finalResults.length > 0) {
-        setToastMsg('⚠️ Some results are out of Uganda bounds. Try a location within Uganda for best routes.');
+      if (finalResults.length === 0) {
+        setToastMsg('No results in Uganda. Try Kampala, Entebbe, Jinja, etc.');
         setShowToast(true);
       }
-      // If ALL results are out of bounds, show a clear alert and suggest closer places
-      if (finalResults.length > 0 && outOfBounds.length === finalResults.length) {
-        setToastMsg('❌ Search out of bounds — please try somewhere within Uganda (e.g. Kampala, Entebbe, Jinja, Gulu).');
-        setShowToast(true);
-      }
-
       return finalResults;
-    } catch (e: any) {
-      console.error('❌ Search Error:', e.response?.data || e.message);
+    } catch {
       return [];
     }
   };
 
-  const searchTimeoutRef = useRef<any>(null);
   const handleSearch = async (query: string, isPickup: boolean) => {
     if (isPickup) setPickupSearch(query); else setDestSearch(query);
     setSearchingPickup(isPickup);
@@ -320,9 +290,10 @@ const RideRequest: React.FC = () => {
         const results = await searchLocation(query);
         setSearchResults(results);
         setIsSearching(false);
-      }, 150);
+      }, 300);
     } else {
       setSearchResults([]);
+      setIsSearching(false);
     }
   };
 
@@ -345,7 +316,7 @@ const RideRequest: React.FC = () => {
 
     try {
       const res = await api.get(`/rides/quote`, {
-        params: { type: selectedRide.vehicleType, km: dist, min: dur }
+        params: { type: selectedRide.dbVehicleType, km: dist, min: dur }
       });
       if (res.data.ok) {
         const total = Math.max(res.data.fare - discount, selectedRide.basePrice);
@@ -353,51 +324,62 @@ const RideRequest: React.FC = () => {
           distance: Math.round(dist * 10) / 10,
           duration: Math.round(dur),
           baseFare: selectedRide.basePrice,
-          distanceFare: 0, // Backend quote is total, we don't break it down here
+          distanceFare: 0,
           timeFare: 0,
           surgeFare: 0,
           totalFare: total,
           formattedTotal: 'UGX ' + total.toLocaleString()
         });
       }
-    } catch (e) {
-      console.error('Quote error:', e);
-    }
+    } catch {}
   };
 
   const applyPromo = () => {
-    if (promoCode.toUpperCase() === 'NAVIGO50') {
-      setDiscount(2000);
-      setToastMsg('🎉 UGX 2,000 off!');
-    } else if (promoCode.toUpperCase() === 'FIRSTRIDE') {
-      setDiscount(selectedRide.basePrice);
-      setToastMsg('🎉 First ride free!');
+    const code = promoCode.trim().toUpperCase();
+    const promo = PROMO_CODES[code];
+    if (!promo) {
+      setToastMsg(`Invalid code. Try: ${Object.keys(PROMO_CODES).join(', ')}`);
+      setShowToast(true);
+      return;
+    }
+    if (promo.discount === 'free') {
+      setDiscount(fare?.totalFare || selectedRide.basePrice);
+      setToastMsg(`🎉 ${promo.label}! Free ride applied.`);
     } else {
-      setToastMsg('Invalid code. Try NAVIGO50');
+      setDiscount(promo.discount);
+      setToastMsg(`🎉 ${promo.label}! UGX ${promo.discount.toLocaleString()} off.`);
     }
     setShowToast(true);
   };
 
   const handleMapClick = async (latlng: [number, number]) => {
     const [lat, lng] = latlng;
+    if (lat < -1.5 || lat > 4.2 || lng < 29.5 || lng > 35) {
+      setToastMsg('Please select a location within Uganda.');
+      setShowToast(true);
+      return;
+    }
     try {
-      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { timeout: 8000 });
+      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
+        params: { format: 'json', lat, lon: lng, zoom: 18, addressdetails: 1 },
+        timeout: 8000
+      });
       const addr = res.data.display_name || '';
       const address = res.data.address || {};
-      const road = address.road || address.pedestrian || address.footway || '';
-      const suburb = address.suburb || address.neighbourhood || address.village || '';
-      const city = address.city || address.town || address.municipality || '';
-      const shortName = road || suburb || city || addr.split(',')[0];
-      const loc: Location = { lat, lng, address: addr, name: '📍 ' + shortName };
+      const road = address.road || address.pedestrian || '';
+      const suburb = address.suburb || address.neighbourhood || '';
+      const city = address.city || address.town || '';
+      const shortName = road || suburb || city || addr.split(',')[0] || 'Selected Point';
+      const loc: Location = { lat, lng, address: addr || 'Selected Point', name: shortName };
       if (searchingPickup) {
         setPickup(loc);
-        setPickupSearch(shortName || '');
+        setPickupSearch(shortName);
       } else {
         setDestination(loc);
-        setDestSearch(shortName || '');
+        setDestSearch(shortName);
       }
     } catch {
-      const loc: Location = { lat, lng, address: 'Unknown Location', name: '📍 Selected Point' };
+      const loc: Location = { lat, lng, address: 'Selected Point', name: 'Selected Point' };
       if (searchingPickup) {
         setPickup(loc);
         setPickupSearch(loc.name || '');
@@ -413,6 +395,11 @@ const RideRequest: React.FC = () => {
       setShowLoginPrompt(true);
       return;
     }
+    if (!pickup || !destination) {
+      setToastMsg('Please select pickup and destination.');
+      setShowToast(true);
+      return;
+    }
     setIsLoading(true);
     try {
       const finalFare = userOffer ?? fare?.totalFare;
@@ -420,7 +407,7 @@ const RideRequest: React.FC = () => {
         serviceType,
         pickup,
         destination,
-        rideType: selectedRide.vehicleType,
+        rideType: selectedRide.dbVehicleType,
         paymentMethod: 'cash',
         distanceKm: actualRouteDist > 0 ? actualRouteDist : fare?.distance,
         durationMin: actualRouteDur > 0 ? actualRouteDur : fare?.duration,
@@ -435,8 +422,8 @@ const RideRequest: React.FC = () => {
       setIsMatching(true);
       const socket = socketService.getSocket();
       if (socket) socket.emit('request-ride', { userId: user?.id, rideId: ride.id });
-    } catch (e) {
-      setToastMsg('Failed to request booking. Please try again.');
+    } catch (e: any) {
+      setToastMsg(e.response?.data?.message || 'Failed to request booking. Please try again.');
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -446,6 +433,7 @@ const RideRequest: React.FC = () => {
   const handleCancelRequest = async () => {
     if (!pendingRideId || cancellingRequest) return;
     setCancellingRequest(true);
+    clearMatchingTimers();
     try {
       await api.post(`/rides/${pendingRideId}/cancel`);
       setStep(BookingStep.LOCATION);
@@ -463,9 +451,9 @@ const RideRequest: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="loading-screen">
+      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#080c14', color: '#fff', gap: 16 }}>
         <IonSpinner name="crescent" color="warning" />
-        <p>Initializing Experience...</p>
+        <p>Initializing NAVIGO...</p>
       </div>
     );
   }
@@ -484,7 +472,7 @@ const RideRequest: React.FC = () => {
             <div className="space-y-6">
               <div className="welcome-header">
                 <span className="welcome-eyebrow">Welcome Back</span>
-                <h1 className="welcome-title">Hello, {user?.fullName || 'Guest'}!</h1>
+                <h1 className="welcome-title">Hello, {user?.fullName?.split(' ')[0] || 'Guest'}!</h1>
                 <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>Where would you like to go today?</p>
               </div>
 
@@ -497,7 +485,7 @@ const RideRequest: React.FC = () => {
                 <p className="section-label">Popular Destinations</p>
                 <div className="popular-places-grid">
                   {POPULAR_PLACES.map(p => (
-                    <div key={p.name} className="place-chip" onClick={() => { setDestination(p); setDestSearch(p.name); setStep(BookingStep.LOCATION); }}>
+                    <div key={p.name} className="place-chip" onClick={() => { setDestination(p); setDestSearch(p.name || ''); setStep(BookingStep.LOCATION); }}>
                       {p.name}
                     </div>
                   ))}
@@ -626,7 +614,7 @@ const RideRequest: React.FC = () => {
                     <input className="location-input" placeholder="Receiver's Name" value={receiverName} onChange={e => setReceiverName(e.target.value)} />
                   </div>
                   <div className="location-input-wrapper">
-                    <input className="location-input" placeholder="Receiver's Phone" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)} />
+                    <input className="location-input" placeholder="Receiver's Phone (07...)" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)} />
                   </div>
                 </div>
               )}
@@ -634,33 +622,35 @@ const RideRequest: React.FC = () => {
               <div className="fare-summary-box">
                 <div className="fare-detail">
                   <span className="fare-label">Distance</span>
-                  <span className="fare-value">{fare?.distance} km</span>
+                  <span className="fare-value">{fare?.distance ?? 0} km • {fare?.duration ?? 0} min</span>
                 </div>
-                <div className="fare-total">{fare?.formattedTotal}</div>
+                <div className="fare-total">{fare?.formattedTotal || 'Calculating...'}</div>
+                {discount > 0 && <div style={{ fontSize: 12, color: '#10B981', marginTop: 4 }}>Discount: -UGX {discount.toLocaleString()}</div>}
               </div>
 
               {fare && (
                 <div className="fare-bid-container" style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                   <p className="section-label" style={{ marginBottom: '8px' }}>Adjust Your Offer</p>
-                  <div className="fare-bid-controls">
-                    <button className="bid-btn" onClick={() => setUserOffer((userOffer ?? fare.totalFare) - 500)}>−</button>
-                    <span className="bid-amount">UGX {(userOffer ?? fare.totalFare).toLocaleString()}</span>
-                    <button className="bid-btn" onClick={() => setUserOffer((userOffer ?? fare.totalFare) + 500)}>+</button>
+                  <div className="fare-bid-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                    <button className="bid-btn" onClick={() => setUserOffer(Math.max(selectedRide.basePrice, (userOffer ?? fare.totalFare) - 500))} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>−</button>
+                    <span className="bid-amount" style={{ fontWeight: 700, color: '#fff' }}>UGX {(userOffer ?? fare.totalFare).toLocaleString()}</span>
+                    <button className="bid-btn" onClick={() => setUserOffer((userOffer ?? fare.totalFare) + 500)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>+</button>
                   </div>
                   <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px' }}>Higher offers get picked up faster</p>
                 </div>
               )}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#94A3B8', padding: '0 4px' }}>
-                <span style={{ textTransform: 'capitalize' }}>{serviceType} Type: {selectedRide.name}</span>
+                <span style={{ textTransform: 'capitalize' }}>{serviceType}: {selectedRide.name}</span>
                 <span style={{ color: 'white', fontWeight: 600 }}>Balance: UGX {walletBalance.toLocaleString()}</span>
               </div>
 
               <div className="location-input-wrapper">
                 <div className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
-                <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value)} />
-                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px' }} onClick={applyPromo}>Apply</button>
+                <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} />
+                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px', cursor: 'pointer' }} onClick={applyPromo}>Apply</button>
               </div>
+              <div style={{ fontSize: 11, color: '#64748B', padding: '0 4px' }}>Try: {Object.keys(PROMO_CODES).join(', ')}</div>
 
               <button className="btn-continue" disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
                 {isLoading ? <IonSpinner name="crescent" /> : serviceType === 'ride' ? 'CONFIRM BOOKING' : 'CONFIRM DELIVERY'}
@@ -670,13 +660,16 @@ const RideRequest: React.FC = () => {
           )}
 
           {step === BookingStep.MATCHING && (
-            <div className="matching-state">
-              <div className="matching-emoji pulse-soft">🚕</div>
+            <div className="matching-state" style={{ textAlign: 'center', padding: 20 }}>
+              <div className="matching-emoji pulse-soft" style={{ fontSize: 48, marginBottom: 16 }}>🚕</div>
               <div className="space-y-2">
-                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver…</h2>
+                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver… {matchingSeconds}s</h2>
                 <p style={{ color: '#94A3B8', fontSize: '14px', margin: 0 }}>
-                  We've alerted drivers near {pickup?.name || 'you'}. You'll be connected the moment one accepts.
+                  We've alerted drivers near {pickup?.name || 'you'}. Auto-cancels in {Math.max(0, 120 - matchingSeconds)}s if no driver accepts.
                 </p>
+                <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, marginTop: 16, overflow: 'hidden' }}>
+                  <div style={{ width: `${(matchingSeconds / 120) * 100}%`, height: '100%', background: '#FF6B35', transition: 'width 1s linear' }} />
+                </div>
               </div>
               <button
                 onClick={handleCancelRequest}
@@ -716,11 +709,11 @@ const RideRequest: React.FC = () => {
 
       <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} color="dark" position="top" />
       <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
-        <div className="glass-booking-card" style={{ maxWidth: '400px', margin: '100px auto', textAlign: 'center' }}>
-          <h2 className="card-title">Ready to Ride?</h2>
+        <div className="glass-booking-card" style={{ maxWidth: '400px', margin: '100px auto', textAlign: 'center', padding: 24, background: '#121212', borderRadius: 16 }}>
+          <h2 className="card-title" style={{ color: '#fff' }}>Ready to Ride?</h2>
           <p style={{ color: '#94A3B8', marginBottom: '24px' }}>Sign in to book rides and earn rewards.</p>
-          <button className="btn-continue" onClick={() => { setShowLoginPrompt(false); ionRouter.push('/login'); }}>Sign In</button>
-          <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '16px' }} onClick={() => { setShowLoginPrompt(false); ionRouter.push('/register'); }}>Create Account</button>
+          <button className="btn-continue" style={{ width: '100%', padding: 12, background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }} onClick={() => { setShowLoginPrompt(false); ionRouter.push('/login'); }}>Sign In</button>
+          <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '16px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }} onClick={() => { setShowLoginPrompt(false); ionRouter.push('/register'); }}>Create Account</button>
         </div>
       </IonModal>
     </div>

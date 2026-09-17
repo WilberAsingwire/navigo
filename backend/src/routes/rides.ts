@@ -1,11 +1,27 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
-import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
+import { authenticate, AuthRequest } from '../middleware/authMiddleware';
+import { rideRequestLimiter } from '../middleware/rateLimit';
 import { fareQuote, clampOffer } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
 
 const router = express.Router();
+
+// Vehicle type normalization — frontend uses go/comfort/xl, backend fare uses boda/economy/comfort/xl
+const normalizeVehicleType = (raw: string): string => {
+  const map: Record<string, string> = {
+    boda: 'boda',
+    go: 'economy',
+    economy: 'economy',
+    standard: 'economy',
+    comfort: 'comfort',
+    xl: 'xl',
+    van: 'xl',
+    car: 'economy',
+  };
+  return map[(raw || '').toLowerCase()] || 'economy';
+};
 
 // ─── Fare Quotation ──────────────────────────────────────
 router.get('/quote', async (req: Request, res: Response) => {
@@ -13,15 +29,26 @@ router.get('/quote', async (req: Request, res: Response) => {
     const { type, km, min } = req.query;
     if (!type || !km) return res.status(400).json({ message: 'Ride type and distance are required' });
 
-    const fare = fareQuote(type as string, parseFloat(km as string), parseFloat(min as string || '0'));
-    res.json({ ok: true, fare });
+    const normalized = normalizeVehicleType(type as string);
+    const kmNum = parseFloat(km as string);
+    const minNum = parseFloat((min as string) || '0');
+    if (isNaN(kmNum) || kmNum < 0 || kmNum > 500) {
+      return res.status(400).json({ message: 'Invalid distance' });
+    }
+    if (isNaN(minNum) || minNum < 0 || minNum > 600) {
+      return res.status(400).json({ message: 'Invalid duration' });
+    }
+
+    const fare = fareQuote(normalized, kmNum, minNum);
+    res.json({ ok: true, fare, vehicleType: normalized });
   } catch (error) {
+    console.error('Quote error:', error);
     res.status(500).json({ message: 'Error calculating quote' });
   }
 });
 
 // ─── Request Ride/Delivery ───────────────────────────────────────
-router.post('/request', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/request', authenticate, rideRequestLimiter, async (req: Request, res: Response) => {
   try {
     const {
       serviceType = 'ride',
@@ -37,26 +64,58 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
       fareOffered,
     } = req.body;
 
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (!pickup || !destination || !rideType) {
       return res.status(400).json({ message: 'Missing required ride details.' });
     }
-
-    // Professional Fare Calculation
-    const fareRecommended = fareQuote(rideType, distanceKm || 0, durationMin || 0);
-    const finalFareOffered = clampOffer(rideType, distanceKm || 0, durationMin || 0, fareOffered || fareRecommended);
-
-    // Server-side balance validation for wallet payments
-    if (paymentMethod === 'wallet') {
-      const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
-      if (!wallet || wallet.balance < fareRecommended) {
-        return res.status(400).json({ message: 'Insufficient wallet balance for this ride.' });
+    // Validate coordinates
+    const isValidCoord = (c: any) => c && typeof c.lat === 'number' && typeof c.lng === 'number' && !isNaN(c.lat) && !isNaN(c.lng) && c.lat >= -5 && c.lat <= 5 && c.lng >= 29 && c.lng <= 36;
+    if (!isValidCoord(pickup) || !isValidCoord(destination)) {
+      return res.status(400).json({ message: 'Invalid pickup or destination coordinates. Must be within Uganda.' });
+    }
+    if (!pickup.address || !destination.address) {
+      return res.status(400).json({ message: 'Pickup and destination addresses are required.' });
+    }
+    if (serviceType === 'delivery') {
+      if (!packageDetails || !receiverName || !receiverPhone) {
+        return res.status(400).json({ message: 'For delivery: package details, receiver name and phone are required.' });
+      }
+      const normalizedPhone = normalizeUgPhone(receiverPhone);
+      if (!normalizedPhone) {
+        return res.status(400).json({ message: 'Invalid receiver phone number. Use 07... format.' });
       }
     }
 
-    const rideId = 'ride_' + Date.now();
+    const normalizedRideType = normalizeVehicleType(rideType);
+    const distNum = parseFloat(distanceKm) || 0;
+    const durNum = parseFloat(durationMin) || 0;
+    if (distNum < 0 || distNum > 500 || durNum < 0 || durNum > 600) {
+      return res.status(400).json({ message: 'Invalid distance or duration' });
+    }
+
+    // Prevent duplicate active requests
+    const existingActive = await db.get(
+      "SELECT id FROM rides WHERE userId = ? AND status IN ('requested','accepted','arrived','ongoing') LIMIT 1",
+      [userId]
+    );
+    if (existingActive) {
+      return res.status(400).json({ message: 'You already have an active ride. Complete or cancel it before requesting a new one.' });
+    }
+
+    const fareRecommended = fareQuote(normalizedRideType, distNum, durNum);
+    const finalFareOffered = clampOffer(normalizedRideType, distNum, durNum, fareOffered || fareRecommended);
+
+    if (paymentMethod === 'wallet') {
+      const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
+      if (!wallet || wallet.balance < fareRecommended) {
+        return res.status(400).json({ message: 'Insufficient wallet balance for this ride. Please top up or use cash.' });
+      }
+    }
+
+    const rideId = 'ride_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000).toISOString(); // auto-expire after 3 min if not accepted
 
     await db.run(
       `INSERT INTO rides (
@@ -66,47 +125,44 @@ router.post('/request', authenticate, async (req: AuthRequest, res: Response) =>
         distanceKm, durationMin,
         fareRecommended, fareOffered, fareFinal,
         packageDetails, receiverName, receiverPhone,
-        requestedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        requestedAt, expiresAt
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         rideId,
         userId,
         serviceType,
-        rideType,
+        normalizedRideType,
         'requested',
         paymentMethod || 'cash',
-        pickup.address, pickup.lat, pickup.lng,
-        destination.address, destination.lat, destination.lng,
-        distanceKm || 0,
-        durationMin || 0,
+        pickup.address.slice(0, 200), pickup.lat, pickup.lng,
+        destination.address.slice(0, 200), destination.lat, destination.lng,
+        distNum,
+        durNum,
         fareRecommended,
-        finalFareOffered, // Use clamped rider's offer if provided, else recommended
-        fareRecommended, // Initial final is the recommended fare
-        packageDetails || null,
-        receiverName || null,
-        receiverPhone || null,
-        new Date().toISOString()
+        finalFareOffered,
+        fareRecommended,
+        packageDetails ? String(packageDetails).slice(0, 500) : null,
+        receiverName ? String(receiverName).slice(0, 100) : null,
+        receiverPhone ? String(receiverPhone).slice(0, 20) : null,
+        new Date().toISOString(),
+        expiresAt
       ]
     );
 
     res.json({
       message: serviceType === 'delivery' ? 'Delivery requested successfully!' : 'Ride requested successfully!',
-      ride: {
-        id: rideId,
-        fareRecommended,
-        status: 'requested'
-      }
+      ride: { id: rideId, fareRecommended, status: 'requested', expiresAt }
     });
   } catch (error) {
     console.error('Request error:', error);
-    res.status(500).json({ message: 'Failed to request booking.' });
+    res.status(500).json({ message: 'Failed to request booking. Please try again.' });
   }
 });
 
 // ─── Get Active Ride (rider's or driver's in-progress ride) ──
-router.get('/active', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/active', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     // Most recent ride the user is part of that isn't finished/cancelled.
@@ -155,10 +211,10 @@ router.get('/active', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // ─── Cancel Ride (rider or assigned driver) ─────────────────
-router.post('/:rideId/cancel', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/:rideId/cancel', authenticate, async (req: Request, res: Response) => {
   try {
     const { rideId } = req.params;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
@@ -189,16 +245,19 @@ router.post('/:rideId/cancel', authenticate, async (req: AuthRequest, res: Respo
   }
 });
 
-// ─── Rate Driver (rider only, after completion) ─────────────
-router.post('/:rideId/rate', authenticate, async (req: AuthRequest, res: Response) => {
+// ─── Rate Driver (rider only, after completion) — with duplicate guard ──
+router.post('/:rideId/rate', authenticate, async (req: Request, res: Response) => {
   try {
     const { rideId } = req.params;
-    const { rating } = req.body;
-    const userId = req.user?.userId;
+    const { rating, tags, tip } = req.body;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Rating must be a whole number from 1 to 5' });
+    }
+    if (tip !== undefined && (typeof tip !== 'number' || tip < 0 || tip > 50000)) {
+      return res.status(400).json({ message: 'Invalid tip amount' });
     }
 
     const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
@@ -206,24 +265,57 @@ router.post('/:rideId/rate', authenticate, async (req: AuthRequest, res: Respons
     if (ride.userId !== userId) return res.status(403).json({ message: 'Only the rider can rate this ride' });
     if (ride.status !== 'completed') return res.status(400).json({ message: 'You can only rate a completed ride' });
     if (!ride.driverId) return res.status(400).json({ message: 'No driver was assigned to this ride' });
+    if (ride.riderRating) return res.status(400).json({ message: 'You have already rated this ride' });
 
-    // Store on the ride, then fold into the driver's rolling rating.
-    await db.run('UPDATE rides SET riderRating = ? WHERE id = ?', [rating, rideId]);
+    await db.run('UPDATE rides SET riderRating = ?, riderTags = ?, tip = ? WHERE id = ?', [
+      rating,
+      tags ? JSON.stringify(tags).slice(0, 500) : null,
+      tip || 0,
+      rideId
+    ]);
 
-    const profile = await db.get(
-      'SELECT rating, ratingCount FROM driver_profiles WHERE userId = ?',
-      [ride.driverId]
-    );
+    // If tip provided and wallet payment, handle tip settlement
+    if (tip && tip > 0 && ride.paymentMethod === 'wallet') {
+      const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [userId]);
+      if (wallet && wallet.balance >= tip) {
+        const tx = await db.getTransactionClient();
+        try {
+          await tx.query('BEGIN');
+          await tx.query('UPDATE wallets SET balance = balance - ? WHERE userId = ?', [tip, userId]);
+          await tx.query(
+            `INSERT INTO wallets (userId, balance) VALUES (?, ?)
+             ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance`,
+            [ride.driverId, tip]
+          );
+          await tx.query(
+            'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+            [`tx_tip_${Date.now()}_${ride.driverId}`, ride.driverId, 'tip', tip, `Tip for ride ${rideId}`, rideId]
+          );
+          await tx.query(
+            'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+            [`tx_tip_pay_${Date.now()}_${userId}`, userId, 'tip_payment', -tip, `Tip for ride ${rideId}`, rideId]
+          );
+          await tx.query('COMMIT');
+          tx.release();
+        } catch (e) {
+          await tx.query('ROLLBACK');
+          tx.release();
+          console.error('Tip settlement failed:', e);
+        }
+      }
+    }
+
+    const profile = await db.get('SELECT rating, ratingCount FROM driver_profiles WHERE userId = ?', [ride.driverId]);
     if (profile) {
       const newCount = (profile.ratingCount || 0) + 1;
-      const newRating = ((profile.rating || 5) * (profile.ratingCount || 0) + rating) / newCount;
+      const newRating = ((parseFloat(profile.rating) || 5) * (profile.ratingCount || 0) + rating) / newCount;
       await db.run(
-        'UPDATE driver_profiles SET rating = ?, ratingCount = ? WHERE userId = ?',
+        'UPDATE driver_profiles SET rating = ?, ratingCount = ?, totalTrips = totalTrips + 1 WHERE userId = ?',
         [Math.round(newRating * 100) / 100, newCount, ride.driverId]
       );
     } else {
       await db.run(
-        'INSERT INTO driver_profiles (userId, rating, ratingCount) VALUES (?, ?, 1)',
+        'INSERT INTO driver_profiles (userId, rating, ratingCount, totalTrips) VALUES (?, ?, 1, 1)',
         [ride.driverId, rating]
       );
     }
@@ -236,10 +328,10 @@ router.post('/:rideId/rate', authenticate, async (req: AuthRequest, res: Respons
 });
 
 // ─── Get Ride Details ──────────────────────────────────────
-router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/details/:rideId', authenticate, async (req: Request, res: Response) => {
   try {
     const { rideId } = req.params;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
@@ -248,7 +340,7 @@ router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Respo
     // Security check: the rider or the assigned driver can always view a ride.
     // Pending ('requested') rides are broadcast to drivers, so any driver may
     // view those in order to decide whether to accept.
-    const isDriver = req.user?.role === 'driver' || req.user?.role === 'motorist';
+    const isDriver = (req as AuthRequest).user?.role === 'driver' || (req as AuthRequest).user?.role === 'motorist';
     const allowed =
       ride.userId === userId ||
       ride.driverId === userId ||
@@ -280,9 +372,9 @@ router.get('/details/:rideId', authenticate, async (req: AuthRequest, res: Respo
 });
 
 // ─── Get Recent Trips (for Home Screen) ────────────────────────────────
-router.get('/recent', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/recent', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     const recentRides = await db.all(
@@ -312,10 +404,10 @@ router.get('/recent', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // ─── Get Ride History ────────────────────────────────────
-router.get('/history/:userId', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/history/:userId', authenticate, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    if (userId !== req.user?.userId) return res.status(403).json({ message: 'Unauthorized' });
+    if (userId !== (req as AuthRequest).user?.userId) return res.status(403).json({ message: 'Unauthorized' });
 
     const db = getDB();
     const statusFilter = req.query.status as string;

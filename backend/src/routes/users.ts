@@ -5,10 +5,10 @@ import { authenticate, AuthRequest } from '../middleware/authMiddleware';
 const router = express.Router();
 
 // ─── Profile Update ────────────────────────────────────
-router.put('/update', authenticate, async (req: AuthRequest, res: Response) => {
+router.put('/update', authenticate, async (req: Request, res: Response) => {
   try {
     const { fullName, email } = req.body;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (!fullName || fullName.trim().length < 2) {
@@ -35,10 +35,10 @@ router.put('/update', authenticate, async (req: AuthRequest, res: Response) => {
 });
 
 // ─── Saved Places ──────────────────────────────────────
-router.get('/saved-places/:userId', authenticate, async (req: AuthRequest, res: Response) => {
+router.get('/saved-places/:userId', authenticate, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    if (userId !== req.user?.userId) return res.status(403).json({ message: 'Unauthorized' });
+    if (userId !== (req as AuthRequest).user?.userId) return res.status(403).json({ message: 'Unauthorized' });
 
     const db = getDB();
     const places = await db.all('SELECT * FROM saved_places WHERE userId = ?', [userId]);
@@ -48,10 +48,10 @@ router.get('/saved-places/:userId', authenticate, async (req: AuthRequest, res: 
   }
 });
 
-router.post('/saved-places', authenticate, async (req: AuthRequest, res: Response) => {
+router.post('/saved-places', authenticate, async (req: Request, res: Response) => {
   try {
     const { label, address, lat, lng } = req.body;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     if (!label || !address || !lat || !lng) {
@@ -70,10 +70,10 @@ router.post('/saved-places', authenticate, async (req: AuthRequest, res: Respons
   }
 });
 
-router.delete('/saved-places/:placeId', authenticate, async (req: AuthRequest, res: Response) => {
+router.delete('/saved-places/:placeId', authenticate, async (req: Request, res: Response) => {
   try {
     const { placeId } = req.params;
-    const userId = req.user?.userId;
+    const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
     await db.run('DELETE FROM saved_places WHERE id = ? AND userId = ?', [placeId, userId]);

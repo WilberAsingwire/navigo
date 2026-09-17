@@ -34,6 +34,9 @@ const HOSPITALS = [
   { name: 'Kibuli Hospital', number: '+256414257323', distance: '4.2km' },
 ];
 
+const STORAGE_KEY = 'navigo_emergency_contacts';
+const LOCATION_PREF_KEY = 'navigo_sos_location_pref';
+
 const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone, variant = 'full' }) => {
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -41,11 +44,34 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
   const [customMessage, setCustomMessage] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [isActivating, setIsActivating] = useState(false);
-  const [savedContacts, setSavedContacts] = useState<EmergencyContact[]>([]);
+  const [savedContacts, setSavedContacts] = useState<EmergencyContact[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContactName, setNewContactName] = useState('');
   const [newContactNumber, setNewContactNumber] = useState('');
-  const [autoShareLocation, setAutoShareLocation] = useState(true);
+  const [autoShareLocation, setAutoShareLocation] = useState(() => {
+    try {
+      const pref = localStorage.getItem(LOCATION_PREF_KEY);
+      return pref !== null ? pref === 'true' : true;
+    } catch { return true; }
+  });
+
+  // Persist contacts
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedContacts));
+    } catch {}
+  }, [savedContacts]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCATION_PREF_KEY, String(autoShareLocation));
+    } catch {}
+  }, [autoShareLocation]);
 
   const allContacts = [...DEFAULT_CONTACTS, ...savedContacts];
 

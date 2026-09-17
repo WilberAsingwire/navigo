@@ -21,7 +21,7 @@ export const DriverNotificationProvider: React.FC<{ children: React.ReactNode }>
 
     const socket = socketService.connect(user.id);
 
-    socket.on('ride-requested', (data) => {
+    socket.on('ride-requested', (data: { rideId: string; riderId: string }) => {
       console.log('🚨 Global Driver Notification: Ride Requested!', data);
       setActiveRequest(data);
     });

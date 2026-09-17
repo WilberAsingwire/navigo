@@ -23,6 +23,19 @@ async function isRideMember(userId: string, rideId: string): Promise<boolean> {
   return !!(ride && (ride.userId === userId || ride.driverId === userId));
 }
 
+const rateLimitMap = new Map<string, { count: number; reset: number }>();
+const checkSocketRateLimit = (key: string, max: number, windowMs: number): boolean => {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(key, { count: 1, reset: now + windowMs });
+    return true;
+  }
+  if (entry.count >= max) return false;
+  entry.count++;
+  return true;
+};
+
 export const setupSocketHandlers = (io: Server) => {
   // ─── Authentication Middleware ──────────────────────────
   io.use((socket, next) => {
@@ -30,13 +43,10 @@ export const setupSocketHandlers = (io: Server) => {
     if (!token) {
       return next(new Error('Authentication error: Token is required'));
     }
-
     const decoded = verifyToken(token);
     if (!decoded) {
       return next(new Error('Authentication error: Invalid or expired token'));
     }
-
-    // Attach user info to socket for use in handlers
     socket.data.userId = decoded.id;
     socket.data.role = decoded.role;
     next();
@@ -46,6 +56,16 @@ export const setupSocketHandlers = (io: Server) => {
     const userId = socket.data.userId;
     const userRole = socket.data.role;
     console.log(`🌐 User connected: ${userId} (${userRole}) | Socket: ${socket.id}`);
+
+    // Auto-join personal room + drivers room
+    socket.join(userId);
+    if (userRole === 'driver' || userRole === 'motorist') {
+      socket.join('drivers');
+      console.log(`👤 Driver ${userId} joined drivers room`);
+    }
+    if (userRole === 'admin') {
+      socket.join('admins');
+    }
 
     // Join a room based on userId to receive targeted notifications
     socket.on('join', (userIdFromClient: string) => {
@@ -83,37 +103,42 @@ export const setupSocketHandlers = (io: Server) => {
       }
     });
 
-    // Rider requests a ride
+    // Rider requests a ride — FIXED: only to drivers room, not global broadcast
     socket.on('request-ride', async (data: { userId: string; rideId: string }) => {
-      // Security check: only the authenticated user can request a ride for themselves
+      if (!checkSocketRateLimit(`req-ride:${userId}`, 5, 60000)) {
+        return socket.emit('error', { message: 'Too many ride requests. Please wait a minute.' });
+      }
       if (data.userId !== userId) {
         return socket.emit('error', { message: 'Unauthorized request' });
       }
-
       const { rideId } = data;
       const db = getDB();
 
-      // Find approved, online, and available drivers
+      // Find approved, online, available drivers — with location if possible
       const drivers = await db.all(
-        'SELECT id, fullName FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = TRUE AND isAvailable = TRUE',
+        'SELECT id, fullName FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = TRUE AND isAvailable = TRUE LIMIT 50',
         ['driver', 'motorist', 'approved']
       );
 
       if (drivers.length > 0) {
-        io.emit('ride-requested', {
+        // Only notify drivers room + admins, NOT all clients
+        io.to('drivers').to('admins').emit('ride-requested', {
           rideId,
           riderId: userId,
+          timestamp: new Date().toISOString(),
         });
-        console.log(`🚕 Broadcasted ride ${rideId} to ${drivers.length} drivers`);
+        console.log(`🚕 Ride ${rideId} broadcast to ${drivers.length} drivers (drivers room only)`);
       } else {
-        socket.emit('no-drivers-found', { message: 'No drivers available at the moment.' });
+        socket.emit('no-drivers-found', { message: 'No drivers available at the moment. Try again in a minute.' });
       }
     });
 
-    // Driver accepts a ride
-    socket.on('accept-ride', async (data: { driverId: string; rideId: string; riderId: string }) => {
+    // Driver accepts a ride — FIXED: check driver not already on active ride
+    socket.on('accept-ride', async (data: { driverId: string; rideId: string }) => {
+      if (!checkSocketRateLimit(`accept:${userId}`, 10, 60000)) {
+        return socket.emit('error', { message: 'Too many attempts. Slow down.' });
+      }
       const { driverId, rideId } = data;
-
       if (userRole !== 'driver' && userRole !== 'motorist') {
         return socket.emit('error', { message: 'Unauthorized: Only drivers can accept rides' });
       }
@@ -123,22 +148,28 @@ export const setupSocketHandlers = (io: Server) => {
 
       const db = getDB();
       try {
-        const ride = await db.get('SELECT userId FROM rides WHERE id = ?', [rideId]);
-        if (!ride) {
-          socket.emit('error', { message: 'Ride not found.' });
-          return;
+        // Guard: driver must not already have an active ride
+        const active = await db.get(
+          "SELECT id FROM rides WHERE driverId = ? AND status IN ('accepted','arrived','ongoing') LIMIT 1",
+          [driverId]
+        );
+        if (active) {
+          return socket.emit('error', { message: 'You already have an active ride. Complete it first.' });
         }
+
+        const ride = await db.get('SELECT userId, status FROM rides WHERE id = ?', [rideId]);
+        if (!ride) return socket.emit('error', { message: 'Ride not found.' });
+        if (ride.status !== 'requested') return socket.emit('error', { message: 'Ride is no longer available.' });
         const actualRiderId = ride.userId;
 
         const tx = await db.getTransactionClient();
         try {
           await tx.query('BEGIN');
-          const updateRes = await tx.query('UPDATE rides SET status = ?, driverId = ? WHERE id = ? AND status = ?', ['accepted', driverId, rideId, 'requested']);
-
-          if (updateRes.rowCount === 0) {
-            throw new Error('Ride is no longer available');
-          }
-
+          const updateRes = await tx.query(
+            'UPDATE rides SET status = ?, driverId = ?, acceptedAt = CURRENT_TIMESTAMP WHERE id = ? AND status = ?',
+            ['accepted', driverId, rideId, 'requested']
+          );
+          if (updateRes.rowCount === 0) throw new Error('Ride is no longer available');
           await tx.query('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
           await tx.query('COMMIT');
           tx.release();
@@ -151,9 +182,11 @@ export const setupSocketHandlers = (io: Server) => {
         io.to(actualRiderId).emit('ride-accepted', {
           rideId,
           driverId,
-          message: 'Your driver has accepted the request!'
+          message: 'Your driver has accepted the request!',
+          timestamp: new Date().toISOString(),
         });
-
+        // Notify other drivers that ride is taken
+        socket.to('drivers').emit('ride-taken', { rideId });
         console.log(`✅ Ride ${rideId} accepted by Driver ${driverId}`);
       } catch (e: any) {
         console.error('Error accepting ride:', e);
@@ -161,29 +194,25 @@ export const setupSocketHandlers = (io: Server) => {
       }
     });
 
-    // Real-time location updates from Driver to Rider
+    // Real-time location updates from Driver to Rider — FIXED: rate limited + correct columns
     socket.on('update-location', async (data: { rideId: string; lat: number; lng: number; userId: string }) => {
+      if (!checkSocketRateLimit(`loc:${userId}`, 30, 60000)) return; // max 30 updates/min
       const { rideId, lat, lng, userId: clientUserId } = data;
-
-      // Security check: only the authenticated user can update their location
       if (clientUserId !== userId) {
         return socket.emit('error', { message: 'Unauthorized location update' });
       }
+      // Validate coordinates — must be within Uganda bbox roughly
+      if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return;
+      if (lat < -5 || lat > 5 || lng < 29 || lng > 36) return; // Uganda bounds guard
 
       const db = getDB();
       try {
+        // Update both users table (for admin live map) and driver_profiles (for rider tracking)
         await db.run('UPDATE users SET currentLat = ?, currentLng = ? WHERE id = ?', [lat, lng, userId]);
+        await db.run('UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?', [lat, lng, userId]);
 
-        socket.to(rideId).emit('location-updated', {
-          lat,
-          lng
-        });
-
-        io.emit('admin-location-updated', {
-          userId,
-          lat,
-          lng
-        });
+        socket.to(rideId).emit('location-updated', { lat, lng, userId, timestamp: Date.now() });
+        io.to('admins').emit('admin-location-updated', { userId, lat, lng });
       } catch (e) {
         console.error('Error updating location:', e);
       }

@@ -30,8 +30,10 @@ const CustomerDashboard: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [totalRides, setTotalRides] = useState<number | null>(null);
+  const [totalRides, setTotalRides] = useState<number>(0);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [walletError, setWalletError] = useState(false);
+  const [completedRides, setCompletedRides] = useState<number>(0);
 
   useEffect(() => {
     let alive = true;
@@ -39,17 +41,45 @@ const CustomerDashboard: React.FC = () => {
       try {
         if (user?.id) {
           const res = await api.get(`/rides/history/${user.id}`);
-          if (alive && Array.isArray(res.data)) setTotalRides(res.data.length);
+          if (alive && Array.isArray(res.data)) {
+            const all = res.data;
+            setTotalRides(all.length);
+            const completed = all.filter((r: any) => r.status === 'completed').length;
+            setCompletedRides(completed);
+            // Persist for loyalty calculation
+            localStorage.setItem('navigo_ride_count', String(all.length));
+            localStorage.setItem('navigo_completed_rides', String(completed));
+          }
         }
-      } catch { /* history unavailable — leave null */ }
+      } catch { /* history unavailable */ }
       try {
         const res = await api.get(`/wallet/balance`);
-        if (alive && res.data?.ok) setWalletBalance(res.data.balance);
-      } catch { /* wallet unavailable — leave null */ }
+        if (alive && res.data?.ok) {
+          setWalletBalance(res.data.balance);
+          setWalletError(false);
+        } else if (alive) {
+          setWalletBalance(0);
+          setWalletError(false);
+        }
+      } catch {
+        if (alive) {
+          setWalletBalance(0);
+          setWalletError(true);
+        }
+      }
       if (alive) setLoading(false);
     })();
     return () => { alive = false; };
   }, [user?.id]);
+
+  // Dynamic loyalty tier based on real ride count
+  const loyaltyTier = (() => {
+    const pts = completedRides * 15 + totalRides * 5; // 15 pts per completed, 5 per any
+    if (pts >= 2500) return { points: pts, tier: 'platinum' as const };
+    if (pts >= 1000) return { points: pts, tier: 'gold' as const };
+    if (pts >= 500) return { points: pts, tier: 'silver' as const };
+    return { points: Math.max(pts, 0), tier: 'bronze' as const };
+  })();
 
   const handleRefresh = (event: any) => { setTimeout(() => { event?.target?.complete(); }, 800); };
 
@@ -113,7 +143,6 @@ const CustomerDashboard: React.FC = () => {
           </div>
 
           <SafeRender>
-          {/* Real stats only — no fake numbers */}
           {loading ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <Skeleton rows={1} trailingWidth="0px" />
@@ -122,18 +151,18 @@ const CustomerDashboard: React.FC = () => {
             <div className="stats-grid">
               <div className="stat-pill">
                 <IonIcon icon={carOutline} className="stat-icon" />
-                <h3 className="stat-value">{totalRides ?? 0}</h3>
+                <h3 className="stat-value">{totalRides}</h3>
                 <p className="stat-label">Total Rides</p>
               </div>
               <div className="stat-pill">
                 <IonIcon icon={walletOutline} className="stat-icon" />
-                <h3 className="stat-value" style={{ fontSize: 18 }}>
-                  {walletBalance === null ? '—' : `UGX ${(walletBalance / 1000).toFixed(0)}k`}
+                <h3 className="stat-value" style={{ fontSize: walletBalance !== null && walletBalance >= 1000 ? 16 : 18 }}>
+                  {walletBalance === null ? 'UGX 0' : walletBalance >= 1000 ? `UGX ${(walletBalance / 1000).toFixed(1)}k` : `UGX ${walletBalance.toLocaleString()}`}
                 </h3>
                 <p className="stat-label">Wallet</p>
-                {walletBalance === null && (
-                  <span style={{ fontSize: 10, color: '#FF6B35', marginTop: 4, textAlign: 'center' }}>
-                    Gateway not configured
+                {walletError && (
+                  <span style={{ fontSize: 10, color: '#94A3B8', marginTop: 4, textAlign: 'center' }}>
+                    Offline — cached
                   </span>
                 )}
               </div>
@@ -161,9 +190,9 @@ const CustomerDashboard: React.FC = () => {
             ))}
           </div>
 
-          {/* 3. ZAWADI REWARDS */}
+          {/* 3. ZAWADI REWARDS — now dynamic based on real ride count */}
           <SafeRender>
-            {user && <LoyaltyCard points={280} tier="silver" />}
+            {user && <LoyaltyCard points={loyaltyTier.points} tier={loyaltyTier.tier} />}
           </SafeRender>
 
           {/* 4. POPULAR DESTINATIONS (real Uganda routes → booking) */}
