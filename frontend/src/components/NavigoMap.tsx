@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconUrl from 'leaflet/dist/images/marker-icon.png';
 import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
-import { IonBadge, IonChip } from '@ionic/react';
 import { useTheme } from '../context/ThemeContext';
 import bodaNew from '../assets/vehicles/boda-new.png';
 import goNew from '../assets/vehicles/go-new.png';
@@ -125,25 +124,34 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
-  // Google Maps embed URL - guaranteed to work, never blocked
-  // Using maps.google.com with q and z, output=embed
   const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=15&ie=UTF8&iwloc=&output=embed`;
   const googleEmbedUrlSat = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=15&t=k&ie=UTF8&iwloc=&output=embed`;
 
+  const handleMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => onMapClick?.([pos.coords.latitude, pos.coords.longitude]),
+        () => {},
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+    try { if ('vibrate' in navigator) navigator.vibrate(10); } catch {}
+  };
+
   return (
     <div style={{ position: 'relative', height: height === '100%' ? '100dvh' : height, minHeight: '100vh', width: '100%', background: '#0F172A', overflow: 'hidden' }}>
-      {/* GUARANTEED MAP - Google iframe behind */}
+      {/* Google Maps iframe - guaranteed */}
       <iframe
         title="Navigo Map"
         src={mapStyle === 'satellite' ? googleEmbedUrlSat : googleEmbedUrl}
         width="100%"
         height="100%"
-        style={{ position: 'absolute', inset: 0, border: 0, filter: theme === 'dark' ? 'invert(0.88) hue-rotate(180deg) brightness(0.95) contrast(1.1)' : 'none' }}
+        style={{ position: 'absolute', inset: 0, border: 0, filter: theme === 'dark' ? 'invert(0.88) hue-rotate(180deg) brightness(0.95) contrast(1.1) saturate(1.2)' : 'none' }}
         loading="eager"
         referrerPolicy="no-referrer-when-downgrade"
       />
 
-      {/* Leaflet overlay for markers and route - transparent tiles */}
+      {/* Transparent Leaflet overlay */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
         <MapContainer
           center={center}
@@ -156,39 +164,37 @@ const NavigoMap: React.FC<MapProps> = ({
           doubleClickZoom={interactive}
           touchZoom={interactive}
         >
-          {/* Transparent base - no tiles, just markers */}
           <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} />
-
-          {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon as any} /><Circle center={[userLocation.lat, userLocation.lng]} radius={16} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.18, weight: 2 }} /></>}
+          {userLocation && <><Marker position={[userLocation.lat, userLocation.lng]} icon={pickIcon as any} /><Circle center={[userLocation.lat, userLocation.lng]} radius={18} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.2, weight: 2 }} /></>}
           {destination && <Marker position={[destination.lat, destination.lng]} icon={destIcon as any} />}
           {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} icon={createVehicleIcon(VEHICLE_ICONS[driverType]?.url || goNew, VEHICLE_ICONS[driverType]?.color || '#0EA5E9') as any} />}
           {routePoints.length > 0 && <Polyline positions={routePoints} pathOptions={{ color: '#FF6B35', weight: 6, opacity: 0.95, lineJoin: 'round', lineCap: 'round' }} />}
           {searchResults.map((r, i) => (
-            <Marker key={`${r.lat}-${r.lng}-${i}`} position={[r.lat, r.lng]} icon={L.divIcon({ className: 'search-icon', html: `<div style="background:#FF6B35;border:3px solid white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;box-shadow:0 4px 12px rgba(0,0,0,0.4);font-size:13px;">${i+1}</div>`, iconSize: [30,30], iconAnchor: [15,15] }) as any} />
+            <Marker key={`${r.lat}-${r.lng}-${i}`} position={[r.lat, r.lng]} icon={L.divIcon({ className: 'search-icon', html: `<div style="background:#FF6B35;border:3px solid white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:800;color:white;box-shadow:0 4px 14px rgba(0,0,0,0.4);font-size:13px;">${i+1}</div>`, iconSize: [32,32], iconAnchor: [16,16] }) as any} />
           ))}
         </MapContainer>
       </div>
 
-      {/* Controls */}
-      {showControls && (
-        <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <IonBadge color="success" style={{ borderRadius: 9999, padding: '6px 12px', fontWeight: 800, fontSize: 11, letterSpacing: 0.5 }}>● LIVE GPS</IonBadge>
-          <IonBadge color="warning" style={{ borderRadius: 9999, padding: '6px 12px', fontWeight: 800, fontSize: 11 }}>● REAL-TIME</IonBadge>
-          <IonChip outline={mapStyle !== 'standard'} color={mapStyle === 'standard' ? 'warning' : 'medium'} onClick={() => setMapStyle('standard')} style={{ height: 30, fontWeight: 800, fontSize: 11, cursor: 'pointer', '--background': mapStyle === 'standard' ? 'rgba(255,107,53,0.22)' : 'rgba(18,24,36,0.9)' } as any}>🗺️ STANDARD</IonChip>
-          <IonChip outline={mapStyle !== 'satellite'} color={mapStyle === 'satellite' ? 'warning' : 'medium'} onClick={() => setMapStyle('satellite')} style={{ height: 30, fontWeight: 800, fontSize: 11, cursor: 'pointer', '--background': mapStyle === 'satellite' ? 'rgba(255,107,53,0.22)' : 'rgba(18,24,36,0.9)' } as any}>🛰️ SATELLITE</IonChip>
-          {routeDistance > 0 && <IonBadge color="dark" style={{ borderRadius: 9999, padding: '6px 12px', fontWeight: 800, fontSize: 12 }}>{routeDistance}km • {routeDuration}min</IonBadge>}
+      {/* Premium Controls */}
+      <div className="map-controls-top">
+        <div className="map-controls-left">
+          <div className="map-badge live">● LIVE GPS</div>
+          <div className="map-badge realtime">● REAL-TIME</div>
+          <div className="map-style-toggle">
+            <button className={`map-style-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => setMapStyle('standard')}>🗺️ STANDARD</button>
+            <button className={`map-style-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => setMapStyle('satellite')}>🛰️ SATELLITE</button>
+          </div>
+          {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
         </div>
-      )}
-
-      <button style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, background: '#FF6B35', color: 'white', border: 'none', padding: '10px 16px', borderRadius: 12, fontWeight: 800, fontSize: 12, cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 6 }}>📍 My Location</button>
+        <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
+      </div>
 
       <style>{`
         .leaflet-container { background: transparent !important; }
         .leaflet-tile-pane { display: none !important; }
         .navigo-icon, .navigo-vehicle, .search-icon { background: transparent !important; border: none !important; }
-        .leaflet-control-attribution { display: none !important; }
-        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important; border-radius: 12px !important; overflow: hidden; margin: 0 12px 24px 0 !important; }
-        .leaflet-control-zoom a { background: rgba(18,24,36,0.92) !important; color: white !important; width: 40px !important; height: 40px !important; line-height: 40px !important; font-size: 20px !important; }
+        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.32) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 90px 0 !important; }
+        .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; backdrop-filter: blur(16px); }
         .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
       `}</style>
     </div>
