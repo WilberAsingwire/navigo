@@ -173,7 +173,7 @@ const RideRequest: React.FC = () => {
         setShowToast(true);
         try {
           await api.post(`/rides/${pendingRideId}/cancel`);
-        } catch {}
+        } catch { /* noop */ }
         setStep(BookingStep.LOCATION);
         setIsMatching(false);
         setPendingRideId(null);
@@ -189,14 +189,14 @@ const RideRequest: React.FC = () => {
     try {
       const res = await api.get(`/wallet/balance`);
       if (res.data?.ok) setWalletBalance(res.data.balance);
-    } catch {}
+    } catch { /* noop */ }
   };
 
   const fetchRecentRides = async () => {
     try {
       const res = await api.get(`/rides/recent`);
       if (Array.isArray(res.data)) setRecentRides(res.data);
-    } catch {}
+    } catch { /* noop */ }
   };
 
   const getCurrentLocation = useCallback(() => {
@@ -231,7 +231,7 @@ const RideRequest: React.FC = () => {
           const shortName = road || suburb || city || addr.split(',')[0] || 'Current Location';
           setPickup({ lat, lng, address: addr || 'Current Location', name: shortName });
           setPickupSearch(shortName);
-        } catch {}
+        } catch { /* noop */ }
       },
       () => {
         setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
@@ -256,7 +256,7 @@ const RideRequest: React.FC = () => {
         },
         timeout: 8000
       });
-      let results = nomRes.data.map((item: any) => ({
+      const results = nomRes.data.map((item: any) => ({
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
         address: item.display_name,
@@ -331,7 +331,7 @@ const RideRequest: React.FC = () => {
           formattedTotal: 'UGX ' + total.toLocaleString()
         });
       }
-    } catch {}
+    } catch { /* noop */ }
   };
 
   const applyPromo = () => {
@@ -460,7 +460,7 @@ const RideRequest: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen scrollY={false} className="ride-request-content">
+      <IonContent fullscreen scrollY={false} className="ride-request-content ride-request-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="booking-page-container">
           <div className="booking-form-panel">
             <button className="back-nav-btn" onClick={() => ionRouter.push('/customer/home')}>

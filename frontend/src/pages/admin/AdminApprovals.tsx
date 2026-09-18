@@ -110,7 +110,7 @@ const AdminApprovals: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container">
         <div className="admin-container">
           <div className="stats-grid">
             {[{label: 'Total', value: stats.total, color: '#4da6ff'}, {label: 'Pending', value: stats.pending, color: '#F59E0B'}, {label: 'Approved', value: stats.approved, color: '#10B981'}, {label: 'Rejected', value: stats.rejected, color: '#EF4444'}].map(s => (

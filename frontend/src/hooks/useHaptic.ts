@@ -10,7 +10,7 @@ export const useHaptic = () => {
       if ('vibrate' in navigator) {
         navigator.vibrate(pattern);
       }
-    } catch {}
+    } catch { /* noop */ }
   }, []);
 
   const light = useCallback(() => vibrate(10), [vibrate]);

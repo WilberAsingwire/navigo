@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { IonButton, IonIcon, IonModal, IonToast, IonItem, IonLabel, IonInput, IonBadge, IonSpinner, IonToggle } from '@ionic/react';
+import { IonButton, IonIcon, IonModal, IonToast, IonItem, IonLabel, IonInput, IonSpinner, IonToggle } from '@ionic/react';
 import { 
   warningOutline, callOutline, locationOutline, shieldCheckmarkOutline, 
   closeOutline, heartOutline, medicalOutline, flameOutline, timeOutline,
@@ -64,13 +64,13 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedContacts));
-    } catch {}
+    } catch { /* noop */ }
   }, [savedContacts]);
 
   useEffect(() => {
     try {
       localStorage.setItem(LOCATION_PREF_KEY, String(autoShareLocation));
-    } catch {}
+    } catch { /* noop */ }
   }, [autoShareLocation]);
 
   const allContacts = [...DEFAULT_CONTACTS, ...savedContacts];

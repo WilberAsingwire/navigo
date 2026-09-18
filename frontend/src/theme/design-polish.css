@@ -1,0 +1,496 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   NAVIGO — GLOBAL DESIGN POLISH (v2)
+   Accessibility, responsiveness, typography hierarchy, focus management,
+   and layout constraints layered atop the existing design tokens.
+   Does not break any existing page.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── 1. BASE TYPOGRAPHY HIERARCHY ──────────────────────────────── */
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02','cv03','cv04','cv11';
+}
+
+body {
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+}
+
+h1, h2, h3, h4 {
+  margin-top: 0;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+p { line-height: 1.6; }
+
+/* Better color of text muted for WCAG AA contrast */
+:root {
+  --nav-text-muted: #7A8AA0; /* was 64748B — bumped slightly for AA on #131B2A */
+  --nav-focus-ring: 0 0 0 3px var(--navigo-orange-soft), 0 0 0 1px var(--navigo-orange);
+}
+
+body.light { --nav-text-muted: #64748B; }
+
+/* ─── 2. RESPONSIVE CONTAINER WIDTHS ──────────────────────────── */
+/* Cap content widths for tablet/desktop so forms don't stretch. */
+.auth-container,
+.rider-dashboard-wrapper,
+.customer-payments-wrapper,
+.history-wrapper,
+.places-wrapper,
+.support-wrapper,
+.profile-wrapper,
+.rider-payments-wrapper,
+.driver-home-wrapper,
+.driver-earnings-wrapper,
+.driver-documents-wrapper,
+.driver-vehicle-wrapper,
+.incoming-wrapper,
+.active-ride-wrapper,
+.driver-active-wrapper,
+.admin-container,
+.booking-content,
+.ride-request-wrapper {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding-left: 20px;
+  padding-right: 20px;
+  box-sizing: border-box;
+}
+
+.ride-request-wrapper,
+.booking-content { max-width: 560px; }
+.active-ride-wrapper,
+.driver-active-wrapper { max-width: 560px; }
+
+/* Wide screens — let admin/map layouts breathe */
+@media (min-width: 960px) {
+  .admin-container { max-width: 1200px; padding: 24px 32px; }
+  .home-main-wrapper,
+  .hero-section + .features-section { max-width: 1280px; margin-left: auto; margin-right: auto; padding-left: 32px; padding-right: 32px; }
+}
+
+@media (min-width: 768px) {
+  .auth-container { max-width: 440px; padding: 40px 24px; }
+}
+
+/* ─── 3. SAFE-AREA + MOBILE SPACING ───────────────────────────── */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+ion-content {
+  --keyboard-offset: 0px;
+  --padding-bottom: calc(var(--safe-bottom) + 16px);
+}
+
+/* Fix bottom-sheets / FABs for iOS notch */
+.booking-bottom-sheet,
+.primary-cta-bar,
+.bottom-action-bar,
+.fixed-bottom,
+.ion-page > ion-fab,
+.chat-box-fixed {
+  padding-bottom: var(--safe-bottom) !important;
+}
+
+/* ─── 4. BETTER TAP TARGETS ────────────────────────────────────── */
+/* WCAG 2.5.5: minimum 44×44 touch targets */
+ion-button,
+button,
+.quick-action-btn,
+.nav-signup-pill,
+.ms-btn,
+.mz-btn,
+.my-location-btn,
+ion-menu-button,
+ion-back-button,
+.ion-activatable,
+.clickable,
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+ion-segment-button { min-height: 40px; }
+
+/* Buttons inside forms shouldn't compress */
+ion-button {
+  min-height: 48px !important;
+  font-size: 15px !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* ─── 5. FORM CONTROL POLISH ──────────────────────────────────── */
+ion-input,
+ion-textarea,
+ion-searchbar {
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --background: var(--nav-input-bg);
+  --border-color: var(--nav-input-border);
+  --border-style: solid;
+  --border-width: 1px;
+  --border-radius: var(--radius-md);
+  --color: var(--nav-input-text);
+  --placeholder-color: var(--nav-input-placeholder);
+  --highlight-color-focused: var(--navigo-orange);
+  transition: border-color var(--duration-normal), box-shadow var(--duration-normal), background var(--duration-normal);
+}
+
+ion-input.ion-touched.ion-invalid,
+ion-textarea.ion-touched.ion-invalid {
+  --border-color: var(--nav-danger);
+  box-shadow: 0 0 0 3px var(--nav-danger-soft);
+}
+
+ion-label { font-weight: 600; }
+
+/* ─── 6. GLASS BOTTOM SHEET STANDARDIZATION ───────────────────── */
+.booking-bottom-sheet,
+.active-ride-bottom-card,
+.rider-cta-card,
+.glass-booking-card,
+.bottom-panel {
+  background: var(--nav-card-glass-strong) !important;
+  backdrop-filter: blur(28px) saturate(1.3) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.3) !important;
+  border-top: 1px solid var(--nav-border-strong);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0 !important;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.35) !important;
+}
+
+body.light .booking-bottom-sheet,
+body.light .active-ride-bottom-card,
+body.light .rider-cta-card,
+body.light .glass-booking-card,
+body.light .bottom-panel {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-top: 1px solid var(--nav-border);
+  box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ─── 7. PRIMARY CTA BUTTON (brand gradient) ──────────────────── */
+ion-button.button-brand,
+.brand-cta,
+.nav-signup-pill {
+  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-ember) 100%) !important;
+  --background-activated: linear-gradient(135deg, var(--navigo-orange-active) 0%, #D94F1A 100%) !important;
+  --background-hover: linear-gradient(135deg, var(--navigo-orange-hover) 0%, var(--navigo-orange-active) 100%) !important;
+  --color: #fff !important;
+  --box-shadow: var(--shadow-orange) !important;
+  --ripple-color: rgba(255, 255, 255, 0.2);
+  font-weight: 700 !important;
+}
+
+ion-button.button-brand:hover,
+.brand-cta:hover {
+  box-shadow: var(--shadow-orange-lg) !important;
+  transform: translateY(-1px);
+}
+
+ion-button.button-ghost {
+  --background: transparent !important;
+  --background-activated: var(--nav-card-hover) !important;
+  --color: var(--nav-text) !important;
+  --border-color: var(--nav-border-strong) !important;
+  --border-style: solid !important;
+  --border-width: 1px !important;
+  --box-shadow: none !important;
+}
+
+/* ─── 8. VEHICLE / VEHICLE OPTION CARDS — SELECTED STATE ─────── */
+.vehicle-option-card,
+.payment-option,
+.vehicle-card {
+  border: 2px solid transparent !important;
+  border-radius: var(--radius-xl) !important;
+  padding: 14px 16px !important;
+  background: var(--nav-card-soft) !important;
+  transition: all var(--duration-normal) var(--ease-spring) !important;
+  cursor: pointer;
+  position: relative;
+}
+
+.vehicle-option-card.selected,
+.payment-option.selected,
+.vehicle-card.selected {
+  border-color: var(--navigo-orange) !important;
+  background: var(--navigo-orange-ghost) !important;
+  box-shadow: 0 0 0 4px var(--navigo-orange-soft), var(--shadow-sm);
+}
+
+.vehicle-option-card.selected::after,
+.payment-option.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--navigo-orange);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ─── 9. MAP CONTROLS — Floating, tactile ─────────────────────── */
+.my-location-btn,
+.map-control-btn {
+  background: var(--nav-card-glass-strong) !important;
+  color: var(--nav-text) !important;
+  border: 1px solid var(--nav-border-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card);
+  min-height: 44px;
+  font-weight: 700;
+  transition: all var(--duration-normal) var(--ease-spring);
+}
+.my-location-btn { background: var(--navigo-orange) !important; color: #fff !important; border-color: var(--navigo-orange); }
+.my-location-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-orange); }
+
+.map-controls-top button { font-family: var(--font-body); }
+
+/* ─── 10. SKELETON / LOADING — GLOBAL ─────────────────────────── */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 56px 24px;
+  color: var(--nav-text-secondary);
+}
+.loading-state ion-spinner {
+  --color: var(--navigo-orange);
+  transform: scale(1.2);
+}
+
+/* ─── 11. ACCESSIBILITY ───────────────────────────────────────── */
+/* Skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 16px;
+  z-index: 9999;
+  background: var(--navigo-orange);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-weight: 700;
+  transition: top 0.2s;
+}
+.skip-link:focus { top: 0; }
+
+/* Stronger focus ring than default */
+*:focus-visible {
+  outline: none !important;
+  box-shadow: var(--nav-focus-ring) !important;
+  border-radius: var(--radius-sm);
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High-contrast mode support (Windows HCM) */
+@media (forced-colors: active) {
+  ion-button, button { border: 1px solid ButtonText; }
+  .driver-card, .fare-card { border: 1px solid CanvasText; }
+}
+
+/* ─── 12. BETTER TOAST / ALERT / MODAL ────────────────────────── */
+ion-toast {
+  --border-radius: var(--radius-lg);
+  --box-shadow: var(--shadow-float);
+  font-family: var(--font-body);
+}
+ion-alert, ion-modal {
+  --backdrop-opacity: 0.6;
+  --border-radius: var(--radius-2xl);
+  --box-shadow: var(--shadow-float);
+}
+
+ion-modal .modal-wrapper,
+ion-modal ion-content {
+  --background: var(--nav-card);
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+}
+
+/* ─── 13. STAT/CHIP BADGE CONSISTENCY ─────────────────────────── */
+.stat-pill,
+.live-pill,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.status-badge.success { background: var(--nav-success-soft); color: var(--nav-success); }
+.status-badge.warning { background: var(--nav-warning-soft); color: var(--nav-warning); }
+.status-badge.danger  { background: var(--nav-danger-soft); color: var(--nav-danger); }
+.status-badge.info    { background: var(--nav-info-soft); color: var(--nav-info); }
+
+/* ─── 14. HOME NAV — Tablet/Desktop tweaks ────────────────────── */
+@media (min-width: 768px) {
+  .home-nav { padding: 0 48px; height: 80px; }
+  .mobile-menu-toggle { display: none !important; }
+}
+@media (max-width: 767px) {
+  .nav-links { display: none; }
+  .mobile-menu-toggle { display: inline-flex !important; }
+}
+
+/* ─── 15. DASHBOARD HEADER — Comfortable spacing ─────────────── */
+.rider-header, .driver-header, .admin-header,
+.dashboard-header {
+  padding: 20px 0 16px;
+}
+
+.welcome-text {
+  font-size: clamp(22px, 5vw, 28px);
+  margin: 0;
+}
+
+.welcome-subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--nav-text-secondary);
+}
+
+/* ─── 16. DIVIDERS / SECTION SEPARATORS ───────────────────────── */
+.nav-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--nav-border), transparent);
+  margin: 16px 0;
+  border: none;
+}
+
+/* ─── 17. CHAT BUBBLE SHAPE ──────────────────────────────────── */
+.chat-bubble-me, .chat-bubble-them {
+  border-radius: 20px !important;
+  padding: 10px 14px !important;
+  max-width: 78%;
+  word-wrap: break-word;
+  line-height: 1.45;
+}
+.chat-bubble-me {
+  background: linear-gradient(135deg, var(--navigo-orange), var(--navigo-ember)) !important;
+  color: #fff !important;
+  border-bottom-right-radius: 6px !important;
+  box-shadow: var(--shadow-orange);
+}
+.chat-bubble-them {
+  background: var(--nav-card) !important;
+  color: var(--nav-text) !important;
+  border: 1px solid var(--nav-border);
+  border-bottom-left-radius: 6px !important;
+}
+
+body.light .chat-bubble-them { background: #fff !important; }
+
+/* ─── 18. LANDSCAPE / SHORT-SCREEN MOBILES ───────────────────── */
+@media (max-height: 640px) {
+  .main-wrapper { padding-top: 60px !important; padding-bottom: 80px !important; }
+  .hero-section { padding-top: 40px; min-height: auto; }
+  .onboarding-slide { padding: 40px 20px !important; }
+}
+
+/* ─── 19. BETTER ICON SIZING IN BUTTONS ──────────────────────── */
+ion-button ion-icon {
+  font-size: 18px;
+  margin-right: 6px;
+}
+
+/* ─── 20. PRINT / SHARE SAFEGUARD ─────────────────────────────── */
+@media print {
+  .chat-box-fixed, .nav, .sos-btn-fab, .theme-toggle-btn { display: none !important; }
+  body { background: white !important; color: black !important; }
+}
+
+/* ─── 21. Error/success feedback bars ────────────────────────── */
+.feedback-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  margin: 12px 0;
+}
+.feedback-banner.error { background: var(--nav-danger-soft); color: var(--nav-danger); border: 1px solid rgba(239,68,68,0.25); }
+.feedback-banner.success { background: var(--nav-success-soft); color: var(--nav-success); border: 1px solid rgba(16,185,129,0.25); }
+.feedback-banner.info { background: var(--nav-info-soft); color: var(--nav-info); border: 1px solid rgba(77,166,255,0.25); }
+
+/* ─── 22. KPI GRID RESPONSIVE ────────────────────────────────── */
+.admin-kpi-grid,
+.kpi-grid,
+.stats-grid,
+.quick-actions-grid,
+.action-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 768px) {
+  .admin-kpi-grid { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 600px) {
+  .quick-actions-grid,
+  .action-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ─── 23. Empty/Error states — softer ────────────────────────── */
+.empty-state-illustration {
+  font-size: 56px;
+  margin-bottom: 14px;
+  opacity: 0.85;
+}
+.empty-state-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+.empty-state-sub {
+  color: var(--nav-text-secondary);
+  font-size: 14px;
+  margin: 0 0 20px;
+}

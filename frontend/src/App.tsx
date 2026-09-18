@@ -24,6 +24,7 @@ import '@ionic/react/css/display.css';
 import './theme/variables.css';
 import './theme/interactive.css';
 import './theme/polish.css';
+import './theme/design-polish.css';
 import './theme/light-mode.css';
 
 setupIonicReact({ mode: 'md' });
@@ -139,10 +140,11 @@ const AppContent: React.FC = () => {
 
   return (
     <IonApp>
+      <a href="#main-content" className="skip-link">Skip to content</a>
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <IonReactRouter>
         <Suspense fallback={<PageLoader />}>
-          <IonRouterOutlet>
+          <IonRouterOutlet id="main-content">
 
             {/* Public Routes */}
             <Route path="/login" render={() => <ErrorBoundary><Login /></ErrorBoundary>} exact />

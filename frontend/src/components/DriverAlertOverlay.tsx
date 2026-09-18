@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonButton, IonIcon, IonText } from '@ionic/react';
+import { IonButton, IonIcon } from '@ionic/react';
 import { carOutline, timerOutline, checkmarkCircleOutline, closeCircleOutline } from 'ionicons/icons';
 import { Haptic } from '../services/HapticService';
 import './DriverAlertOverlay.css';

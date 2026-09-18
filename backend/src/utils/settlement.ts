@@ -53,15 +53,11 @@ export const settleRidePayment = async (rideId: string) => {
         );
         if (settledRes.rowCount === 0) throw new Error('Ride already settled or not found');
 
+        // Cash tip: paid directly in cash to driver, so don't touch wallet balance; record a ledger entry only.
         if (tip > 0) {
           await tx.query(
-            `INSERT INTO wallets (userId, balance) VALUES (?, ?)
-             ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance`,
-            [driverId, tip]
-          );
-          await tx.query(
             'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
-            [`tx_tip_${Date.now()}_${driverId}`, driverId, 'tip', tip, `Cash tip for ride ${rideId}`, rideId]
+            [`tx_cash_tip_${Date.now()}_${driverId}`, driverId, 'cash_tip', tip, `Cash tip for ride ${rideId}`, rideId]
           );
         }
         await tx.query(

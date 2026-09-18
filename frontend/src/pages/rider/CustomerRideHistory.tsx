@@ -77,7 +77,7 @@ const CustomerRideHistory: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ride-history-container">
+      <IonContent className="ride-history-container history-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <div style={{ padding: 14, maxWidth: 600, margin: '0 auto' }}>
 
           {/* Stats */}

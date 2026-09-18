@@ -5,6 +5,7 @@ import { rideRequestLimiter } from '../middleware/rateLimit';
 import { fareQuote, clampOffer } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
+import { settleRidePayment } from '../utils/settlement';
 
 const router = express.Router();
 
@@ -245,6 +246,110 @@ router.post('/:rideId/cancel', authenticate, async (req: Request, res: Response)
   }
 });
 
+// ─── Update Ride Status (REST fallback for when socket drops) ──────────
+// Authorizes same way the socket handler does: only the assigned driver can transition.
+router.post('/:rideId/status', authenticate, async (req: Request, res: Response) => {
+  try {
+    const rideId = String(req.params.rideId);
+    const { status } = req.body;
+    const userId = (req as AuthRequest).user?.userId as string | undefined;
+    const db = getDB();
+
+    const ride = await db.get('SELECT driverId, userId, status as curStatus FROM rides WHERE id = ?', [rideId]);
+    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    if (ride.driverId !== userId) {
+      return res.status(403).json({ message: 'Only the assigned driver can update status' });
+    }
+
+    const allowed: Record<string, string[]> = {
+      requested: ['accepted'],
+      accepted: ['arrived'],
+      arrived: ['ongoing'],
+      ongoing: ['completed'],
+    };
+    if (!allowed[ride.curStatus]?.includes(status)) {
+      return res.status(400).json({ message: `Can't move a ${ride.curStatus} ride to ${status}` });
+    }
+
+    await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
+
+    let settlementResult = null;
+    if (status === 'completed') {
+      settlementResult = await settleRidePayment(rideId);
+    }
+
+    notifyRide(String(rideId), ride.userId ?? null, userId ?? null, 'status-changed', { rideId: String(rideId), status });
+
+    res.json({ ok: true, status, settlement: settlementResult });
+  } catch (error) {
+    console.error('Status update error:', error);
+    res.status(500).json({ message: 'Failed to update status' });
+  }
+});
+
+// ─── Send tip mid-ride or after completion (rider only) ──
+router.post('/:rideId/tip', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { rideId } = req.params;
+    const { amount } = req.body;
+    const userId = (req as AuthRequest).user?.userId;
+    const db = getDB();
+
+    const tipAmt = Number(amount);
+    if (!Number.isFinite(tipAmt) || tipAmt <= 0 || tipAmt > 50000) {
+      return res.status(400).json({ message: 'Invalid tip amount (max UGX 50,000).' });
+    }
+
+    const ride = await db.get('SELECT * FROM rides WHERE id = ?', [rideId]);
+    if (!ride) return res.status(404).json({ message: 'Ride not found.' });
+    if (ride.userId !== userId) return res.status(403).json({ message: 'Only the rider can tip.' });
+    if (!ride.driverId) return res.status(400).json({ message: 'Wait for a driver to be assigned before tipping.' });
+
+    if (ride.paymentMethod === 'wallet') {
+      const tx = await db.getTransactionClient();
+      try {
+        await tx.query('BEGIN');
+        const walletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [userId]);
+        const wallet = walletRes.rows[0];
+        if (!wallet || wallet.balance < tipAmt) {
+          await tx.query('ROLLBACK');
+          tx.release();
+          return res.status(400).json({ message: 'Insufficient wallet balance for this tip.' });
+        }
+        await tx.query('UPDATE wallets SET balance = balance - ? WHERE userId = ?', [tipAmt, userId]);
+        await tx.query('INSERT INTO wallets (userId, balance) VALUES (?, 0) ON CONFLICT(userId) DO NOTHING', [ride.driverId]);
+        await tx.query('UPDATE wallets SET balance = balance + ? WHERE userId = ?', [tipAmt, ride.driverId]);
+        await tx.query(
+          'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+          [`tx_tip_${Date.now()}_${ride.driverId}`, ride.driverId, 'tip', tipAmt, `Tip for ride ${rideId}`, rideId]
+        );
+        await tx.query(
+          'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+          [`tx_tip_pay_${Date.now()}_${userId}`, userId, 'tip_payment', -tipAmt, `Tip for ride ${rideId}`, rideId]
+        );
+        await tx.query('UPDATE rides SET tip = COALESCE(tip,0) + ? WHERE id = ?', [tipAmt, rideId]);
+        await tx.query('COMMIT');
+        tx.release();
+      } catch (e) {
+        try { await tx.query('ROLLBACK'); } catch {}
+        tx.release();
+        throw e;
+      }
+    } else {
+      // Cash trips — just record the intended tip so it shows up on settlement.
+      await db.run('UPDATE rides SET tip = COALESCE(tip,0) + ? WHERE id = ?', [tipAmt, rideId]);
+    }
+
+    // Notify driver in real time
+    notifyRide(String(rideId), userId ?? null, ride.driverId ?? null, 'ride-tip', { rideId, amount: tipAmt });
+
+    res.json({ ok: true, message: `Tip of UGX ${tipAmt.toLocaleString()} sent!`, tipTotal: Number(ride.tip || 0) + tipAmt });
+  } catch (error) {
+    console.error('Tip error:', error);
+    res.status(500).json({ message: 'Failed to send tip.' });
+  }
+});
+
 // ─── Rate Driver (rider only, after completion) — with duplicate guard ──
 router.post('/:rideId/rate', authenticate, async (req: Request, res: Response) => {
   try {
@@ -274,18 +379,24 @@ router.post('/:rideId/rate', authenticate, async (req: Request, res: Response) =
       rideId
     ]);
 
-    // If tip provided and wallet payment, handle tip settlement
+    // If tip provided and wallet payment, handle tip settlement atomically
+    // (balance check + debit + credit all inside one transaction).
     if (tip && tip > 0 && ride.paymentMethod === 'wallet') {
-      const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [userId]);
-      if (wallet && wallet.balance >= tip) {
-        const tx = await db.getTransactionClient();
-        try {
-          await tx.query('BEGIN');
+      const tx = await db.getTransactionClient();
+      try {
+        await tx.query('BEGIN');
+        const walletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [userId]);
+        const wallet = walletRes.rows[0];
+        if (wallet && wallet.balance >= tip) {
           await tx.query('UPDATE wallets SET balance = balance - ? WHERE userId = ?', [tip, userId]);
           await tx.query(
-            `INSERT INTO wallets (userId, balance) VALUES (?, ?)
-             ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance`,
-            [ride.driverId, tip]
+            `INSERT INTO wallets (userId, balance) VALUES (?, 0)
+             ON CONFLICT(userId) DO NOTHING`,
+            [ride.driverId]
+          );
+          await tx.query(
+            `UPDATE wallets SET balance = balance + ? WHERE userId = ?`,
+            [tip, ride.driverId]
           );
           await tx.query(
             'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
@@ -296,12 +407,15 @@ router.post('/:rideId/rate', authenticate, async (req: Request, res: Response) =
             [`tx_tip_pay_${Date.now()}_${userId}`, userId, 'tip_payment', -tip, `Tip for ride ${rideId}`, rideId]
           );
           await tx.query('COMMIT');
-          tx.release();
-        } catch (e) {
+        } else {
           await tx.query('ROLLBACK');
-          tx.release();
-          console.error('Tip settlement failed:', e);
+          console.error('Tip settlement failed: insufficient wallet balance');
         }
+        tx.release();
+      } catch (e) {
+        try { await tx.query('ROLLBACK'); } catch {}
+        tx.release();
+        console.error('Tip settlement failed:', e);
       }
     }
 
@@ -349,21 +463,29 @@ router.get('/details/:rideId', authenticate, async (req: Request, res: Response)
       return res.status(403).json({ message: 'Unauthorized: You are not part of this ride' });
     }
 
-    const rider = await db.get(
-      `SELECT u.id, u.fullName, u.phone, u.verificationStatus,
-              COALESCE(dp.rating, 5) AS rating,
-              COALESCE(dp.totalTrips, 0) AS totalTrips
-       FROM users u
-       LEFT JOIN driver_profiles dp ON dp.userId = u.id
-       WHERE u.id = ?`,
-      [ride.userId]
-    );
+    const isDirectParticipant = ride.userId === userId || ride.driverId === userId;
+
+    // Only return PII-less summary to drivers browsing an open request; full data only if they're the actual rider/driver.
+    const rider = isDirectParticipant
+      ? await db.get(
+          `SELECT u.id, u.fullName, u.phone, u.verificationStatus,
+                  COALESCE(dp.rating, 5) AS rating,
+                  COALESCE(dp.totalTrips, 0) AS totalTrips
+           FROM users u
+           LEFT JOIN driver_profiles dp ON dp.userId = u.id
+           WHERE u.id = ?`,
+          [ride.userId]
+        )
+      : { id: ride.userId, rating: 5, totalTrips: 0 };
 
     res.json({
       ...ride,
-      rider: rider,
+      rider,
+      // Hide destination exact address/coords from non-participants to prevent stalking/targeting.
       pickup: { address: ride.pickupName, lat: ride.pickupLat, lng: ride.pickupLng },
-      destination: { address: ride.dropName, lat: ride.dropLat, lng: ride.dropLng }
+      destination: isDirectParticipant
+        ? { address: ride.dropName, lat: ride.dropLat, lng: ride.dropLng }
+        : { address: '', lat: null, lng: null },
     });
   } catch (error) {
     console.error('Ride details error:', error);
@@ -382,7 +504,7 @@ router.get('/recent', authenticate, async (req: Request, res: Response) => {
       [userId, 'completed']
     );
 
-    const formatted = recentRides.map(ride => ({
+    const formatted = recentRides.map((ride: any) => ({
       ...ride,
       pickup: {
         address: ride.pickupName,
@@ -430,7 +552,7 @@ router.get('/history/:userId', authenticate, async (req: Request, res: Response)
     const rides = await db.all(query, params);
 
     // Format for frontend compatibility
-    const formattedRides = rides.map(ride => ({
+    const formattedRides = rides.map((ride: any) => ({
       ...ride,
       pickup: {
         address: ride.pickupName,

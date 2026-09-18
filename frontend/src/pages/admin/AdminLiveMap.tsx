@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonIcon, IonBadge, IonSpinner, IonChip, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonIcon, IonBadge, IonSpinner, IonSegment, IonSegmentButton, IonLabel } from '@ionic/react';
 import { refreshOutline, bicycleOutline, carOutline, personOutline, pauseOutline, playOutline } from 'ionicons/icons';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import markerIcon2xUrl from 'leaflet/dist/images/marker-icon-2x.png';
@@ -170,7 +170,7 @@ const AdminLiveMap: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container admin-live-map">
         <div style={{display: 'flex', gap: 6, padding: '8px 12px', overflowX: 'auto'}}>
           {[{label: 'Drivers', value: stats.drivers, color: '#FF6B35'}, {label: 'Motorists', value: stats.motorists, color: '#FF6B35'}, {label: 'Customers', value: stats.riders, color: '#FF6B35'}, {label: 'Active Trips', value: stats.activeTrips, color: '#FF6B35'}].map(s => (
             <div key={s.label} style={{background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px', textAlign: 'center', flex: 1, minWidth: 70}}>

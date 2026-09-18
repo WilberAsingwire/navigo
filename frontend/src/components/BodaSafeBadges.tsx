@@ -1,5 +1,5 @@
 import React from 'react';
-import { IonBadge, IonIcon, IonChip, IonLabel, IonProgressBar } from '@ionic/react';
+import { IonIcon, IonProgressBar } from '@ionic/react';
 import { 
   shieldCheckmarkOutline, starOutline, waterOutline, 
   cardOutline, schoolOutline, ribbonOutline, 

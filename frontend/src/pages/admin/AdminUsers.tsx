@@ -127,7 +127,7 @@ const AdminUsers: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any} className="admin-users-container">
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-users-container admin-container">
         {loading && <IonProgressBar type="indeterminate" color="warning" />}
 
         <div style={{padding: 14, maxWidth: 700, margin: '0 auto'}}>

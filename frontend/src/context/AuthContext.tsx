@@ -146,6 +146,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (!/^07\d{8}$/.test(cleanPhone)) {
         throw new Error('Invalid phone number. Use format 07... (e.g. 0772000000)');
       }
+      if (!password || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+        throw new Error('Password must be at least 8 characters and include a letter and a number.');
+      }
       const response = await api.post(`/auth/register`, {
         fullName: name.trim(),
         phone: cleanPhone,
@@ -191,10 +194,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const resetPassword = async (phone: string, code: string, newPassword: string) => {
+  const resetPassword = async (identifier: string, code: string, newPassword: string) => {
     try {
-      const cleanPhone = normalizePhone(phone);
-      await api.post(`/auth/reset-password`, { phone: cleanPhone, code, newPassword });
+      // Backend accepts either phone or email — send whichever the user provided.
+      const looksLikeEmail = /\S+@\S+\.\S+/.test(identifier);
+      const payload: Record<string, string> = { code, newPassword };
+      if (looksLikeEmail) {
+        payload.email = identifier.trim().toLowerCase();
+      } else {
+        payload.phone = normalizePhone(identifier);
+      }
+      await api.post(`/auth/reset-password`, payload);
     } catch (err: any) {
       throw handleApiError(err, 'Password reset failed. Please check your code and try again.');
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonCard, IonCardContent, IonIcon, IonGrid, IonRow, IonCol, IonBadge, IonButton, IonSpinner } from '@ionic/react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonIcon, IonGrid, IonRow, IonCol, IonBadge, IonButton, IonSpinner } from '@ionic/react';
 import { 
   peopleOutline, carOutline, statsChartOutline, walletOutline, 
   bicycleOutline, starOutline, trendingUpOutline, alertCircleOutline,
@@ -84,7 +84,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <IonPage>
-        <IonContent style={{'--background': '#080c14'} as any}>
+        <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <div style={{ fontSize: 40 }}>🛡️</div>
             <IonSpinner name="crescent" color="warning" />
@@ -106,7 +106,7 @@ const AdminDashboard: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container">
         <div style={{ padding: 14, maxWidth: 800, margin: '0 auto' }}>
           
           {/* Welcome */}

@@ -60,7 +60,7 @@ const RiderSupport: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="support-container">
+      <IonContent className="support-container support-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <div style={{ padding: 14, maxWidth: 600, margin: '0 auto' }}>
 
           {segment === 'faq' && (

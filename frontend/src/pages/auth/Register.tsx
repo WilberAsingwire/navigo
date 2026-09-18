@@ -36,8 +36,9 @@ const Register: React.FC = () => {
 
   const getPasswordStrength = (pwd: string): { label: string; color: string; percent: number } => {
     if (!pwd) return { label: '', color: '#1E293B', percent: 0 };
-    if (pwd.length < 6) return { label: 'Weak', color: '#EF4444', percent: 0.33 };
-    if (pwd.length < 8 || !/[A-Z]/.test(pwd) || !/[0-9]/.test(pwd)) return { label: 'Fair', color: '#F59E0B', percent: 0.66 };
+    if (pwd.length < 8) return { label: 'Weak', color: '#EF4444', percent: 0.33 };
+    if (!/[A-Za-z]/.test(pwd) || !/[0-9]/.test(pwd)) return { label: 'Fair', color: '#F59E0B', percent: 0.66 };
+    if (pwd.length < 10) return { label: 'Good', color: '#3B82F6', percent: 0.85 };
     return { label: 'Strong', color: '#10B981', percent: 1 };
   };
 
@@ -64,7 +65,8 @@ const Register: React.FC = () => {
     if (cleanPhone.length < 10) return setError('Please enter a valid 10-digit phone number');
 
     if (!password) return setError('Please enter a password');
-    if (password.length < 6) return setError('Password must be at least 6 characters');
+    if (password.length < 8) return setError('Password must be at least 8 characters');
+    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return setError('Password must contain at least one letter and one number');
     if (password !== confirmPassword) return setError('Passwords do not match');
     if (!acceptTerms) return setError('Please accept the Terms of Service');
 
@@ -81,7 +83,7 @@ const Register: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent style={{ '--background': '#0a0a0a' }}>
+      <IonContent style={{ '--background': '#0a0a0a' }} className="auth-container">
         <div className="auth-container">
           <div className="glow-top"></div>
           <div className="glow-bottom"></div>
@@ -177,7 +179,7 @@ const Register: React.FC = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimum 6 characters"
+                    placeholder="At least 8 characters, include a number"
                   />
                   <button
                     type="button"

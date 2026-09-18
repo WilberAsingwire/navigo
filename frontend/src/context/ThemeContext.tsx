@@ -66,7 +66,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Haptic feedback
     try {
       if ('vibrate' in navigator) navigator.vibrate(10);
-    } catch {}
+    } catch { /* noop */ }
   };
 
   const setTheme = (newTheme: Theme) => {

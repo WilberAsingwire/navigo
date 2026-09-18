@@ -238,3 +238,17 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-card, .glow-top, .glow-bottom, .input-group { animation: none !important; }
 }
+
+/* Light mode auth — readable on the photo background */
+body.light .auth-container {
+  background: linear-gradient(rgba(248,250,252,0.88), rgba(248,250,252,0.95)), url('https://images.unsplash.com/photo-1449824913935-59a10b5d7a98?q=80&w=2070&auto=format&fit=crop');
+}
+body.light .auth-card {
+  background: rgba(255,255,255,0.92);
+  border-color: rgba(15,23,42,0.08);
+}
+body.light .auth-copy { color: var(--nav-text-secondary); }
+body.light .method-btn { color: var(--nav-text-muted); }
+body.light .method-btn.active { color: var(--navigo-orange); background: var(--navigo-orange-soft); }
+body.light .input-label { color: var(--nav-text-secondary); }
+body.light .error-message { color: var(--nav-danger); }

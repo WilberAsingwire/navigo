@@ -105,7 +105,7 @@ const DriverHome: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="driver-page-container">
+      <IonContent className="driver-page-container driver-home-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <IonRefresher slot="fixed" onIonRefresh={(e) => setTimeout(() => e.target.complete(), 1000)}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>

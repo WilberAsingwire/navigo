@@ -130,7 +130,7 @@ const CustomerSavedPlaces: React.FC = () => {
           <IonTitle>Saved Places</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent style={{'--background': '#080c14', '--color': '#fff8f0'} as any} className="ion-padding">
+      <IonContent style={{'--background': 'var(--nav-bg)', '--color': '#fff8f0'} as any} className="ion-padding places-wrapper">
 
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: 40 }}>

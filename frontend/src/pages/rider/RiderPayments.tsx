@@ -121,7 +121,7 @@ const RiderPayments: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{ '--background': '#080c14' } as any}>
+      <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="rider-payments-wrapper">
         {loading ? (
           <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}><Skeleton rows={3} /></div>
         ) : (

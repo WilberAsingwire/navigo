@@ -160,7 +160,7 @@ const DriverActiveRide: React.FC = () => {
   if (loading) {
     return (
       <IonPage>
-        <IonContent style={{ '--background': '#080c14' } as any}>
+        <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="driver-active-wrapper">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <IonSpinner name="crescent" color="warning" />
             <p style={{ color: '#94A3B8' }}>Loading trip details…</p>
@@ -178,7 +178,7 @@ const DriverActiveRide: React.FC = () => {
             <IonTitle style={{ color: '#fff' }}>Active Trip</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent style={{ '--background': '#080c14' } as any}>
+        <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="driver-active-wrapper">
           <EmptyState
             icon={<IonIcon icon={carOutline} style={{ fontSize: 26 }} />}
             title="No active trip"
@@ -213,7 +213,7 @@ const DriverActiveRide: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="driver-active-container" style={{ '--background': '#080c14' } as any}>
+      <IonContent className="driver-active-container driver-active-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
         {/* Map */}
         <div style={{ height: '40vh', width: '100%', position: 'relative' }}>
           <NavigoMap

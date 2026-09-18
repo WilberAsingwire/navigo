@@ -102,7 +102,7 @@ const PhoneVerification: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="auth-content">
+      <IonContent className="auth-content auth-container" style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="auth-container">
           <div className="auth-logo">
             <div style={{ fontSize: 48, marginBottom: 12 }}>📱</div>
