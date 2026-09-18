@@ -457,10 +457,20 @@ const NavigoMap: React.FC<MapProps> = ({
           animation: nvFloat 3s ease-in-out infinite;
           transform-style: preserve-3d;
         }
-        .nv-body img { width: 70%; height: 70%; object-fit: contain; }
+        .nv-body img {
+          width: 70%; height: 70%; object-fit: contain;
+          animation: nvTilt 3s ease-in-out infinite;
+        }
+        @keyframes nvTilt {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(5deg) scale(1.1); }
+        }
         @keyframes nvFloat {
-          0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
-          50% { transform: translateY(-6px) rotateX(10deg) rotateY(10deg); }
+          0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+          25% { transform: translateY(-4px) rotateX(15deg) rotateY(5deg) rotateZ(2deg); }
+          50% { transform: translateY(-8px) rotateX(0deg) rotateY(15deg) rotateZ(-2deg); }
+          75% { transform: translateY(-4px) rotateX(-15deg) rotateY(5deg) rotateZ(2deg); }
+          100% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
         }
         @keyframes nvShadow {
           0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.3; }
