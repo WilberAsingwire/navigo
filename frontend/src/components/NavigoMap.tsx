@@ -64,6 +64,7 @@ const MapEvents: React.FC<{
   useMapEvents({
     click(e) { const ll = e.latlng; if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]); },
     moveend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
+    zoomend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
   });
   useEffect(() => {
     if (followUser && isValidLatLng(userLocation)) { try { map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 }); } catch { /* noop */ } }
@@ -182,28 +183,54 @@ const NavigoMap: React.FC<MapProps> = ({
   };
 
   const handleZoomIn = () => {
-    const newZoom = Math.min(mapZoom + 1, 20);
-    setMapZoom(newZoom);
     if (mapRef.current) {
-      try { mapRef.current.setZoom(newZoom); } catch { /* noop */ }
-    }
-  };
-  const handleZoomOut = () => {
-    const newZoom = Math.max(mapZoom - 1, 5);
-    setMapZoom(newZoom);
-    if (mapRef.current) {
-      try { mapRef.current.setZoom(newZoom); } catch { /* noop */ }
+      try {
+        mapRef.current.zoomIn(1, { animate: true });
+      } catch {
+        setMapZoom((z) => Math.min(z + 1, 20));
+      }
+    } else {
+      setMapZoom((z) => Math.min(z + 1, 20));
     }
   };
 
-  // Google Maps iframe with dynamic style and zoom
-  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
-  const getMapTypeParam = () => {
-    if (mapStyle === 'satellite') return 'k'; // satellite
-    if (mapStyle === 'terrain') return 'p'; // terrain
-    return 'm'; // roadmap standard
+  const handleZoomOut = () => {
+    if (mapRef.current) {
+      try {
+        mapRef.current.zoomOut(1, { animate: true });
+      } catch {
+        setMapZoom((z) => Math.max(z - 1, 5));
+      }
+    } else {
+      setMapZoom((z) => Math.max(z - 1, 5));
+    }
   };
-  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=${getMapTypeParam()}&output=embed&hl=en&iwloc=near`;
+
+  const TILE_CONFIG: Record<
+    'standard' | 'satellite' | 'terrain',
+    { url: string; subdomains: string[]; maxZoom: number; attribution: string }
+  > = {
+    standard: {
+      url: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Maps',
+    },
+    satellite: {
+      url: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Maps',
+    },
+    terrain: {
+      url: 'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+      subdomains: ['0', '1', '2', '3'],
+      maxZoom: 20,
+      attribution: '&copy; Google Maps',
+    },
+  };
+
+  const currentTiles = TILE_CONFIG[mapStyle] || TILE_CONFIG.standard;
 
   return (
     <div
@@ -212,40 +239,66 @@ const NavigoMap: React.FC<MapProps> = ({
         height: height,
         width: '100%',
         position: 'relative',
-        background: '#e5e7eb',
-        // Fix sizing when placed inside flex/contained parents (IonContent inner-scroll)
+        background: mapStyle === 'satellite' ? '#0c1524' : '#f2efe9',
         minHeight: '100%',
         flex: '1 1 auto',
       }}
     >
-      {/* GOOGLE MAPS IFRAME BACKGROUND - always works, never blocked */}
-      <iframe
-        key={`${center[0].toFixed(4)}-${center[1].toFixed(4)}-${mapZoom}-${mapStyle}`}
-        src={googleEmbedUrl}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, zIndex: 0 }}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Google Maps"
-        onLoad={() => { /* map loaded */ }}
-      />
-
-      {/* LEAFLET OVERLAY - transparent, only for markers and route */}
+      {/* NATIVE LEAFLET MAP — Smooth hardware-accelerated animated zoom, zero white flash */}
       <MapContainer
         center={center}
         zoom={mapZoom}
-        style={{ height: '100%', width: '100%', background: 'transparent', zIndex: 1 }}
+        zoomAnimation={true}
+        fadeAnimation={true}
+        markerZoomAnimation={true}
+        style={{
+          height: '100%',
+          width: '100%',
+          background: mapStyle === 'satellite' ? '#0c1524' : '#f2efe9',
+          zIndex: 1,
+        }}
         zoomControl={false}
         attributionControl={false}
         ref={mapRef as any}
       >
-        {/* Transparent tiles - we rely on iframe for base, but keep one TileLayer with opacity 0.01 to keep Leaflet happy */}
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          opacity={0}
-          attribution=""
+          key={mapStyle}
+          url={currentTiles.url}
+          subdomains={currentTiles.subdomains}
+          maxZoom={currentTiles.maxZoom}
+          keepBuffer={6}
+          updateWhenZooming={false}
+          updateWhenIdle={false}
+          attribution={currentTiles.attribution}
+          eventHandlers={{
+            tileerror: (error: any) => {
+              try {
+                const img = error?.tile as HTMLImageElement;
+                if (img && !img.dataset.fallback) {
+                  img.dataset.fallback = '1';
+                  const coords = error.coords;
+                  if (coords) {
+                    img.src = `https://a.basemaps.cartocdn.com/rastertiles/voyager/${coords.z}/${coords.x}/${coords.y}.png`;
+                  }
+                }
+              } catch {
+                /* noop */
+              }
+            },
+          }}
         />
 
-        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c, z) => { if (!isNaN(c[0]) && !isNaN(c[1])) { setMapCenter(c); setMapZoom(z); } }} />
+        <MapEvents
+          onMapClick={onMapClick}
+          userLocation={userLocation}
+          followUser={followUser}
+          onMove={(c, z) => {
+            if (!isNaN(c[0]) && !isNaN(c[1])) {
+              setMapCenter(c);
+              setMapZoom(z);
+            }
+          }}
+        />
 
         {isValidLatLng(userLocation) && (
           <>
@@ -301,8 +354,9 @@ const NavigoMap: React.FC<MapProps> = ({
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: transparent !important; }
-        .navigo-map-root .leaflet-tile-pane { display: none; }
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); }
+        .navigo-map-root .leaflet-tile-container { will-change: transform; }
+        .navigo-map-root .leaflet-tile { image-rendering: auto; }
         .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
         .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
         .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
