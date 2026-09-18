@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/react';
+import { IonPage, IonContent, IonIcon } from '@ionic/react';
 import {
   shieldCheckmarkOutline, starOutline,
   phonePortraitOutline, mapOutline,

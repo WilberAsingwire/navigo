@@ -98,7 +98,7 @@ const DriverEarnings: React.FC = () => {
             <IonTitle style={{ color: '#fff' }}>Earnings</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent className="driver-earnings-container" style={{ '--background': '#080c14' } as any}>
+        <IonContent className="driver-earnings-container driver-earnings-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
           <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}><Skeleton rows={4} /></div>
         </IonContent>
       </IonPage>
@@ -114,7 +114,7 @@ const DriverEarnings: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="driver-earnings-container" style={{ '--background': '#080c14' } as any}>
+      <IonContent className="driver-earnings-container driver-earnings-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
         <IonRefresher slot="fixed" onIonRefresh={(e) => { loadData(); setTimeout(() => e.target.complete(), 800); }}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>

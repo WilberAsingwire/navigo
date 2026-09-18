@@ -73,8 +73,11 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Name must be at least 2 characters' });
     }
 
-    if (!password || password.length < 4) {
-      return res.status(400).json({ message: 'Password must be at least 4 characters' });
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      return res.status(400).json({ message: 'Password must contain at least one letter and one number.' });
     }
 
     const validRoles = ['rider', 'driver'];
@@ -100,7 +103,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     const needsVerification = userRole === 'driver';
     const hashedPassword = await hashPassword(password);
 
-    const userId = `user_${Math.random().toString(36).substr(2, 9)}${Date.now()}`;
+    const userId = `user_${Math.random().toString(36).substring(2, 11)}${Date.now()}`;
     const newUser: any = {
       id: userId,
       fullName: fullName.trim(),
@@ -117,6 +120,11 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       await db.run(
         'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.password, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.createdAt]
+      );
+      // Create a wallet row (starting at 0 balance) so future top-ups/payouts work.
+      await db.run(
+        'INSERT INTO wallets (userId, balance) VALUES (?, 0) ON CONFLICT(userId) DO NOTHING',
+        [newUser.id]
       );
     } catch (dbError: any) {
       console.error('DATABASE INSERT ERROR:', dbError);
@@ -220,6 +228,10 @@ router.post('/google-register', async (req: Request, res: Response) => {
       'INSERT INTO users (id, fullName, phone, email, role, phoneVerified, verificationStatus, socialProvider, socialId, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [newUser.id, newUser.fullName, newUser.phone, newUser.email, newUser.role, newUser.phoneVerified, newUser.verificationStatus, newUser.socialProvider, newUser.socialId, newUser.createdAt]
     );
+    await db.run(
+      'INSERT INTO wallets (userId, balance) VALUES (?, 0) ON CONFLICT(userId) DO NOTHING',
+      [newUser.id]
+    );
 
     const token = generateToken({ id: newUser.id, role: newUser.role });
     res.json({ message: 'Registration successful!', user: sanitizeUser(newUser), token });
@@ -320,20 +332,22 @@ router.get('/admin/stats', authenticate, authorize(['admin']), async (req: Reque
     const [totalDrivers] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'driver'");
     const [totalMotorists] = await db.all("SELECT COUNT(*) as count FROM users WHERE role = 'motorist'");
     const [activeRides] = await db.all("SELECT COUNT(*) as count FROM rides WHERE status NOT IN ('completed', 'cancelled')");
-    const [revenue] = await db.all("SELECT SUM(amount) as total FROM wallet_transactions WHERE kind = 'ride_payment' AND amount > 0");
+    const [revenue] = await db.all("SELECT COALESCE(SUM(ABS(amount)),0) as total FROM wallet_transactions WHERE kind = 'commission'");
     const [avgRating] = await db.all('SELECT AVG(rating) as avg FROM driver_profiles');
     const [pending] = await db.all("SELECT COUNT(*) as count FROM users WHERE verificationStatus = 'pending'");
+    const [supportTicketCount] = await db.all("SELECT COUNT(*) as count FROM support_tickets WHERE status != 'resolved'");
+    const [disputesCount] = await db.all("SELECT COUNT(*) as count FROM rides WHERE riderRating IS NOT NULL AND riderTags::text LIKE '%dispute%'");
 
     res.json({
       totalUsers: totalUsers?.count || 0,
       totalDrivers: totalDrivers?.count || 0,
       totalMotorists: totalMotorists?.count || 0,
       activeRides: activeRides?.count || 0,
-      revenue: revenue?.total || 0,
+      revenue: Number(revenue?.total) || 0,
       avgRating: parseFloat(avgRating?.avg || '0').toFixed(1),
       pendingApprovals: pending?.count || 0,
-      supportTickets: 0, // Mocked
-      disputes: 0 // Mocked
+      supportTickets: supportTicketCount?.count || 0,
+      disputes: disputesCount?.count || 0
     });
   } catch (error) {
     console.error('Stats error:', error);
@@ -421,23 +435,40 @@ router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (
 
 router.post('/forgot-password', authLimiter, smsLimiter, async (req: Request, res: Response) => {
   try {
-    const { phone } = req.body;
+    const { phone, email } = req.body;
     const db = getDB();
-    const cleanPhone = normalizePhone(phone);
 
-    const user = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
-    if (!user) {
-      return res.json({ message: 'If registered, you will receive a reset code.' });
+    // Accept either phone OR email so the flow works for all account types.
+    let user = null;
+    let cleanPhone: string | null = null;
+    if (phone) {
+      cleanPhone = normalizePhone(phone);
+      if (cleanPhone) user = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
+    }
+    if (!user && email && /\S+@\S+\.\S+/.test(email)) {
+      user = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+      if (user) cleanPhone = user.phone;
+    }
+
+    // Always return a generic message (don't leak account existence) but include
+    // the reset code as `devCode` ONLY in non-production environments for QA.
+    const generic = { message: 'If registered, you will receive a reset code.' };
+    let devCode: string | null = null;
+
+    if (!user || !cleanPhone) {
+      return res.json(generic);
     }
 
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await db.run('CREATE TABLE IF NOT EXISTS password_resets (phone TEXT PRIMARY KEY, code TEXT, expires DATETIME)');
-    await db.run('INSERT INTO password_resets (phone, code, expires) VALUES (?, ?, ?) ON CONFLICT (phone) DO UPDATE SET code = EXCLUDED.code, expires = EXCLUDED.expires', [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]);
+    devCode = process.env.NODE_ENV !== 'production' ? resetCode : null;
 
-    // Send via SMS
+    await db.run(
+      'INSERT INTO password_resets (phone, code, expires) VALUES (?, ?, ?) ON CONFLICT (phone) DO UPDATE SET code = EXCLUDED.code, expires = EXCLUDED.expires',
+      [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]
+    );
+
     const smsResult = await notificationService.sendSMS(cleanPhone, `Your NAVIGO reset code is: ${resetCode}. Valid for 10 minutes.`);
 
-    // Send via Email if available
     let emailResult = { success: false };
     if (user.email) {
       emailResult = await notificationService.sendEmail(
@@ -447,28 +478,49 @@ router.post('/forgot-password', authLimiter, smsLimiter, async (req: Request, re
       );
     }
 
-    // Reset code sent via SMS/Email
-
     res.json({
-      message: 'If registered, you will receive a reset code.',
+      ...generic,
       sentVia: {
         sms: smsResult.success,
         email: user.email ? emailResult.success : false
-      }
+      },
+      ...(devCode ? { devCode } : {})
     });
   } catch (error) {
+    console.error('Forgot password error:', error);
     res.status(500).json({ message: 'Failed to process request.' });
   }
 });
 
 router.post('/reset-password', authLimiter, async (req: Request, res: Response) => {
   try {
-    const { phone, code, newPassword } = req.body;
+    const { phone, email, code, newPassword } = req.body;
     const db = getDB();
-    const cleanPhone = phone.replace(/\s+/g, '').replace('+256', '0');
+
+    if (!newPassword || newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters and include at least one letter and one number.' });
+    }
+    if (!code || String(code).length !== 6) {
+      return res.status(400).json({ message: 'Invalid reset code.' });
+    }
+
+    // Resolve user by phone OR email
+    let user = null;
+    let cleanPhone: string | null = null;
+    if (phone) {
+      cleanPhone = normalizePhone(phone);
+      if (cleanPhone) user = await db.get('SELECT * FROM users WHERE phone = ?', [cleanPhone]);
+    }
+    if (!user && email && /\S+@\S+\.\S+/.test(email)) {
+      user = await db.get('SELECT * FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+      if (user) cleanPhone = user.phone;
+    }
+    if (!user || !cleanPhone) {
+      return res.status(400).json({ message: 'Invalid reset code.' });
+    }
 
     const reset = await db.get('SELECT * FROM password_resets WHERE phone = ?', [cleanPhone]);
-    if (!reset || reset.code !== code) {
+    if (!reset || reset.code !== String(code)) {
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
     if (new Date() > new Date(reset.expires)) {
@@ -476,11 +528,12 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
     }
 
     const hashedPassword = await hashPassword(newPassword);
-    await db.run('UPDATE users SET password = ? WHERE phone = ?', [hashedPassword, cleanPhone]);
+    await db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
     await db.run('DELETE FROM password_resets WHERE phone = ?', [cleanPhone]);
 
     res.json({ message: 'Password reset successful!' });
   } catch (error) {
+    console.error('Reset password error:', error);
     res.status(500).json({ message: 'Reset failed.' });
   }
 });

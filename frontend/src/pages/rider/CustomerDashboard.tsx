@@ -53,7 +53,7 @@ const CustomerDashboard: React.FC = () => {
             localStorage.setItem('navigo_completed_rides', String(completed));
           }
         }
-      } catch {}
+      } catch { /* noop */ }
       try {
         const res = await api.get(`/wallet/balance`);
         if (alive && res.data?.ok) {
@@ -98,7 +98,7 @@ const CustomerDashboard: React.FC = () => {
   if (!user) {
     return (
       <IonPage>
-        <IonContent className="rider-page-container">
+        <IonContent className="rider-page-container rider-dashboard-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
           <div style={{ padding: 24, textAlign: 'center', color: '#fff' }}>
             <h3>Loading profile...</h3>
             <p style={{ color: '#94A3B8' }}>Please wait while we fetch your account.</p>
@@ -115,7 +115,7 @@ const CustomerDashboard: React.FC = () => {
           <div style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
             <div className="rider-header">
               <div>
-                <h2 className="welcome-text">Hello, {((user?.fullName || 'there') || 'Guest').split(' ')[0] || 'Guest'} 👋</h2>
+                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0] || 'Guest'} 👋</h2>
                 <p className="welcome-subtitle">Ready for your next ride?</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -134,7 +134,7 @@ const CustomerDashboard: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="rider-page-container">
+      <IonContent className="rider-page-container rider-dashboard-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} pullingText="Pull to refresh" refreshingSpinner="crescent" />
         </IonRefresher>

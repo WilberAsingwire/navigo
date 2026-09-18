@@ -1,6 +1,10 @@
-import { Pool } from 'pg';
+import { Pool, QueryResult } from 'pg';
 
 let pool: Pool | null = null;
+
+/** Uniform shape returned by `db.run()`/`getTransactionClient.query()` whether backed by pg or the in-memory mock. */
+export type DBRunResult = QueryResult<any>;
+
 
 const convertPlaceholders = (query: string) => {
   let index = 1;
@@ -235,9 +239,10 @@ export const initDB = async () => {
       driver_profiles: [],
     };
     // Minimal mock pool object to prevent null checks
+    const emptyResult = (): QueryResult<any> => ({ rows: [], rowCount: 0, command: '', oid: 0, fields: [] });
     pool = {
-      query: async () => ({ rows: [], rowCount: 0 }),
-      connect: async () => ({ query: async () => ({ rows: [] }), release: () => {} }),
+      query: async () => emptyResult(),
+      connect: async () => ({ query: async () => emptyResult(), release: () => {} }),
     } as any;
     // Override getDB to use mock
     (global as any).__NAVIGO_MOCK_DB__ = mockStore;
@@ -247,12 +252,13 @@ export const initDB = async () => {
 
 export const getDB = () => {
   const mockStore = (global as any).__NAVIGO_MOCK_DB__;
+  const emptyResult = (rows: any[] = []): QueryResult<any> => ({ rows, rowCount: rows.length, command: '', oid: 0, fields: [] });
   if (mockStore) {
     // In-memory fallback
     const findUser = (emailOrPhone: string) => mockStore.users.find((u: any) => u.email === emailOrPhone || u.phone === emailOrPhone);
     return {
       getTransactionClient: async () => ({
-        query: async () => ({ rows: [] }),
+        query: async (_q: string, _p: any[] = []) => emptyResult([]),
         release: () => {},
       }),
       get: async (query: string, params: any[] = []) => {
@@ -262,6 +268,9 @@ export const getDB = () => {
             return mockStore.users.find((u: any) => u.email === params[0] || u.phone === params[0] || u.id === params[0] || u.email === params[0]?.toLowerCase?.());
           }
           return mockStore.users[0];
+        }
+        if (q.includes('from wallets')) {
+          return mockStore.wallets.find((w: any) => w.userId === params[0]);
         }
         if (q.includes('select 1')) return { ok: 1 };
         return undefined;
@@ -282,13 +291,18 @@ export const getDB = () => {
           if (!existing) {
             mockStore.users.push({ id, fullName, phone, email, role: params[5] || 'rider', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() });
           }
-          return { rowCount: 1 };
+          return emptyResult();
         }
         if (q.includes('insert into rides')) {
           mockStore.rides.push({ id: params[0], ...params });
-          return { rowCount: 1 };
+          return emptyResult();
         }
-        return { rowCount: 0 };
+        if (q.includes('insert into support_tickets')) {
+          const ticketId = mockStore.support_tickets.length + 1;
+          mockStore.support_tickets.push({ id: ticketId, userId: params[0], type: params[1], description: params[2], priority: params[3] });
+          return emptyResult([{ id: ticketId }]);
+        }
+        return emptyResult();
       },
       exec: async () => {},
     };

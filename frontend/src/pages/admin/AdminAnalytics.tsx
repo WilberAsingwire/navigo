@@ -16,7 +16,7 @@ interface AnalyticsStats {
   totalRides: number;
   totalRevenue: number;
   activeDrivers: number;
-  avgRating: number;
+  avgRating: number | string;
   monthlyGrowth: number;
 }
 
@@ -41,9 +41,34 @@ const AdminAnalytics: React.FC = () => {
         api.get('/admin/analytics/top-drivers')
       ]);
 
-      setStats(statsRes.data);
-      setDailyData(dailyRes.data);
-      setTopDrivers(topRes.data);
+      // Backend returns { ok, ...summary }, { ok, daily }, { ok, drivers }
+      const s = statsRes.data || {};
+      const daily = dailyRes.data?.daily || dailyRes.data || [];
+      const drivers = topRes.data?.drivers || topRes.data || [];
+
+      setStats({
+        totalRides: s.totalRides ?? 0,
+        totalRevenue: s.totalRevenue ?? 0,
+        activeDrivers: s.totalDrivers ?? 0,
+        avgRating: '—',
+        monthlyGrowth: s.completionRate ?? 0,
+      });
+      setDailyData(
+        daily.map((d: any) => ({
+          date: d.day || d.date,
+          count: Number(d.rides || d.count || 0),
+        })).filter((d: DailyStats) => d.date)
+      );
+      setTopDrivers(
+        drivers.map((dv: any) => ({
+          id: dv.driverId || dv.id,
+          fullName: dv.fullName || 'Unknown',
+          vehicleType: dv.vehicleType || '—',
+          completedRides: Number(dv.rides || 0),
+          earnings: Number(dv.earnings || 0),
+          rating: Number(dv.rating || 5),
+        }))
+      );
     } catch (e) {
       console.error('Failed to fetch analytics:', e);
     } finally {
@@ -58,7 +83,7 @@ const AdminAnalytics: React.FC = () => {
   if (loading) {
     return (
       <IonPage>
-        <IonContent className="analytics-loading">
+        <IonContent className="analytics-loading admin-container" style={{'--background': 'var(--nav-bg)'} as any}>
           <div className="loading-center">
             <IonSpinner name="crescent" color="warning" />
             <p>Analyzing Ecosystem Data…</p>
@@ -87,7 +112,7 @@ const AdminAnalytics: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="analytics-container" style={{'--background': '#080c14'} as any}>
+      <IonContent className="analytics-container admin-container" style={{'--background': 'var(--nav-bg)'} as any}>
         <div style={{ padding: 20, maxWidth: 800, margin: '0 auto' }}>
 
           <div className="analytics-header">

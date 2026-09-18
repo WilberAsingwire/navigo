@@ -63,15 +63,16 @@ const MapEvents: React.FC<{
   const map = useMap();
   useMapEvents({
     click(e) { const ll = e.latlng; if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]); },
-    moveend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch {} },
+    moveend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
+    zoomend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
   });
   useEffect(() => {
-    if (followUser && isValidLatLng(userLocation)) { try { map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 }); } catch {} }
+    if (followUser && isValidLatLng(userLocation)) { try { map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 }); } catch { /* noop */ } }
   }, [userLocation, followUser, map]);
   useEffect(() => {
-    const t = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 300);
-    const t2 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 1000);
-    const t3 = setTimeout(() => { try { map.invalidateSize(); } catch {} }, 2000);
+    const t = setTimeout(() => { try { map.invalidateSize(); } catch { /* noop */ } }, 300);
+    const t2 = setTimeout(() => { try { map.invalidateSize(); } catch { /* noop */ } }, 1000);
+    const t3 = setTimeout(() => { try { map.invalidateSize(); } catch { /* noop */ } }, 2000);
     return () => { clearTimeout(t); clearTimeout(t2); clearTimeout(t3); };
   }, [map]);
   return null;
@@ -108,7 +109,6 @@ const NavigoMap: React.FC<MapProps> = ({
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
   const [mapZoom, setMapZoom] = useState(15);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
-  const [tileStatus, setTileStatus] = useState<string>('Google Maps');
   const mapRef = React.useRef<L.Map | null>(null);
 
   const getValidCenter = (): [number, number] => {
@@ -139,7 +139,9 @@ const NavigoMap: React.FC<MapProps> = ({
         const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${from};${to}?overview=full&geometries=geojson`, { signal: AbortSignal.timeout(8000) });
         const data = await res.json();
         if (data.routes?.length) {
-          const pts = data.routes[0].geometry.coordinates.map((c: number[]) => [c[1], c[0]] as [number, number]).filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng));
+          const pts = data.routes[0].geometry.coordinates
+            .map((c: number[]): [number, number] => [c[1], c[0]])
+            .filter(([lat, lng]: [number, number]) => !isNaN(lat) && !isNaN(lng));
           setRoutePoints(pts);
           const d = Math.round(data.routes[0].distance / 100) / 10;
           const t = Math.round(data.routes[0].duration / 60);
@@ -156,12 +158,70 @@ const NavigoMap: React.FC<MapProps> = ({
             const t = Math.max(1, Math.round((dist / 22) * 60));
             setRouteDistance(dist); setRouteDuration(t);
             onDistanceChange?.(dist, t);
-          } catch {}
+          } catch { /* noop */ }
         }
       }
     };
     fetchRoute();
   }, [userLocation, destination, showRoute]);
+
+  // Google Maps embed URL generator
+  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
+  const getGoogleEmbedUrl = (
+    c: [number, number],
+    z: number,
+    style: 'standard' | 'satellite' | 'terrain'
+  ) => {
+    const typeParam = style === 'satellite' ? 'k' : style === 'terrain' ? 'p' : 'm';
+    return `https://maps.google.com/maps?q=${c[0].toFixed(5)},${c[1].toFixed(5)}&z=${z}&t=${typeParam}&output=embed&hl=en&iwloc=near`;
+  };
+
+  // Double-buffer iframes to eliminate white flash during zoom / pan / style changes
+  const [activeBuffer, setActiveBuffer] = useState<0 | 1>(0);
+  const [bufferUrls, setBufferUrls] = useState<[string, string]>(() => {
+    const init = getGoogleEmbedUrl(center, mapZoom, mapStyle);
+    return [init, init];
+  });
+  const [visualScale, setVisualScale] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const pendingUpdateRef = React.useRef<{
+    center: [number, number];
+    zoom: number;
+    style: 'standard' | 'satellite' | 'terrain';
+  } | null>(null);
+  const updateTimerRef = React.useRef<any>(null);
+
+  const scheduleBufferUpdate = (
+    c: [number, number],
+    z: number,
+    s: 'standard' | 'satellite' | 'terrain',
+    delay = 320
+  ) => {
+    pendingUpdateRef.current = { center: c, zoom: z, style: s };
+    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
+
+    updateTimerRef.current = setTimeout(() => {
+      if (!pendingUpdateRef.current) return;
+      const { center: targetCenter, zoom: targetZoom, style: targetStyle } = pendingUpdateRef.current;
+      const nextBuffer = activeBuffer === 0 ? 1 : 0;
+      const nextUrl = getGoogleEmbedUrl(targetCenter, targetZoom, targetStyle);
+
+      setBufferUrls((prev) => {
+        const next: [string, string] = [...prev];
+        next[nextBuffer] = nextUrl;
+        return next;
+      });
+      setIsTransitioning(true);
+    }, delay);
+  };
+
+  const handleBufferLoad = (bufferIndex: 0 | 1) => {
+    if (bufferIndex !== activeBuffer && isTransitioning) {
+      setActiveBuffer(bufferIndex);
+      setIsTransitioning(false);
+      setVisualScale(1);
+    }
+  };
 
   const handleMyLocation = () => {
     if (navigator.geolocation) {
@@ -171,8 +231,9 @@ const NavigoMap: React.FC<MapProps> = ({
           setMapCenter(ll);
           onMapClick?.(ll);
           if (mapRef.current) {
-            try { mapRef.current.flyTo(ll, 16, { duration: 1 }); } catch {}
+            try { mapRef.current.flyTo(ll, 16, { duration: 1 }); } catch { /* noop */ }
           }
+          scheduleBufferUpdate(ll, 16, mapStyle, 100);
         },
         () => {},
         { enableHighAccuracy: true, timeout: 8000 }
@@ -181,70 +242,139 @@ const NavigoMap: React.FC<MapProps> = ({
   };
 
   const handleZoomIn = () => {
-    const newZoom = Math.min(mapZoom + 1, 20);
-    setMapZoom(newZoom);
+    const nextZoom = Math.min(mapZoom + 1, 20);
+    if (nextZoom === mapZoom) return;
+
+    // 1. Instantly apply visual CSS zoom animation to active iframe — zero white flash!
+    setVisualScale((prev) => prev * 1.3);
+    setMapZoom(nextZoom);
+
+    // 2. Animate Leaflet overlay pins smoothly
     if (mapRef.current) {
-      try { mapRef.current.setZoom(newZoom); } catch {}
+      try {
+        mapRef.current.setZoom(nextZoom, { animate: true });
+      } catch { /* noop */ }
     }
-  };
-  const handleZoomOut = () => {
-    const newZoom = Math.max(mapZoom - 1, 5);
-    setMapZoom(newZoom);
-    if (mapRef.current) {
-      try { mapRef.current.setZoom(newZoom); } catch {}
-    }
+
+    // 3. Update background buffer URL debounced
+    scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
 
-  // Google Maps iframe with dynamic style and zoom
-  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
-  const getMapTypeParam = () => {
-    if (mapStyle === 'satellite') return 'k'; // satellite
-    if (mapStyle === 'terrain') return 'p'; // terrain
-    return 'm'; // roadmap standard
+  const handleZoomOut = () => {
+    const nextZoom = Math.max(mapZoom - 1, 5);
+    if (nextZoom === mapZoom) return;
+
+    // 1. Instantly apply visual CSS zoom animation to active iframe — zero white flash!
+    setVisualScale((prev) => prev * 0.77);
+    setMapZoom(nextZoom);
+
+    // 2. Animate Leaflet overlay pins smoothly
+    if (mapRef.current) {
+      try {
+        mapRef.current.setZoom(nextZoom, { animate: true });
+      } catch { /* noop */ }
+    }
+
+    // 3. Update background buffer URL debounced
+    scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
-  const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=${getMapTypeParam()}&output=embed&hl=en&iwloc=near`;
+
+  const handleStyleChange = (newStyle: 'standard' | 'satellite' | 'terrain') => {
+    if (newStyle === mapStyle) return;
+    setMapStyle(newStyle);
+    scheduleBufferUpdate(center, mapZoom, newStyle, 50);
+  };
+
+  const getIframeStyle = (bufferIndex: 0 | 1): React.CSSProperties => {
+    const isActive = bufferIndex === activeBuffer;
+    return {
+      position: 'absolute',
+      inset: 0,
+      width: '100%',
+      height: '100%',
+      border: 0,
+      pointerEvents: 'none',
+      zIndex: isActive ? 1 : 0,
+      opacity: isActive ? 1 : 0,
+      transform: isActive ? `scale(${visualScale})` : 'scale(1)',
+      transformOrigin: 'center center',
+      transition: isActive
+        ? 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-in-out'
+        : 'opacity 0.3s ease-in-out',
+      willChange: 'transform, opacity',
+    };
+  };
 
   return (
-    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#e5e7eb' }}>
-      {/* GOOGLE MAPS IFRAME BACKGROUND - always works, never blocked */}
+    <div
+      className="navigo-map-root"
+      style={{
+        height: height,
+        width: '100%',
+        position: 'relative',
+        background: mapStyle === 'satellite' ? '#0c1524' : '#e5e7eb',
+        minHeight: '100%',
+        flex: '1 1 auto',
+        overflow: 'hidden',
+      }}
+    >
+      {/* DOUBLE-BUFFERED GOOGLE MAPS IFRAMES — Zero white flash on zoom, smooth animated scale */}
       <iframe
-        key={`${center[0].toFixed(4)}-${center[1].toFixed(4)}-${mapZoom}-${mapStyle}`}
-        src={googleEmbedUrl}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, zIndex: 0 }}
+        src={bufferUrls[0]}
+        style={getIframeStyle(0)}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
-        title="Google Maps"
-        onLoad={() => setTileStatus(`Google ${mapStyle} z${mapZoom}`)}
+        title="Google Maps Primary"
+        onLoad={() => handleBufferLoad(0)}
+      />
+      <iframe
+        src={bufferUrls[1]}
+        style={getIframeStyle(1)}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        title="Google Maps Secondary"
+        onLoad={() => handleBufferLoad(1)}
       />
 
-      {/* LEAFLET OVERLAY - transparent, only for markers and route */}
+      {/* LEAFLET OVERLAY — Transparent, only for markers, route polyline, and touch events */}
       <MapContainer
         center={center}
         zoom={mapZoom}
-        style={{ height: '100%', width: '100%', background: 'transparent', zIndex: 1 }}
+        zoomAnimation={true}
+        fadeAnimation={true}
+        markerZoomAnimation={true}
+        style={{
+          height: '100%',
+          width: '100%',
+          background: 'transparent',
+          zIndex: 2,
+        }}
         zoomControl={false}
         attributionControl={false}
         ref={mapRef as any}
       >
-        {/* Transparent tiles - we rely on iframe for base, but keep one TileLayer with opacity 0.01 to keep Leaflet happy */}
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          opacity={0}
-          attribution=""
+        <MapEvents
+          onMapClick={onMapClick}
+          userLocation={userLocation}
+          followUser={followUser}
+          onMove={(c, z) => {
+            if (!isNaN(c[0]) && !isNaN(c[1])) {
+              setMapCenter(c);
+              scheduleBufferUpdate(c, z, mapStyle, 600);
+            }
+          }}
         />
-
-        <MapEvents onMapClick={onMapClick} userLocation={userLocation} followUser={followUser} onMove={(c, z) => { if (!isNaN(c[0]) && !isNaN(c[1])) { setMapCenter(c); setMapZoom(z); } }} />
 
         {isValidLatLng(userLocation) && (
           <>
-            <Marker position={[userLocation!.lat, userLocation!.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]); } catch {} } }} />
+            <Marker position={[userLocation!.lat, userLocation!.lng]} icon={pickupIcon} draggable={!!onPickupDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]); } catch { /* noop */ } } }} />
             <Circle center={[userLocation!.lat, userLocation!.lng]} radius={1000} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.06, weight: 1, dashArray: '8 8', opacity: 0.5 }} />
             <Circle center={[userLocation!.lat, userLocation!.lng]} radius={20} pathOptions={{ color: '#FF6B35', fillColor: '#FF6B35', fillOpacity: 0.25, weight: 2 }} />
           </>
         )}
 
         {isValidLatLng(destination as any) && (
-          <Marker position={[destination!.lat, destination!.lng]} icon={destIcon} draggable={!!onDestDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onDestDrag?.([ll.lat, ll.lng]); } catch {} } }} />
+          <Marker position={[destination!.lat, destination!.lng]} icon={destIcon} draggable={!!onDestDrag} eventHandlers={{ dragend: (e: any) => { try { const ll = e.target.getLatLng(); if (!isNaN(ll.lat) && !isNaN(ll.lng)) onDestDrag?.([ll.lat, ll.lng]); } catch { /* noop */ } } }} />
         )}
 
         {isValidLatLng(driverLocation as any) && <Marker position={[driverLocation!.lat, driverLocation!.lng]} icon={createVehicleIcon(VEHICLE_ICONS[driverType]?.url || goNew, VEHICLE_ICONS[driverType]?.color || '#0EA5E9')} />}
@@ -270,9 +400,9 @@ const NavigoMap: React.FC<MapProps> = ({
           <div className="map-badge live"><span className="bdot"></span> LIVE GPS</div>
           <div className="map-badge rt">● REAL-TIME</div>
           <div className="map-style-toggle">
-            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => setMapStyle('standard')}>STANDARD</button>
-            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => setMapStyle('satellite')}>SATELLITE</button>
-            <button className={`ms-btn ${mapStyle === 'terrain' ? 'active' : ''}`} onClick={() => setMapStyle('terrain')}>TERRAIN</button>
+            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => handleStyleChange('standard')}>STANDARD</button>
+            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>SATELLITE</button>
+            <button className={`ms-btn ${mapStyle === 'terrain' ? 'active' : ''}`} onClick={() => handleStyleChange('terrain')}>TERRAIN</button>
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}

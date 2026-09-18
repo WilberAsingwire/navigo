@@ -1,69 +1,82 @@
-import React, { useState, useEffect } from 'react';
-import { useHistory, Link } from 'react-router-dom';
+import React, { useState } from 'react';
 import {
-  IonPage, IonContent, IonSpinner, IonToast, IonIcon
+  IonPage, IonContent, IonIcon, IonSpinner, IonToast
 } from '@ionic/react';
-import {
-  lockClosedOutline, checkmarkCircleOutline, keyOutline, refreshOutline,
-  eyeOutline, eyeOffOutline, globeOutline
-} from 'ionicons/icons';
+import { arrowBackOutline, lockClosedOutline, refreshOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import { useIonRouter } from '@ionic/react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import './Auth.css';
-import './ForgotPassword.css';
+import './AuthStyles.css';
 
 const ForgotPassword: React.FC = () => {
-  const history = useHistory();
+  const ionRouter = useIonRouter();
   const { forgotPassword, resetPassword } = useAuth();
-
-  const [step, setStep] = useState<'phone' | 'code' | 'success'>('phone');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [devCode, setDevCode] = useState('');
-  const [countdown, setCountdown] = useState(0);
-  const [canResend, setCanResend] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [devCode, setDevCode] = useState<string | null>(null);
+  const [toastMsg, setToastMsg] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resentAt, setResentAt] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setCanResend(true);
-    }
-  }, [countdown]);
+  const isDev = import.meta.env.DEV;
 
-  const handleRequestCode = async () => {
+  const handleRequestCode = async (isResend = false) => {
     setError('');
-    if (!phone || phone.length < 10) return setError('Please enter a valid phone number');
-    setIsLoading(true);
+    if (!email || !email.includes('@')) {
+      return setError('Please enter a valid email address');
+    }
+    if (isResend) setResending(true); else setIsLoading(true);
     try {
-      const returnedCode = await forgotPassword(phone);
-      setDevCode(returnedCode);
+      // Use api instance (token-safe) rather than the AuthContext forgotPassword
+      // so we can capture an optional devCode without double-calling.
+      const res = await api.post('/auth/forgot-password', { email });
+      // Backend only returns a devCode in non-production/development environments.
+      if (res.data?.devCode) setDevCode(res.data.devCode);
+      else setDevCode(null);
       setStep('code');
-      setCountdown(60);
-      setCanResend(false);
+      if (isResend) {
+        setResentAt(Date.now());
+        setCode('');
+        setToastMsg('A new code has been sent.');
+        setShowToast(true);
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset code');
+      setError(err.response?.data?.message || 'Failed to send reset code. Try again.');
     } finally {
       setIsLoading(false);
+      setResending(false);
     }
   };
 
   const handleResetPassword = async () => {
     setError('');
-    if (!code || code.length !== 6) return setError('Reset code must be 6 digits');
-    if (!newPassword || newPassword.length < 4) return setError('Password must be at least 4 characters');
-    if (newPassword !== confirmPassword) return setError('Passwords do not match');
+    if (code.length < 4) {
+      return setError('Please enter the full reset code');
+    }
+    if (newPassword.length < 8) {
+      return setError('Password must be at least 8 characters');
+    }
+    if (!/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return setError('Password must contain at least one letter and one number');
+    }
+    if (newPassword !== confirmPassword) {
+      return setError('Passwords do not match');
+    }
     setIsLoading(true);
     try {
-      await resetPassword(phone, code, newPassword);
-      setStep('success');
+      await resetPassword(email, code, newPassword);
+      setToastMsg('Password reset! Signing you in...');
+      setShowToast(true);
+      setTimeout(() => ionRouter.push('/login', 'root', 'replace'), 1200);
     } catch (err: any) {
-      setError(err.message || 'Password reset failed');
+      setError(err.response?.data?.message || 'Reset failed. Check the code and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -71,43 +84,44 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent className="auth-content">
-        <div className="forgot-page-container">
-          <div className="forgot-card">
+      <IonContent className="auth-content auth-container">
+        <div className="auth-page-container">
+          <div className="auth-glass-card">
+            <button className="back-btn" onClick={() => ionRouter.push('/login', 'back')}>
+              <IonIcon icon={arrowBackOutline} /> Back
+            </button>
 
             <div className="icon-badge">
-              <IonIcon icon={keyOutline} />
+              <IonIcon icon={lockClosedOutline} />
             </div>
-            <h1 className="forgot-title">Forgot Password?</h1>
-            <p className="forgot-subtitle">
-              {step === 'phone'
-                ? "We'll send a 6-digit reset code to your phone"
-                : step === 'code'
-                  ? `We've sent a code to ${phone}`
-                  : "Your account is secured"}
+
+            <span className="step-badge">{step === 'email' ? 'Step 1 of 2' : 'Step 2 of 2'}</span>
+            <h1 className="auth-title">Forgot Password</h1>
+            <p className="auth-subtitle">
+              {step === 'email'
+                ? 'Enter your email and we\'ll send a reset code.'
+                : 'Enter the code sent to your email and choose a new password.'}
             </p>
 
-            {step === 'phone' && (
+            {step === 'email' && (
               <>
-                <div className="phone-input-wrapper">
-                  <div className="country-badge">
-                    <IonIcon icon={globeOutline} />
-                    <span>+256</span>
+                <div className="input-group">
+                  <div className="input-label">Email</div>
+                  <div className="input-wrapper">
+                    <span className="input-icon">@</span>
+                    <input
+                      className="auth-input"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      autoFocus
+                      onKeyDown={(e) => e.key === 'Enter' && handleRequestCode(false)}
+                    />
                   </div>
-                  <input
-                    className="phone-field"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="700 000 000"
-                    maxLength={10}
-                    onKeyDown={(e) => e.key === 'Enter' && handleRequestCode()}
-                  />
                 </div>
-
-                {error && <div className="auth-error">{error}</div>}
-
-                <button className="btn-primary" onClick={handleRequestCode} disabled={isLoading}>
+                {error && <div className="error-message">{error}</div>}
+                <button className="btn-primary" onClick={() => handleRequestCode(false)} disabled={isLoading}>
                   {isLoading ? <IonSpinner name="crescent" /> : 'Send Reset Code'}
                 </button>
               </>
@@ -115,91 +129,99 @@ const ForgotPassword: React.FC = () => {
 
             {step === 'code' && (
               <>
-                <div className="dev-code-box">
-                  <p>🔧 DEV CODE: <strong>{devCode}</strong></p>
-                </div>
-
-                <div className="reset-field-group">
-                  <label className="reset-label">6-Digit Reset Code</label>
-                  <input
-                    className="reset-input"
-                    type="text"
-                    inputMode="numeric"
-                    value={code}
-                    onChange={e => setCode(e.target.value)}
-                    placeholder="000000"
-                    maxLength={6}
-                  />
-                </div>
-
-                <div className="reset-field-group">
-                  <label className="reset-label">New Password</label>
-                  <div className="input-wrapper password-wrapper">
+                <div className="input-group">
+                  <div className="input-label">Reset Code</div>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></span>
                     <input
-                      className="reset-input"
-                      type={showPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      placeholder="Minimum 4 characters"
+                      className="auth-input"
+                      type="text"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="6-digit code"
+                      inputMode="numeric"
+                      maxLength={6}
+                      autoFocus
                     />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      <IonIcon icon={showPassword ? eyeOffOutline : eyeOutline} />
-                    </button>
                   </div>
                 </div>
-
-                <div className="reset-field-group">
-                  <label className="reset-label">Confirm New Password</label>
-                  <input
-                    className="reset-input"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter password"
-                  />
+                <div className="input-group">
+                  <div className="input-label">New Password</div>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IonIcon icon={lockClosedOutline} /></span>
+                    <input
+                      className="auth-input"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="At least 8 characters"
+                    />
+                  </div>
                 </div>
-
-                {error && <div className="auth-error">{error}</div>}
-
+                <div className="input-group">
+                  <div className="input-label">Confirm Password</div>
+                  <div className="input-wrapper">
+                    <span className="input-icon"><IonIcon icon={lockClosedOutline} /></span>
+                    <input
+                      className="auth-input"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter new password"
+                      onKeyDown={(e) => e.key === 'Enter' && handleResetPassword()}
+                    />
+                  </div>
+                </div>
+                {error && <div className="error-message">{error}</div>}
                 <button className="btn-primary" onClick={handleResetPassword} disabled={isLoading}>
                   {isLoading ? <IonSpinner name="crescent" /> : 'Reset Password'}
                 </button>
-
                 <button
-                  className="btn-secondary"
-                  style={{ background: 'none', border: 'none', color: '#FF6B35', cursor: 'pointer', marginTop: 12, fontSize: '13px' }}
-                  onClick={handleRequestCode}
-                  disabled={!canResend || isLoading}
+                  className="resend-link"
+                  onClick={() => handleRequestCode(true)}
+                  disabled={resending}
+                  style={{
+                    marginTop: '12px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#FF6B35',
+                    fontWeight: 600,
+                    cursor: resending ? 'wait' : 'pointer',
+                    fontSize: '14px',
+                  }}
                 >
-                  <IonIcon icon={refreshOutline} style={{ marginRight: 4 }} />
-                  {countdown > 0 ? `Resend Code (${countdown}s)` : 'Resend Code'}
+                  {resending
+                    ? 'Sending…'
+                    : (<><IonIcon icon={refreshOutline} /> {resentAt ? 'Resend new code' : 'Didn\'t get the code? Resend'}</>)}
                 </button>
               </>
             )}
 
-            {step === 'success' && (
-              <div className="success-container">
-                <IonIcon icon={checkmarkCircleOutline} className="success-icon" />
-                <h2 className="forgot-title">Password Reset!</h2>
-                <p className="forgot-subtitle">Your password has been updated successfully.</p>
-                <button className="btn-primary" onClick={() => history.push('/login')}>
-                  Back to Login
-                </button>
+            {/* Dev-code helper: ONLY rendered in Vite dev mode and only when backend actually returned a code. */}
+            {isDev && devCode && (
+              <div style={{
+                marginTop: '16px',
+                padding: '10px 12px',
+                borderRadius: '10px',
+                background: 'rgba(255,107,53,0.08)',
+                border: '1px dashed rgba(255,107,53,0.35)',
+                color: '#FFB088',
+                fontSize: '12px',
+                textAlign: 'center'
+              }}>
+                🔧 DEV CODE: <strong style={{ letterSpacing: '2px' }}>{devCode}</strong>
               </div>
             )}
 
-            {step !== 'success' && (
-              <div className="forgot-footer">
-                <p>Remember password? <Link to="/login" className="forgot-link">Sign In</Link></p>
-              </div>
-            )}
+            <IonToast
+              isOpen={showToast}
+              onDidDismiss={() => setShowToast(false)}
+              message={toastMsg}
+              duration={3000}
+              position="top"
+              color="dark"
+            />
           </div>
-
-          <IonToast isOpen={!!error} onDidDismiss={() => setError('')} message={error} duration={4000} color="danger" position="top" />
         </div>
       </IonContent>
     </IonPage>

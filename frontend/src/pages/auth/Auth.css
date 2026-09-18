@@ -1,32 +1,57 @@
-/* NAVIGO Auth Pages — Complete Styling */
+/* NAVIGO Auth Pages — Refreshed v2 with design tokens + light mode */
 
 .auth-content {
-  --background: #080c14;
-  --color: #fff8f0;
+  --background: var(--nav-bg);
+  --color: var(--nav-text);
+  background:
+    radial-gradient(circle at 15% 10%, var(--navigo-orange-ghost) 0%, transparent 45%),
+    radial-gradient(circle at 85% 90%, rgba(255,107,53,0.06) 0%, transparent 45%),
+    var(--nav-bg) !important;
+  min-height: 100vh;
 }
 
 .auth-container {
-  max-width: 420px;
+  max-width: 440px;
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 32px 20px 48px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-card {
+  background: var(--nav-card-glass);
+  backdrop-filter: blur(24px) saturate(1.15);
+  -webkit-backdrop-filter: blur(24px) saturate(1.15);
+  border: 1px solid var(--nav-border);
+  border-radius: var(--radius-2xl);
+  padding: 28px 24px;
+  box-shadow: var(--shadow-float);
+}
+body.light .auth-card {
+  background: #fff;
+  border-color: var(--nav-border);
+  box-shadow: var(--shadow-card);
 }
 
 /* Logo */
 .auth-logo {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .auth-logo h1 {
-  font-size: 34px;
+  font-size: clamp(30px, 7vw, 38px);
   font-weight: 800;
-  color: #FF6B35;
+  color: var(--navigo-orange);
   margin: 0;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
 }
 
 .auth-logo p {
-  color: rgba(255, 248, 240, 0.5);
+  color: var(--nav-text-secondary);
   margin: 6px 0 0;
   font-size: 13px;
 }
@@ -34,72 +59,81 @@
 /* Role Segment */
 .role-segment {
   margin-bottom: 22px;
-  --background: rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: 3px;
+  --background: var(--nav-card-soft);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  border: 1px solid var(--nav-border);
 }
 
 .role-segment ion-segment-button {
-  --color: rgba(255, 248, 240, 0.4);
-  --color-checked: #FF6B35;
-  --indicator-color: rgba(255, 107, 53, 0.15);
-  font-size: 11px;
-  min-height: 36px;
-  --border-radius: 10px;
+  --color: var(--nav-text-muted);
+  --color-checked: var(--navigo-orange);
+  --indicator-color: var(--navigo-orange-soft);
+  font-size: 12px;
+  font-weight: 700;
+  min-height: 40px;
+  --border-radius: var(--radius-md);
+  --padding-top: 4px;
+  --padding-bottom: 4px;
 }
 
 /* Verification Notice */
 .verification-notice {
-  background: rgba(255, 107, 53, 0.08);
-  border: 1px solid rgba(255, 107, 53, 0.2);
-  border-radius: 14px;
+  background: var(--navigo-orange-soft);
+  border: 1px solid var(--nav-border-orange);
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 22px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
 .verification-notice ion-icon {
   font-size: 22px;
-  color: #FF6B35;
+  color: var(--navigo-orange);
   flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .verification-notice p {
-  color: rgba(255, 248, 240, 0.7);
+  color: var(--nav-text-secondary);
   font-size: 12px;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 /* Input Fields */
 .auth-input {
-  --background: rgba(255, 255, 255, 0.05);
-  --color: #fff;
-  --placeholder-color: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  --background: var(--nav-input-bg) !important;
+  --color: var(--nav-input-text) !important;
+  --placeholder-color: var(--nav-input-placeholder) !important;
+  border-radius: var(--radius-md) !important;
   margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  --padding-start: 12px;
-  --highlight-color-focused: #FF6B35;
+  border: 1px solid var(--nav-input-border);
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --highlight-color-focused: var(--navigo-orange);
+  font-size: 15px;
 }
 
 .auth-input ion-icon[slot="start"] {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   font-size: 18px;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .auth-input ion-label {
-  color: rgba(255, 248, 240, 0.6) !important;
+  color: var(--nav-text-secondary) !important;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
 .auth-input ion-note {
-  color: rgba(255, 248, 240, 0.3);
+  color: var(--nav-text-muted);
   font-size: 10px;
 }
 
@@ -110,27 +144,26 @@
 }
 
 .forgot-password-link a {
-  color: #FF6B35;
-  font-size: 12px;
+  color: var(--navigo-orange);
+  font-size: 13px;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.forgot-password-link a:hover {
-  text-decoration: underline;
-}
+.forgot-password-link a:hover { text-decoration: underline; }
 
 /* Error Message */
 .auth-error {
-  background: rgba(232, 93, 117, 0.12);
-  color: #E85D75;
+  background: var(--nav-danger-soft);
+  color: var(--nav-danger);
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   margin-bottom: 16px;
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
-  border: 1px solid rgba(232, 93, 117, 0.2);
-  animation: shake 0.3s ease;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  animation: shake 0.35s ease;
+  font-weight: 500;
 }
 
 @keyframes shake {
@@ -141,19 +174,20 @@
 
 /* Main Button */
 .auth-button {
-  --background: linear-gradient(135deg, #FF6B35, #E85D75);
-  --background-activated: linear-gradient(135deg, #E85D75, #FF6B35);
-  --border-radius: 14px;
-  font-weight: 700;
-  height: 50px;
-  margin-top: 8px;
-  font-size: 15px;
-  --box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
-  transition: all 0.3s ease;
+  --background: linear-gradient(135deg, var(--navigo-orange), var(--navigo-ember)) !important;
+  --background-activated: linear-gradient(135deg, var(--navigo-orange-active), #D94F1A) !important;
+  --border-radius: var(--radius-md) !important;
+  font-weight: 700 !important;
+  height: 52px !important;
+  margin-top: 10px;
+  font-size: 15px !important;
+  --box-shadow: var(--shadow-orange) !important;
+  --ripple-color: rgba(255,255,255,0.2);
+  letter-spacing: 0.01em;
 }
 
 .auth-button:hover {
-  --box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  --box-shadow: var(--shadow-orange-lg) !important;
   transform: translateY(-1px);
 }
 
@@ -162,9 +196,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 28px 0 20px;
-  color: rgba(255, 255, 255, 0.3);
+  margin: 24px 0 18px;
+  color: var(--nav-text-muted);
   font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .auth-divider::before,
@@ -172,7 +209,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--nav-border);
 }
 
 /* Social Buttons */
@@ -184,33 +221,22 @@
 }
 
 .social-btn {
-  --border-radius: 12px;
-  --border-color: rgba(255, 255, 255, 0.12);
-  --color: #fff;
-  height: 46px;
+  --border-radius: var(--radius-md);
+  --border-color: var(--nav-border-strong);
+  --color: var(--nav-text);
+  --background: var(--nav-card-soft);
+  --background-activated: var(--nav-card-hover);
+  height: 48px;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: all 0.2s var(--ease-spring);
+  --box-shadow: none;
 }
 
 .social-btn:hover {
-  --border-color: rgba(255, 255, 255, 0.25);
+  --border-color: var(--nav-border-orange);
+  --background: var(--nav-card-hover);
   transform: translateY(-1px);
-}
-
-.social-btn.google {
-  --background: rgba(219, 68, 55, 0.1);
-  --background-hover: rgba(219, 68, 55, 0.18);
-}
-
-.social-btn.facebook {
-  --background: rgba(66, 103, 178, 0.1);
-  --background-hover: rgba(66, 103, 178, 0.18);
-}
-
-.social-btn.github {
-  --background: rgba(255, 255, 255, 0.06);
-  --background-hover: rgba(255, 255, 255, 0.1);
 }
 
 /* Switch Link */
@@ -218,107 +244,113 @@
   text-align: center;
   margin-top: 22px;
   font-size: 13px;
-  color: rgba(255, 248, 240, 0.5);
+  color: var(--nav-text-secondary);
 }
 
 .auth-switch a {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
+  margin-left: 4px;
 }
 
-.auth-switch a:hover {
-  text-decoration: underline;
-}
+.auth-switch a:hover { text-decoration: underline; }
 
 /* Guest Mode */
 .guest-mode {
   text-align: center;
   margin-top: 18px;
   padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--nav-border);
 }
 
 .guest-mode ion-button {
-  --color: rgba(255, 248, 240, 0.5);
+  --color: var(--nav-text-secondary);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .guest-mode ion-note {
-  font-size: 10px;
+  font-size: 11px;
   margin-top: 4px;
   display: block;
+  color: var(--nav-text-muted);
 }
 
 /* Terms Checkbox */
 .terms-item {
   --background: transparent;
-  --color: rgba(255, 248, 240, 0.5);
+  --color: var(--nav-text-secondary);
   font-size: 12px;
   margin: 10px 0 16px;
   --padding-start: 0;
 }
 
 .terms-label a {
-  color: #FF6B35;
+  color: var(--navigo-orange);
   text-decoration: none;
+  font-weight: 600;
 }
+.terms-label a:hover { text-decoration: underline; }
 
 /* Code Sent Message */
 .code-sent-message {
   text-align: center;
   margin-bottom: 22px;
-  padding: 16px;
-  background: rgba(45, 106, 79, 0.08);
-  border-radius: 14px;
-  border: 1px solid rgba(45, 106, 79, 0.15);
+  padding: 20px 16px;
+  background: var(--nav-success-soft);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .code-sent-message ion-icon {
   font-size: 40px;
-  color: #2D6A4F;
+  color: var(--nav-success);
   margin-bottom: 8px;
 }
 
 .code-sent-message p {
-  color: rgba(255, 248, 240, 0.7);
+  color: var(--nav-text-secondary);
   font-size: 13px;
   margin: 0;
+  line-height: 1.5;
 }
 
 /* Dev Code Box */
 .dev-code-box {
-  background: rgba(255, 193, 7, 0.08);
-  border: 1px dashed rgba(255, 193, 7, 0.3);
-  border-radius: 12px;
+  background: var(--nav-warning-soft);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
   padding: 12px;
   margin-bottom: 18px;
   text-align: center;
 }
 
 .dev-code-box p {
-  color: #FFC107;
+  color: var(--nav-warning);
   font-size: 12px;
-  margin: 0;
+  margin: 0 0 4px;
+  font-weight: 600;
 }
 
 .dev-code-box strong {
-  font-size: 16px;
-  letter-spacing: 2px;
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: var(--nav-warning);
+  font-family: var(--font-display);
 }
 
 /* Success Message */
 .success-message {
   text-align: center;
-  padding: 40px 20px;
+  padding: 48px 24px;
 }
 
 .success-icon {
   font-size: 72px;
-  color: #2D6A4F;
+  color: var(--nav-success);
   margin-bottom: 16px;
-  animation: scaleIn 0.5s ease;
+  animation: scaleIn 0.5s var(--ease-spring);
 }
 
 @keyframes scaleIn {
@@ -328,22 +360,25 @@
 }
 
 .success-message h2 {
-  color: #fff;
+  color: var(--nav-text);
   margin: 0 0 8px;
-  font-size: 22px;
+  font-size: 24px;
+  font-family: var(--font-display);
 }
 
 .success-message p {
-  color: rgba(255, 248, 240, 0.5);
-  margin-bottom: 24px;
+  color: var(--nav-text-secondary);
+  margin-bottom: 28px;
   font-size: 14px;
 }
 
 /* Toast */
 ion-toast {
-  --background: rgba(13, 17, 23, 0.95);
-  --color: #fff;
-  --border-radius: 12px;
-  --box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  --border-color: rgba(255, 255, 255, 0.1);
+  --border-radius: var(--radius-lg);
+  --box-shadow: var(--shadow-float);
+}
+
+@media (min-width: 600px) {
+  .auth-container { padding: 48px 24px; }
+  .auth-card { padding: 36px 32px; }
 }

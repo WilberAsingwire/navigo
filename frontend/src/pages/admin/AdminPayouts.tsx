@@ -83,7 +83,7 @@ const AdminPayouts: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{ '--background': '#080c14' } as any}>
+      <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="admin-container">
         <IonRefresher slot="fixed" onIonRefresh={(e) => { load(); setTimeout(() => e.target.complete(), 800); }}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>

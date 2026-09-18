@@ -60,7 +60,7 @@ const Login: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent style={{ '--background': '#0a0a0a' }}>
+      <IonContent className="auth-container" style={{ '--background': 'transparent' } as any}>
         <div className="auth-container">
           <div className="glow-top"></div>
           <div className="glow-bottom"></div>

@@ -16,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
+import './Profile.css';
 
 const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuth();
@@ -71,30 +72,30 @@ const Profile: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="profile-wrapper">
         <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
           
           {/* Avatar Section */}
           <div style={{ textAlign: 'center', marginBottom: 20, paddingTop: 10 }}>
-            <div style={{ width: 88, height: 88, margin: '0 auto 12px', border: '3px solid #FF6B35', borderRadius: '50%', overflow: 'hidden' }}>
-              <InitialsAvatar name={user?.fullName || 'N'} size={88} />
+            <div className="profile-avatar-wrap">
+              <InitialsAvatar name={user?.fullName || 'N'} size={90} />
             </div>
-            <h2 style={{ color: '#fff', margin: '8px 0 2px', fontSize: 20 }}>{user?.fullName || 'Customer'}</h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>
+            <h2 className="profile-name">{user?.fullName || 'Customer'}</h2>
+            <p className="profile-phone">
               {user?.role === 'rider' ? '🚗 Customer' : user?.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'} • {user?.phone || 'No phone'}
             </p>
             {user?.verificationStatus === 'approved' && (
-              <IonBadge color="success" style={{ marginTop: 6 }}>✅ Verified</IonBadge>
+              <span className="profile-verified-badge">✓ Verified Account</span>
             )}
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 20 }}>
+          <div className="profile-stats-grid">
             {stats.map(s => (
-              <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
-                <IonIcon icon={s.icon} style={{ color: '#FF6B35', fontSize: 18, marginBottom: 4 }} />
-                <p style={{ color: '#fff', fontSize: 15, fontWeight: 700, margin: 2 }}>{s.value}</p>
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{s.label}</span>
+              <div key={s.label} className="profile-stat-card">
+                <IonIcon icon={s.icon} style={{ color: 'var(--navigo-orange)', fontSize: 20, marginBottom: 6 }} />
+                <div className="profile-stat-value">{s.value}</div>
+                <div className="profile-stat-label">{s.label}</div>
               </div>
             ))}
           </div>

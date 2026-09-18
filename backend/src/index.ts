@@ -12,6 +12,7 @@ import userRoutes from './routes/users';
 import walletRoutes from './routes/wallet';
 import poiRoutes from './routes/poi';
 import supportRoutes from './routes/support';
+import adminRoutes from './routes/admin';
 import { initDB } from './config/database';
 import { setupSocketHandlers, setIO } from './socket/socketHandler';
 import { generalLimiter } from './middleware/rateLimit';
@@ -80,9 +81,18 @@ app.get('/auth/google/callback',
     const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-five.vercel.app/auth/callback';
 
     if (existingUser) {
-      // User exists, redirect with status existing
+      // User exists, redirect with status existing — include userId & role so the
+      // frontend can land the user on the correct home page without an extra fetch.
       const token = require('./utils/auth').generateToken({ id: existingUser.id, role: existingUser.role });
-      res.redirect(`${redirectUrl}?status=existing&token=${token}`);
+      const params = new URLSearchParams({
+        status: 'existing',
+        token,
+        userId: existingUser.id,
+        name: existingUser.fullName || name,
+        email: existingUser.email || email || '',
+        role: existingUser.role || 'customer',
+      }).toString();
+      res.redirect(`${redirectUrl}?${params}`);
     } else {
       // New user, redirect with status new and their info
       const params = new URLSearchParams({
@@ -106,6 +116,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/poi', poiRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/admin', adminRoutes);
+// Some screens (AdminAnalytics, AdminPayouts) still call the legacy /auth/admin/* path.
+// Mount sub-routers for the specific endpoints that don't already exist under auth routes.
+app.use('/api/auth/admin/payouts', adminRoutes);
+app.use('/api/admin/analytics', adminRoutes);
 
 app.get('/api/health', async (_req: any, res: any) => {
   try {
@@ -156,6 +171,10 @@ initDB().then(async () => {
           await db.run(
             'INSERT INTO users (id, fullName, phone, email, password, role, phoneVerified, verificationStatus, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [adminId, 'NAVIGO Admin', finalPhone, adminEmail, adminPassword, 'admin', true, 'approved', new Date().toISOString()]
+          );
+          await db.run(
+            'INSERT INTO wallets (userId, balance) VALUES (?, 0) ON CONFLICT(userId) DO NOTHING',
+            [adminId]
           );
           console.log(`🚀 NEW ADMIN CREATED: ${adminEmail} | ID: ${adminId} | Phone: ${finalPhone}`);
         }

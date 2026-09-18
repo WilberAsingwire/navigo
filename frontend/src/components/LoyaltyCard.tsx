@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IonToast, IonProgressBar } from '@ionic/react';
 import { useAuth } from '../context/AuthContext';
 import { Haptic } from '../services/HapticService';

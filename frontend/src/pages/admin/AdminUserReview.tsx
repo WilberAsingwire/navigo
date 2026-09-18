@@ -104,7 +104,7 @@ const AdminUserReview: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container">
         <IonRefresher slot="fixed" onIonRefresh={(e) => { setLoading(true); setTimeout(() => { setLoading(false); e.target.complete(); }, 1000); }}>
           <IonRefresherContent pullingIcon={chevronDownCircleOutline} />
         </IonRefresher>

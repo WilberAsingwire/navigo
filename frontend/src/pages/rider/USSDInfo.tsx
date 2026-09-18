@@ -13,7 +13,7 @@ const USSDInfo: React.FC = () => {
           <IonTitle>Offline Booking</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding" style={{'--background': '#080c14', '--color': '#fff8f0'} as any}>
+      <IonContent className="ion-padding auth-container" style={{'--background': 'var(--nav-bg)', '--color': '#fff8f0'} as any}>
         
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <IonIcon icon={phonePortraitOutline} style={{ fontSize: 64, color: '#FF6B35' }} />

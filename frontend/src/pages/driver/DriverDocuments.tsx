@@ -74,7 +74,7 @@ const DriverDocuments: React.FC = () => {
         savedUser.verificationStatus = 'pending';
         savedUser.isFemaleDriver = isFemaleDriver;
         localStorage.setItem('navigo_user', JSON.stringify(savedUser));
-      } catch {}
+      } catch { /* noop */ }
 
       setTimeout(() => history.push('/driver/home'), 2000);
     } catch (err: any) {
@@ -104,7 +104,7 @@ const DriverDocuments: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="driver-docs-container">
+      <IonContent className="driver-docs-container driver-documents-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="docs-container">
           <IonCard className="status-card">
             <IonCardContent>

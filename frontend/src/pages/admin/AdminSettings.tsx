@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonItem, IonLabel, IonInput, IonButton, IonIcon, IonToggle, IonCard, IonCardContent, IonToast } from '@ionic/react';
+import { IonPage, IonContent, IonHeader, IonToolbar, IonTitle, IonButtons, IonBackButton, IonInput, IonButton, IonIcon, IonToggle, IonCard, IonCardContent, IonToast } from '@ionic/react';
 import { settingsOutline, cashOutline, carOutline, bicycleOutline, pieChartOutline, phonePortraitOutline, mailOutline, shieldCheckmarkOutline, checkmarkCircleOutline } from 'ionicons/icons';
 
 const AdminSettings: React.FC = () => {
@@ -30,7 +30,7 @@ const AdminSettings: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent style={{'--background': '#080c14'} as any}>
+      <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container">
         <div style={{padding: 14, maxWidth: 600, margin: '0 auto'}}>
 
           {/* GENERAL */}

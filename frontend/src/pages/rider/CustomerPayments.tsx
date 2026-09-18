@@ -85,7 +85,7 @@ const RiderPayments: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="payments-container">
+      <IonContent className="payments-container customer-payments-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         {loading && <IonProgressBar type="indeterminate" color="warning" />}
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>

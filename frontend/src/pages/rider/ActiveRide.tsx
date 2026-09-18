@@ -155,7 +155,7 @@ const ActiveRide: React.FC = () => {
   if (loading) {
     return (
       <IonPage>
-        <IonContent style={{ '--background': '#080c14' } as any}>
+        <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="active-ride-wrapper">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <IonSpinner name="crescent" color="warning" />
             <p style={{ color: '#94A3B8' }}>Loading your ride…</p>
@@ -173,7 +173,7 @@ const ActiveRide: React.FC = () => {
             <IonTitle style={{ color: '#fff' }}>My Ride</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <IonContent style={{ '--background': '#080c14' } as any}>
+        <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="active-ride-wrapper">
           <EmptyState
             icon={<IonIcon icon={carOutline} style={{ fontSize: 26 }} />}
             title="No active ride"
@@ -209,7 +209,7 @@ const ActiveRide: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="active-ride-content" style={{ '--background': '#080c14' } as any}>
+      <IonContent className="active-ride-content active-ride-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
         <div style={{ height: '280px', width: '100%', position: 'relative' }}>
           <NavigoMap
             userLocation={driverPos || ride.pickup}

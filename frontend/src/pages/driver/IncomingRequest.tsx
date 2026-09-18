@@ -9,7 +9,7 @@ import {
   personOutline, mapOutline
 } from 'ionicons/icons';
 import InitialsAvatar from '../../components/InitialsAvatar';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import socketService from '../../services/socketService';
 import api from '../../services/api';
@@ -104,7 +104,7 @@ const IncomingRequest: React.FC = () => {
   if (!requestData) {
     return (
       <IonPage>
-        <IonContent className="request-bg" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <IonContent className="request-bg incoming-wrapper" style={{'--background': 'var(--nav-bg)',  display: 'flex', justifyContent: 'center', alignItems: 'center' } as any}>
           <div style={{ textAlign: 'center', color: '#fff' }}>
             <IonSpinner name="crescent" />
             <p>Waiting for ride requests...</p>
@@ -118,7 +118,7 @@ const IncomingRequest: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent className="request-bg" scrollY={false}>
+      <IonContent className="request-bg incoming-wrapper" scrollY={false} style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="request-container">
           <div className="timer-section">
             <div className={`timer-circle pulse`}>

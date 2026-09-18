@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { IonPage, IonContent, IonSpinner, IonToast, IonIcon } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import { checkmarkCircleOutline, globeOutline } from 'ionicons/icons';
 import './Auth.css';
 import './CompleteSocialRegistration.css';
-import { API_URL } from '../../config';
 
 const CompleteSocialRegistration: React.FC = () => {
   const history = useHistory();
@@ -15,34 +14,48 @@ const CompleteSocialRegistration: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const socialData = JSON.parse(localStorage.getItem('temp_social_user') || '{}');
+  const raw = localStorage.getItem('temp_social_user') || '{}';
+  const socialData = (() => { try { return JSON.parse(raw); } catch { return {}; } })();
+
+  // Guard against direct navigation without a pending social payload
+  if (!socialData.name && !socialData.socialId) {
+    // Defer the redirect until after mount
+    setTimeout(() => history.replace('/login'), 0);
+  }
+
+  const normalizePhone = (v: string) => v.replace(/\D/g, '');
 
   const handleCompleteRegistration = async () => {
     setError('');
-    if (!phone || phone.length < 10) {
-      return setError('Please enter a valid phone number');
+    const cleanPhone = normalizePhone(phone);
+    if (cleanPhone.length < 9) {
+      return setError('Please enter a valid Ugandan phone number');
     }
+    // Prefix with leading 0 if missing (user typed 7... instead of 07...)
+    const finalPhone = cleanPhone.startsWith('0') ? cleanPhone : `0${cleanPhone}`;
 
     setIsLoading(true);
     try {
-      const response = await axios.post(`${API_URL}/auth/google-register`, {
-        ...socialData,
-        phone: phone
+      // Backend expects `fullName`, not `name` — map it explicitly to avoid silent nulls.
+      const response = await api.post('/auth/google-register', {
+        fullName: socialData.name,
+        email: socialData.email,
+        socialId: socialData.socialId,
+        provider: socialData.provider || 'google',
+        phone: finalPhone,
       });
 
-      // CLEAR any existing session first to prevent "Role Leaking" from old admin accounts
       localStorage.removeItem('navigo_token');
       localStorage.removeItem('navigo_user');
-
-      // Now save the new, fresh customer session
       saveSession(response.data.user, response.data.token);
       localStorage.removeItem('temp_social_user');
 
-      const role = response.data.user.role;
-      const redirectPath = (role === 'driver' || role === 'motorist') ? '/driver/home' :
-                           (role === 'admin') ? '/admin/dashboard' : '/customer/home';
-
-      history.push(redirectPath);
+      const role = response.data.user?.role || 'customer';
+      const redirectPath =
+        role === 'admin' ? '/admin/dashboard'
+        : (role === 'driver' || role === 'motorist') ? '/driver/home'
+        : '/customer/home';
+      history.replace(redirectPath);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
@@ -52,7 +65,7 @@ const CompleteSocialRegistration: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent className="auth-content">
+      <IonContent className="auth-content auth-container" style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="social-reg-page-container">
           <div className="social-reg-card">
 
@@ -75,7 +88,7 @@ const CompleteSocialRegistration: React.FC = () => {
                 className="phone-field"
                 type="tel"
                 value={phone}
-                onChange={e => setPhone(e.target.value)}
+                onChange={e => setPhone(normalizePhone(e.target.value))}
                 placeholder="700 000 000"
                 maxLength={10}
                 onKeyDown={(e) => e.key === 'Enter' && handleCompleteRegistration()}

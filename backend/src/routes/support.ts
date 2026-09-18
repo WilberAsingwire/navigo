@@ -38,7 +38,7 @@ router.get('/admin/tickets', authenticate, authorize(['admin']), async (req: Req
       ORDER BY t.createdAt DESC
     `);
 
-    const ticketsWithReplies = await Promise.all(tickets.map(async (t) => {
+    const ticketsWithReplies = await Promise.all(tickets.map(async (t: any) => {
       const replies = await db.all('SELECT fromUser as from, message as text, createdAt as time FROM support_replies WHERE ticketId = ? ORDER BY createdAt ASC', [t.id]);
       return { ...t, replies };
     }));
