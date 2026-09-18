@@ -109,7 +109,7 @@ const Login: React.FC = () => {
                     type={method === 'phone' ? 'text' : 'email'}
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder={method === 'phone' ? '07... (e.g. 0772000000)' : 'you@example.com'}
+                    placeholder={method === 'phone' ? '07...' : 'email@example.com'}
                     onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                   />
                 </div>

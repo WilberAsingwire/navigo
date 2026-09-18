@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   IonIcon, IonButton, IonTextarea, IonAvatar, IonBadge,
-  IonSpinner, IonChip
+  IonSpinner
 } from '@ionic/react';
 import {
   sendOutline, closeOutline, checkmarkDoneOutline,
   timeOutline, personOutline, carOutline, happyOutline,
-  attachOutline, micOutline, callOutline, imageOutline,
+  micOutline, callOutline,
   locationOutline, informationCircleOutline, cameraOutline
 } from 'ionicons/icons';
 import { io, Socket } from 'socket.io-client';

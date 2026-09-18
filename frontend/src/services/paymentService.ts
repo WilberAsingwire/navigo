@@ -178,12 +178,13 @@ export const processPayment = async (
   return provider === 'mtn' ? payWithMTN(request) : payWithAirtel(request);
 };
 
+import api from './api';
+
 // Get wallet balance
 export const getWalletBalance = async (): Promise<WalletBalance> => {
-  // In production: fetch from backend
-  const saved = localStorage.getItem('navigo_wallet');
-  const balance = saved ? JSON.parse(saved).balance : 0;
-  return { balance, currency: 'UGX', lastUpdated: new Date().toISOString() };
+  const res = await api.get('/wallet/balance');
+  if (!res.data.ok) throw new Error(res.data.message || 'Failed to fetch balance');
+  return { balance: res.data.balance, currency: 'UGX', lastUpdated: new Date().toISOString() };
 };
 
 // Top-up wallet
@@ -196,73 +197,43 @@ export const topUpWallet = async (amount: number, phone: string, provider: 'mtn'
     reference,
     narration: `NAVIGO Wallet Top-up - UGX ${amount.toLocaleString()}`,
   };
-  
+
   const result = provider === 'mtn' ? await payWithMTN(request) : await payWithAirtel(request);
-  
-  if (result.success) {
-    // Save to local storage for demo
-    const saved = localStorage.getItem('navigo_wallet');
-    const current = saved ? JSON.parse(saved) : { balance: 0, transactions: [] };
-    const updated = {
-      balance: current.balance + amount,
-      transactions: [
-        {
-          id: reference,
-          type: 'credit',
-          amount,
-          description: `Top-up via ${provider === 'mtn' ? 'MTN' : 'Airtel'} Money`,
-          date: new Date().toISOString(),
-          provider,
-          status: 'pending',
-          reference,
-        },
-        ...(current.transactions || []),
-      ].slice(0, 50), // Keep last 50
-    };
-    localStorage.setItem('navigo_wallet', JSON.stringify(updated));
+
+  if (result.success && result.transactionId) {
+    try {
+      await api.post('/wallet/topup', {
+        amount,
+        paymentReference: result.transactionId
+      });
+    } catch (e: any) {
+      console.error('Failed to register top-up with backend:', e);
+    }
   }
-  
+
   return result;
 };
 
 // Get transaction history
 export const getTransactionHistory = async (): Promise<Transaction[]> => {
-  const saved = localStorage.getItem('navigo_wallet');
-  return saved ? JSON.parse(saved).transactions || [] : [];
+  const res = await api.get('/wallet/transactions');
+  if (!res.data.ok) return [];
+  return res.data.transactions;
 };
 
 // Pay for ride from wallet
 export const payFromWallet = async (amount: number, rideId: string): Promise<PaymentResponse> => {
-  const saved = localStorage.getItem('navigo_wallet');
-  const current = saved ? JSON.parse(saved) : { balance: 0, transactions: [] };
-  
-  if (current.balance < amount) {
-    return { success: false, message: 'Insufficient balance. Please top up.', status: 'failed' };
+  // This should be handled by the ride settlement logic in the backend,
+  // but if we need a manual trigger:
+  try {
+    const res = await api.post(`/rides/${rideId}/settle`, { amount, paymentMethod: 'wallet' });
+    return {
+      success: res.data.ok,
+      transactionId: res.data.transactionId,
+      message: res.data.message || (res.data.ok ? 'Paid from wallet' : 'Payment failed'),
+      status: res.data.ok ? 'completed' : 'failed',
+    };
+  } catch (e: any) {
+    return { success: false, message: e.response?.data?.message || 'Wallet payment failed', status: 'failed' };
   }
-  
-  const reference = generateReference();
-  const updated = {
-    balance: current.balance - amount,
-    transactions: [
-      {
-        id: reference,
-        type: 'debit',
-        amount,
-        description: `Ride payment - ${rideId}`,
-        date: new Date().toISOString(),
-        provider: 'wallet',
-        status: 'completed',
-        reference,
-      },
-      ...current.transactions,
-    ].slice(0, 50),
-  };
-  localStorage.setItem('navigo_wallet', JSON.stringify(updated));
-  
-  return {
-    success: true,
-    transactionId: reference,
-    message: `✅ Paid UGX ${amount.toLocaleString()} from wallet`,
-    status: 'completed',
-  };
 };

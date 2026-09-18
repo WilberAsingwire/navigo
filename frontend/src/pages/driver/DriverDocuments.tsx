@@ -173,7 +173,7 @@ const DriverDocuments: React.FC = () => {
                   <IonInput
                     value={nationalId}
                     onIonInput={e => setNationalId(e.detail.value!)}
-                    placeholder="e.g., CF8901234ABCD"
+                    placeholder="Enter National ID"
                   />
                 </IonItem>
 
@@ -183,7 +183,7 @@ const DriverDocuments: React.FC = () => {
                   <IonInput
                     value={drivingLicense}
                     onIonInput={e => setDrivingLicense(e.detail.value!)}
-                    placeholder="e.g., DL-2023-001234"
+                    placeholder="Enter Driving License Number"
                   />
                 </IonItem>
 
@@ -193,7 +193,7 @@ const DriverDocuments: React.FC = () => {
                   <IonInput
                     value={vehiclePlate}
                     onIonInput={e => setVehiclePlate(e.detail.value!)}
-                    placeholder="e.g., UBA 123A"
+                    placeholder="Enter Vehicle Plate"
                   />
                 </IonItem>
 
@@ -203,7 +203,7 @@ const DriverDocuments: React.FC = () => {
                   <IonInput
                     value={vehicleModel}
                     onIonInput={e => setVehicleModel(e.detail.value!)}
-                    placeholder="e.g., Toyota Prius 2020"
+                    placeholder="Enter Vehicle Model"
                   />
                 </IonItem>
 
@@ -213,7 +213,7 @@ const DriverDocuments: React.FC = () => {
                   <IonInput
                     value={vehicleColor}
                     onIonInput={e => setVehicleColor(e.detail.value!)}
-                    placeholder="e.g., White"
+                    placeholder="Enter Vehicle Color"
                   />
                 </IonItem>
               </IonList>

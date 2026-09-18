@@ -24,15 +24,33 @@
 }
 
 .driver-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 14px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  border: 1px solid var(--nav-border);
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
   transition: all 0.3s ease;
+}
+
+.route-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.tip-banner {
+  background: rgba(255, 107, 53, 0.05);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  text-align: center;
 }
 
 .driver-details h3 {

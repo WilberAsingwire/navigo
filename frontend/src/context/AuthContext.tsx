@@ -181,7 +181,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem('navigo_token');
     localStorage.removeItem('navigo_user');
     localStorage.removeItem('navigo_guest');
-    localStorage.removeItem('navigo_onboarding_complete');
   }, []);
 
   const forgotPassword = async (phone: string): Promise<string> => {

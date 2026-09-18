@@ -25,6 +25,8 @@ const DriverHome: React.FC = () => {
   const { user } = useAuth();
   const { light, medium } = useHaptic();
   const [isOnline, setIsOnline] = useState(false);
+  const [toastMsg, setToastMsg] = useState('');
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -45,26 +47,37 @@ const DriverHome: React.FC = () => {
     }
   }, [user, history]);
 
-  const [stats] = useState({
-    earnings: 85000,
-    rating: 4.8,
-    completedRides: 156,
-    acceptanceRate: 94,
-    todayEarnings: 45000,
-    weeklyEarnings: 320000
+  const [stats, setStats] = useState({
+    earnings: 0,
+    rating: 5,
+    completedRides: 0,
+    acceptanceRate: 100,
+    todayEarnings: 0,
+    weeklyEarnings: 0
   });
 
-  const [recentActivity] = useState([
-    { id: '1', text: 'Ride completed with Alice N. — UGX 8,500', time: '10 min ago', icon: checkmarkCircleOutline, color: '#2D6A4F' },
-    { id: '2', text: 'New ride request from Kololo', time: '25 min ago', icon: carOutline, color: '#4da6ff' },
-    { id: '3', text: 'Payout of UGX 200,000 processed', time: '2 hours ago', icon: cashOutline, color: '#FF6B35' },
-    { id: '4', text: 'Your rating increased to 4.8 ⭐', time: '1 day ago', icon: trendingUpOutline, color: '#FFC107' },
-  ]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDriverData = async () => {
+      try {
+        const res = await api.get('/drivers/stats');
+        if (res.data) {
+          setStats(res.data.stats);
+          setRecentActivity(res.data.activity);
+        }
+      } catch (e) {
+        console.error('Failed to fetch driver stats:', e);
+      }
+    };
+    fetchDriverData();
+  }, []);
 
   const handleStatusToggle = async (online: boolean) => {
     if (user?.verificationStatus !== 'approved') {
       setIsOnline(false);
-      alert('Your account must be approved by an admin before you can go online.');
+      setToastMsg('Your account must be approved by an admin before you can go online.');
+      setShowToast(true);
       return;
     }
     try {
@@ -73,7 +86,8 @@ const DriverHome: React.FC = () => {
       setIsOnline(online);
     } catch (error) {
       console.error('Failed to update online status:', error);
-      alert('Could not update status. Please try again.');
+      setToastMsg('Could not update status. Please try again.');
+      setShowToast(true);
       setIsOnline(!online);
     }
   };
@@ -150,13 +164,17 @@ const DriverHome: React.FC = () => {
           </div>
 
           <h3 className="activity-header">Recent Activity</h3>
-          {recentActivity.map(activity => (
-            <div key={activity.id} className="activity-item" onClick={() => light()}>
-              <IonIcon icon={activity.icon} className="activity-icon" style={{ color: activity.color }} />
-              <span className="activity-text">{activity.text}</span>
-              <span className="activity-time">{activity.time}</span>
-            </div>
-          ))}
+          {recentActivity.length > 0 ? (
+            recentActivity.map(activity => (
+              <div key={activity.id} className="activity-item" onClick={() => light()}>
+                <IonIcon icon={activity.icon || checkmarkCircleOutline} className="activity-icon" style={{ color: activity.color }} />
+                <span className="activity-text">{activity.text}</span>
+                <span className="activity-time">{new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', padding: 20, color: '#64748B', fontSize: 13 }}>No recent activity yet</div>
+          )}
 
           <div className="bottom-stats-grid">
             <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completedRides}</p><span className="bottom-stat-label">Total Rides</span></div>
@@ -164,6 +182,7 @@ const DriverHome: React.FC = () => {
             <div className="bottom-stat-card"><p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p><span className="bottom-stat-label">This Week</span></div>
           </div>
         </div>
+        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} position="top" />
       </IonContent>
     </IonPage>
   );

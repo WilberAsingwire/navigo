@@ -13,25 +13,12 @@ import {
 } from 'ionicons/icons';
 import './CustomerPayments.css';
 
-const MOCK_TRANSACTIONS = [
-  { id: '1', description: 'Ride to Acacia Mall', date: '2026-07-26', amount: 8500, type: 'debit' },
-  { id: '2', description: 'Top-up via MTN Money', date: '2026-07-25', amount: 50000, type: 'credit' },
-  { id: '3', description: 'Ride to Uganda Road', date: '2026-07-25', amount: 3200, type: 'debit' },
-  { id: '4', description: 'Referral Bonus', date: '2026-07-24', amount: 5000, type: 'credit' },
-  { id: '5', description: 'Ride to Entebbe Road', date: '2026-07-23', amount: 12000, type: 'debit' },
-];
-
-const SAVED_METHODS = [
-  { id: 'mtn1', type: 'mtn', name: 'MTN Mobile Money', number: '0772****123', isDefault: true, icon: '📱' },
-  { id: 'airtel1', type: 'airtel', name: 'Airtel Money', number: '0753****456', isDefault: false, icon: '📱' },
-];
-
 const RiderPayments: React.FC = () => {
   const [segment, setSegment] = useState<'methods' | 'history'>('methods');
   const [showAddModal, setShowAddModal] = useState(false);
   const [balance] = useState(45000);
-  const [transactions] = useState(MOCK_TRANSACTIONS);
-  const [savedMethods, setSavedMethods] = useState(SAVED_METHODS);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [savedMethods, setSavedMethods] = useState<any[]>([]);
   const [newProvider, setNewProvider] = useState<'mtn' | 'airtel'>('mtn');
   const [newNumber, setNewNumber] = useState('');
   const [loading] = useState(false);
@@ -178,7 +165,7 @@ const RiderPayments: React.FC = () => {
 
             <IonItem className="modal-input-item">
               <IonLabel position="stacked">Phone Number</IonLabel>
-              <IonInput type="tel" value={newNumber} onIonInput={e => setNewNumber(e.detail.value!)} placeholder="0772000000" maxlength={12} />
+              <IonInput type="tel" value={newNumber} onIonInput={e => setNewNumber(e.detail.value!)} placeholder="07..." maxlength={12} />
             </IonItem>
 
             <IonButton expand="block" onClick={handleAddMethod} className="payment-add-btn">

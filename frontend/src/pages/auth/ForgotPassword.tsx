@@ -114,7 +114,7 @@ const ForgotPassword: React.FC = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
+                      placeholder="email@example.com"
                       autoFocus
                       onKeyDown={(e) => e.key === 'Enter' && handleRequestCode(false)}
                     />
@@ -197,21 +197,6 @@ const ForgotPassword: React.FC = () => {
               </>
             )}
 
-            {/* Dev-code helper: ONLY rendered in Vite dev mode and only when backend actually returned a code. */}
-            {isDev && devCode && (
-              <div style={{
-                marginTop: '16px',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                background: 'rgba(255,107,53,0.08)',
-                border: '1px dashed rgba(255,107,53,0.35)',
-                color: '#FFB088',
-                fontSize: '12px',
-                textAlign: 'center'
-              }}>
-                🔧 DEV CODE: <strong style={{ letterSpacing: '2px' }}>{devCode}</strong>
-              </div>
-            )}
 
             <IonToast
               isOpen={showToast}

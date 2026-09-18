@@ -74,7 +74,7 @@ const PageLoader: React.FC = () => (
   </div>
 );
 
-const ProtectedContent: React.FC<{ allowedRoles: string[]; component: React.ComponentType<any> }> = ({ allowedRoles, component: Component, ...props }) => {
+const ProtectedContent: React.FC<{ allowedRoles: string[]; component: React.ElementType }> = ({ allowedRoles, component: Component, ...props }) => {
   const { isAuthenticated, user, isLoading, isGuest } = useAuth();
   if (isLoading) return <PageLoader />;
   if (isGuest || !isAuthenticated || !user) return <Redirect to="/login" />;

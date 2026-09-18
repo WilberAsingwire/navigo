@@ -67,6 +67,31 @@ const DemandLayer: React.FC = () => {
   return null;
 };
 
+const UserMarker: React.FC<{ user: any; icon: L.DivIcon }> = ({ user, icon }) => {
+  const markerRef = React.useRef<L.Marker | null>(null);
+  const map = useMap();
+
+  useEffect(() => {
+    if (!markerRef.current) {
+      markerRef.current = L.marker([user.lat, user.lng], { icon }).addTo(map);
+      markerRef.current.bindPopup(
+        `<strong style="color:#000">${user.fullName}</strong><br/><span style="color:#666">Role: ${user.role}</span><br/><span style="color:#666">Status: ${user.status}</span>`
+      );
+    } else {
+      markerRef.current.setLatLng([user.lat, user.lng]);
+    }
+
+    return () => {
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+    };
+  }, [user.lat, user.lng, map, icon]);
+
+  return null;
+};
+
 const AdminLiveMap: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
@@ -74,18 +99,24 @@ const AdminLiveMap: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number]>([0.3476, 32.5825]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'drivers' | 'motorists' | 'riders' | 'heatmap'>('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [mapKey, setMapKey] = useState(0);
   const [mapStyle] = useState<'standard' | 'dark'>('dark');
   const [stats, setStats] = useState({ drivers: 0, motorists: 0, riders: 0, activeTrips: 0 });
+  const mapRef = React.useRef<L.Map | null>(null);
 
   const tileUrls: Record<string, string> = {
     standard: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
   };
 
+  const handleFlyToUser = (lat: number, lng: number) => {
+    if (mapRef.current) {
+      mapRef.current.flyTo([lat, lng], 16, { duration: 1.5 });
+    }
+  };
+
   const loadData = useCallback(async () => {
     setLoading(true);
-    setMapKey(prev => prev + 1);
+
 
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -97,7 +128,8 @@ const AdminLiveMap: React.FC = () => {
 
     try {
       const res = await api.get('/auth/admin/live-locations');
-      const fetchedUsers = res.data.map((u: { currentLat: number; currentLng: number; isOnline: boolean; role: string; [k: string]: any }) => ({
+      const { users: rawUsers, activeTrips } = res.data;
+      const fetchedUsers = rawUsers.map((u: { currentLat: number; currentLng: number; isOnline: boolean; role: string; [k: string]: any }) => ({
         ...u,
         lat: u.currentLat,
         lng: u.currentLng,
@@ -108,7 +140,7 @@ const AdminLiveMap: React.FC = () => {
         drivers: fetchedUsers.filter((u: { role: string }) => u.role === 'driver').length,
         motorists: fetchedUsers.filter((u: { role: string }) => u.role === 'motorist').length,
         riders: fetchedUsers.filter((u: { role: string }) => u.role === 'rider').length,
-        activeTrips: 0
+        activeTrips: activeTrips || 0
       });
     } catch (e) {
       console.error('Failed to fetch live locations:', e);
@@ -194,12 +226,12 @@ const AdminLiveMap: React.FC = () => {
           </div>
         ) : (
           <div style={{height: '45vh', width: '100%', minHeight: 280}}>
-            <MapContainer key={mapKey} center={userLocation} zoom={14} style={{height: '100%', width: '100%'}}>
+            <MapContainer center={userLocation} zoom={14} style={{height: '100%', width: '100%'}} ref={mapRef}>
               <TileLayer url={tileUrls[mapStyle]} />
               <FlyToButton center={userLocation} />
               <Marker position={userLocation} icon={riderIcon}><Popup>📍 Your Location</Popup></Marker>
               {filteredUsers.map(u => (
-                <Marker key={u.id} position={[u.lat, u.lng]} icon={getIcon(u.role)}><Popup><strong style={{color: '#000'}}>{u.fullName}</strong><br/><span style={{color: '#666'}}>Role: {u.role}</span><br/><span style={{color: '#666'}}>Status: {u.status}</span></Popup></Marker>
+                <UserMarker key={u.id} user={u} icon={getIcon(u.role)} />
               ))}
             </MapContainer>
           </div>
@@ -211,7 +243,7 @@ const AdminLiveMap: React.FC = () => {
             {autoRefresh && <span style={{color: '#2D6A4F', fontSize: 10}}>● Live</span>}
           </div>
           {filteredUsers.map(u => (
-            <div key={u.id} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10}}>
+            <div key={u.id} onClick={() => handleFlyToUser(u.lat, u.lng)} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'background 0.2s'}}>
               <IonIcon icon={getRoleIcon(u.role)} style={{color: u.role === 'driver' ? '#4da6ff' : u.role === 'motorist' ? '#ffab40' : '#00e676', fontSize: 18}} />
               <div style={{flex: 1}}><span style={{color: '#fff', fontSize: 13}}>{u.fullName}</span><p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{u.lat?.toFixed(4)}, {u.lng?.toFixed(4)}</p></div>
               <IonBadge style={{background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: 10}}>{u.status === 'active' ? 'Active' : 'Idle'}</IonBadge>

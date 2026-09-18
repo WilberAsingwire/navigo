@@ -74,12 +74,7 @@ const AdminDashboard: React.FC = () => {
     { label: 'Settings', icon: settingsOutline, path: '/admin/settings', color: 'medium' },
   ];
 
-  const alerts = [
-    { icon: alertCircleOutline, text: '3 new driver applications pending review', color: '#F59E0B', time: '2 min ago' },
-    { icon: checkmarkCircleOutline, text: 'Driver John K. approved successfully', color: '#10B981', time: '15 min ago' },
-    { icon: starOutline, text: 'Rider dispute #1042 needs attention', color: '#EF4444', time: '1 hour ago' },
-    { icon: trendingUpOutline, text: 'Revenue up 22% this week', color: '#4da6ff', time: '3 hours ago' },
-  ];
+  const alerts: any[] = [];
 
   if (loading) {
     return (
@@ -157,10 +152,8 @@ const AdminDashboard: React.FC = () => {
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(255,255,255,0.06)' }}>
             <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>📈 Revenue Overview</h3>
             <p style={{ color: '#D1D5DB', fontSize: 12, margin: '0 0 16px' }}>Last 7 days</p>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 80 }}>
-              {[40, 55, 35, 70, 60, 85, 95].map((h, i) => (
-                <div key={i} style={{ flex: 1, background: '#FF6B35', height: `${h}%`, borderRadius: '4px 4px 0 0', opacity: 0.7 + (i * 0.04) }} />
-              ))}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
+              No data available for this period
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
               {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => <span key={d} style={{ fontSize: 9, color: '#D1D5DB' }}>{d}</span>)}

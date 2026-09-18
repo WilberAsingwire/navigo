@@ -24,13 +24,6 @@ interface RideOption { id: string; name: string; description: string; basePrice:
 interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
 enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
 
-const POPULAR_PLACES: Location[] = [
-  { name: 'Uganda Central Square', lat: 0.3136, lng: 32.5811, address: 'Uganda Central' },
-  { name: 'Entebbe Airport', lat: 0.0437, lng: 32.4369, address: 'Entebbe' },
-  { name: 'Acacia Mall', lat: 0.3348, lng: 32.5873, address: 'Kololo, Kampala' },
-  { name: 'Uganda University', lat: 0.3361, lng: 32.5711, address: 'Kampala' },
-];
-
 // Unified promo codes — single source of truth
 const PROMO_CODES: Record<string, { discount: number | 'free', label: string }> = {
   NAVIGO50: { discount: 2000, label: 'UGX 2,000 off' },
@@ -56,6 +49,30 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 
 const MATCHING_TIMEOUT_MS = 120000; // 2 minutes — auto-cancel if no driver
 
+const Stepper: React.FC<{ currentStep: BookingStep; onStepClick: (step: BookingStep) => void }> = ({ currentStep, onStepClick }) => {
+  const steps = [
+    { id: BookingStep.LOCATION, label: 'Pickup', icon: locationOutline },
+    { id: BookingStep.RIDE_TYPE, label: 'Vehicle', icon: carOutline },
+    { id: BookingStep.PAYMENT, label: 'Payment', icon: checkmarkCircleOutline },
+  ];
+
+  return (
+    <div className="booking-stepper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, position: 'relative' }}>
+      <div className="stepper-line" style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.1)', zIndex: 0 }}>
+        <div className="stepper-progress" style={{ height: '100%', background: '#FF6B35', transition: 'width 0.3s ease', width: `${(currentStep / 4) * 100}%` }} />
+      </div>
+      {steps.map((s, i) => (
+        <div key={s.id} className="stepper-item" style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }} onClick={() => onStepClick(s.id)}>
+          <div className={`stepper-dot ${currentStep >= s.id ? 'active' : ''}`} style={{ width: 24, height: 24, borderRadius: '50%', background: currentStep >= s.id ? '#FF6B35' : '#3F3F46', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, border: '2px solid #121212', transition: '0.3s' }}>
+            {currentStep > s.id ? <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 14 }} /> : i + 1}
+          </div>
+          <span className={`stepper-label ${currentStep === s.id ? 'active' : ''}`} style={{ fontSize: 10, color: currentStep === s.id ? '#fff' : '#94A3B8', marginTop: 4, fontWeight: 600 }}>{s.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const RideRequest: React.FC = () => {
   const ionRouter = useIonRouter();
   const { isAuthenticated, isGuest, user } = useAuth();
@@ -74,6 +91,7 @@ const RideRequest: React.FC = () => {
   const [isMatching, setIsMatching] = useState(false);
   const [actualRouteDist, setActualRouteDist] = useState(0);
   const [actualRouteDur, setActualRouteDur] = useState(0);
+  const [routeStatus, setRouteStatus] = useState<'calculating' | 'optimized' | 'unavailable'>('calculating');
   const [driverFound, setDriverFound] = useState(false);
   const [matchedDriver, setMatchedDriver] = useState<any>(null);
   const [pendingRideId, setPendingRideId] = useState<string | null>(null);
@@ -81,7 +99,8 @@ const RideRequest: React.FC = () => {
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [promoCode, setPromoCode] = useState('');
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState<number | 'free'>(0);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'wallet'>('cash');
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -308,6 +327,27 @@ const RideRequest: React.FC = () => {
     setSearchResults([]);
   };
 
+  const calculateFastFare = useCallback(() => {
+    if (!pickup || !destination) return;
+    const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
+    const speed = selectedRide.vehicleType === 'boda' ? 28 : 22;
+    const dur = actualRouteDur > 0 ? actualRouteDur : (dist / speed) * 60;
+
+    const rawTotal = Math.max(selectedRide.basePrice + (dist * selectedRide.pricePerKm) + (dur * selectedRide.pricePerMinute), selectedRide.basePrice);
+    const finalTotal = discount === 'free' ? 0 : Math.max(rawTotal - (discount as number), 0);
+
+    setFare({
+      distance: Math.round(dist * 10) / 10,
+      duration: Math.round(dur),
+      baseFare: selectedRide.basePrice,
+      distanceFare: 0,
+      timeFare: 0,
+      surgeFare: 0,
+      totalFare: finalTotal,
+      formattedTotal: 'UGX ' + Math.round(finalTotal).toLocaleString()
+    });
+  }, [pickup, destination, selectedRide, discount, actualRouteDist, actualRouteDur]);
+
   const calculateFare = async () => {
     if (!pickup || !destination) return;
     const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
@@ -319,7 +359,8 @@ const RideRequest: React.FC = () => {
         params: { type: selectedRide.dbVehicleType, km: dist, min: dur }
       });
       if (res.data.ok) {
-        const total = Math.max(res.data.fare - discount, selectedRide.basePrice);
+        const rawFare = res.data.fare;
+        const finalTotal = discount === 'free' ? 0 : Math.max(rawFare - (discount as number), 0);
         setFare({
           distance: Math.round(dist * 10) / 10,
           duration: Math.round(dur),
@@ -327,8 +368,8 @@ const RideRequest: React.FC = () => {
           distanceFare: 0,
           timeFare: 0,
           surgeFare: 0,
-          totalFare: total,
-          formattedTotal: 'UGX ' + total.toLocaleString()
+          totalFare: finalTotal,
+          formattedTotal: 'UGX ' + finalTotal.toLocaleString()
         });
       }
     } catch { /* noop */ }
@@ -343,7 +384,7 @@ const RideRequest: React.FC = () => {
       return;
     }
     if (promo.discount === 'free') {
-      setDiscount(fare?.totalFare || selectedRide.basePrice);
+      setDiscount('free');
       setToastMsg(`🎉 ${promo.label}! Free ride applied.`);
     } else {
       setDiscount(promo.discount);
@@ -408,7 +449,7 @@ const RideRequest: React.FC = () => {
         pickup,
         destination,
         rideType: selectedRide.dbVehicleType,
-        paymentMethod: 'cash',
+        paymentMethod,
         distanceKm: actualRouteDist > 0 ? actualRouteDist : fare?.distance,
         durationMin: actualRouteDur > 0 ? actualRouteDur : fare?.duration,
         packageDetails: serviceType === 'delivery' ? packageDetails : null,
@@ -449,6 +490,17 @@ const RideRequest: React.FC = () => {
     }
   };
 
+  const handleStepChange = (targetStep: BookingStep) => {
+    if (targetStep === BookingStep.MATCHING) return; // Cannot jump to matching
+    if (targetStep === BookingStep.PAYMENT && (!pickup || !destination)) {
+      setToastMsg('Please select pickup and destination first.');
+      setShowToast(true);
+      setStep(BookingStep.LOCATION);
+      return;
+    }
+    setStep(targetStep);
+  };
+
   if (isInitializing) {
     return (
       <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--nav-bg)', color: '#fff', gap: 16 }}>
@@ -481,16 +533,6 @@ const RideRequest: React.FC = () => {
                 <span>Enter destination...</span>
               </button>
 
-              <div className="space-y-3">
-                <p className="section-label">Popular Destinations</p>
-                <div className="popular-places-grid">
-                  {POPULAR_PLACES.map(p => (
-                    <div key={p.name} className="place-chip" onClick={() => { setDestination(p); setDestSearch(p.name || ''); setStep(BookingStep.LOCATION); }}>
-                      {p.name}
-                    </div>
-                  ))}
-                </div>
-              </div>
 
               <div className="space-y-3">
                 <p className="section-label">Recent Trips</p>
@@ -643,6 +685,11 @@ const RideRequest: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#94A3B8', padding: '0 4px' }}>
                 <span style={{ textTransform: 'capitalize' }}>{serviceType}: {selectedRide.name}</span>
                 <span style={{ color: 'white', fontWeight: 600 }}>Balance: UGX {walletBalance.toLocaleString()}</span>
+              </div>
+
+              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 15 }}>
+                <button onClick={() => setPaymentMethod('cash')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: paymentMethod === 'cash' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>💵 Cash</button>
+                <button onClick={() => setPaymentMethod('wallet')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: paymentMethod === 'wallet' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>💳 Wallet</button>
               </div>
 
               <div className="location-input-wrapper">

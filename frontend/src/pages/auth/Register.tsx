@@ -154,7 +154,7 @@ const Register: React.FC = () => {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    placeholder="700 000 000"
+                    placeholder="07..."
                     maxLength={10}
                   />
                 </div>

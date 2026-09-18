@@ -230,7 +230,7 @@ const ActiveRide: React.FC = () => {
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
           {/* Driver card (once assigned) */}
           {(driver || phase !== 'requested') && (
-            <div className="driver-card" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+            <div className="driver-card">
               <IonAvatar style={{ width: 48, height: 48 }}>
                 <InitialsAvatar name={driverName} size={48} />
               </IonAvatar>
@@ -276,7 +276,7 @@ const ActiveRide: React.FC = () => {
           )}
 
           {/* Route */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+          <div className="route-card">
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4 }}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#2D6A4F', border: '2px solid #fff' }} />
@@ -302,7 +302,7 @@ const ActiveRide: React.FC = () => {
 
           {/* Status-driven actions */}
           {phase === 'ongoing' && (
-            <div style={{ background: 'rgba(255,107,53,0.05)', border: '1px solid rgba(255,107,53,0.2)', borderRadius: 16, padding: 14, marginBottom: 12, textAlign: 'center' }}>
+            <div className="tip-banner">
               <p style={{ color: '#FF6B35', margin: '0 0 10px', fontSize: 13, fontWeight: 600 }}>Support your driver</p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
                 {[1000, 2000, 5000].map(amt => (
@@ -347,18 +347,17 @@ const ActiveRide: React.FC = () => {
             </div>
           )}
 
+          <SOSButton
+            userLocation={driverPos || { lat: ride.pickup.lat, lng: ride.pickup.lng }}
+            userName={user?.fullName || 'Customer'}
+            userPhone={user?.phone}
+            variant="compact"
+          />
+
           {canCancel && (
-            <>
-              <SOSButton
-                userLocation={driverPos || { lat: ride.pickup.lat, lng: ride.pickup.lng }}
-                userName={user?.fullName || 'Customer'}
-                userPhone={user?.phone}
-                variant="compact"
-              />
-              <IonButton expand="block" fill="clear" color="danger" onClick={handleCancel} disabled={cancelling} style={{ borderRadius: 12 }}>
-                {cancelling ? <IonSpinner name="crescent" /> : 'Cancel ride'}
-              </IonButton>
-            </>
+            <IonButton expand="block" fill="clear" color="danger" onClick={handleCancel} disabled={cancelling} style={{ borderRadius: 12 }}>
+              {cancelling ? <IonSpinner name="crescent" /> : 'Cancel ride'}
+            </IonButton>
           )}
         </div>
 
