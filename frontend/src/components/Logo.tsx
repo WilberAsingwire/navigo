@@ -29,8 +29,6 @@ const Logo: React.FC<LogoProps> = ({ variant = 'full', size = 'medium', onClick,
 
   const iconId = `navigo-logo-${size}-${variant}`;
 
-  const iconId = `navigo-logo-${size}-${variant}`;
-
   const IconImg = (
     <img
       src={logoImg}
