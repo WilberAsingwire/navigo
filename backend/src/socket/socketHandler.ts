@@ -271,7 +271,7 @@ export const setupSocketHandlers = (io: Server) => {
     });
     socket.on('send-message', async (d: any) => {
       const { rideId, message } = d;
-      if (await isRideMember(userId, rideId)) {
+      if (socket.rooms.has(rideId)) {
         socket.to(rideId).emit('new-message', { ...message, senderId: userId });
       } else {
         socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });

@@ -110,7 +110,7 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
 
     if (paymentMethod === 'wallet') {
       const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
-      if (!wallet || wallet.balance < fareRecommended) {
+      if (!wallet || wallet.balance < finalFareOffered) {
         return res.status(400).json({ message: 'Insufficient wallet balance for this ride. Please top up or use cash.' });
       }
     }
