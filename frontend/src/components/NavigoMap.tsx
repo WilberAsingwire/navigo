@@ -63,17 +63,21 @@ const MapEvents: React.FC<{
   const map = useMap();
   useMapEvents({
     click(e) { const ll = e.latlng; if (!isNaN(ll.lat) && !isNaN(ll.lng)) onMapClick?.([ll.lat, ll.lng]); },
-    moveend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
-    zoomend() { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
+    move(e) { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
+    zoom(e) { try { const c = map.getCenter(); if (!isNaN(c.lat) && !isNaN(c.lng)) onMove?.([c.lat, c.lng], map.getZoom()); } catch { /* noop */ } },
   });
   useEffect(() => {
     if (followUser && isValidLatLng(userLocation)) { try { map.flyTo([userLocation!.lat, userLocation!.lng], 15, { duration: 1 }); } catch { /* noop */ } }
   }, [userLocation, followUser, map]);
   useEffect(() => {
-    const t = setTimeout(() => { try { map.invalidateSize(); } catch { /* noop */ } }, 300);
-    const t2 = setTimeout(() => { try { map.invalidateSize(); } catch { /* noop */ } }, 1000);
-    const t3 = setTimeout(() => { try { map.invalidateSize(); } catch { /* noop */ } }, 2000);
-    return () => { clearTimeout(t); clearTimeout(t2); clearTimeout(t3); };
+    const observer = new ResizeObserver(() => {
+      try { map.invalidateSize(); } catch { /* noop */ }
+    });
+
+    const container = document.querySelector('.navigo-map-root');
+    if (container) observer.observe(container);
+
+    return () => observer.disconnect();
   }, [map]);
   return null;
 };
@@ -94,15 +98,18 @@ interface MapProps {
   onMapClick?: (ll: [number, number]) => void;
   onPickupDrag?: (ll: [number, number]) => void;
   onDestDrag?: (ll: [number, number]) => void;
+  loading?: boolean;
+  error?: string;
 }
 
 const NavigoMap: React.FC<MapProps> = ({
   userLocation, destination, driverLocation, driverType = 'go',
   height = '100%', showRoute = true,
   showControls = true, followUser = true, showNearbyDrivers = false,
-  searchResults = [], onDistanceChange, onMapClick, onPickupDrag, onDestDrag
+  searchResults = [], onDistanceChange, onMapClick, onPickupDrag, onDestDrag,
+  loading, error
 }) => {
-  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite' | 'terrain'>('standard');
+  const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
@@ -151,15 +158,7 @@ const NavigoMap: React.FC<MapProps> = ({
         }
         throw new Error('no route');
       } catch {
-        if (isValidLatLng(userLocation) && isValidLatLng(destination as any)) {
-          setRoutePoints([[userLocation!.lat, userLocation!.lng], [destination!.lat, destination!.lng]]);
-          try {
-            const dist = Math.round(L.latLng(userLocation!.lat, userLocation!.lng).distanceTo(L.latLng(destination!.lat, destination!.lng)) / 100) / 10;
-            const t = Math.max(1, Math.round((dist / 22) * 60));
-            setRouteDistance(dist); setRouteDuration(t);
-            onDistanceChange?.(dist, t);
-          } catch { /* noop */ }
-        }
+        // Removed straight-line fallback to avoid misleading users with non-road routes.
       }
     };
     fetchRoute();
@@ -170,9 +169,9 @@ const NavigoMap: React.FC<MapProps> = ({
   const getGoogleEmbedUrl = (
     c: [number, number],
     z: number,
-    style: 'standard' | 'satellite' | 'terrain'
+    style: 'standard' | 'satellite'
   ) => {
-    const typeParam = style === 'satellite' ? 'k' : style === 'terrain' ? 'p' : 'm';
+    const typeParam = style === 'satellite' ? 'k' : 'm';
     return `https://maps.google.com/maps?q=${c[0].toFixed(5)},${c[1].toFixed(5)}&z=${z}&t=${typeParam}&output=embed&hl=en&iwloc=near`;
   };
 
@@ -182,7 +181,6 @@ const NavigoMap: React.FC<MapProps> = ({
     const init = getGoogleEmbedUrl(center, mapZoom, mapStyle);
     return [init, init];
   });
-  const [visualScale, setVisualScale] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const pendingUpdateRef = React.useRef<{
     center: [number, number];
@@ -194,7 +192,7 @@ const NavigoMap: React.FC<MapProps> = ({
   const scheduleBufferUpdate = (
     c: [number, number],
     z: number,
-    s: 'standard' | 'satellite' | 'terrain',
+    s: 'standard' | 'satellite',
     delay = 320
   ) => {
     pendingUpdateRef.current = { center: c, zoom: z, style: s };
@@ -245,8 +243,6 @@ const NavigoMap: React.FC<MapProps> = ({
     const nextZoom = Math.min(mapZoom + 1, 20);
     if (nextZoom === mapZoom) return;
 
-    // 1. Instantly apply visual CSS zoom animation to active iframe — zero white flash!
-    setVisualScale((prev) => prev * 1.3);
     setMapZoom(nextZoom);
 
     // 2. Animate Leaflet overlay pins smoothly
@@ -264,8 +260,6 @@ const NavigoMap: React.FC<MapProps> = ({
     const nextZoom = Math.max(mapZoom - 1, 5);
     if (nextZoom === mapZoom) return;
 
-    // 1. Instantly apply visual CSS zoom animation to active iframe — zero white flash!
-    setVisualScale((prev) => prev * 0.77);
     setMapZoom(nextZoom);
 
     // 2. Animate Leaflet overlay pins smoothly
@@ -279,7 +273,7 @@ const NavigoMap: React.FC<MapProps> = ({
     scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
 
-  const handleStyleChange = (newStyle: 'standard' | 'satellite' | 'terrain') => {
+  const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
     if (newStyle === mapStyle) return;
     setMapStyle(newStyle);
     scheduleBufferUpdate(center, mapZoom, newStyle, 50);
@@ -296,12 +290,11 @@ const NavigoMap: React.FC<MapProps> = ({
       pointerEvents: 'none',
       zIndex: isActive ? 1 : 0,
       opacity: isActive ? 1 : 0,
-      transform: isActive ? `scale(${visualScale})` : 'scale(1)',
       transformOrigin: 'center center',
       transition: isActive
-        ? 'transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-in-out'
+        ? 'opacity 0.3s ease-in-out'
         : 'opacity 0.3s ease-in-out',
-      willChange: 'transform, opacity',
+      willChange: 'opacity',
     };
   };
 
@@ -335,6 +328,25 @@ const NavigoMap: React.FC<MapProps> = ({
         title="Google Maps Secondary"
         onLoad={() => handleBufferLoad(1)}
       />
+
+      {loading && (
+        <div className="map-overlay-state loading">
+          <div className="map-state-card">
+            <div className="map-spinner"></div>
+            <p>Loading map layers...</p>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="map-overlay-state error">
+          <div className="map-state-card">
+            <div className="map-error-icon">⚠️</div>
+            <p>{error}</p>
+            <button className="map-retry-btn" onClick={() => window.location.reload()}>Retry</button>
+          </div>
+        </div>
+      )}
 
       {/* LEAFLET OVERLAY — Transparent, only for markers, route polyline, and touch events */}
       <MapContainer
@@ -402,7 +414,6 @@ const NavigoMap: React.FC<MapProps> = ({
           <div className="map-style-toggle">
             <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => handleStyleChange('standard')}>STANDARD</button>
             <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>SATELLITE</button>
-            <button className={`ms-btn ${mapStyle === 'terrain' ? 'active' : ''}`} onClick={() => handleStyleChange('terrain')}>TERRAIN</button>
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
