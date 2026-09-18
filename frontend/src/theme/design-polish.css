@@ -54,8 +54,7 @@ body.light { --nav-text-muted: #64748B; }
 .active-ride-wrapper,
 .driver-active-wrapper,
 .admin-container,
-.booking-content,
-.ride-request-wrapper {
+.booking-content {
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
@@ -64,8 +63,15 @@ body.light { --nav-text-muted: #64748B; }
   box-sizing: border-box;
 }
 
-.ride-request-wrapper,
-.booking-content { max-width: 560px; }
+/* Map-centric layouts need the FULL viewport — no max-width cap, no horizontal padding */
+.ride-request-wrapper {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .active-ride-wrapper,
 .driver-active-wrapper { max-width: 560px; }
 
@@ -74,6 +80,11 @@ body.light { --nav-text-muted: #64748B; }
   .admin-container { max-width: 1200px; padding: 24px 32px; }
   .home-main-wrapper,
   .hero-section + .features-section { max-width: 1280px; margin-left: auto; margin-right: auto; padding-left: 32px; padding-right: 32px; }
+  /* On desktop the booking page is a two-pane view: map full-bleed, form as a floating card */
+  .ride-request-wrapper {
+    max-width: none;
+    padding: 0;
+  }
 }
 
 @media (min-width: 768px) {

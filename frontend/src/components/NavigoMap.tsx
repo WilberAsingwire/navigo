@@ -206,7 +206,18 @@ const NavigoMap: React.FC<MapProps> = ({
   const googleEmbedUrl = `https://maps.google.com/maps?q=${center[0]},${center[1]}&z=${mapZoom}&t=${getMapTypeParam()}&output=embed&hl=en&iwloc=near`;
 
   return (
-    <div className="navigo-map-root" style={{ height: height === '100%' ? '100vh' : height, width: '100%', position: 'relative', background: '#e5e7eb' }}>
+    <div
+      className="navigo-map-root"
+      style={{
+        height: height,
+        width: '100%',
+        position: 'relative',
+        background: '#e5e7eb',
+        // Fix sizing when placed inside flex/contained parents (IonContent inner-scroll)
+        minHeight: '100%',
+        flex: '1 1 auto',
+      }}
+    >
       {/* GOOGLE MAPS IFRAME BACKGROUND - always works, never blocked */}
       <iframe
         key={`${center[0].toFixed(4)}-${center[1].toFixed(4)}-${mapZoom}-${mapStyle}`}

@@ -9,6 +9,16 @@
   color: var(--nav-text);
   overflow: hidden;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Force Ionic inner-scroll (shadow DOM) to fill so absolute children can size to it */
+.ride-request-content::part(scroll),
+.ride-request-content .ion-page,
+.ride-request-content .inner-scroll {
+  height: 100dvh !important;
+  overflow: hidden !important;
 }
 
 .booking-map-panel {
@@ -21,11 +31,16 @@
   background: #0F172A;
 }
 
-.booking-map-panel > div,
+.booking-map-panel > div:first-child,
+.booking-map-panel .navigo-map-root,
 .booking-map-panel .leaflet-container {
   height: 100% !important;
   width: 100% !important;
-  min-height: 100vh;
+}
+
+.booking-map-panel iframe {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Map Controls - Premium Glass */
