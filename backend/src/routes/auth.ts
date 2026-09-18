@@ -416,7 +416,8 @@ router.get('/admin/live-locations', authenticate, authorize(['admin']), async (r
     const users = await db.all(
       'SELECT id, fullName, role, currentLat, currentLng, isOnline FROM users WHERE isOnline = TRUE AND currentLat IS NOT NULL AND currentLng IS NOT NULL'
     );
-    res.json(users);
+    const activeRidesRow = await db.get("SELECT COUNT(*) as count FROM rides WHERE status IN ('accepted', 'arrived', 'ongoing')");
+    res.json({ users, activeTrips: activeRidesRow?.count || 0 });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch live locations' });
   }
