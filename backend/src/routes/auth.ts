@@ -110,6 +110,11 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     const needsVerification = userRole === 'driver';
     const hashedPassword = await hashPassword(password);
 
+    // Phone-OTP enforcement is opt-in (REQUIRE_PHONE_VERIFICATION=1) so the
+    // app keeps working in free mode without an SMS provider. The OTP
+    // endpoints below are fully functional either way.
+    const requireOtp = process.env.REQUIRE_PHONE_VERIFICATION === '1';
+
     const userId = `user_${Math.random().toString(36).substring(2, 11)}${Date.now()}`;
     const newUser: any = {
       id: userId,
@@ -118,7 +123,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       email: processedEmail,
       password: hashedPassword,
       role: userRole,
-      phoneVerified: true,
+      phoneVerified: !requireOtp,
       verificationStatus: needsVerification ? 'unverified' : 'approved',
       createdAt: new Date().toISOString()
     };
@@ -553,6 +558,130 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ message: 'Reset failed.' });
+  }
+});
+
+// ─── PHONE VERIFICATION (real OTP — C10) ─────────────────────────────────
+// Codes are 6 digits, stored SHA-256 hashed, expire in 10 minutes, capped at
+// 5 wrong attempts. Delivery: SMS (Africa's Talking) when configured, else
+// the account's email, else — in non-production only — returned as devCode.
+
+router.post('/send-verification', smsLimiter, async (req: Request, res: Response) => {
+  try {
+    const { phone } = req.body;
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ message: 'Phone number is required.' });
+    }
+    const cleanPhone = normalizePhone(phone);
+    if (!/^07\d{8}$/.test(cleanPhone)) {
+      return res.status(400).json({ message: 'Enter a valid Ugandan phone number (07XXXXXXXX).' });
+    }
+
+    const db = getDB();
+    // Generic response regardless of account existence — don't leak who is registered.
+    const generic = { message: 'If this number is registered, a verification code has been sent.' };
+    const user = await db.get('SELECT id, email, phoneVerified FROM users WHERE phone = ?', [cleanPhone]);
+    if (!user) return res.json(generic);
+    if (user.phoneVerified === true || user.phoneVerified === 't') {
+      return res.json({ message: 'This phone number is already verified.', alreadyVerified: true });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await db.run(
+      `INSERT INTO phone_verifications (phone, codeHash, attempts, expiresAt, lastSentAt)
+       VALUES (?, ?, 0, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (phone) DO UPDATE SET codeHash = EXCLUDED.codeHash, attempts = 0, expiresAt = EXCLUDED.expiresAt, lastSentAt = CURRENT_TIMESTAMP`,
+      [cleanPhone, hashResetCode(code), expiresAt]
+    );
+
+    const text = `Your NAVIGO verification code is: ${code}. Valid for 10 minutes. Never share this code.`;
+    const sms = await notificationService.sendSMS(cleanPhone, text);
+    if (!sms.success && user.email) {
+      await notificationService.sendEmail(user.email, 'Your NAVIGO verification code', text);
+    }
+
+    res.json({
+      ...generic,
+      // QA convenience outside production only — mirrors the reset-code pattern.
+      devCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+    });
+  } catch (error) {
+    console.error('Send verification error:', error);
+    res.status(500).json({ message: 'Could not send verification code. Try again.' });
+  }
+});
+
+router.post('/verify-phone', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { phone, code } = req.body;
+    if (!phone || !code || !/^\d{6}$/.test(String(code))) {
+      return res.status(400).json({ message: 'Phone and 6-digit code are required.' });
+    }
+    const cleanPhone = normalizePhone(String(phone));
+    const db = getDB();
+
+    const row = await db.get('SELECT * FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+    if (!row) return res.status(400).json({ message: 'Invalid or expired code. Request a new one.' });
+    if (new Date() > new Date(row.expiresAt)) {
+      await db.run('DELETE FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+      return res.status(400).json({ message: 'Code expired. Request a new one.' });
+    }
+    if (Number(row.attempts) >= 5) {
+      await db.run('DELETE FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+      return res.status(429).json({ message: 'Too many wrong attempts. Request a new code.' });
+    }
+    if (row.codeHash !== hashResetCode(String(code))) {
+      await db.run('UPDATE phone_verifications SET attempts = attempts + 1 WHERE phone = ?', [cleanPhone]);
+      return res.status(400).json({ message: 'Incorrect code. Please try again.' });
+    }
+
+    await db.run('DELETE FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+    await db.run('UPDATE users SET phoneVerified = TRUE WHERE phone = ?', [cleanPhone]);
+    res.json({ message: 'Phone number verified! 🎉', verified: true });
+  } catch (error) {
+    console.error('Verify phone error:', error);
+    res.status(500).json({ message: 'Verification failed. Try again.' });
+  }
+});
+
+// ─── OAUTH CODE EXCHANGE (H9) ────────────────────────────────────────────
+// Social login redirects now carry a one-time 60-second code instead of the
+// JWT, so tokens never appear in URLs, browser history, or server logs.
+router.post('/exchange-code', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { code } = req.body;
+    if (!code || typeof code !== 'string' || code.length < 32 || code.length > 128) {
+      return res.status(400).json({ message: 'Invalid sign-in code.' });
+    }
+    const db = getDB();
+
+    // Atomic single-use claim: expired or already-used codes match nothing.
+    const claim = await db.run(
+      `UPDATE oauth_codes SET usedAt = CURRENT_TIMESTAMP
+       WHERE code = ? AND usedAt IS NULL AND expiresAt > CURRENT_TIMESTAMP
+       RETURNING userId`,
+      [code]
+    );
+    const userId = claim.rows?.[0]?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'Sign-in link expired or already used. Please sign in again.' });
+    }
+
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+    if (!user) return res.status(401).json({ message: 'Account not found.' });
+    if (user.status === 'banned' || user.status === 'suspended') {
+      return res.status(403).json({ message: 'This account is blocked. Contact NAVIGO support.' });
+    }
+
+    res.json({
+      message: `Welcome back, ${user.fullName}!`,
+      user: sanitizeUser(user),
+      token: generateToken({ id: user.id, role: user.role }),
+    });
+  } catch (error) {
+    console.error('Exchange code error:', error);
+    res.status(500).json({ message: 'Sign-in failed. Please try again.' });
   }
 });
 

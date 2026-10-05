@@ -25,7 +25,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (identifier: string, password: string) => Promise<any>;
-  register: (name: string, phone: string, password: string, email?: string, role?: string) => Promise<void>;
+  register: (name: string, phone: string, password: string, email?: string, role?: string) => Promise<any>;
   socialLogin: (provider: string, socialId: string, name: string, email?: string, phone?: string) => Promise<any>;
   logout: () => void;
   forgotPassword: (phone: string) => Promise<string>;
@@ -157,6 +157,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         role
       });
       saveSession(response.data.user, response.data.token);
+      return response.data.user;
     } catch (err: any) {
       throw handleApiError(err, 'Registration failed. Please try again.');
     }

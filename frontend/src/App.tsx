@@ -35,6 +35,7 @@ const Register = lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
 const CompleteSocialRegistration = lazy(() => import('./pages/auth/CompleteSocialRegistration'));
+const PhoneVerification = lazy(() => import('./pages/auth/PhoneVerification'));
 
 /* Rider — keep dashboard eager for fast first paint, others lazy */
 import CustomerDashboard from './pages/rider/CustomerDashboard';
@@ -150,7 +151,7 @@ const AppContent: React.FC = () => {
             <Route path="/login" render={() => <ErrorBoundary><Login /></ErrorBoundary>} exact />
             <Route path="/register" render={() => <ErrorBoundary><Register /></ErrorBoundary>} exact />
             <Route path="/forgot-password" render={() => <ErrorBoundary><ForgotPassword /></ErrorBoundary>} exact />
-            <Route path="/verify-phone" render={() => <HomeRedirect />} exact />
+            <Route path="/verify-phone" component={PhoneVerification} exact />
             <Route path="/explore" render={() => <ErrorBoundary><RideRequest /></ErrorBoundary>} exact />
             <Route path="/ussd" render={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} exact />
             <Route path="/auth/callback" render={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} exact />

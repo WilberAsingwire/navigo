@@ -1,6 +1,8 @@
 import './loadEnv'; // MUST be first — loads .env before any module reads process.env at import time
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import crypto from 'crypto';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { createServer } from 'http';
@@ -22,7 +24,22 @@ app.set('trust proxy', 1); // Trust Render's proxy to ensure HTTPS is detected c
 
 const httpServer = createServer(app);
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean) : null;
+// CORS (H12): deny-by-default in production. Origins come from
+// ALLOWED_ORIGINS; if unset in production we fall back to the known frontend
+// (REDIRECT_URL's origin / the Vercel deployment) instead of allowing '*'.
+// In development, no list = allow all (local tooling, device testing).
+const envOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+  : null;
+const redirectOrigin = (() => {
+  try { return new URL(process.env.REDIRECT_URL || 'https://navigo-five.vercel.app/auth/callback').origin; }
+  catch { return 'https://navigo-five.vercel.app'; }
+})();
+const allowedOrigins = envOrigins
+  || (process.env.NODE_ENV === 'production' ? [redirectOrigin] : null);
+
+// Security headers (H11). API-only server, so the strict defaults are safe.
+app.use(helmet());
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -41,7 +58,9 @@ app.use((req, _res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '10mb' }));
+// Scoped body limit (H11): every JSON payload in the app is text-only
+// (driver docs are license/plate strings, not images), so 100 KB is generous.
+app.use(express.json({ limit: '100kb' }));
 app.use(passport.initialize());
 
 // Google OAuth Strategy — optional, safe fallback
@@ -79,17 +98,16 @@ app.get('/auth/google/callback',
     const redirectUrl = process.env.REDIRECT_URL || 'https://navigo-five.vercel.app/auth/callback';
 
     if (existingUser) {
-      // User exists, redirect with status existing — include userId & role so the
-      // frontend can land the user on the correct home page without an extra fetch.
-      const token = require('./utils/auth').generateToken({ id: existingUser.id, role: existingUser.role });
-      const params = new URLSearchParams({
-        status: 'existing',
-        token,
-        userId: existingUser.id,
-        name: existingUser.fullName || name,
-        email: existingUser.email || email || '',
-        role: existingUser.role || 'customer',
-      }).toString();
+      // H9: never put the JWT in the redirect URL (it would land in browser
+      // history, logs and Referer headers). Issue a one-time 60-second code
+      // the frontend exchanges for the token via POST /api/auth/exchange-code.
+      const code = crypto.randomBytes(32).toString('hex');
+      await db.run('DELETE FROM oauth_codes WHERE expiresAt < CURRENT_TIMESTAMP'); // housekeeping
+      await db.run(
+        'INSERT INTO oauth_codes (code, userId, expiresAt) VALUES (?, ?, ?)',
+        [code, existingUser.id, new Date(Date.now() + 60 * 1000).toISOString()]
+      );
+      const params = new URLSearchParams({ status: 'existing', code }).toString();
       res.redirect(`${redirectUrl}?${params}`);
     } else {
       // New user, redirect with status new and their info
@@ -195,6 +213,12 @@ app.use((err: any, _req: any, res: any, _next: any) => {
   console.error('Unhandled error:', err?.message);
   if (err?.message === 'Not allowed by CORS') {
     return res.status(403).json({ message: 'CORS: Origin not allowed' });
+  }
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ message: 'Request body too large.' });
+  }
+  if (err?.type === 'entity.parse.failed') {
+    return res.status(400).json({ message: 'Invalid JSON body.' });
   }
   res.status(500).json({ message: 'Internal server error' });
 });

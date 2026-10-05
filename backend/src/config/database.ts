@@ -44,6 +44,8 @@ const CAMEL_COLUMNS = [
   'rideId', 'gatewayRef',
   // topup_requests / ride_messages
   'senderPhone', 'momoRef', 'reviewedBy', 'reviewNote', 'reviewedAt', 'senderId', 'senderName', 'senderRole',
+  // phone_verifications / oauth_codes
+  'codeHash', 'lastSentAt', 'usedAt',
   // support
   'ticketId', 'fromUser',
   // common query aliases
@@ -278,6 +280,26 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- Phone verification OTPs — codes stored HASHED (a DB leak must not
+        -- expose live codes), 10-minute expiry, attempt-capped.
+        CREATE TABLE IF NOT EXISTS phone_verifications (
+          phone TEXT PRIMARY KEY,
+          codeHash TEXT NOT NULL,
+          attempts INTEGER NOT NULL DEFAULT 0,
+          expiresAt TIMESTAMP WITH TIME ZONE NOT NULL,
+          lastSentAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- One-time OAuth exchange codes (H9): social login redirects carry a
+        -- short-lived random code instead of the JWT itself, so tokens never
+        -- land in browser history, server logs, or Referer headers.
+        CREATE TABLE IF NOT EXISTS oauth_codes (
+          code TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          expiresAt TIMESTAMP WITH TIME ZONE NOT NULL,
+          usedAt TIMESTAMP WITH TIME ZONE
+        );
+
         -- Migration: Remove role check constraint and rename 'name' to 'fullName'
         DO $$
         BEGIN
@@ -366,6 +388,7 @@ export const initDB = async () => {
       topup_requests: [],
       payouts: [],
       ride_messages: [],
+      phone_verifications: [],
     };
     // Minimal mock pool object to prevent null checks
     const emptyResult = (): QueryResult<any> => ({ rows: [], rowCount: 0, command: '', oid: 0, fields: [] });
@@ -401,6 +424,9 @@ export const getDB = () => {
         if (q.includes('from wallets')) {
           return mockStore.wallets.find((w: any) => w.userId === params[0]);
         }
+        if (q.includes('from phone_verifications')) {
+          return mockStore.phone_verifications.find((p: any) => p.phone === params[0]);
+        }
         if (q.includes('select 1')) return { ok: 1 };
         return undefined;
       },
@@ -429,7 +455,7 @@ export const getDB = () => {
           const [id, fullName, phone, email] = params;
           const existing = mockStore.users.find((u: any) => u.email === email || u.phone === phone);
           if (!existing) {
-            mockStore.users.push({ id, fullName, phone, email, role: params[5] || 'rider', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() });
+            mockStore.users.push({ id, fullName, phone, email, role: params[5] || 'rider', phoneVerified: params[6] !== false && params[6] !== 'false', verificationStatus: 'approved', createdAt: new Date().toISOString() });
           }
           return emptyResult();
         }
@@ -448,6 +474,27 @@ export const getDB = () => {
             const err: any = new Error('duplicate momoRef'); err.code = '23505'; throw err;
           }
           mockStore.topup_requests.push({ id, userId, amount, provider, senderPhone, momoRef, status: 'pending', createdAt: new Date().toISOString() });
+          return emptyResult();
+        }
+        if (q.includes('insert into phone_verifications')) {
+          const [phone, codeHash, expiresAt] = params;
+          const existing = mockStore.phone_verifications.find((p: any) => p.phone === phone);
+          if (existing) { existing.codeHash = codeHash; existing.attempts = 0; existing.expiresAt = expiresAt; }
+          else mockStore.phone_verifications.push({ phone, codeHash, attempts: 0, expiresAt });
+          return emptyResult();
+        }
+        if (q.includes('update phone_verifications')) {
+          const row = mockStore.phone_verifications.find((p: any) => p.phone === params[0]);
+          if (row) row.attempts = Number(row.attempts || 0) + 1;
+          return emptyResult();
+        }
+        if (q.includes('delete from phone_verifications')) {
+          mockStore.phone_verifications = mockStore.phone_verifications.filter((p: any) => p.phone !== params[0]);
+          return emptyResult();
+        }
+        if (q.includes('update users set phoneverified')) {
+          const u = mockStore.users.find((x: any) => x.phone === params[0]);
+          if (u) u.phoneVerified = true;
           return emptyResult();
         }
         if (q.includes('insert into ride_messages')) {

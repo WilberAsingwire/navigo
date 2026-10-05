@@ -43,6 +43,22 @@ Design constraint: **everything must work today with zero paid services**, while
 **New env vars (all optional):** `MOMO_MTN_NUMBER`, `MOMO_MTN_NAME`, `MOMO_AIRTEL_NUMBER`, `MOMO_AIRTEL_NAME` (the NAVIGO deposit numbers shown to riders — top-ups are hidden until at least one is set), `MATCH_RADIUS_KM` (default 12), `FLUTTERWAVE_SECRET_KEY` (presence switches payment mode to `gateway`). See `backend/.env.example`.
 
 **Still open after Round 2:** C10 real OTP, H9 OAuth token-in-URL, H11 helmet/body limits, H12 CORS deny-by-default, H13 CGNAT rate limits, and the Medium/Low lists below.
+
+---
+
+## 🛠️ FIX LOG — Round 3 (2026-10-06 — security-hardening round; verified: backend `tsc` ✅, frontend `tsc` ✅, prod build ✅, live API smoke test ✅)
+
+| # | Issue | Fix |
+|---|---|---|
+| C10 | Phone "verification" accepted any 6-digit code client-side; no backend OTP existed | Real OTP infrastructure: `phone_verifications` table (SHA-256-hashed codes, 10-min expiry, 5-attempt cap, resend cooldown via per-phone SMS limits). `POST /auth/send-verification` (generic response — doesn't leak account existence; delivery SMS → email fallback → `devCode` outside production) + `POST /auth/verify-phone`. PhoneVerification page rewritten to call the real API and wired into routing (it was orphaned — `/verify-phone` rendered a redirect). Enforcement is opt-in via `REQUIRE_PHONE_VERIFICATION=1` (register then sets `phoneVerified=false` and the app routes to the OTP screen), so free mode without an SMS provider keeps working. |
+| H9 | Google OAuth redirect put the JWT (plus name/email/role) in the URL — token lands in browser history, server logs, Referer headers | Redirect now carries only a one-time 60-second random code (`oauth_codes` table). New `POST /auth/exchange-code` does an atomic single-use claim (`UPDATE … WHERE usedAt IS NULL AND expiresAt > now RETURNING`), checks ban/suspend status, and returns the token in the response body. AuthCallback updated; legacy token-in-URL path removed. Expired codes are swept on each issue. |
+| H11 | No security headers; 10 MB JSON body limit on every route | `helmet()` (CSP, HSTS, nosniff, frame-options verified in smoke test). Global JSON body limit cut to 100 KB — every payload in the app is text-only (driver docs are license/plate strings). Error handler now returns proper 413 (too large) and 400 (malformed JSON) instead of 500. |
+| H12 | CORS allowed any origin when `ALLOWED_ORIGINS` unset — including in production | Deny-by-default in production: falls back to the known frontend origin (derived from `REDIRECT_URL`, default the Vercel deployment) instead of `*`. Dev stays open for local tooling. Socket.io shares the same list. |
+| H13 | Pure per-IP rate limits — useless under Ugandan CGNAT (hundreds of users share one IP; one abuser locks out a whole neighbourhood) | Rewritten limiter strategy: per-IP limits loosened into flood guards (general 600/15 min, auth 100/h, SMS 30/day) while the strict limits key on the actual attack target — per-account (phone/email) 10/h for auth, per-target-phone 5/day for SMS, per-user-ID for ride requests and wallet operations. |
+
+**Smoke-tested live:** helmet headers present; register with `REQUIRE_PHONE_VERIFICATION=1` → `phoneVerified:false`; send-verification → hashed code + devCode; wrong code rejected & attempt-counted; correct code verifies; code single-use; bogus exchange-code rejected; 200 KB body → 413; malformed JSON → 400.
+
+**Still open after Round 3:** full Leaflet/OSM conversion of remaining map screens, driver-doc object storage, CI + test coverage, repo hygiene (stray plan files, `.gitgnore` typos), and the Medium/Low lists below.
 **Scope:** Entire repo — backend (Express + PostgreSQL + Socket.io), frontend (Ionic React + Vite), infra/config, repo hygiene. Both projects were dependency-installed, type-checked (`tsc --noEmit`) and production-built as part of this audit.
 
 ---

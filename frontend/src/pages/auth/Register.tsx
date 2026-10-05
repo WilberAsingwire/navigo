@@ -72,8 +72,14 @@ const Register: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
-      history.push('/login');
+      const newUser = await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
+      if (newUser && newUser.phoneVerified === false) {
+        // Backend requires phone verification — send them to the OTP screen.
+        localStorage.setItem('navigo_temp_phone', cleanPhone);
+        history.push('/verify-phone', { phone: cleanPhone });
+      } else {
+        history.push('/login');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
     } finally {
