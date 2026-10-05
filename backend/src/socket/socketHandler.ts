@@ -31,6 +31,41 @@ async function isRideMember(userId: string, rideId: string): Promise<boolean> {
   return !!(ride && (ride.userId === userId || ride.driverId === userId));
 }
 
+// ─── Driver matching helpers ────────────────────────────
+const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+};
+
+/** Which ride types a driver's registered vehicle can serve. */
+const SERVES: Record<string, string[]> = {
+  boda: ['boda'],
+  motorcycle: ['boda'],
+  car: ['economy'],
+  go: ['economy'],
+  economy: ['economy'],
+  standard: ['economy'],
+  comfort: ['comfort', 'economy'],
+  van: ['xl', 'economy'],
+  xl: ['xl', 'economy'],
+};
+
+const canServe = (driverVehicle: string | null | undefined, rideType: string): boolean => {
+  const dv = (driverVehicle || '').toLowerCase().trim();
+  if (!dv) return true; // driver hasn't registered a vehicle type — don't exclude them
+  const served = SERVES[dv];
+  if (!served) return true; // unknown vehicle label — be permissive so rides still match
+  return served.includes(rideType);
+};
+
+/** Max pickup distance for targeted dispatch. Beyond this we broaden the net. */
+const MATCH_RADIUS_KM = Number(process.env.MATCH_RADIUS_KM || 12);
+
 const rateLimitMap = new Map<string, { count: number; reset: number }>();
 const checkSocketRateLimit = (key: string, max: number, windowMs: number): boolean => {
   const now = Date.now();
@@ -116,7 +151,7 @@ export const setupSocketHandlers = (io: Server) => {
       }
     });
 
-    // Rider requests a ride — FIXED: only to drivers room, not global broadcast
+    // Rider requests a ride — dispatched with vehicle-type + proximity matching
     socket.on('request-ride', async (data: { userId: string; rideId: string }) => {
       if (!checkSocketRateLimit(`req-ride:${userId}`, 5, 60000)) {
         return socket.emit('error', { message: 'Too many ride requests. Please wait a minute.' });
@@ -127,22 +162,58 @@ export const setupSocketHandlers = (io: Server) => {
       const { rideId } = data;
       const db = getDB();
 
-      // Find approved, online, available drivers — with location if possible
-      const drivers = await db.all(
-        'SELECT id, fullName FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND isOnline = TRUE AND isAvailable = TRUE LIMIT 50',
-        ['driver', 'motorist', 'approved']
-      );
+      try {
+        // The ride must exist, belong to this rider, and still be open.
+        const ride = await db.get(
+          "SELECT vehicleType, pickupLat, pickupLng, status FROM rides WHERE id = ? AND userId = ?",
+          [rideId, userId]
+        );
+        if (!ride || ride.status !== 'requested') {
+          return socket.emit('error', { message: 'Ride not found or no longer open.' });
+        }
 
-      if (drivers.length > 0) {
-        // Only notify drivers room + admins, NOT all clients
-        io.to('drivers').to('admins').emit('ride-requested', {
-          rideId,
-          riderId: userId,
-          timestamp: new Date().toISOString(),
-        });
-        console.log(`🚕 Ride ${rideId} broadcast to ${drivers.length} drivers (drivers room only)`);
-      } else {
-        socket.emit('no-drivers-found', { message: 'No drivers available at the moment. Try again in a minute.' });
+        // Approved, online, available drivers with their vehicle + last location.
+        const drivers = await db.all(
+          `SELECT u.id,
+                  COALESCE(dp.vehicleType, u.vehicleType) AS vehicleType,
+                  COALESCE(dp.lat, u.currentLat) AS lat,
+                  COALESCE(dp.lng, u.currentLng) AS lng
+           FROM users u
+           LEFT JOIN driver_profiles dp ON dp.userId = u.id
+           WHERE (u.role = ? OR u.role = ?) AND u.verificationStatus = ?
+             AND u.isOnline = TRUE AND u.isAvailable = TRUE
+           LIMIT 200`,
+          ['driver', 'motorist', 'approved']
+        );
+
+        // 1) Filter by vehicle type (a boda can't serve an XL request).
+        const eligible = drivers.filter((d: any) => canServe(d.vehicleType, ride.vehicleType));
+
+        // 2) Prefer drivers within MATCH_RADIUS_KM of the pickup. If nobody
+        //    with a known location is nearby, broaden to all eligible drivers
+        //    (some may not have reported a location yet) — a match beats none.
+        const pLat = Number(ride.pickupLat);
+        const pLng = Number(ride.pickupLng);
+        const near = eligible.filter((d: any) =>
+          d.lat != null && d.lng != null &&
+          haversineKm(pLat, pLng, Number(d.lat), Number(d.lng)) <= MATCH_RADIUS_KM
+        );
+        const targets: any[] = near.length > 0 ? near : eligible;
+
+        if (targets.length === 0) {
+          return socket.emit('no-drivers-found', {
+            message: 'No drivers available for this vehicle type right now. Try again in a minute or pick another ride type.',
+          });
+        }
+
+        const payload = { rideId, riderId: userId, vehicleType: ride.vehicleType, timestamp: new Date().toISOString() };
+        // Targeted dispatch: each matched driver's personal room (not the whole fleet) + admins.
+        for (const d of targets) io.to(d.id).emit('ride-requested', payload);
+        io.to('admins').emit('ride-requested', payload);
+        console.log(`🚕 Ride ${rideId} (${ride.vehicleType}) dispatched to ${targets.length}/${drivers.length} drivers (${near.length > 0 ? `within ${MATCH_RADIUS_KM}km` : 'radius widened'})`);
+      } catch (e) {
+        console.error('request-ride dispatch error:', e);
+        socket.emit('error', { message: 'Failed to notify drivers. Please retry.' });
       }
     });
 
@@ -275,6 +346,14 @@ export const setupSocketHandlers = (io: Server) => {
           const settlement = await settleRidePayment(rideId);
           if (settlement.success) {
             console.log(`💰 Settlement successful for ride ${rideId}`);
+            // Wallet couldn't cover the fare → both parties must know the fare
+            // is now collected in cash.
+            if (settlement.fallback === 'cash') {
+              notifyRide(rideId, ride.userId, userId, 'payment-fallback-cash', {
+                rideId,
+                message: 'Wallet balance was insufficient — please settle this fare in cash.',
+              });
+            }
           } else {
             console.error(`❌ Settlement failed for ride ${rideId}: ${settlement.message}`);
           }
@@ -288,7 +367,8 @@ export const setupSocketHandlers = (io: Server) => {
       }
     });
 
-    // Chat logic
+    // Chat logic — messages are PERSISTED so history survives reconnects and
+    // there is an audit trail for disputes/safety investigations.
     socket.on('join-chat', async (d: any) => {
       const { rideId } = d;
       if (await isRideMember(userId, rideId)) {
@@ -297,12 +377,81 @@ export const setupSocketHandlers = (io: Server) => {
         socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
       }
     });
+
     socket.on('send-message', async (d: any) => {
       const { rideId, message } = d;
-      if (socket.rooms.has(rideId)) {
-        socket.to(rideId).emit('new-message', { ...message, senderId: userId });
-      } else {
-        socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
+      if (!socket.rooms.has(rideId)) {
+        return socket.emit('error', { message: 'Unauthorized: You are not part of this ride' });
+      }
+      if (!checkSocketRateLimit(`chat:${userId}`, 30, 60000)) {
+        return socket.emit('error', { message: 'You are sending messages too fast.' });
+      }
+
+      const text = String(message?.text || '').slice(0, 1000).trim();
+      if (!text) return;
+
+      const stored = {
+        id: message?.id || `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        text,
+        senderId: userId, // ALWAYS from the authenticated socket, never the client payload
+        senderName: String(message?.senderName || '').slice(0, 100),
+        senderRole: String(message?.senderRole || userRole || '').slice(0, 20),
+        timestamp: new Date().toISOString(),
+      };
+
+      try {
+        const db = getDB();
+        await db.run(
+          'INSERT INTO ride_messages (id, rideId, senderId, senderName, senderRole, text) VALUES (?, ?, ?, ?, ?, ?)',
+          [stored.id, rideId, stored.senderId, stored.senderName, stored.senderRole, stored.text]
+        );
+      } catch (e) {
+        console.error('Failed to persist chat message:', e);
+        // Still relay in real time even if persistence hiccups.
+      }
+
+      socket.to(rideId).emit('new-message', { ...stored, status: 'delivered' });
+    });
+
+    // Load persisted chat history (ack callback → ChatBox initial render).
+    socket.on('load-messages', async (d: any, callback?: (messages: any[]) => void) => {
+      try {
+        const { rideId } = d || {};
+        if (!rideId || typeof callback !== 'function') return;
+        if (!(await isRideMember(userId, rideId))) return callback([]);
+
+        const db = getDB();
+        const rows = await db.all(
+          'SELECT id, senderId, senderName, senderRole, text, createdAt FROM ride_messages WHERE rideId = ? ORDER BY createdAt ASC LIMIT 200',
+          [rideId]
+        );
+        callback(rows.map((r: any) => ({
+          id: r.id,
+          text: r.text,
+          senderId: r.senderId,
+          senderName: r.senderName,
+          senderRole: r.senderRole,
+          timestamp: r.createdAt,
+          status: 'delivered',
+        })));
+      } catch (e) {
+        console.error('load-messages error:', e);
+        if (typeof callback === 'function') callback([]);
+      }
+    });
+
+    // Typing indicator + read receipts — relayed to the other ride participant.
+    socket.on('typing', (d: any) => {
+      const { rideId, isTyping } = d || {};
+      if (rideId && socket.rooms.has(rideId)) {
+        socket.to(rideId).emit('user-typing', { userId, isTyping: !!isTyping });
+      }
+    });
+
+    socket.on('message-read', (d: any) => {
+      const { rideId, messageId } = d || {};
+      if (rideId && messageId && socket.rooms.has(rideId)) {
+        socket.to(rideId).emit('message-read-confirmed', messageId);
       }
     });
 

@@ -1,6 +1,13 @@
 import { getDB } from '../config/database';
 import { driverShare as calcDriverShare, COMMISSION_RATE } from './fare';
 
+export interface SettlementResult {
+  success: boolean;
+  message: string;
+  /** Set when a wallet ride couldn't be debited and fell back to cash collection. */
+  fallback?: 'cash';
+}
+
 /**
  * Settle a completed ride.
  *
@@ -17,8 +24,78 @@ import { driverShare as calcDriverShare, COMMISSION_RATE } from './fare';
  *       We still record the driver's 90% earnings (kind 'cash_trip', NOT
  *       added to the payoutable balance — the driver already holds the cash)
  *       and accrue NAVIGO's 10% (kind 'commission').
+ *
+ * SAFETY NET: if a wallet ride can't be debited at completion time (balance
+ * dropped below the fare mid-ride), the ride is converted to CASH collection
+ * instead of silently failing — the driver is told to collect cash, nothing
+ * is ever lost from the ledger.
  */
-export const settleRidePayment = async (rideId: string) => {
+
+/** Cash-rail settlement (also used as the wallet-failure fallback). */
+const settleAsCash = async (
+  ride: any,
+  options: { convertedFromWallet?: boolean } = {}
+): Promise<SettlementResult> => {
+  const db = getDB();
+  const rideId = ride.id;
+  const driverId = ride.driverId;
+  const fare = Number(ride.fareFinal) || 0;
+  const fareDriverShare = calcDriverShare(fare);
+  const commission = fare - fareDriverShare;
+  const tip = Number(ride.tip) || 0;
+
+  const tx = await db.getTransactionClient();
+  try {
+    await tx.query('BEGIN');
+    const settledRes = await tx.query(
+      'UPDATE rides SET settled = TRUE WHERE id = ? AND settled = FALSE',
+      [rideId]
+    );
+    if (settledRes.rowCount === 0) throw new Error('Ride already settled or not found');
+
+    if (options.convertedFromWallet) {
+      // Record the conversion on the ride so history/receipts are truthful.
+      await tx.query("UPDATE rides SET paymentMethod = 'cash' WHERE id = ?", [rideId]);
+    }
+
+    // Cash tip: paid directly in cash to driver, so don't touch wallet balance; record a ledger entry only.
+    if (tip > 0) {
+      await tx.query(
+        'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+        [`tx_cash_tip_${Date.now()}_${driverId}`, driverId, 'cash_tip', tip, `Cash tip for ride ${rideId}`, rideId]
+      );
+    }
+    await tx.query(
+      'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        `tx_cash_${Date.now()}_${driverId}`,
+        driverId,
+        'cash_trip',
+        fareDriverShare,
+        options.convertedFromWallet
+          ? `Cash earnings for ride ${rideId} (90%) — wallet balance was insufficient, fare collected in cash`
+          : `Cash earnings for ride ${rideId} (90%)`,
+        rideId,
+      ]
+    );
+    await tx.query(
+      'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
+      [`tx_comm_${Date.now()}_${rideId}`, null, 'commission', commission, `Commission on cash ride ${rideId}`, rideId]
+    );
+
+    await tx.query('COMMIT');
+    tx.release();
+    return options.convertedFromWallet
+      ? { success: true, message: 'Wallet balance insufficient — converted to cash collection', fallback: 'cash' }
+      : { success: true, message: 'Cash ride settled (earnings recorded)' };
+  } catch (e: any) {
+    try { await tx.query('ROLLBACK'); } catch {}
+    tx.release();
+    throw e;
+  }
+};
+
+export const settleRidePayment = async (rideId: string): Promise<SettlementResult> => {
   const db = getDB();
 
   try {
@@ -37,52 +114,30 @@ export const settleRidePayment = async (rideId: string) => {
 
     const riderId = ride.userId;
     const driverId = ride.driverId;
-    const fare = ride.fareFinal;
+    const fare = Number(ride.fareFinal) || 0;
     const fareDriverShare = calcDriverShare(fare);
     const commission = fare - fareDriverShare;
-    const tip = ride.tip || 0;
+    const tip = Number(ride.tip) || 0;
 
     // ── CASH ride: record earnings + accrue commission, no wallet movement ──
     if (ride.paymentMethod !== 'wallet') {
-      const tx = await db.getTransactionClient();
-      try {
-        await tx.query('BEGIN');
-        const settledRes = await tx.query(
-          'UPDATE rides SET settled = TRUE WHERE id = ? AND settled = FALSE',
-          [rideId]
-        );
-        if (settledRes.rowCount === 0) throw new Error('Ride already settled or not found');
-
-        // Cash tip: paid directly in cash to driver, so don't touch wallet balance; record a ledger entry only.
-        if (tip > 0) {
-          await tx.query(
-            'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
-            [`tx_cash_tip_${Date.now()}_${driverId}`, driverId, 'cash_tip', tip, `Cash tip for ride ${rideId}`, rideId]
-          );
-        }
-        await tx.query(
-          'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
-          [`tx_cash_${Date.now()}_${driverId}`, driverId, 'cash_trip', fareDriverShare, `Cash earnings for ride ${rideId} (90%)`, rideId]
-        );
-        await tx.query(
-          'INSERT INTO wallet_transactions (id, userId, kind, amount, note, rideId) VALUES (?, ?, ?, ?, ?, ?)',
-          [`tx_comm_${Date.now()}_${rideId}`, null, 'commission', commission, `Commission on cash ride ${rideId}`, rideId]
-        );
-
-        await tx.query('COMMIT');
-        tx.release();
-        return { success: true, message: 'Cash ride settled (earnings recorded)' };
-      } catch (e: any) {
-        await tx.query('ROLLBACK');
-        tx.release();
-        throw e;
-      }
+      return await settleAsCash(ride);
     }
 
     // ── CASHLESS (wallet) ride: full live settlement ──
     const tx = await db.getTransactionClient();
+    let insufficientBalance = false;
     try {
       await tx.query('BEGIN');
+
+      // Check the rider can actually pay BEFORE claiming the ride as settled —
+      // if not, we roll back and fall through to the cash fallback below.
+      const riderWalletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [riderId]);
+      const riderWallet = riderWalletRes.rows[0];
+      if (!riderWallet || Number(riderWallet.balance) < fare) {
+        insufficientBalance = true;
+        throw new Error('Insufficient wallet balance');
+      }
 
       // Double-settlement guard: atomically claim the ride.
       const settledRes = await tx.query(
@@ -92,11 +147,6 @@ export const settleRidePayment = async (rideId: string) => {
       if (settledRes.rowCount === 0) throw new Error('Ride already settled or not found');
 
       // 1. Debit the rider the full fare (locked row).
-      const riderWalletRes = await tx.query('SELECT balance FROM wallets WHERE userId = ? FOR UPDATE', [riderId]);
-      const riderWallet = riderWalletRes.rows[0];
-      if (!riderWallet || riderWallet.balance < fare) {
-        throw new Error('Insufficient wallet balance');
-      }
       await tx.query('UPDATE wallets SET balance = balance - ? WHERE userId = ?', [fare, riderId]);
 
       // 2. Credit the driver 90% of the fare + 100% of the tip (upsert wallet row).
@@ -139,8 +189,15 @@ export const settleRidePayment = async (rideId: string) => {
       console.log(`✅ Settled ride ${rideId}: UGX ${fare} → driver ${fareDriverShare}${tip ? ` + tip` : ''}, NAVIGO ${commission}`);
       return { success: true, message: 'Wallet settlement completed' };
     } catch (e: any) {
-      await tx.query('ROLLBACK');
+      try { await tx.query('ROLLBACK'); } catch {}
       tx.release();
+
+      // SAFETY NET: wallet couldn't cover the fare → convert to cash collection
+      // so the ride still settles and the driver is told to collect cash.
+      if (insufficientBalance) {
+        console.warn(`⚠️ Ride ${rideId}: wallet balance insufficient — falling back to cash collection.`);
+        return await settleAsCash(ride, { convertedFromWallet: true });
+      }
       throw e;
     }
   } catch (error) {

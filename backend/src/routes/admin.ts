@@ -123,15 +123,63 @@ router.post('/payouts/:id/complete', authenticate, authorize(['admin']), async (
     const db = getDB();
     const existing = await db.get('SELECT * FROM payouts WHERE id = ?', [id]);
     if (!existing) return res.status(404).json({ ok: false, message: 'Payout not found.' });
+    if (existing.status === 'completed') {
+      return res.status(400).json({ ok: false, message: 'Payout is already completed.' });
+    }
     const adminId = (req as AuthRequest).user?.userId || 'unknown';
     await db.run(
-      "UPDATE payouts SET status = 'completed', note = COALESCE(note,'') || ? WHERE id = ?",
+      "UPDATE payouts SET status = 'completed', completedAt = CURRENT_TIMESTAMP, note = COALESCE(note,'') || ? WHERE id = ?",
       [`\n[${new Date().toISOString()}] Marked complete by admin ${adminId}`, id]
     );
     res.json({ ok: true, message: 'Payout marked as completed.' });
   } catch (error) {
     console.error('Admin payout complete error:', error);
     res.status(500).json({ ok: false, message: 'Failed to mark payout complete.' });
+  }
+});
+
+// Admin rejects a payout that can't be sent — the driver's wallet is refunded
+// atomically (status flips exactly once, so a double-click can't double-refund).
+router.post('/payouts/:id/reject', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const reason = String(req.body?.reason || 'Could not process this payout').slice(0, 300);
+    const adminId = (req as AuthRequest).user?.userId || 'unknown';
+    const db = getDB();
+
+    const tx = await db.getTransactionClient();
+    try {
+      await tx.query('BEGIN');
+      const claim = await tx.query(
+        "UPDATE payouts SET status = 'failed', note = COALESCE(note,'') || ? WHERE id = ? AND status IN ('pending','processing') RETURNING userId, amount",
+        [`\n[${new Date().toISOString()}] Rejected by admin ${adminId}: ${reason}`, id]
+      );
+      if (claim.rowCount === 0) {
+        await tx.query('ROLLBACK');
+        tx.release();
+        return res.status(400).json({ ok: false, message: 'Payout not found or already finalized.' });
+      }
+      const payout = claim.rows[0];
+      await tx.query(
+        `INSERT INTO wallets (userId, balance) VALUES (?, ?)
+         ON CONFLICT(userId) DO UPDATE SET balance = wallets.balance + EXCLUDED.balance`,
+        [payout.userId, payout.amount]
+      );
+      await tx.query(
+        'INSERT INTO wallet_transactions (id, userId, kind, amount, note) VALUES (?, ?, ?, ?, ?)',
+        [`tx_refund_${Date.now()}_${payout.userId}`, payout.userId, 'refund', payout.amount, `Refund — payout ${id} rejected: ${reason}`]
+      );
+      await tx.query('COMMIT');
+      tx.release();
+      res.json({ ok: true, message: 'Payout rejected and balance refunded.' });
+    } catch (e) {
+      try { await tx.query('ROLLBACK'); } catch {}
+      tx.release();
+      throw e;
+    }
+  } catch (error) {
+    console.error('Admin payout reject error:', error);
+    res.status(500).json({ ok: false, message: 'Failed to reject payout.' });
   }
 });
 

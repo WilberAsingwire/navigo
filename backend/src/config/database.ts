@@ -42,6 +42,8 @@ const CAMEL_COLUMNS = [
   'etaAccepted', 'etaArrive', 'etaStart', 'etaComplete', 'riderRating', 'riderTags', 'requestedAt',
   // wallet_transactions / payouts
   'rideId', 'gatewayRef',
+  // topup_requests / ride_messages
+  'senderPhone', 'momoRef', 'reviewedBy', 'reviewNote', 'reviewedAt', 'senderId', 'senderName', 'senderRole',
   // support
   'ticketId', 'fromUser',
   // common query aliases
@@ -245,6 +247,37 @@ export const initDB = async () => {
           completedAt TIMESTAMP WITH TIME ZONE
         );
 
+        -- Manual (free-mode) wallet top-ups: the rider sends Mobile Money to the
+        -- NAVIGO MoMo number person-to-person (no gateway fees), submits the
+        -- MoMo transaction ID here, and an admin verifies & approves it.
+        -- When a payment gateway is enabled later, the same wallet credit flow
+        -- is reused — only the verification step changes.
+        CREATE TABLE IF NOT EXISTS topup_requests (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          amount INTEGER NOT NULL,
+          provider TEXT NOT NULL,          -- mtn | airtel
+          senderPhone TEXT NOT NULL,       -- number the money was sent FROM
+          momoRef TEXT NOT NULL,           -- Mobile Money transaction ID
+          status TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+          reviewedBy TEXT,
+          reviewNote TEXT,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          reviewedAt TIMESTAMP WITH TIME ZONE
+        );
+
+        -- Persisted ride chat — survives reconnects and provides an audit trail
+        -- for disputes and safety investigations.
+        CREATE TABLE IF NOT EXISTS ride_messages (
+          id TEXT PRIMARY KEY,
+          rideId TEXT REFERENCES rides(id) ON DELETE CASCADE,
+          senderId TEXT REFERENCES users(id) ON DELETE SET NULL,
+          senderName TEXT,
+          senderRole TEXT,
+          text TEXT NOT NULL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
         -- Migration: Remove role check constraint and rename 'name' to 'fullName'
         DO $$
         BEGIN
@@ -278,6 +311,12 @@ export const initDB = async () => {
         CREATE INDEX IF NOT EXISTS idx_wtx_user_created ON wallet_transactions (userId, createdAt);
         CREATE INDEX IF NOT EXISTS idx_users_role_online ON users (role, isOnline, isAvailable);
         CREATE INDEX IF NOT EXISTS idx_payouts_user ON payouts (userId, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_topups_user ON topup_requests (userId, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_topups_status ON topup_requests (status, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_ride_messages ON ride_messages (rideId, createdAt);
+
+        -- One MoMo transaction ID can only ever be claimed once.
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_topup_momoref ON topup_requests (momoRef);
       `);
 
       // A payment reference may only ever be credited ONCE — closes the
@@ -324,6 +363,9 @@ export const initDB = async () => {
       saved_places: [],
       support_tickets: [],
       driver_profiles: [],
+      topup_requests: [],
+      payouts: [],
+      ride_messages: [],
     };
     // Minimal mock pool object to prevent null checks
     const emptyResult = (): QueryResult<any> => ({ rows: [], rowCount: 0, command: '', oid: 0, fields: [] });
@@ -368,6 +410,17 @@ export const getDB = () => {
         if (q.includes('from rides')) return mockStore.rides;
         if (q.includes('from wallets')) return mockStore.wallets;
         if (q.includes('from support_tickets')) return mockStore.support_tickets;
+        if (q.includes('from topup_requests')) {
+          // Rider's own list filters by userId (first param); admin list may filter by status.
+          if (q.includes('where userid')) return mockStore.topup_requests.filter((t: any) => t.userId === params[0]);
+          if (q.includes('t.status = ?')) return mockStore.topup_requests.filter((t: any) => t.status === params[0]);
+          return mockStore.topup_requests;
+        }
+        if (q.includes('from payouts')) {
+          if (q.includes('where userid')) return mockStore.payouts.filter((p: any) => p.userId === params[0]);
+          return mockStore.payouts;
+        }
+        if (q.includes('from ride_messages')) return mockStore.ride_messages.filter((m: any) => m.rideId === params[0]);
         return [];
       },
       run: async (query: string, params: any[] = []) => {
@@ -388,6 +441,19 @@ export const getDB = () => {
           const ticketId = mockStore.support_tickets.length + 1;
           mockStore.support_tickets.push({ id: ticketId, userId: params[0], type: params[1], description: params[2], priority: params[3] });
           return emptyResult([{ id: ticketId }]);
+        }
+        if (q.includes('insert into topup_requests')) {
+          const [id, userId, amount, provider, senderPhone, momoRef] = params;
+          if (mockStore.topup_requests.some((t: any) => t.momoRef === momoRef)) {
+            const err: any = new Error('duplicate momoRef'); err.code = '23505'; throw err;
+          }
+          mockStore.topup_requests.push({ id, userId, amount, provider, senderPhone, momoRef, status: 'pending', createdAt: new Date().toISOString() });
+          return emptyResult();
+        }
+        if (q.includes('insert into ride_messages')) {
+          const [id, rideId, senderId, senderName, senderRole, text] = params;
+          mockStore.ride_messages.push({ id, rideId, senderId, senderName, senderRole, text, createdAt: new Date().toISOString() });
+          return emptyResult();
         }
         return emptyResult();
       },

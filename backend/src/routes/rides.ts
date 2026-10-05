@@ -301,6 +301,12 @@ router.post('/:rideId/status', authenticate, async (req: Request, res: Response)
     let settlementResult = null;
     if (status === 'completed') {
       settlementResult = await settleRidePayment(rideId);
+      if (settlementResult?.fallback === 'cash') {
+        notifyRide(String(rideId), ride.userId ?? null, userId ?? null, 'payment-fallback-cash', {
+          rideId: String(rideId),
+          message: 'Wallet balance was insufficient — please settle this fare in cash.',
+        });
+      }
     }
 
     notifyRide(String(rideId), ride.userId ?? null, userId ?? null, 'status-changed', { rideId: String(rideId), status });

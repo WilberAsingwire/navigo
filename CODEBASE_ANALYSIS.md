@@ -25,6 +25,24 @@
 | — | Ride-history bugs: `verificationStatus` aliased as `driverRating`; ambiguous `status` column after join | Joins `driver_profiles` for the real rating; qualified `r.status` / `r.requestedAt` |
 
 **Still open (next rounds):** C2 real top-up gateway flow, C3 payouts via `/v3/transfers`, C5 failed-settlement recovery, C10 real OTP verification, H2 proximity/vehicle-type matching, H4 chat persistence, H9 OAuth token-in-URL, H11 helmet/body limits/doc storage, H12 CORS deny-by-default, H13 CGNAT-aware rate limits, and the Medium/Low lists below.
+
+---
+
+## 🛠️ FIX LOG — Round 2 (2026-10-06 — "money works free-mode" round; verified: backend `tsc` ✅, frontend `tsc` ✅, prod build ✅, API smoke test ✅)
+
+Design constraint: **everything must work today with zero paid services**, while keeping a clean upgrade path to paid gateways later. `GET /api/wallet/payment-info` reports `mode: 'manual' | 'gateway'` — setting `FLUTTERWAVE_SECRET_KEY` later flips the whole money stack to gateway mode with no schema or UI changes.
+
+| # | Issue | Fix |
+|---|---|---|
+| C2 | Wallet top-up was simulated (fake references auto-credited) | **Manual MoMo top-up flow**: rider sends Mobile Money person-to-person to the NAVIGO number (`MOMO_MTN_NUMBER`/`MOMO_AIRTEL_NUMBER`), submits amount + MoMo transaction ID + sender phone (`POST /wallet/topup-request`); admin verifies the deposit and approves (`/wallet/admin/topup-requests/:id/approve` — atomic claim + wallet credit + ledger row) or rejects with a reason. `UNIQUE INDEX` on `momoRef` means one transaction ID can only ever be credited once. New `topup_requests` table. Rider UI (RiderPayments) walks through the 3 steps and shows pending/rejected requests; Admin UI gained a "Wallet Top-ups" tab. The fake frontend `paymentService.ts` is deleted. |
+| C3/H7 | Payout used wrong gateway API; gateway call inside the DB transaction | Payout restructured to **two phases**: Phase 1 commits the debit + ledger + `pending` payout row atomically (FOR UPDATE balance check) *before* any network call; Phase 2 hands off — in free mode it stays `pending` in the admin queue (admin sends MoMo from the NAVIGO wallet and clicks "Mark as paid"); in gateway mode a failed transfer refunds in a fresh claim-guarded transaction. Added admin `POST /payouts/:id/reject` (refund + ledger). Driver UI (DriverEarnings) now has a working Request Payout modal (min UGX 10,000) + payout history with status badges. |
+| C5 | Failed settlement left ride completed but money in limbo | `settlement.ts` rewritten: insufficient wallet balance now **falls back to cash settlement** (commission recorded as receivable) instead of failing silently; both socket and REST completion paths notify the ride room with `payment-fallback-cash` so driver & rider see "pay cash" immediately. |
+| H2 | No proximity or vehicle-type matching (every driver got every request) | `request-ride` now matches on **vehicle class serve-map** (boda→boda; comfort serves comfort+economy; van/XL serves xl+economy; unknown vehicle = permissive) **and haversine distance** (`MATCH_RADIUS_KM`, default 12 km; broadens to all eligible drivers if none are near). Emits only to matched drivers' personal rooms + admins — no more fleet-wide broadcast. |
+| H4 | Chat was relay-only (lost on reconnect, no audit trail) | New `ride_messages` table; `send-message` persists (sender identity always from socket auth, 1000-char cap, 30 msg/min rate limit), new `load-messages` ack returns the last 200 on (re)join; typing + read receipts wired to the events ChatBox already listened for. |
+
+**New env vars (all optional):** `MOMO_MTN_NUMBER`, `MOMO_MTN_NAME`, `MOMO_AIRTEL_NUMBER`, `MOMO_AIRTEL_NAME` (the NAVIGO deposit numbers shown to riders — top-ups are hidden until at least one is set), `MATCH_RADIUS_KM` (default 12), `FLUTTERWAVE_SECRET_KEY` (presence switches payment mode to `gateway`). See `backend/.env.example`.
+
+**Still open after Round 2:** C10 real OTP, H9 OAuth token-in-URL, H11 helmet/body limits, H12 CORS deny-by-default, H13 CGNAT rate limits, and the Medium/Low lists below.
 **Scope:** Entire repo — backend (Express + PostgreSQL + Socket.io), frontend (Ionic React + Vite), infra/config, repo hygiene. Both projects were dependency-installed, type-checked (`tsc --noEmit`) and production-built as part of this audit.
 
 ---
