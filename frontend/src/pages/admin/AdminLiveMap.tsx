@@ -227,7 +227,11 @@ const AdminLiveMap: React.FC = () => {
         ) : (
           <div style={{height: '45vh', width: '100%', minHeight: 280}}>
             <MapContainer center={userLocation} zoom={14} style={{height: '100%', width: '100%'}} ref={mapRef}>
-              <TileLayer url={tileUrls[mapStyle]} />
+              <TileLayer
+                url={tileUrls[mapStyle]}
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
               <FlyToButton center={userLocation} />
               <Marker position={userLocation} icon={riderIcon}><Popup>Your location</Popup></Marker>
               {filteredUsers.map(u => (

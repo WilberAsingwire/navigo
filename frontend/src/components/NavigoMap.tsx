@@ -11,7 +11,7 @@ import api from '../services/api';
 // paid upgrade path (Google/Mapbox tiles) is a one-line TileLayer URL swap.
 const TILE_LAYERS = {
   standard: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
   satellite: {
@@ -287,6 +287,7 @@ const NavigoMap: React.FC<MapProps> = ({
           key={mapStyle}
           url={TILE_LAYERS[mapStyle].url}
           attribution={TILE_LAYERS[mapStyle].attribution}
+          referrerPolicy="strict-origin-when-cross-origin"
           maxZoom={19}
         />
         <MapEvents

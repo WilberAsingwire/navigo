@@ -174,9 +174,7 @@ ion-label { font-weight: 600; }
 .rider-cta-card,
 .glass-booking-card,
 .bottom-panel {
-  background: var(--nav-card-glass-strong) !important;
-  backdrop-filter: blur(28px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(1.3) !important;
+  background: var(--nav-bg-raised) !important;
   border-top: 1px solid var(--nav-border-strong);
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0 !important;
   box-shadow: 0 -8px 40px rgba(0,0,0,0.35) !important;
@@ -187,7 +185,7 @@ body.light .active-ride-bottom-card,
 body.light .rider-cta-card,
 body.light .glass-booking-card,
 body.light .bottom-panel {
-  background: rgba(255, 255, 255, 0.95) !important;
+  background: #FFFFFF !important;
   border-top: 1px solid var(--nav-border);
   box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.08) !important;
 }
@@ -256,8 +254,6 @@ ion-button.button-ghost {
   background: var(--nav-card-glass-strong) !important;
   color: var(--nav-text) !important;
   border: 1px solid var(--nav-border-strong);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-card);
   min-height: 44px;

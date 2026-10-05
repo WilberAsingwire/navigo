@@ -93,16 +93,15 @@
 }
 
 .map-badge.route {
-  background: rgba(15,23,42,0.85);
+  background: var(--nav-bg-raised);
   color: #F5F7FA;
-  border-color: rgba(255,255,255,0.12);
+  border-color: var(--nav-border-strong);
 }
 
 .map-style-toggle {
   display: flex;
-  background: rgba(15,23,42,0.85);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--nav-bg-raised);
+  border: 1px solid var(--nav-border-strong);
   border-radius: 9999px;
   padding: 3px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.25);
@@ -215,10 +214,8 @@
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
-  background: rgba(15,23,42,0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--nav-bg-raised);
+  border: 1px solid var(--nav-border-strong);
   padding: 10px 16px;
   border-radius: 9999px;
   transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
