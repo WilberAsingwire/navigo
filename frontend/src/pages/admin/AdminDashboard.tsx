@@ -62,7 +62,7 @@ const AdminDashboard: React.FC = () => {
     { label: 'Motorists', value: (stats.totalMotorists ?? 0).toLocaleString(), icon: bicycleOutline, color: '#ffab40', change: '+15%' },
     { label: 'Active Rides', value: (stats.activeRides ?? 0).toString(), icon: mapOutline, color: '#FF6B35', change: 'Now' },
     { label: 'Revenue Today', value: String(stats.revenue ?? '0'), icon: walletOutline, color: '#10B981', change: '+22%' },
-    { label: 'Avg Rating', value: String(stats.avgRating ?? stats.rating ?? '0'), icon: starOutline, color: '#F59E0B', change: '★' },
+    { label: 'Avg Rating', value: String(stats.avgRating ?? stats.rating ?? '0'), icon: starOutline, color: '#F59E0B', change: 'avg' },
   ];
 
   const quickActions = [
@@ -81,7 +81,7 @@ const AdminDashboard: React.FC = () => {
       <IonPage>
         <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
-            <div style={{ fontSize: 40 }}>🛡️</div>
+            <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: 36, color: 'var(--navigo-orange)' }} />
             <IonSpinner name="crescent" color="warning" />
             <p style={{ color: 'rgba(255,255,255,0.5)' }}>Loading admin panel...</p>
           </div>
@@ -107,7 +107,7 @@ const AdminDashboard: React.FC = () => {
           {/* Welcome */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, Admin 🛡️</h2>
+              <h2 style={{ color: '#fff', margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, Admin</h2>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: '4px 0 0' }}>System is running normally</p>
             </div>
             <IonBadge style={{ background: 'rgba(16,185,129,0.2)', color: '#10B981', padding: '6px 14px', borderRadius: 20, fontSize: 12 }}>● Online</IonBadge>
@@ -150,7 +150,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* Revenue Chart */}
           <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(255,255,255,0.06)' }}>
-            <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>📈 Revenue Overview</h3>
+            <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>Revenue Overview</h3>
             <p style={{ color: '#D1D5DB', fontSize: 12, margin: '0 0 16px' }}>Last 7 days</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
               No data available for this period
@@ -161,7 +161,7 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Recent Alerts */}
-          <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>🔔 Recent Activity</h3>
+          <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Recent Activity</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 30 }}>
             {alerts.map((alert, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, border: '1px solid rgba(255,255,255,0.04)' }}>

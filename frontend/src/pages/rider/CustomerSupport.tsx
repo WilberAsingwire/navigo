@@ -80,7 +80,7 @@ const RiderSupport: React.FC = () => {
         priority: reportType === 'safety' ? 'urgent' : 'medium',
       });
       presentToast({
-        message: `✅ Ticket #${res.data?.ticketId ?? ''} submitted! Track it under "My Tickets".`,
+        message: `Ticket #${res.data?.ticketId ?? ''} submitted — track it under My Tickets`,
         duration: 3500, color: 'success',
       });
       setReportType('');
@@ -113,10 +113,10 @@ const RiderSupport: React.FC = () => {
         </IonToolbar>
         <IonToolbar style={{'--background': '#080c14'} as any}>
           <IonSegment value={segment} onIonChange={e => setSegment(e.detail.value as any)}>
-            <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📖 FAQs</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11, color: "#D1D5DB" }}>🚨 Report</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="tickets"><IonLabel style={{ fontSize: 11, color: "#D1D5DB" }}>🎫 My Tickets</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📞 Contact</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>FAQs</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11, color: "#D1D5DB" }}>Report</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="tickets"><IonLabel style={{ fontSize: 11, color: "#D1D5DB" }}>My Tickets</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>Contact</IonLabel></IonSegmentButton>
           </IonSegment>
         </IonToolbar>
       </IonHeader>
@@ -149,13 +149,13 @@ const RiderSupport: React.FC = () => {
 
           {segment === 'report' && (
             <div className="report-form">
-              <h3 className="report-title">🚨 Report an Issue</h3>
+              <h3 className="report-title">Report an Issue</h3>
               <p className="report-subtitle">We'll get back to you within 2 hours</p>
 
               <IonItem className="support-input-field">
                 <IonSelect placeholder="Select issue type" value={reportType} onIonChange={e => setReportType(e.detail.value)}>
-                  <IonSelectOption value="billing">💰 Billing / Payment Issue</IonSelectOption>
-                  <IonSelectOption value="lost">🎒 Lost Item in Vehicle</IonSelectOption>
+                  <IonSelectOption value="billing">Billing / Payment Issue</IonSelectOption>
+                  <IonSelectOption value="lost">Lost Item in Vehicle</IonSelectOption>
                   <IonSelectOption value="safety">🛡️ Safety Concern</IonSelectOption>
                   <IonSelectOption value="driver">👤 Driver Behavior</IonSelectOption>
                   <IonSelectOption value="app">📱 App Bug / Crash</IonSelectOption>
@@ -179,7 +179,7 @@ const RiderSupport: React.FC = () => {
 
           {segment === 'tickets' && (
             <div className="tickets-section">
-              <h3 className="report-title">🎫 My Tickets</h3>
+              <h3 className="report-title">My Tickets</h3>
               {loadingTickets ? (
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, textAlign: 'center', marginTop: 24 }}>Loading…</p>
               ) : tickets.length === 0 ? (
@@ -221,7 +221,7 @@ const RiderSupport: React.FC = () => {
 
           {segment === 'contact' && (
             <div className="contact-section">
-              <h3 className="report-title" style={{ marginBottom: 16 }}>📞 Contact Us</h3>
+              <h3 className="report-title" style={{ marginBottom: 16 }}>Contact Us</h3>
 
               <div className="support-contact-grid">
                 <div onClick={() => window.open('https://wa.me/256800100200', '_blank')}

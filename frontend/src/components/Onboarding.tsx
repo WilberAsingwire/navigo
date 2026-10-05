@@ -12,21 +12,18 @@ const SLIDES = [
   {
     title: 'Navigate Your World',
     description: 'Experience the fastest, most reliable ride-hailing in Uganda. From Boda to XL, we get you there in style.',
-    emoji: '🏍️',
     icon: rocketOutline,
     color: '#FF6B35',
   },
   {
     title: 'Earn Zawadi Rewards',
     description: 'Every ride brings you closer to gold. Earn points, climb tiers, and redeem them for free rides and cash!',
-    emoji: '🎁',
     icon: giftOutline,
     color: '#4285F4',
   },
   {
     title: 'Ride with Boda Safe™',
     description: 'Your safety is our priority. Verified drivers, live tracking, and emergency SOS built-in for peace of mind.',
-    emoji: '🛡️',
     icon: shieldCheckmarkOutline,
     color: '#4CAF50',
   },
@@ -59,7 +56,6 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
         <div className="onboarding-content">
           <div className="onboarding-visual">
             <div className="visual-circle" style={{ borderColor: slide.color }}>
-              <span className="visual-emoji">{slide.emoji}</span>
               <IonIcon icon={slide.icon} className="visual-icon" style={{ color: slide.color }} />
             </div>
           </div>

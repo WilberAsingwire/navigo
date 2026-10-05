@@ -208,12 +208,12 @@ const AdminUsers: React.FC = () => {
                 {(() => { const sc = getStatusColor(selectedUser.status); return <span style={{background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600}}>{selectedUser.status}</span>; })()}
               </div>
               <div style={{background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 16}}>
-                <p>📞 {selectedUser.phone}</p>
-                <p>📧 {selectedUser.email || 'No email'}</p>
-                <p>🔄 Role: {selectedUser.role}</p>
+                <p>Phone: {selectedUser.phone}</p>
+                <p>Email: {selectedUser.email || 'No email'}</p>
+                <p>Role: {selectedUser.role}</p>
                 <p>⭐ Rating: {selectedUser.rating || 'N/A'}</p>
-                <p>🚗 Rides: {selectedUser.totalRides || 0}</p>
-                <p>📅 Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                <p>Rides: {selectedUser.totalRides || 0}</p>
+                <p>Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
               </div>
               <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
                 {selectedUser.status !== 'active' && (

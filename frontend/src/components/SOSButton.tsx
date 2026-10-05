@@ -3,7 +3,7 @@ import { IonButton, IonIcon, IonModal, IonToast, IonItem, IonLabel, IonInput, Io
 import { 
   warningOutline, callOutline, locationOutline, shieldCheckmarkOutline, 
   closeOutline, heartOutline, medicalOutline, flameOutline, timeOutline,
-  checkmarkCircleOutline, addCircleOutline, starOutline
+  checkmarkCircleOutline, addCircleOutline, starOutline, headsetOutline
 } from 'ionicons/icons';
 
 interface SOSButtonProps {
@@ -17,15 +17,15 @@ interface EmergencyContact {
   id: string;
   name: string;
   number: string;
-  emoji: string;
+  icon?: string;
   isCustom?: boolean;
 }
 
 const DEFAULT_CONTACTS: EmergencyContact[] = [
-  { id: 'police', name: 'Uganda Police', number: '999', emoji: '🚔' },
-  { id: 'ambulance', name: 'Ambulance', number: '112', emoji: '🚑' },
-  { id: 'fire', name: 'Fire Brigade', number: '912', emoji: '🔥' },
-  { id: 'navigo', name: 'NAVIGO 24/7 Support', number: '+256800100200', emoji: '🛡️' },
+  { id: 'police', name: 'Uganda Police', number: '999', icon: shieldCheckmarkOutline },
+  { id: 'ambulance', name: 'Ambulance', number: '112', icon: medicalOutline },
+  { id: 'fire', name: 'Fire Brigade', number: '912', icon: flameOutline },
+  { id: 'navigo', name: 'NAVIGO 24/7 Support', number: '+256800100200', icon: headsetOutline },
 ];
 
 const HOSPITALS = [
@@ -80,7 +80,7 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
       ? `📍 https://maps.google.com/?q=${userLocation.lat},${userLocation.lng}` : '';
     const msg = customMessage || `🚨 EMERGENCY! ${userName || 'NAVIGO User'} needs immediate help! ${locationMsg} Contact: ${userPhone || 'Unknown'}`;
     window.open(`tel:${contact.number}`, '_system');
-    setToastMsg(`🚨 Alert sent to ${contact.name}! Help is on the way.`);
+    setToastMsg(`Alert sent to ${contact.name} — help is on the way`);
     setShowToast(true);
     setShowModal(false);
     setIsActivating(false);
@@ -105,10 +105,10 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
     if (!newContactName || !newContactNumber) return;
     setSavedContacts([...savedContacts, { 
       id: Date.now().toString(), name: newContactName, number: newContactNumber, 
-      emoji: '⭐', isCustom: true 
+      icon: starOutline, isCustom: true 
     }]);
     setNewContactName(''); setNewContactNumber(''); setShowAddContact(false);
-    setToastMsg('✅ Emergency contact saved!');
+    setToastMsg('Emergency contact saved');
     setShowToast(true);
   };
 
@@ -182,7 +182,7 @@ const SOSButton: React.FC<SOSButtonProps> = ({ userLocation, userName, userPhone
             {allContacts.map(contact => (
               <div key={contact.id} onClick={() => handleSOS(contact)}
                 style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, cursor: 'pointer' }}>
-                <span style={{ fontSize: 24 }}>{contact.emoji}</span>
+                <IonIcon icon={contact.icon} style={{ fontSize: 22, color: 'var(--navigo-orange)' }} />
                 <div style={{ flex: 1 }}>
                   <strong style={{ color: '#fff', fontSize: 14 }}>{contact.name}</strong>
                   <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: 2 }}>{contact.number}</p>

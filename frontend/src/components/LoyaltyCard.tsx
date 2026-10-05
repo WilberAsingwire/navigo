@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { IonToast, IonProgressBar } from '@ionic/react';
+import { IonToast, IonProgressBar, IonIcon } from '@ionic/react';
+import {
+  medalOutline, trophyOutline, diamondOutline, cashOutline, bicycleOutline,
+  phonePortraitOutline, carOutline, carSportOutline, globeOutline, busOutline,
+  walletOutline, locateOutline, peopleOutline, starOutline, personOutline
+} from 'ionicons/icons';
 import { useAuth } from '../context/AuthContext';
 import { Haptic } from '../services/HapticService';
 import './LoyaltyCard.css';
@@ -11,21 +16,21 @@ interface LoyaltyCardProps {
 }
 
 const TIER_CONFIG = {
-  bronze: { name: 'Bronze', color: '#cd7f32', nextTier: 500, emoji: '🥉', cashback: '2%' },
-  silver: { name: 'Silver', color: '#c0c0c0', nextTier: 1000, emoji: '🥈', cashback: '5%' },
-  gold: { name: 'Gold', color: '#ffd700', nextTier: 2500, emoji: '🥇', cashback: '10%' },
-  platinum: { name: 'Platinum', color: '#e5e4e2', nextTier: 99999, emoji: '💎', cashback: '15%' },
+  bronze: { name: 'Bronze', color: '#cd7f32', nextTier: 500, icon: medalOutline, cashback: '2%' },
+  silver: { name: 'Silver', color: '#c0c0c0', nextTier: 1000, icon: medalOutline, cashback: '5%' },
+  gold: { name: 'Gold', color: '#ffd700', nextTier: 2500, icon: trophyOutline, cashback: '10%' },
+  platinum: { name: 'Platinum', color: '#e5e4e2', nextTier: 99999, icon: diamondOutline, cashback: '15%' },
 };
 
 const ALL_REWARDS = [
-  { name: 'UGX 1,000 Off', points: 50, emoji: '💰' },
-  { name: 'Free Boda Ride', points: 100, emoji: '🏍️' },
-  { name: 'UGX 500 Airtime', points: 150, emoji: '📱' },
-  { name: 'Free NAVIGO Go', points: 200, emoji: '🚗' },
-  { name: 'Free Comfort', points: 350, emoji: '🚙' },
-  { name: 'MTN Data 1GB', points: 400, emoji: '🌐' },
-  { name: 'Free XL Ride', points: 500, emoji: '🚐' },
-  { name: 'UGX 10,000 Cash', points: 800, emoji: '💵' },
+  { name: 'UGX 1,000 Off', points: 50, icon: cashOutline },
+  { name: 'Free Boda Ride', points: 100, icon: bicycleOutline },
+  { name: 'UGX 500 Airtime', points: 150, icon: phonePortraitOutline },
+  { name: 'Free NAVIGO Go', points: 200, icon: carOutline },
+  { name: 'Free Comfort', points: 350, icon: carSportOutline },
+  { name: 'MTN Data 1GB', points: 400, icon: globeOutline },
+  { name: 'Free XL Ride', points: 500, icon: busOutline },
+  { name: 'UGX 10,000 Cash', points: 800, icon: walletOutline },
 ];
 
 const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
@@ -84,7 +89,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         {/* Header */}
         <div className="loyalty-header">
           <div className="tier-info">
-            <span className="tier-emoji">{config.emoji}</span>
+            <IonIcon className="tier-emoji" icon={config.icon} />
             <div className="tier-details">
               <span className="tier-name">Zawadi Rewards</span>
               <span className="tier-badge" style={{ background: config.color, color: '#000' }}>
@@ -133,7 +138,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
                   onClick={() => handleRedeem(reward)}
                   className={`reward-tile ${canAfford ? 'reward-tile-available' : 'reward-tile-locked'}`}
                 >
-                  <span className="reward-emoji">{reward.emoji}</span>
+                  <IonIcon className="reward-emoji" icon={reward.icon} />
                   <p className={`reward-name ${canAfford ? '' : 'reward-name-locked'}`}>{reward.name}</p>
                   {canAfford ? (
                     <span className="reward-action action-redeem">Redeem</span>
@@ -151,10 +156,10 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         {activeTab === 'challenges' && (
           <div className="challenges-list">
             {[
-              { name: 'Complete 5 rides', points: 50, emoji: '🎯', check: () => parseInt(localStorage.getItem('navigo_ride_count') || '0') >= 5 },
-              { name: 'Refer a friend', points: 100, emoji: '👥', check: () => (parseInt(localStorage.getItem('navigo_referrals') || '0')) > 0 },
-              { name: 'Rate 3 drivers', points: 30, emoji: '⭐', check: () => true },
-              { name: 'Women Preferred', points: 25, emoji: '👩', check: () => true }
+              { name: 'Complete 5 rides', points: 50, icon: locateOutline, check: () => parseInt(localStorage.getItem('navigo_ride_count') || '0') >= 5 },
+              { name: 'Refer a friend', points: 100, icon: peopleOutline, check: () => (parseInt(localStorage.getItem('navigo_referrals') || '0')) > 0 },
+              { name: 'Rate 3 drivers', points: 30, icon: starOutline, check: () => true },
+              { name: 'Women Preferred', points: 25, icon: personOutline, check: () => true }
             ].map(c => (
               <div key={c.name} className="challenge-item" onClick={() => {
                 if (c.check()) {
@@ -164,7 +169,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
                 }
                 setShowToast(true);
               }}>
-                <span className="challenge-emoji">{c.emoji}</span>
+                <IonIcon className="challenge-emoji" icon={c.icon} />
                 <span className="challenge-name">{c.name}</span>
                 <span className="challenge-points">+{c.points}</span>
               </div>

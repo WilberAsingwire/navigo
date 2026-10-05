@@ -6,7 +6,8 @@ import {
   arrowForwardOutline, callOutline,
   checkmarkCircleOutline, locationOutline,
   flashOutline, menuOutline, closeOutline,
-  timeOutline, peopleOutline
+  timeOutline, peopleOutline,
+  medalOutline, trophyOutline, diamondOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './Home.css';
@@ -160,9 +161,11 @@ const Home: React.FC = () => {
 
               <div className="hero-trust">
                 <div className="trust-avatars">
-                  <span>🇺🇬</span><span>⭐</span><span>🛡️</span>
+                  <IonIcon icon={shieldCheckmarkOutline} />
+                  <IonIcon icon={starOutline} />
+                  <IonIcon icon={peopleOutline} />
                 </div>
-                <span className="trust-text"><strong>50k+</strong> rides • <strong>4.9</strong> rating • <strong>2k+</strong> drivers</span>
+                <span className="trust-text"><strong>50k+</strong> rides · <strong>4.9</strong> rating · <strong>2k+</strong> drivers</span>
               </div>
             </div>
 
@@ -324,25 +327,25 @@ const Home: React.FC = () => {
             <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
             <div className="rewards-grid">
               <div className="tier-card bronze">
-                <div className="tier-icon-container">🥉</div>
+                <div className="tier-icon-container"><IonIcon icon={medalOutline} /></div>
                 <h3 className="tier-title">Bronze</h3>
                 <p className="tier-pts">0 - 500 pts</p>
                 <div className="tier-benefit">Basic Rewards</div>
               </div>
               <div className="tier-card silver">
-                <div className="tier-icon-container">🥈</div>
+                <div className="tier-icon-container"><IonIcon icon={medalOutline} /></div>
                 <h3 className="tier-title">Silver</h3>
                 <p className="tier-pts">500 - 1k pts</p>
                 <div className="tier-benefit">5% Discount</div>
               </div>
               <div className="tier-card gold">
-                <div className="tier-icon-container">🥇</div>
+                <div className="tier-icon-container"><IonIcon icon={trophyOutline} /></div>
                 <h3 className="tier-title">Gold</h3>
                 <p className="tier-pts">1k - 2.5k pts</p>
                 <div className="tier-benefit">Priority Booking</div>
               </div>
               <div className="tier-card platinum">
-                <div className="tier-icon-container">💎</div>
+                <div className="tier-icon-container"><IonIcon icon={diamondOutline} /></div>
                 <h3 className="tier-title">Platinum</h3>
                 <p className="tier-pts">2.5k+ pts</p>
                 <div className="tier-benefit">VIP Experience</div>
@@ -357,8 +360,8 @@ const Home: React.FC = () => {
                 <div style={{ marginBottom: 16 }}><Logo variant="full" size="medium" onClick={() => navigate('/')} /></div>
                 <p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone. Boda Safe™ verified.</p>
                 <div className="footer-badges">
-                  <span className="footer-badge">🇺🇬 Made in Uganda</span>
-                  <span className="footer-badge">🛡️ Boda Safe™</span>
+                  <span className="footer-badge">Made in Uganda</span>
+                  <span className="footer-badge">Boda Safe™</span>
                 </div>
               </div>
               <div className="footer-col">

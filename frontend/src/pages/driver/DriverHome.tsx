@@ -107,8 +107,8 @@ const DriverHome: React.FC = () => {
                 <InitialsAvatar name={user?.fullName || 'D'} size={36} />
               </IonAvatar>
               <div>
-                <h2 className="driver-welcome-text">Hello, {user?.fullName?.split(' ')[0] || 'Driver'} 👋</h2>
-                <p className={`driver-status-text ${isOnline ? 'online' : 'offline'}`}>{isOnline ? '🟢 Online' : '🔴 Offline'}</p>
+                <h2 className="driver-welcome-text">Hello, {user?.fullName?.split(' ')[0] || 'Driver'}</h2>
+                <p className={`driver-status-text ${isOnline ? 'online' : 'offline'}`}>{isOnline ? 'Online' : 'Offline'}</p>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

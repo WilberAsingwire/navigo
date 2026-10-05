@@ -99,7 +99,7 @@ const IncomingRequest: React.FC = () => {
       if (settled || d.rideId !== rideId) return;
       settled = true;
       cleanup();
-      presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
+      presentToast({ message: 'Ride accepted — navigate to pickup', color: 'success', duration: 2000 });
       history.push('/driver/active-ride');
     };
 
@@ -155,10 +155,10 @@ const IncomingRequest: React.FC = () => {
               <h1 className="sora-font" style={{ color: timeLeft <= 5 ? '#ff5252' : '#FF6B35' }}>{timeLeft}</h1>
               <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>sec</span>
             </div>
-            <h2 className="sora-font" style={{ color: '#fff', margin: '8px 0' }}>🔔 New Ride Request!</h2>
+            <h2 className="sora-font" style={{ color: '#fff', margin: '8px 0' }}>New ride request</h2>
             <IonProgressBar value={progressPercent / 100} color={timeLeft <= 5 ? 'danger' : 'success'} style={{ height: 6, borderRadius: 3, maxWidth: 200, margin: '0 auto' }} />
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '6px 0 0' }}>
-              {timeLeft <= 5 ? '⏰ Hurry! Request expires soon' : 'Accept before time runs out'}
+              {timeLeft <= 5 ? 'Request expires soon' : 'Accept before time runs out'}
             </p>
           </div>
 
@@ -170,7 +170,7 @@ const IncomingRequest: React.FC = () => {
               <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>
                 {requestData.riderName}
                 {requestData.serviceType === 'delivery' && (
-                  <IonBadge color="light" style={{ marginLeft: 8, fontSize: 9, verticalAlign: 'middle' }}>📦 DELIVERY</IonBadge>
+                  <IonBadge color="light" style={{ marginLeft: 8, fontSize: 9, verticalAlign: 'middle' }}>DELIVERY</IonBadge>
                 )}
               </h3>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>

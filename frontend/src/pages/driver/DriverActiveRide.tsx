@@ -145,7 +145,7 @@ const DriverActiveRide: React.FC = () => {
     setSendingStatus(false);
 
     if (status === 'completed') {
-      setToastMsg('✅ Trip completed — settling payment');
+      setToastMsg('Trip completed — settling payment');
       setShowToast(true);
       setTimeout(() => history.push('/driver/home'), 2600);
     }
@@ -302,7 +302,7 @@ const DriverActiveRide: React.FC = () => {
           </div>
 
           {/* Earnings Breakdown */}
-          <div className="earnings-card" style={{ background: 'linear-gradient(135deg, rgba(45,106,79,0.25), rgba(13,33,55,0.6))', border: '1px solid rgba(45,106,79,0.4)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+          <div className="earnings-card" style={{ background: 'var(--nav-bg-raised)', border: '1px solid var(--nav-border-strong)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
             <h4 className="earnings-title" style={{ color: '#fff', margin: '0 0 10px', fontSize: 14 }}>
               <IonIcon icon={cashOutline} style={{ color: '#FF6B35' }} /> Your Earnings
             </h4>
@@ -321,17 +321,17 @@ const DriverActiveRide: React.FC = () => {
           {/* Lifecycle actions */}
           {phase === 'accepted' && (
             <IonButton expand="block" className="main-action-btn" onClick={() => sendStatus('arrived')} disabled={sendingStatus} style={{ borderRadius: 12, marginBottom: 10, fontWeight: 700 }}>
-              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={checkmarkCircleOutline} slot="start" />} I Have Arrived 📍
+              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={checkmarkCircleOutline} slot="start" />} I have arrived
             </IonButton>
           )}
           {phase === 'arrived' && (
             <IonButton expand="block" className="main-action-btn" onClick={() => sendStatus('ongoing')} disabled={sendingStatus} style={{ borderRadius: 12, marginBottom: 10, fontWeight: 700 }}>
-              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={navigateOutline} slot="start" />} Start Trip 🚗
+              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={navigateOutline} slot="start" />} Start trip
             </IonButton>
           )}
           {phase === 'ongoing' && (
             <IonButton expand="block" className="complete-action-btn" onClick={() => sendStatus('completed')} disabled={sendingStatus} style={{ borderRadius: 12, marginBottom: 10, fontWeight: 700 }}>
-              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={checkmarkCircleOutline} slot="start" />} Complete Trip ✅
+              {sendingStatus ? <IonSpinner name="crescent" /> : <IonIcon icon={checkmarkCircleOutline} slot="start" />} Complete trip
             </IonButton>
           )}
 

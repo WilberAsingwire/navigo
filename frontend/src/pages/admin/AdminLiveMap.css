@@ -7,7 +7,7 @@
 /* 1. Map Toggle - Pill Container */
 .admin-live-map ion-chip {
   background: #2A2A2A !important;
-  border-radius: 20px !important;
+  border-radius: var(--radius-md) !important;
   padding: 4px 12px !important;
   font-size: 11px !important;
 }
@@ -132,7 +132,7 @@ ion-badge[color="success"] {
   padding: 0 !important;
 }
 .leaflet-control-locate a::after {
-  content: "📍" !important;
+  content: "◎" !important;
   font-size: 14px !important;
   text-indent: 0 !important;
   display: flex !important;

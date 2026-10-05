@@ -5,16 +5,14 @@
 .admin-dashboard-container {
   --background: var(--nav-bg);
   background: var(--nav-bg);
-  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
+  background-image: none;
 }
 
 /* KPI Cards */
 .admin-kpi-grid { margin-bottom: 8px; }
 .admin-kpi-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 12px;
   border: 1px solid var(--nav-border);
@@ -38,9 +36,8 @@
   margin-bottom: 24px;
 }
 .admin-quick-action-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 18px 12px;
   text-align: center;
   cursor: pointer;
@@ -63,9 +60,8 @@
 
 /* Revenue Chart */
 .admin-revenue-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 24px;
   border: 1px solid var(--nav-border);
@@ -84,9 +80,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 14px 12px;
   border: 1px solid var(--nav-border);
   transition: all 0.2s ease;
@@ -109,7 +104,7 @@
   border: 1px solid rgba(16, 185, 129, 0.3) !important;
   font-weight: 500;
   padding: 6px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   font-size: 12px;
 }
 

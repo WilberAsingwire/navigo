@@ -35,12 +35,12 @@ const RiderPayments: React.FC = () => {
       name: newProvider === 'mtn' ? 'MTN Mobile Money' : 'Airtel Money',
       number: newNumber.slice(0, 4) + '****' + newNumber.slice(-3),
       isDefault: false,
-      icon: '📱'
+      icon: 'momo'
     };
     setSavedMethods([...savedMethods, newMethod]);
     setShowAddModal(false);
     setNewNumber('');
-    presentToast({ message: 'Payment method added! ✅', color: 'success', duration: 2000 });
+    presentToast({ message: 'Payment method added', color: 'success', duration: 2000 });
   };
 
   const removeMethod = (id: string) => {
@@ -98,11 +98,11 @@ const RiderPayments: React.FC = () => {
 
           {segment === 'methods' ? (
             <>
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>💳 Saved Payment Methods</h3>
+              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Saved Payment Methods</h3>
               {savedMethods.map(method => (
                 <div key={method.id} onClick={() => setDefault(method.id)}
                   className={`payment-method-card ${method.isDefault ? 'default' : ''}`}>
-                  <span className="method-icon">{method.icon}</span>
+                  <span className="method-icon"><IonIcon icon={phonePortraitOutline} /></span>
                   <div className="method-details">
                     <h4>{method.name}</h4>
                     <p>{method.number}</p>
@@ -124,7 +124,7 @@ const RiderPayments: React.FC = () => {
             </>
           ) : (
             <>
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>📋 Transaction History</h3>
+              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Transaction History</h3>
               {transactions.map(t => (
                 <div key={t.id} className="transaction-card">
                   <div className={`transaction-icon ${t.type === 'credit' ? 'icon-credit' : 'icon-debit'}`}>

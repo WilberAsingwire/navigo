@@ -18,9 +18,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadowUrl,
 });
 
-const carIcon = L.divIcon({ html: '<div style="background:#4da6ff;width:22px;height:22px;border-radius:50%;border:3px solid white;font-size:12px;text-align:center;line-height:22px;box-shadow:0 0 10px rgba(77,166,255,0.6)">🚗</div>', iconSize: [28, 28], iconAnchor: [14, 14] });
-const bikeIcon = L.divIcon({ html: '<div style="background:#ffab40;width:22px;height:22px;border-radius:50%;border:3px solid white;font-size:12px;text-align:center;line-height:22px;box-shadow:0 0 10px rgba(255,171,64,0.6)">🏍️</div>', iconSize: [28, 28], iconAnchor: [14, 14] });
-const riderIcon = L.divIcon({ html: '<div style="background:#00e676;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(0,230,118,0.6)"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+const carIcon = L.divIcon({ html: '<div style="background:#4da6ff;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+const bikeIcon = L.divIcon({ html: '<div style="background:#ffab40;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+const riderIcon = L.divIcon({ html: '<div style="background:#00e676;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
 
 const FlyToButton: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
@@ -29,7 +29,7 @@ const FlyToButton: React.FC<{ center: [number, number] }> = ({ center }) => {
       <div className="leaflet-control leaflet-bar">
         <a onClick={() => map.flyTo(center, 15, { duration: 1 })}
           style={{ cursor: 'pointer', padding: '6px 10px', display: 'block', background: '#FF6B35', color: '#fff', fontWeight: 'bold', fontSize: 11, border: 'none', textDecoration: 'none' }}>
-          📍
+          Center
         </a>
       </div>
     </div>
@@ -160,7 +160,7 @@ const AdminLiveMap: React.FC = () => {
     });
 
     socket.on('connect_error', (err: any) => {
-      console.error('❌ Admin Map Socket Auth Error:', err.message);
+      console.error('Admin map socket auth error:', err.message);
     });
 
     socket.on('admin-location-updated', (data: { userId: string; lat: number; lng: number }) => {
@@ -229,7 +229,7 @@ const AdminLiveMap: React.FC = () => {
             <MapContainer center={userLocation} zoom={14} style={{height: '100%', width: '100%'}} ref={mapRef}>
               <TileLayer url={tileUrls[mapStyle]} />
               <FlyToButton center={userLocation} />
-              <Marker position={userLocation} icon={riderIcon}><Popup>📍 Your Location</Popup></Marker>
+              <Marker position={userLocation} icon={riderIcon}><Popup>Your location</Popup></Marker>
               {filteredUsers.map(u => (
                 <UserMarker key={u.id} user={u} icon={getIcon(u.role)} />
               ))}

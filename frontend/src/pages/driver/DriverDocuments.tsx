@@ -165,13 +165,13 @@ const DriverDocuments: React.FC = () => {
                 <p>Submit your documents below to start driving with NAVIGO.</p>
               )}
               {verificationStatus === 'pending' && (
-                <p>⏳ Your documents are being reviewed. This usually takes 24-48 hours.</p>
+                <p>Your documents are being reviewed. This usually takes 24–48 hours.</p>
               )}
               {verificationStatus === 'approved' && (
-                <p>🎉 You're verified! You can now accept rides.</p>
+                <p>You're verified — you can now accept rides.</p>
               )}
               {verificationStatus === 'rejected' && (
-                <p>❌ Your documents were rejected. Please re-submit with correct information.</p>
+                <p>Your documents were rejected. Please re-submit with correct information.</p>
               )}
             </IonCardContent>
           </IonCard>
@@ -270,7 +270,7 @@ const DriverDocuments: React.FC = () => {
               {/* Female Driver Toggle */}
               <div className={`female-driver-toggle ${isFemaleDriver ? 'active' : ''}`}>
                 <div className="female-driver-info">
-                  <span style={{ fontSize: 24 }}>👩</span>
+                  <IonIcon icon={personOutline} style={{ fontSize: 24, color: 'var(--navigo-orange)' }} />
                   <div>
                     <strong className="female-driver-title">Female Driver</strong>
                     <p className="female-driver-desc">Enable to appear in Women Preferred searches</p>

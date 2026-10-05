@@ -209,7 +209,7 @@ const DriverEarnings: React.FC = () => {
 
           {/* Weekly Chart */}
           <div className="earnings-chart-card">
-            <h4 className="chart-title">📊 This Week</h4>
+            <h4 className="chart-title">This week</h4>
             <div className="chart-container">
               {weeklyData.map((d, i) => (
                 <div key={i} className="chart-bar-wrapper">

@@ -1,7 +1,8 @@
 import React from 'react';
 import { IonIcon, IonProgressBar } from '@ionic/react';
 import { 
-  shieldCheckmarkOutline, starOutline, waterOutline, 
+  shieldCheckmarkOutline, starOutline, waterOutline,
+  diamondOutline, trophyOutline, medalOutline, ellipseOutline, 
   cardOutline, schoolOutline, ribbonOutline, 
   checkmarkCircleOutline, lockClosedOutline 
 } from 'ionicons/icons';
@@ -75,12 +76,12 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
   const score = Math.min(100, Math.round((earnedBadges / maxBadges * 40) + (rating / 5 * 40) + Math.min(totalRides / 500 * 20, 20)));
   
   const getLevel = () => {
-    if (score >= 90) return { name: 'Elite', color: '#00e676', emoji: '💎' };
-    if (score >= 75) return { name: 'Diamond', color: '#4da6ff', emoji: '🔷' };
-    if (score >= 60) return { name: 'Gold', color: '#FFC107', emoji: '🥇' };
-    if (score >= 40) return { name: 'Silver', color: '#c0c0c0', emoji: '🥈' };
-    if (score >= 20) return { name: 'Bronze', color: '#cd7f32', emoji: '🥉' };
-    return { name: 'New', color: '#ff5252', emoji: '🔴' };
+    if (score >= 90) return { name: 'Elite', color: '#00e676', icon: diamondOutline };
+    if (score >= 75) return { name: 'Diamond', color: '#4da6ff', icon: diamondOutline };
+    if (score >= 60) return { name: 'Gold', color: '#FFC107', icon: trophyOutline };
+    if (score >= 40) return { name: 'Silver', color: '#c0c0c0', icon: medalOutline };
+    if (score >= 20) return { name: 'Bronze', color: '#cd7f32', icon: medalOutline };
+    return { name: 'New', color: '#ff5252', icon: ellipseOutline };
   };
 
   const level = getLevel();
@@ -97,7 +98,7 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 28 }}>{level.emoji}</span>
+            <IonIcon icon={level.icon} style={{ fontSize: 26, color: level.color }} />
             <div>
               <h3 style={{ color: '#fff', margin: 0, fontSize: 16, fontWeight: 700 }}>Boda Safe™ Score</h3>
               <span style={{ color: level.color, fontSize: 12, fontWeight: 600 }}>{level.name} Driver</span>
@@ -117,7 +118,7 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
         color={score >= 60 ? 'success' : score >= 40 ? 'warning' : 'danger'}
       />
       <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '0 0 16px', textAlign: 'center' }}>
-        {level.name === 'Elite' ? '🏆 Maximum safety level achieved!' : 
+        {level.name === 'Elite' ? 'Maximum safety level achieved' : 
          `${Math.max(0, 90 - score)}% to next level • ${maxBadges - earnedBadges} more badges needed`}
       </p>
 

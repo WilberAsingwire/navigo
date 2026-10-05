@@ -55,7 +55,7 @@
 .kpi-card {
   background: var(--nav-card-soft);
   border: 1px solid var(--nav-border);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   padding: 20px;
   display: flex;
   align-items: center;
@@ -65,7 +65,7 @@
 .kpi-icon-box {
   width: 48px;
   height: 48px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,9 +91,9 @@
 }
 
 .chart-section {
-  background: var(--nav-card-glass);
+  background: var(--nav-card);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 24px;
+  border-radius: var(--radius-md);
   padding: 24px;
   margin-bottom: 32px;
 }
@@ -127,7 +127,7 @@
 .bar {
   width: 100%;
   max-width: 30px;
-  background: linear-gradient(to top, var(--navigo-orange), #FF9E7D);
+  background: var(--navigo-orange);
   border-radius: 6px 6px 0 0;
   position: relative;
   transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -165,9 +165,9 @@
 }
 
 .performer-item {
-  background: var(--nav-card-glass);
+  background: var(--nav-card);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 16px;
   display: flex;
   justify-content: space-between;

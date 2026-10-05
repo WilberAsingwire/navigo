@@ -64,7 +64,7 @@ const AdminSupport: React.FC = () => {
     if (!reply.trim()) return presentToast({ message: 'Please type a response', color: 'warning', duration: 2000 });
     try {
       await api.post('/support/admin/resolve', { ticketId: id, message: reply });
-      presentToast({ message: '✅ Ticket resolved & user notified!', color: 'success', duration: 2000 });
+      presentToast({ message: 'Ticket resolved — user notified', color: 'success', duration: 2000 });
       setSelectedTicket(null); setReply('');
       await fetchTickets();
     } catch (e) {
@@ -76,7 +76,7 @@ const AdminSupport: React.FC = () => {
     if (!reply.trim()) return presentToast({ message: 'Please type a response', color: 'warning', duration: 2000 });
     try {
       await api.post('/support/admin/reply', { ticketId: id, message: reply });
-      presentToast({ message: '✅ Reply sent!', color: 'success', duration: 2000 });
+      presentToast({ message: 'Reply sent', color: 'success', duration: 2000 });
       setReply('');
       await fetchTickets();
     } catch (e) {
@@ -214,9 +214,9 @@ const AdminSupport: React.FC = () => {
               <div style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 14, marginBottom: 16}}>
                 <p style={{color: '#D1D5DB', margin: '0 0 8px', fontSize: 14, lineHeight: 1.5}}>{selectedTicket.description}</p>
                 <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
-                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>👤 {selectedTicket.userName}</span>
-                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>📋 {selectedTicket.userRole}</span>
-                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>🕐 {new Date(selectedTicket.createdAt).toLocaleString()}</span>
+                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>{selectedTicket.userName}</span>
+                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>{selectedTicket.userRole}</span>
+                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>{new Date(selectedTicket.createdAt).toLocaleString()}</span>
                 </div>
               </div>
               {selectedTicket.replies.length > 0 && (

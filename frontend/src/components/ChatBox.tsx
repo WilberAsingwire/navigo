@@ -7,7 +7,7 @@ import {
   sendOutline, closeOutline, checkmarkDoneOutline,
   timeOutline, personOutline, carOutline, happyOutline,
   micOutline, callOutline,
-  locationOutline, informationCircleOutline, cameraOutline
+  locationOutline, informationCircleOutline, cameraOutline, chatbubbleEllipsesOutline
 } from 'ionicons/icons';
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../config';
@@ -63,7 +63,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
     });
     newSocket.on('connect', () => { setIsConnected(true); newSocket.emit('join-chat', { rideId }); });
     newSocket.on('connect_error', (err: any) => {
-      console.error('❌ Chat Socket Auth Error:', err.message);
+      console.error('Chat socket auth error:', err.message);
     });
     newSocket.on('disconnect', () => setIsConnected(false));
     newSocket.on('new-message', (message: Message) => {
@@ -156,7 +156,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
         {!isConnected && <div className="chat-connecting"><IonSpinner name="crescent" /> Connecting...</div>}
         {messages.length === 0 && isConnected && (
           <div className="chat-empty">
-            <div className="chat-empty-icon">💬</div>
+            <div className="chat-empty-icon"><IonIcon icon={chatbubbleEllipsesOutline} /></div>
             <h4>Start chatting with {otherUser.name}</h4>
             <p>Messages are secure and encrypted</p>
             <div className="chat-empty-info">
@@ -176,7 +176,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
               </IonAvatar>}
               <div className={`message-bubble ${isMine ? 'mine' : 'theirs'} ${msg.type === 'location' ? 'location' : ''}`}>
                 {msg.type === 'location' ? (
-                  <div className="location-msg"><span>📍</span><span>Shared Location</span></div>
+                  <div className="location-msg"><IonIcon icon={locationOutline} /><span>Shared location</span></div>
                 ) : <p className="message-text">{msg.text}</p>}
                 <div className="message-meta">
                   <span className="message-time">{formatTime(msg.timestamp)}</span>

@@ -89,7 +89,7 @@ const CustomerSavedPlaces: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setToastMsg('Place saved successfully! ✅');
+      setToastMsg('Place saved');
       setShowToast(true);
       setShowAddModal(false);
       setPlaceLabel('');
@@ -209,7 +209,7 @@ const CustomerSavedPlaces: React.FC = () => {
                   <IonIcon icon={checkmarkCircleOutline} style={{ color: '#00e676' }} />
                   <div style={{ flex: 1 }}>
                     <p style={{ margin: 0, fontSize: 13, color: '#fff' }}>{selectedPlace.address}</p>
-                    <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Selected ✅</p>
+                    <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Selected</p>
                   </div>
                 </div>
               )}

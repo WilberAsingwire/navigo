@@ -134,7 +134,7 @@ const CustomerRideHistory: React.FC = () => {
                   <IonBadge color={ride.status === 'completed' || ride.status === 'Completed' ? 'success' : 'danger'} style={{ fontSize: 9 }}>{ride.status}</IonBadge>
                 </div>
                 <div className="ride-footer">
-                  <span className="ride-meta">🚗 {ride.paymentMethod}</span>
+                  <span className="ride-meta">{ride.paymentMethod}</span>
                   <span className="ride-fare">UGX {(Number(ride.fare) || 0).toLocaleString()}</span>
                 </div>
               </div>
@@ -177,7 +177,7 @@ const CustomerRideHistory: React.FC = () => {
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Ride Type</span>
-                  <p className="detail-item-value">{selectedRide.rideType === 'boda' ? '🏍️ Boda' : selectedRide.rideType === 'comfort' ? '🚙 Comfort' : '🚗 Economy'}</p>
+                  <p className="detail-item-value">{selectedRide.rideType === 'boda' ? 'Boda' : selectedRide.rideType === 'comfort' ? '🚙 Comfort' : '🚗 Economy'}</p>
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Payment</span>

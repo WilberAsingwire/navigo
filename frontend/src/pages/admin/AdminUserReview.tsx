@@ -70,7 +70,7 @@ const AdminUserReview: React.FC = () => {
   const handleAction = (id: string, action: 'approve' | 'reject') => {
     setDrivers(prev => prev.map(d => d._id === id ? { ...d, status: action === 'approve' ? 'approved' : 'rejected' } : d));
     presentToast({
-      message: `Driver ${action === 'approve' ? 'approved ✅' : 'rejected ❌'} successfully!`,
+      message: `Driver ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
       duration: 2000,
       color: action === 'approve' ? 'success' : 'danger'
     });
@@ -84,7 +84,7 @@ const AdminUserReview: React.FC = () => {
     setDrivers(prev => prev.map(d => 
       pendingDrivers.find(p => p._id === d._id) ? { ...d, status: action === 'approve' ? 'approved' : 'rejected' } : d
     ));
-    presentToast({ message: `${action === 'approve' ? '✅' : '❌'} ${pendingDrivers.length} drivers ${action === 'approve' ? 'approved' : 'rejected'}!`, duration: 3000, color: action === 'approve' ? 'success' : 'danger' });
+    presentToast({ message: `${pendingDrivers.length} drivers ${action === 'approve' ? 'approved' : 'rejected'}!`, duration: 3000, color: action === 'approve' ? 'success' : 'danger' });
   };
 
   const stats = {
@@ -166,13 +166,13 @@ const AdminUserReview: React.FC = () => {
                   </IonAvatar>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <h3 style={{ color: '#fff', margin: 0, fontSize: 14 }}>{driver.name} {driver.isFemaleDriver ? '👩' : ''}</h3>
+                      <h3 style={{ color: '#fff', margin: 0, fontSize: 14 }}>{driver.name}</h3>
                       <IonBadge color={driver.role === 'driver' ? 'primary' : 'warning'} style={{ fontSize: 9 }}>
-                        {driver.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}
+                        {driver.role === 'driver' ? 'Driver' : 'Motorist'}
                       </IonBadge>
                     </div>
                     <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '3px 0' }}>
-                      📞 {driver.phone} • 🚗 {driver.vehiclePlate} • ⭐ {driver.rating}
+                      {driver.phone} · {driver.vehiclePlate} · {driver.rating}★
                     </p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
@@ -192,21 +192,21 @@ const AdminUserReview: React.FC = () => {
           {selectedUser && (
             <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', overflow: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ margin: 0, fontSize: 18 }}>{selectedUser.name} {selectedUser.isFemaleDriver ? '👩' : ''}</h2>
+                <h2 style={{ margin: 0, fontSize: 18 }}>{selectedUser.name}</h2>
                 <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
               </div>
 
               {/* Driver Info */}
               <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Phone</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📞 {selectedUser.phone}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Email</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📧 {selectedUser.email || 'N/A'}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Vehicle</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>🚗 {selectedUser.vehiclePlate} • {selectedUser.vehicleModel} ({selectedUser.vehicleColor})</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Role</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>NIN</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>🆔 {selectedUser.nationalId}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>License</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📋 {selectedUser.drivingLicense}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Permit</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📄 {selectedUser.permitNumber}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Rating</span><p style={{ color: '#FFC107', margin: 2, fontSize: 13 }}>⭐ {selectedUser.rating} ({selectedUser.totalRides} rides)</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Phone</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.phone}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Email</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.email || 'N/A'}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Vehicle</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.vehiclePlate} • {selectedUser.vehicleModel} ({selectedUser.vehicleColor})</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Role</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.role === 'driver' ? 'Driver' : 'Motorist'}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>NIN</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.nationalId}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>License</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.drivingLicense}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Permit</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.permitNumber}</p></div>
+                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Rating</span><p style={{ color: '#FFC107', margin: 2, fontSize: 13 }}>{selectedUser.rating} ({selectedUser.totalRides} rides)</p></div>
                 </div>
               </div>
 

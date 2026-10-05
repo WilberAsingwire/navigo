@@ -3,7 +3,7 @@ import { IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonItem, IonLabel
 import { useHistory, useLocation } from 'react-router-dom';
 import {
   refreshOutline, arrowBackOutline,
-  shieldCheckmarkOutline, keyOutline
+  shieldCheckmarkOutline, keyOutline, phonePortraitOutline
 } from 'ionicons/icons';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
@@ -101,7 +101,7 @@ const PhoneVerification: React.FC = () => {
         }
       } catch { /* non-fatal */ }
       localStorage.removeItem('navigo_temp_phone');
-      setInfo('Phone verified! 🎉');
+      setInfo('Phone verified');
 
       const role = user?.role || JSON.parse(localStorage.getItem('navigo_user') || '{}')?.role;
       const token = localStorage.getItem('navigo_token');
@@ -135,7 +135,7 @@ const PhoneVerification: React.FC = () => {
       <IonContent className="auth-content auth-container" style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="auth-container">
           <div className="auth-logo">
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📱</div>
+            <IonIcon icon={phonePortraitOutline} style={{ fontSize: 44, color: 'var(--navigo-orange)', marginBottom: 12 }} />
             <h1>Verify Your Phone</h1>
             <p>We sent a 6-digit code to <strong>{maskedPhone(phone)}</strong></p>
           </div>
@@ -143,7 +143,7 @@ const PhoneVerification: React.FC = () => {
           {/* Dev-only code display (backend returns devCode outside production) */}
           {devCode && (
             <div className="dev-code-box">
-              <p>🔧 DEV MODE: <strong>{devCode}</strong></p>
+              <p>DEV MODE: <strong>{devCode}</strong></p>
             </div>
           )}
 

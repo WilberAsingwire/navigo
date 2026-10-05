@@ -24,7 +24,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', 
         height: '100vh', background: 'var(--nav-bg)', color: '#fff', gap: 16 
       }}>
-        <div style={{ fontSize: 40 }}>🚀</div>
+        
         <IonSpinner name="crescent" color="warning" />
         <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>Loading NAVIGO...</p>
       </div>

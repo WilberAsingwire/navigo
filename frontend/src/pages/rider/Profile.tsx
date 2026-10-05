@@ -39,7 +39,7 @@ const Profile: React.FC = () => {
 
       updateUser({ fullName: editName, email: editEmail });
       setShowEdit(false);
-      setToastMsg('Profile updated successfully! ✅');
+      setToastMsg('Profile updated');
       setShowToast(true);
     } catch (err: any) {
       setToastMsg(err.response?.data?.message || 'Failed to update profile');
@@ -82,7 +82,7 @@ const Profile: React.FC = () => {
             </div>
             <h2 className="profile-name">{user?.fullName || 'Customer'}</h2>
             <p className="profile-phone">
-              {user?.role === 'rider' ? '🚗 Customer' : user?.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'} • {user?.phone || 'No phone'}
+              {user?.role === 'rider' ? 'Customer' : user?.role === 'driver' ? 'Driver' : 'Motorist'} • {user?.phone || 'No phone'}
             </p>
             {user?.verificationStatus === 'approved' && (
               <span className="profile-verified-badge">✓ Verified Account</span>

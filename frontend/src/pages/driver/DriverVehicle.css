@@ -25,10 +25,9 @@
 .verification-status p { color: var(--nav-text-secondary); font-size: 12px; margin: 2px 0 0; }
 
 .vehicle-main-card {
-  background: var(--nav-card-glass);
+  background: var(--nav-card);
   border-radius: var(--radius-2xl);
   border: 1px solid var(--nav-border);
-  backdrop-filter: blur(20px);
   padding: 20px;
   box-shadow: var(--shadow-card);
 }
@@ -38,7 +37,7 @@ body.light .vehicle-main-card { background: #fff; }
 
 .doc-list { background: transparent; }
 .doc-item {
-  --background: var(--nav-card-glass);
+  --background: var(--nav-card);
   margin-bottom: 8px;
   border-radius: var(--radius-md);
   --padding-start: 14px;
@@ -50,7 +49,7 @@ body.light .vehicle-main-card { background: #fff; }
 .doc-item p { color: var(--nav-text-muted); font-size: 11px; margin: 2px 0 0; }
 
 .submit-doc-btn {
-  --background: linear-gradient(135deg, var(--navigo-orange), var(--navigo-ember)) !important;
+  --background: var(--navigo-orange) !important;
   --box-shadow: var(--shadow-orange) !important;
   --border-radius: var(--radius-md) !important;
   font-weight: 700 !important;

@@ -3,10 +3,7 @@
 .auth-content {
   --background: var(--nav-bg);
   --color: var(--nav-text);
-  background:
-    radial-gradient(circle at 15% 10%, var(--navigo-orange-ghost) 0%, transparent 45%),
-    radial-gradient(circle at 85% 90%, rgba(255,107,53,0.06) 0%, transparent 45%),
-    var(--nav-bg) !important;
+  background: var(--nav-bg) !important;
   min-height: 100vh;
 }
 
@@ -21,9 +18,7 @@
 }
 
 .auth-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(24px) saturate(1.15);
-  -webkit-backdrop-filter: blur(24px) saturate(1.15);
+  background: var(--nav-card);
   border: 1px solid var(--nav-border);
   border-radius: var(--radius-2xl);
   padding: 28px 24px;
@@ -174,8 +169,8 @@ body.light .auth-card {
 
 /* Main Button */
 .auth-button {
-  --background: linear-gradient(135deg, var(--navigo-orange), var(--navigo-ember)) !important;
-  --background-activated: linear-gradient(135deg, var(--navigo-orange-active), #D94F1A) !important;
+  --background: var(--navigo-orange) !important;
+  --background-activated: var(--navigo-orange-active) !important;
   --border-radius: var(--radius-md) !important;
   font-weight: 700 !important;
   height: 52px !important;

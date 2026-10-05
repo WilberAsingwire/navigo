@@ -46,8 +46,8 @@ const Register: React.FC = () => {
 
   const getRoleInfo = (r: string) => {
     switch (r) {
-      case 'rider': return { text: '📱 Book rides, earn Zawadi points, and get exclusive discounts!' };
-      case 'driver': return { text: '🚗 Earn UGX 50K-150K daily driving your car. Keep 90% of every fare!' };
+      case 'rider': return { text: 'Book rides, earn Zawadi points, and get exclusive discounts.' };
+      case 'driver': return { text: 'Earn UGX 50K–150K daily driving your car. Keep 90% of every fare.' };
       default: return null;
     }
   };

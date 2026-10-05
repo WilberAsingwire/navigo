@@ -94,10 +94,10 @@ const ActiveRide: React.FC = () => {
     const onStatus = (data: { rideId: string; status: string }) => {
       if (data.rideId !== rideIdRef.current) return;
       setRide(prev => (prev ? { ...prev, status: data.status as Ride['status'] } : prev));
-      if (data.status === 'accepted') { setToastMsg('🚕 Your driver has accepted!'); setShowToast(true); }
-      if (data.status === 'arrived') { setToastMsg('📍 Your driver has arrived at pickup.'); setShowToast(true); }
-      if (data.status === 'ongoing') { setToastMsg('🚗 Your ride has started.'); setShowToast(true); }
-      if (data.status === 'completed') { setToastMsg('✅ Ride completed.'); setShowToast(true); }
+      if (data.status === 'accepted') { setToastMsg('Your driver has accepted'); setShowToast(true); }
+      if (data.status === 'arrived') { setToastMsg('Your driver has arrived at pickup'); setShowToast(true); }
+      if (data.status === 'ongoing') { setToastMsg('Your ride has started'); setShowToast(true); }
+      if (data.status === 'completed') { setToastMsg('Ride completed'); setShowToast(true); }
     };
     const onLocation = (data: { lat: number; lng: number }) => setDriverPos({ lat: data.lat, lng: data.lng });
     const onCancelled = (data: { rideId: string; message: string }) => {
@@ -122,7 +122,7 @@ const ActiveRide: React.FC = () => {
     try {
       const res = await api.post(`/rides/${ride.id}/tip`, { amount });
       setTip(amount);
-      setToastMsg(`❤️ Tip of UGX ${amount.toLocaleString()} sent!`);
+      setToastMsg(`Tip of UGX ${amount.toLocaleString()} sent`);
       setShowToast(true);
     } catch (e: any) {
       setToastMsg(e.response?.data?.message || 'Failed to send tip');
@@ -254,7 +254,7 @@ const ActiveRide: React.FC = () => {
 
           {phase === 'requested' && (
             <div style={{ textAlign: 'center', padding: '10px 0 14px' }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>🚕</div>
+              <IonIcon icon={carOutline} style={{ fontSize: 36, color: 'var(--navigo-orange)', marginBottom: 8 }} />
               <h3 style={{ color: '#fff', margin: '0 0 4px' }}>Finding your driver…</h3>
               <p style={{ color: '#94A3B8', fontSize: 13, margin: 0 }}>We're alerting available drivers near you.</p>
             </div>

@@ -5,15 +5,13 @@
 .driver-earnings-container {
   --background: var(--nav-bg);
   background: var(--nav-bg);
-  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
+  background-image: none;
 }
 
 /* Balance Card */
 .earnings-balance-card {
-  background: linear-gradient(135deg, rgba(27, 73, 101, 0.4), rgba(13, 33, 55, 0.6));
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
+  background: var(--nav-bg-raised);
+  border-radius: var(--radius-md);
   padding: 24px;
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -49,12 +47,12 @@
 }
 
 .payout-btn {
-  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
+  --background: var(--navigo-orange) !important;
   --color: #fff !important;
-  --border-radius: 16px !important;
+  --border-radius: var(--radius-md) !important;
   font-weight: 700 !important;
   height: 52px !important;
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: none;
 }
 
 /* Quick Stats */
@@ -66,9 +64,8 @@
 }
 
 .earnings-stat-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 12px;
   text-align: center;
   border: 1px solid var(--nav-border);
@@ -99,9 +96,8 @@
 
 /* Chart Card */
 .earnings-chart-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 16px;
   border: 1px solid var(--nav-border);
   margin-bottom: 16px;
@@ -127,7 +123,7 @@
 }
 
 .chart-bar {
-  background: linear-gradient(180deg, var(--navigo-orange), #E85D75);
+  background: var(--navigo-orange);
   border-radius: 4px 4px 0 0;
   min-height: 4px;
 }
@@ -141,9 +137,8 @@
 
 /* History Card */
 .earnings-history-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 10px;
   border: 1px solid var(--nav-border);
@@ -199,9 +194,8 @@
 
 /* Payout Card */
 .earnings-payout-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 14px;
   display: flex;
   align-items: center;
@@ -236,9 +230,8 @@
 
 /* Overview Card */
 .earnings-overview-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 16px;
   text-align: center;
   border: 1px solid var(--nav-border);

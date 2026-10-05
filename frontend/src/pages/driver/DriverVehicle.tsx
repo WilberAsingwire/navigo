@@ -6,7 +6,7 @@ import {
   IonInput, IonToast, IonTextarea
 } from '@ionic/react';
 import {
-  carOutline, cardOutline, shieldCheckmarkOutline, timeOutline,
+  carOutline, carSportOutline, cardOutline, shieldCheckmarkOutline, timeOutline,
   cameraOutline, documentTextOutline, warningOutline, checkmarkCircleOutline,
   createOutline, closeOutline, calendarOutline, colorPaletteOutline,
   speedometerOutline, peopleOutline
@@ -37,7 +37,7 @@ const DriverVehicle: React.FC = () => {
   const handleSave = () => {
     setVehicle({ ...editForm });
     setShowEdit(false);
-    setToastMsg('Vehicle details updated successfully! ✅');
+    setToastMsg('Vehicle details updated');
     setShowToast(true);
   };
 
@@ -74,7 +74,7 @@ const DriverVehicle: React.FC = () => {
               style={{ fontSize: 28, color: vehicle.status === 'active' ? '#2D6A4F' : '#FFC107' }} />
             <div>
               <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>
-                {vehicle.status === 'active' ? '✅ Verified Partner' : '⏳ Review in Progress'}
+                {vehicle.status === 'active' ? 'Verified partner' : 'Review in progress'}
               </h3>
               <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: '3px 0 0' }}>
                 {vehicle.status === 'active' ? 'Your documents are up to date' : 'Some documents need attention'}
@@ -83,9 +83,9 @@ const DriverVehicle: React.FC = () => {
           </div>
 
           {/* Vehicle Card */}
-          <IonCard style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))', borderRadius: 18, border: '1px solid rgba(255,255,255,0.06)', marginBottom: 16 }}>
+          <IonCard style={{ background: 'var(--nav-card)', borderRadius: 12, border: '1px solid var(--nav-border)', marginBottom: 16 }}>
             <IonCardContent style={{ textAlign: 'center', padding: 24 }}>
-              <div style={{ fontSize: 48, marginBottom: 10 }}>🚗</div>
+              <IonIcon icon={carSportOutline} style={{ fontSize: 44, color: 'var(--navigo-orange)', marginBottom: 10 }} />
               <h2 style={{ color: '#fff', margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>{vehicle.model}</h2>
               <IonBadge color="warning" style={{ fontSize: 13, padding: '6px 14px', marginTop: 6 }}>{vehicle.plate}</IonBadge>
               
@@ -115,7 +115,7 @@ const DriverVehicle: React.FC = () => {
           </div>
 
           {/* Documents */}
-          <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>📄 Documents</h3>
+          <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Documents</h3>
           {documents.map(doc => (
             <div key={doc.name} style={{
               display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)',

@@ -1,8 +1,7 @@
 .admin-users-container {
   --background: var(--nav-bg);
   background: var(--nav-bg);
-  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
+  background-image: none;
 }
 .admin-toolbar { --background: #1A1A1A; }
 .admin-search { --background: var(--nav-card-hover); --color: #fff; --placeholder-color: #888; border-radius: 12px; }
@@ -15,9 +14,8 @@
   margin-bottom: 14px;
 }
 .stat-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 12px;
   text-align: center;
   border: 1px solid var(--nav-border);
@@ -40,9 +38,8 @@
 
 /* User Cards - Premium Glass */
 .user-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 12px;
   margin-bottom: 8px;
   display: flex;

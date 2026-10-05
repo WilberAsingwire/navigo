@@ -178,7 +178,7 @@ const Login: React.FC = () => {
                 }}
                 onClick={() => history.push('/ussd')}
               >
-                <IonIcon icon={callOutline} /> 📱 No internet? Dial *284*624#
+                <IonIcon icon={callOutline} /> No internet? Dial *284*624#
               </button>
 
               <div style={{ margin: '24px 0', display: 'flex', alignItems: 'center', gap: '12px' }}>

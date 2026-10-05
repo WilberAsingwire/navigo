@@ -17,7 +17,7 @@ const AdminSettings: React.FC = () => {
 
   const handleSave = (section: string) => {
     setEditing(null);
-    setToastMsg(`✅ ${section} settings saved!`);
+    setToastMsg(`${section} settings saved`);
     setShowToast(true);
   };
 

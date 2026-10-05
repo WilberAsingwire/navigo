@@ -45,7 +45,7 @@ const OnboardingBanner: React.FC = () => {
     }}>
       <div style={{ fontSize: 28, flexShrink: 0 }}><IonIcon icon={rocketOutline} style={{ color: '#FF6B35' }} /></div>
       <div style={{ flex: 1 }}>
-        <h4 style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>Welcome to NAVIGO! 👋</h4>
+        <h4 style={{ margin: 0, color: '#fff', fontWeight: 700, fontSize: 15 }}>Welcome to NAVIGO</h4>
         <p style={{ margin: '4px 0 0', color: '#94A3B8', fontSize: 13, lineHeight: 1.4 }}>
           Book your first ride, earn Zawadi points, and enjoy safe, affordable travel across Kampala.
         </p>
