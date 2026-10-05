@@ -59,6 +59,20 @@ Design constraint: **everything must work today with zero paid services**, while
 **Smoke-tested live:** helmet headers present; register with `REQUIRE_PHONE_VERIFICATION=1` → `phoneVerified:false`; send-verification → hashed code + devCode; wrong code rejected & attempt-counted; correct code verifies; code single-use; bogus exchange-code rejected; 200 KB body → 413; malformed JSON → 400.
 
 **Still open after Round 3:** full Leaflet/OSM conversion of remaining map screens, driver-doc object storage, CI + test coverage, repo hygiene (stray plan files, `.gitgnore` typos), and the Medium/Low lists below.
+
+---
+
+## 🛠️ FIX LOG — Round 4 (2026-10-06 — maps, tests/CI & repo-hygiene round; verified: backend `tsc`+tests ✅, frontend `tsc`+tests+build ✅, live preview ✅)
+
+| # | Issue | Fix |
+|---|---|---|
+| Maps | NavigoMap's base map was a double-buffered **Google Maps embed iframe hack** (ToS-grey, no API key, markers on a transparent Leaflet overlay could drift out of sync with the tiles) | Converted to a real Leaflet map with free tiles: OpenStreetMap (standard) + Esri World Imagery (satellite), proper attribution, native pinch/zoom/pan — ~140 lines of iframe/buffer machinery deleted. Paid upgrade path = one TileLayer URL swap. Used by RideRequest, ActiveRide, and DriverActiveRide; AdminLiveMap was already Leaflet. |
+| Fake data | The rider map showed **4 hardcoded fake "nearby drivers"** | New `GET /api/drivers/nearby` — real online+approved drivers within 8 km, coordinates fuzzed to ~110 m for driver privacy, only id/type/position exposed, refreshed every 15 s on the map. |
+| Testing/CI (D-grade) | Backend had zero tests; no CI anywhere | Backend: vitest + 21 unit tests over the money-critical pure logic (fare engine: minimums, 100-UGX rounding, free first 500 m, commission clamp, driver-share arithmetic, bargaining bounds; Ugandan phone normalization). GitHub Actions CI typechecks, tests, and production-builds both projects on every push. |
+| Repo hygiene (C-) | Stray AI plan files (root + frontend), `MEMORY.md` pointing at non-existent files, useless root `package.json`/lock, 752 KB duplicate icon at root, misspelled `.gitgnore` files, tracked local `.claude/` settings and screenshots, 4 stale audit reports at root, no README | All stray files removed; old audits archived to `docs/archive/`; `.claude/` and screenshots untracked + ignored; proper root `README.md` (setup, free-vs-paid stack table, fare policy, repo layout). |
+| DX | Live preview / remote dev couldn't reach the API (frontend hardcoded localhost backend) | Vite dev proxy for `/api`, `/socket.io` (ws) and `/auth/google` — set `VITE_API_URL=/api` and everything flows same-origin. |
+
+**Still open (backlog):** driver-doc object storage (currently text fields only), OSRM/Nominatim self-hosting or rate-limit handling at scale, e2e Cypress runs in CI, and the remaining Medium/Low cosmetic items below.
 **Scope:** Entire repo — backend (Express + PostgreSQL + Socket.io), frontend (Ionic React + Vite), infra/config, repo hygiene. Both projects were dependency-installed, type-checked (`tsc --noEmit`) and production-built as part of this audit.
 
 ---

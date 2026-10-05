@@ -4,7 +4,7 @@
   "description": "NAVIGO Backend API",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run",
     "start": "tsx src/index.ts",
     "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc"
@@ -51,6 +51,7 @@
     "@types/pg": "^8.20.4",
     "@types/ws": "^8.0.0",
     "nodemon": "^3.1.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.3"
   }
 }

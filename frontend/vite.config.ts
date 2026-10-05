@@ -19,6 +19,14 @@ export default defineConfig({
     hmr: {
       clientPort: 443,
     },
+    // Dev-only: lets the browser reach the backend through the SAME origin
+    // (set VITE_API_URL=/api). Required for remote/live previews where the
+    // user's browser cannot reach the sandbox's localhost directly.
+    proxy: {
+      '/api': { target: 'http://localhost:5000', changeOrigin: true },
+      '/socket.io': { target: 'http://localhost:5000', ws: true, changeOrigin: true },
+      '/auth/google': { target: 'http://localhost:5000', changeOrigin: true },
+    },
   },
   preview: {
     host: '0.0.0.0',

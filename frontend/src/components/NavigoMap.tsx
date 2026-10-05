@@ -2,7 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
+
+// FREE MAP STACK: OpenStreetMap tiles for the standard view and Esri World
+// Imagery for satellite — both free, no API key, no Google dependency. The
+// paid upgrade path (Google/Mapbox tiles) is a one-line TileLayer URL swap.
+const TILE_LAYERS = {
+  standard: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
+  },
+} as const;
 import bodaNew from '../assets/vehicles/boda-new.png';
 import goNew from '../assets/vehicles/go-new.png';
 import comfortNew from '../assets/vehicles/comfort-new.png';
@@ -130,15 +144,27 @@ const NavigoMap: React.FC<MapProps> = ({
 
   // Track zoom changes
 
+  // REAL nearby drivers (was: 4 hardcoded fake markers). Refreshes every 15 s
+  // while the map is visible; silently shows none if the request fails.
+  const nearbyKey = isValidLatLng(userLocation)
+    ? `${userLocation!.lat.toFixed(3)},${userLocation!.lng.toFixed(3)}`
+    : null;
   useEffect(() => {
-    if (!showNearbyDrivers || !isValidLatLng(userLocation)) return;
-    setNearbyDrivers([
-      { id: '1', lat: userLocation!.lat + 0.005, lng: userLocation!.lng + 0.003, type: 'boda' },
-      { id: '2', lat: userLocation!.lat - 0.003, lng: userLocation!.lng + 0.005, type: 'go' },
-      { id: '3', lat: userLocation!.lat + 0.002, lng: userLocation!.lng - 0.004, type: 'comfort' },
-      { id: '4', lat: userLocation!.lat - 0.006, lng: userLocation!.lng - 0.002, type: 'boda' },
-    ]);
-  }, [showNearbyDrivers, userLocation]);
+    if (!showNearbyDrivers || !nearbyKey) { setNearbyDrivers([]); return; }
+    let cancelled = false;
+    const [lat, lng] = nearbyKey.split(',').map(Number);
+    const load = async () => {
+      try {
+        const res = await api.get('/drivers/nearby', { params: { lat, lng } });
+        if (!cancelled) setNearbyDrivers(res.data?.drivers || []);
+      } catch {
+        if (!cancelled) setNearbyDrivers([]);
+      }
+    };
+    load();
+    const timer = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [showNearbyDrivers, nearbyKey]);
 
   useEffect(() => {
     if (!showRoute || !isValidLatLng(userLocation) || !isValidLatLng(destination as any)) { setRoutePoints([]); return; }
@@ -167,62 +193,6 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
-  // Google Maps embed URL generator
-  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
-  const getGoogleEmbedUrl = (
-    c: [number, number],
-    z: number,
-    style: 'standard' | 'satellite'
-  ) => {
-    const typeParam = style === 'satellite' ? 'k' : 'm';
-    return `https://maps.google.com/maps?q=${c[0].toFixed(5)},${c[1].toFixed(5)}&z=${z}&t=${typeParam}&output=embed&hl=en&iwloc=near`;
-  };
-
-  // Double-buffer iframes to eliminate white flash during zoom / pan / style changes
-  const [activeBuffer, setActiveBuffer] = useState<0 | 1>(0);
-  const [bufferUrls, setBufferUrls] = useState<[string, string]>(() => {
-    const init = getGoogleEmbedUrl(center, mapZoom, mapStyle);
-    return [init, init];
-  });
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const pendingUpdateRef = React.useRef<{
-    center: [number, number];
-    zoom: number;
-    style: 'standard' | 'satellite';
-  } | null>(null);
-  const updateTimerRef = React.useRef<any>(null);
-
-  const scheduleBufferUpdate = (
-    c: [number, number],
-    z: number,
-    s: 'standard' | 'satellite',
-    delay = 320
-  ) => {
-    pendingUpdateRef.current = { center: c, zoom: z, style: s };
-    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-
-    updateTimerRef.current = setTimeout(() => {
-      if (!pendingUpdateRef.current) return;
-      const { center: targetCenter, zoom: targetZoom, style: targetStyle } = pendingUpdateRef.current;
-      const nextBuffer = activeBuffer === 0 ? 1 : 0;
-      const nextUrl = getGoogleEmbedUrl(targetCenter, targetZoom, targetStyle);
-
-      setBufferUrls((prev) => {
-        const next: [string, string] = [...prev];
-        next[nextBuffer] = nextUrl;
-        return next;
-      });
-      setIsTransitioning(true);
-    }, delay);
-  };
-
-  const handleBufferLoad = (bufferIndex: 0 | 1) => {
-    if (bufferIndex !== activeBuffer && isTransitioning) {
-      setActiveBuffer(bufferIndex);
-      setIsTransitioning(false);
-    }
-  };
-
   const handleMyLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -233,7 +203,6 @@ const NavigoMap: React.FC<MapProps> = ({
           if (mapRef.current) {
             try { mapRef.current.flyTo(ll, 16, { duration: 1 }); } catch { /* noop */ }
           }
-          scheduleBufferUpdate(ll, 16, mapStyle, 100);
         },
         () => {},
         { enableHighAccuracy: true, timeout: 8000 }
@@ -242,62 +211,25 @@ const NavigoMap: React.FC<MapProps> = ({
   };
 
   const handleZoomIn = () => {
-    const nextZoom = Math.min(mapZoom + 1, 20);
+    const nextZoom = Math.min(mapZoom + 1, 19);
     if (nextZoom === mapZoom) return;
-
     setMapZoom(nextZoom);
-
-    // 2. Animate Leaflet overlay pins smoothly
     if (mapRef.current) {
-      try {
-        mapRef.current.setZoom(nextZoom, { animate: true });
-      } catch { /* noop */ }
+      try { mapRef.current.setZoom(nextZoom, { animate: true }); } catch { /* noop */ }
     }
-
-    // 3. Update background buffer URL debounced
-    scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
 
   const handleZoomOut = () => {
     const nextZoom = Math.max(mapZoom - 1, 5);
     if (nextZoom === mapZoom) return;
-
     setMapZoom(nextZoom);
-
-    // 2. Animate Leaflet overlay pins smoothly
     if (mapRef.current) {
-      try {
-        mapRef.current.setZoom(nextZoom, { animate: true });
-      } catch { /* noop */ }
+      try { mapRef.current.setZoom(nextZoom, { animate: true }); } catch { /* noop */ }
     }
-
-    // 3. Update background buffer URL debounced
-    scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
 
   const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
-    if (newStyle === mapStyle) return;
     setMapStyle(newStyle);
-    scheduleBufferUpdate(center, mapZoom, newStyle, 50);
-  };
-
-  const getIframeStyle = (bufferIndex: 0 | 1): React.CSSProperties => {
-    const isActive = bufferIndex === activeBuffer;
-    return {
-      position: 'absolute',
-      inset: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      pointerEvents: 'none',
-      zIndex: isActive ? 1 : 0,
-      opacity: isActive ? 1 : 0,
-      transformOrigin: 'center center',
-      transition: isActive
-        ? 'opacity 0.3s ease-in-out'
-        : 'opacity 0.3s ease-in-out',
-      willChange: 'opacity',
-    };
   };
 
   return (
@@ -313,24 +245,6 @@ const NavigoMap: React.FC<MapProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* DOUBLE-BUFFERED GOOGLE MAPS IFRAMES — Zero white flash on zoom, smooth animated scale */}
-      <iframe
-        src={bufferUrls[0]}
-        style={getIframeStyle(0)}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Google Maps Primary"
-        onLoad={() => handleBufferLoad(0)}
-      />
-      <iframe
-        src={bufferUrls[1]}
-        style={getIframeStyle(1)}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Google Maps Secondary"
-        onLoad={() => handleBufferLoad(1)}
-      />
-
       {loading && (
         <div className="map-overlay-state loading">
           <div className="map-state-card">
@@ -350,23 +264,29 @@ const NavigoMap: React.FC<MapProps> = ({
         </div>
       )}
 
-      {/* LEAFLET OVERLAY — Transparent, only for markers, route polyline, and touch events */}
+      {/* LEAFLET MAP — real OSM/Esri tiles + markers, routes, and touch events */}
       <MapContainer
         center={center}
         zoom={mapZoom}
+        maxZoom={19}
         zoomAnimation={true}
         fadeAnimation={true}
         markerZoomAnimation={true}
         style={{
           height: '100%',
           width: '100%',
-          background: 'transparent',
           zIndex: 2,
         }}
         zoomControl={false}
-        attributionControl={false}
+        attributionControl={true}
         ref={mapRef as any}
       >
+        <TileLayer
+          key={mapStyle}
+          url={TILE_LAYERS[mapStyle].url}
+          attribution={TILE_LAYERS[mapStyle].attribution}
+          maxZoom={19}
+        />
         <MapEvents
           onMapClick={onMapClick}
           userLocation={userLocation}
@@ -374,7 +294,7 @@ const NavigoMap: React.FC<MapProps> = ({
           onMove={(c, z) => {
             if (!isNaN(c[0]) && !isNaN(c[1])) {
               setMapCenter(c);
-              scheduleBufferUpdate(c, z, mapStyle, 600);
+              setMapZoom(z);
             }
           }}
         />
@@ -432,8 +352,8 @@ const NavigoMap: React.FC<MapProps> = ({
       <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: transparent !important; }
-        .navigo-map-root .leaflet-tile-pane { display: none; }
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: ${mapStyle === 'satellite' ? '#0c1524' : '#e5e7eb'} !important; }
+        .navigo-map-root .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,0.75); }
         .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
         .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
         .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }

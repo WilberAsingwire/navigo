@@ -13,3 +13,6 @@ coverage/
 .ionic/
 *.tsbuildinfo
 screenshots/
+
+# local tooling
+.claude/
