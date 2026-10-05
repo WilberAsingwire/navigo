@@ -6,7 +6,8 @@ import {
   arrowForwardOutline, callOutline,
   checkmarkCircleOutline, locationOutline,
   flashOutline, menuOutline, closeOutline,
-  timeOutline, peopleOutline
+  timeOutline, peopleOutline,
+  medalOutline, trophyOutline, diamondOutline
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import './Home.css';
@@ -51,6 +52,9 @@ const Home: React.FC = () => {
       features: ['Helmet included', 'Boda Safe™ verified'],
       color: '#FF6B35',
       popular: true,
+      price: '450',
+      minFare: '1,500',
+      eta: '2-5 min',
     },
     {
       id: 'go',
@@ -61,6 +65,10 @@ const Home: React.FC = () => {
       seats: '4',
       features: ['4 seats', 'AC comfort'],
       color: '#0EA5E9',
+      popular: false,
+      price: '750',
+      minFare: '3,000',
+      eta: '4-9 min',
     },
     {
       id: 'comfort',
@@ -71,6 +79,10 @@ const Home: React.FC = () => {
       seats: '4',
       features: ['4.8+ rated', 'Professional drivers'],
       color: '#111827',
+      popular: false,
+      price: '950',
+      minFare: '5,000',
+      eta: '5-12 min',
     },
     {
       id: 'xl',
@@ -81,6 +93,10 @@ const Home: React.FC = () => {
       seats: '6',
       features: ['6 seats', 'Luggage space'],
       color: '#6366F1',
+      popular: false,
+      price: '1,300',
+      minFare: '8,000',
+      eta: '6-15 min',
     },
   ];
 
@@ -145,9 +161,11 @@ const Home: React.FC = () => {
 
               <div className="hero-trust">
                 <div className="trust-avatars">
-                  <span>🇺🇬</span><span>⭐</span><span>🛡️</span>
+                  <IonIcon icon={shieldCheckmarkOutline} />
+                  <IonIcon icon={starOutline} />
+                  <IonIcon icon={peopleOutline} />
                 </div>
-                <span className="trust-text"><strong>50k+</strong> rides • <strong>4.9</strong> rating • <strong>2k+</strong> drivers</span>
+                <span className="trust-text"><strong>50k+</strong> rides · <strong>4.9</strong> rating · <strong>2k+</strong> drivers</span>
               </div>
             </div>
 
@@ -181,7 +199,6 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="preview-vehicle">
-                    <div className="vehicle-glow" style={{ background: `radial-gradient(circle, ${active.color}18 0%, transparent 70%)` }} />
                     <img src={active.image} alt={active.name} className="preview-vehicle-img" />
                     <div className="vehicle-meta">
                       <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
@@ -208,7 +225,7 @@ const Home: React.FC = () => {
                     <span className="fare-label">Estimated Fare</span>
                     <span className="fare-sub">{active.desc}</span>
                   </div>
-                  <span className="fare-amount">UGX {active.price}</span>
+                  <span className="fare-amount">from UGX {active.minFare}</span>
                 </div>
 
                 <button className="preview-book-btn" onClick={() => navigate('/register')}>
@@ -229,7 +246,6 @@ const Home: React.FC = () => {
                 <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
                   {ride.popular && <div className="ride-badge">Most Popular</div>}
                   <div className="card-img-wrap">
-                    <div className="card-img-glow" style={{ background: `radial-gradient(circle, ${ride.color}15 0%, transparent 70%)` }} />
                     <img src={ride.image} alt={ride.name} className="card-vehicle-img" />
                   </div>
                   <h3 className="card-title">{ride.name}</h3>
@@ -309,25 +325,25 @@ const Home: React.FC = () => {
             <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
             <div className="rewards-grid">
               <div className="tier-card bronze">
-                <div className="tier-icon-container">🥉</div>
+                <div className="tier-icon-container"><IonIcon icon={medalOutline} /></div>
                 <h3 className="tier-title">Bronze</h3>
                 <p className="tier-pts">0 - 500 pts</p>
                 <div className="tier-benefit">Basic Rewards</div>
               </div>
               <div className="tier-card silver">
-                <div className="tier-icon-container">🥈</div>
+                <div className="tier-icon-container"><IonIcon icon={medalOutline} /></div>
                 <h3 className="tier-title">Silver</h3>
                 <p className="tier-pts">500 - 1k pts</p>
                 <div className="tier-benefit">5% Discount</div>
               </div>
               <div className="tier-card gold">
-                <div className="tier-icon-container">🥇</div>
+                <div className="tier-icon-container"><IonIcon icon={trophyOutline} /></div>
                 <h3 className="tier-title">Gold</h3>
                 <p className="tier-pts">1k - 2.5k pts</p>
                 <div className="tier-benefit">Priority Booking</div>
               </div>
               <div className="tier-card platinum">
-                <div className="tier-icon-container">💎</div>
+                <div className="tier-icon-container"><IonIcon icon={diamondOutline} /></div>
                 <h3 className="tier-title">Platinum</h3>
                 <p className="tier-pts">2.5k+ pts</p>
                 <div className="tier-benefit">VIP Experience</div>
@@ -342,8 +358,8 @@ const Home: React.FC = () => {
                 <div style={{ marginBottom: 16 }}><Logo variant="full" size="medium" onClick={() => navigate('/')} /></div>
                 <p>Uganda's smartest ride-hailing app. Safe, affordable, and reliable for everyone. Boda Safe™ verified.</p>
                 <div className="footer-badges">
-                  <span className="footer-badge">🇺🇬 Made in Uganda</span>
-                  <span className="footer-badge">🛡️ Boda Safe™</span>
+                  <span className="footer-badge">Made in Uganda</span>
+                  <span className="footer-badge">Boda Safe™</span>
                 </div>
               </div>
               <div className="footer-col">

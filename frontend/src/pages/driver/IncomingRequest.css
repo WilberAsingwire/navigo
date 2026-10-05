@@ -1,8 +1,6 @@
 .request-bg {
   --background: var(--nav-bg);
-  background:
-    radial-gradient(circle at 20% 20%, var(--navigo-orange-ghost) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(13, 33, 55, 0.6) 0%, var(--nav-bg) 100%) !important;
+  background: var(--nav-bg) !important;
 }
 .request-container {
   max-width: 480px;
@@ -23,24 +21,15 @@
   border: 3px solid var(--nav-border-orange);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   margin: 0 auto 16px;
-  box-shadow: 0 0 0 0 var(--navigo-orange-glow);
-  animation: pulseRing 1.6s ease-out infinite;
-}
-@keyframes pulseRing {
-  0% { box-shadow: 0 0 0 0 rgba(255,107,53,0.45); }
-  70% { box-shadow: 0 0 0 20px rgba(255,107,53,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
 }
 .timer-circle h1 { font-family: var(--font-display); font-size: 28px; font-weight: 800; margin: 0; line-height: 1; color: var(--navigo-orange); }
 .timer-circle small { font-size: 11px; font-weight: 700; color: var(--nav-text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
 
 .route-card {
-  background: var(--nav-card-glass) !important;
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--nav-border) !important;
-  border-radius: var(--radius-2xl) !important;
+  background: var(--nav-card) !important;
+  border: 1px solid var(--nav-border-strong) !important;
+  border-radius: var(--radius-md) !important;
   padding: 18px !important;
-  box-shadow: var(--shadow-card);
 }
 body.light .route-card { background: #fff !important; }
 
@@ -58,31 +47,33 @@ body.light .route-card { background: #fff !important; }
 .fare-display {
   text-align: center;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(27,73,101,0.35), rgba(13,33,55,0.6));
-  border-radius: var(--radius-xl);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--nav-bg-raised);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--nav-border-strong);
 }
 body.light .fare-display {
-  background: linear-gradient(135deg, #1B4965 0%, #0D2137 100%);
+  background: #0F172A;
   color: #fff;
 }
 .fare-amount {
   font-family: var(--font-display);
   font-size: 36px;
   font-weight: 800;
-  color: var(--navigo-orange);
+  color: var(--nav-text);
   letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
+body.light .fare-amount { color: #fff; }
 .fare-label { font-size: 12px; color: var(--nav-text-secondary); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-top: 4px; }
 
 .action-grid { display: flex; gap: 12px; margin-top: auto; }
 .action-grid ion-button { flex: 1; min-height: 52px; --border-radius: var(--radius-md); font-weight: 700 !important; }
 .accept-btn {
-  --background: linear-gradient(135deg, var(--nav-success), #1B4965) !important;
-  --box-shadow: 0 8px 20px rgba(16,185,129,0.3) !important;
+  --background: var(--nav-success) !important;
+  --box-shadow: none !important;
 }
 .decline-btn {
-  --background: var(--nav-card-glass) !important;
+  --background: transparent !important;
   --color: var(--nav-danger) !important;
   --border-color: rgba(239,68,68,0.25) !important;
   --border-style: solid !important;

@@ -46,8 +46,8 @@ const Register: React.FC = () => {
 
   const getRoleInfo = (r: string) => {
     switch (r) {
-      case 'rider': return { text: '📱 Book rides, earn Zawadi points, and get exclusive discounts!' };
-      case 'driver': return { text: '🚗 Earn UGX 50K-150K daily driving your car. Keep 90% of every fare!' };
+      case 'rider': return { text: 'Book rides, earn Zawadi points, and get exclusive discounts.' };
+      case 'driver': return { text: 'Earn UGX 50K–150K daily driving your car. Keep 90% of every fare.' };
       default: return null;
     }
   };
@@ -72,8 +72,14 @@ const Register: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
-      history.push('/login');
+      const newUser = await register(name.trim(), cleanPhone, password, email.trim() || undefined, role);
+      if (newUser && newUser.phoneVerified === false) {
+        // Backend requires phone verification — send them to the OTP screen.
+        localStorage.setItem('navigo_temp_phone', cleanPhone);
+        history.push('/verify-phone', { phone: cleanPhone });
+      } else {
+        history.push('/login');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Registration failed');
     } finally {
@@ -116,8 +122,8 @@ const Register: React.FC = () => {
 
             {roleInfo && (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px',
+                display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--nav-card-soft)',
+                border: '1px solid var(--nav-border-strong)', borderRadius: '12px', padding: '12px',
                 fontSize: '13px', color: 'var(--navigo-zinc-400)', marginBottom: '24px'
               }}>
                 <IonIcon icon={informationCircleOutline} style={{ color: 'var(--navigo-ember)' }} />

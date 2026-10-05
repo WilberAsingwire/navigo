@@ -1,5 +1,6 @@
 import axios from 'axios';
 import nodemailer from 'nodemailer';
+import { normalizeUgPhone } from '../utils/uganda';
 
 interface NotificationService {
   sendSMS(phone: string, message: string): Promise<{ success: boolean; error?: string }>;
@@ -18,11 +19,19 @@ class NotificationServiceInstance implements NotificationService {
       return { success: false, error: 'SMS configuration missing' };
     }
 
+    // Africa's Talking requires international format (+2567XXXXXXXX);
+    // local 07XX numbers are silently undeliverable.
+    const intlPhone = normalizeUgPhone(phone);
+    if (!intlPhone) {
+      console.error(`SMS not sent — invalid Ugandan phone: ${phone}`);
+      return { success: false, error: 'Invalid phone number format' };
+    }
+
     try {
       // Africa's Talking SMS API
       const response = await axios.post(
         'https://api.africastalking.com/version1/messaging',
-        `apiKey=${this.smsApiKey}&username=${this.smsUsername}&to=${phone}&message=${encodeURIComponent(message)}`,
+        `apiKey=${this.smsApiKey}&username=${this.smsUsername}&to=${encodeURIComponent(intlPhone)}&message=${encodeURIComponent(message)}`,
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         }

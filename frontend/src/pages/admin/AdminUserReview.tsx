@@ -70,7 +70,7 @@ const AdminUserReview: React.FC = () => {
   const handleAction = (id: string, action: 'approve' | 'reject') => {
     setDrivers(prev => prev.map(d => d._id === id ? { ...d, status: action === 'approve' ? 'approved' : 'rejected' } : d));
     presentToast({
-      message: `Driver ${action === 'approve' ? 'approved ✅' : 'rejected ❌'} successfully!`,
+      message: `Driver ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
       duration: 2000,
       color: action === 'approve' ? 'success' : 'danger'
     });
@@ -84,7 +84,7 @@ const AdminUserReview: React.FC = () => {
     setDrivers(prev => prev.map(d => 
       pendingDrivers.find(p => p._id === d._id) ? { ...d, status: action === 'approve' ? 'approved' : 'rejected' } : d
     ));
-    presentToast({ message: `${action === 'approve' ? '✅' : '❌'} ${pendingDrivers.length} drivers ${action === 'approve' ? 'approved' : 'rejected'}!`, duration: 3000, color: action === 'approve' ? 'success' : 'danger' });
+    presentToast({ message: `${pendingDrivers.length} drivers ${action === 'approve' ? 'approved' : 'rejected'}!`, duration: 3000, color: action === 'approve' ? 'success' : 'danger' });
   };
 
   const stats = {
@@ -100,7 +100,7 @@ const AdminUserReview: React.FC = () => {
         <IonToolbar>
           <IonButtons slot="start"><IonBackButton defaultHref="/admin/dashboard" /></IonButtons>
           <IonTitle>Driver Approvals</IonTitle>
-          <IonButton slot="end" fill="clear"><IonIcon icon={refreshOutline} style={{ color: '#FF6B35' }} /></IonButton>
+          <IonButton slot="end" fill="clear"><IonIcon icon={refreshOutline} style={{ color: 'var(--navigo-orange)' }} /></IonButton>
         </IonToolbar>
       </IonHeader>
 
@@ -120,9 +120,9 @@ const AdminUserReview: React.FC = () => {
               { label: 'Approved', value: stats.approved, color: '#2D6A4F' },
               { label: 'Rejected', value: stats.rejected, color: '#ff5252' },
             ].map(s => (
-              <div key={s.label} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+              <div key={s.label} style={{ background: 'var(--nav-card-soft)', borderRadius: 8, padding: 10, textAlign: 'center' }}>
                 <div style={{ fontSize: 18, fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)' }}>{s.label}</div>
+                <div style={{ fontSize: 9, color: 'var(--nav-text-secondary)' }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -152,34 +152,34 @@ const AdminUserReview: React.FC = () => {
 
           {/* Driver List */}
           {filteredDrivers.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.4)' }}>
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--nav-text-dim)' }}>
               <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: 40 }} />
               <p>No drivers in this category</p>
             </div>
           ) : (
             filteredDrivers.map(driver => (
               <div key={driver._id} onClick={() => { setSelectedUser(driver); setShowDetail(true); }}
-                style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 14, marginBottom: 8, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)' }}>
+                style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14, marginBottom: 8, cursor: 'pointer', border: '1px solid var(--nav-border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <IonAvatar style={{ width: 44, height: 44 }}>
                     <InitialsAvatar name={driver.name} size={44} />
                   </IonAvatar>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <h3 style={{ color: '#fff', margin: 0, fontSize: 14 }}>{driver.name} {driver.isFemaleDriver ? '👩' : ''}</h3>
+                      <h3 style={{ color: 'var(--nav-text)', margin: 0, fontSize: 14 }}>{driver.name}</h3>
                       <IonBadge color={driver.role === 'driver' ? 'primary' : 'warning'} style={{ fontSize: 9 }}>
-                        {driver.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}
+                        {driver.role === 'driver' ? 'Driver' : 'Motorist'}
                       </IonBadge>
                     </div>
-                    <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '3px 0' }}>
-                      📞 {driver.phone} • 🚗 {driver.vehiclePlate} • ⭐ {driver.rating}
+                    <p style={{ color: 'var(--nav-text-dim)', fontSize: 11, margin: '3px 0' }}>
+                      {driver.phone} · {driver.vehiclePlate} · {driver.rating}★
                     </p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                     <IonBadge color={driver.status === 'approved' ? 'success' : driver.status === 'pending' ? 'warning' : 'danger'} style={{ fontSize: 9 }}>
                       {driver.status}
                     </IonBadge>
-                    <IonIcon icon={eyeOutline} style={{ color: '#FF6B35', fontSize: 16 }} />
+                    <IonIcon icon={eyeOutline} style={{ color: 'var(--navigo-orange)', fontSize: 16 }} />
                   </div>
                 </div>
               </div>
@@ -190,35 +190,35 @@ const AdminUserReview: React.FC = () => {
         {/* Detail Modal */}
         <IonModal isOpen={showDetail} onDidDismiss={() => setShowDetail(false)}>
           {selectedUser && (
-            <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', overflow: 'auto' }}>
+            <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: 'var(--nav-text)', height: '100%', overflow: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h2 style={{ margin: 0, fontSize: 18 }}>{selectedUser.name} {selectedUser.isFemaleDriver ? '👩' : ''}</h2>
-                <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
+                <h2 style={{ margin: 0, fontSize: 18 }}>{selectedUser.name}</h2>
+                <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: 'var(--nav-text)', fontSize: 22 }} /></IonButton>
               </div>
 
               {/* Driver Info */}
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 16 }}>
+              <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Phone</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📞 {selectedUser.phone}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Email</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📧 {selectedUser.email || 'N/A'}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Vehicle</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>🚗 {selectedUser.vehiclePlate} • {selectedUser.vehicleModel} ({selectedUser.vehicleColor})</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Role</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>{selectedUser.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>NIN</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>🆔 {selectedUser.nationalId}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>License</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📋 {selectedUser.drivingLicense}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Permit</span><p style={{ color: '#fff', margin: 2, fontSize: 13 }}>📄 {selectedUser.permitNumber}</p></div>
-                  <div><span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>Rating</span><p style={{ color: '#FFC107', margin: 2, fontSize: 13 }}>⭐ {selectedUser.rating} ({selectedUser.totalRides} rides)</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>Phone</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.phone}</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>Email</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.email || 'N/A'}</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>Vehicle</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.vehiclePlate} • {selectedUser.vehicleModel} ({selectedUser.vehicleColor})</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>Role</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.role === 'driver' ? 'Driver' : 'Motorist'}</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>NIN</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.nationalId}</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>License</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.drivingLicense}</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>Permit</span><p style={{ color: 'var(--nav-text)', margin: 2, fontSize: 13 }}>{selectedUser.permitNumber}</p></div>
+                  <div><span style={{ color: 'var(--nav-text-secondary)', fontSize: 10 }}>Rating</span><p style={{ color: '#FFC107', margin: 2, fontSize: 13 }}>{selectedUser.rating} ({selectedUser.totalRides} rides)</p></div>
                 </div>
               </div>
 
               {/* Document Preview */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
                   <IonIcon icon={cameraOutline} style={{ fontSize: 24, color: 'rgba(255,255,255,0.2)', marginBottom: 8 }} />
-                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 0 }}>Vehicle Photo</p>
+                  <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: 0 }}>Vehicle Photo</p>
                 </div>
-                <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+                <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
                   <IonIcon icon={personOutline} style={{ fontSize: 24, color: 'rgba(255,255,255,0.2)', marginBottom: 8 }} />
-                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 0 }}>Selfie with Vehicle</p>
+                  <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: 0 }}>Selfie with Vehicle</p>
                 </div>
               </div>
 

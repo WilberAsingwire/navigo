@@ -196,19 +196,13 @@ body.light .bottom-panel {
 ion-button.button-brand,
 .brand-cta,
 .nav-signup-pill {
-  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-ember) 100%) !important;
-  --background-activated: linear-gradient(135deg, var(--navigo-orange-active) 0%, #D94F1A 100%) !important;
-  --background-hover: linear-gradient(135deg, var(--navigo-orange-hover) 0%, var(--navigo-orange-active) 100%) !important;
+  --background: var(--navigo-orange) !important;
+  --background-activated: var(--navigo-orange-active) !important;
+  --background-hover: var(--navigo-orange-hover) !important;
   --color: #fff !important;
-  --box-shadow: var(--shadow-orange) !important;
+  --box-shadow: none !important;
   --ripple-color: rgba(255, 255, 255, 0.2);
   font-weight: 700 !important;
-}
-
-ion-button.button-brand:hover,
-.brand-cta:hover {
-  box-shadow: var(--shadow-orange-lg) !important;
-  transform: translateY(-1px);
 }
 
 ion-button.button-ghost {
@@ -226,10 +220,10 @@ ion-button.button-ghost {
 .payment-option,
 .vehicle-card {
   border: 2px solid transparent !important;
-  border-radius: var(--radius-xl) !important;
+  border-radius: var(--radius-md) !important;
   padding: 14px 16px !important;
   background: var(--nav-card-soft) !important;
-  transition: all var(--duration-normal) var(--ease-spring) !important;
+  transition: all var(--duration-normal) var(--ease-out) !important;
   cursor: pointer;
   position: relative;
 }
@@ -268,10 +262,10 @@ ion-button.button-ghost {
   box-shadow: var(--shadow-card);
   min-height: 44px;
   font-weight: 700;
-  transition: all var(--duration-normal) var(--ease-spring);
+  transition: all var(--duration-normal) var(--ease-out);
 }
 .my-location-btn { background: var(--navigo-orange) !important; color: #fff !important; border-color: var(--navigo-orange); }
-.my-location-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-orange); }
+.my-location-btn:hover { background: var(--nav-card); }
 
 .map-controls-top button { font-family: var(--font-body); }
 
@@ -421,10 +415,9 @@ ion-modal ion-content {
   line-height: 1.45;
 }
 .chat-bubble-me {
-  background: linear-gradient(135deg, var(--navigo-orange), var(--navigo-ember)) !important;
+  background: var(--navigo-orange) !important;
   color: #fff !important;
-  border-bottom-right-radius: 6px !important;
-  box-shadow: var(--shadow-orange);
+  border-bottom-right-radius: 4px !important;
 }
 .chat-bubble-them {
   background: var(--nav-card) !important;

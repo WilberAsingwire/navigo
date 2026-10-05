@@ -99,9 +99,9 @@ const CustomerDashboard: React.FC = () => {
     return (
       <IonPage>
         <IonContent className="rider-page-container rider-dashboard-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
-          <div style={{ padding: 24, textAlign: 'center', color: '#fff' }}>
+          <div style={{ padding: 24, textAlign: 'center', color: 'var(--nav-text)' }}>
             <h3>Loading profile...</h3>
-            <p style={{ color: '#94A3B8' }}>Please wait while we fetch your account.</p>
+            <p style={{ color: 'var(--nav-text-secondary)' }}>Please wait while we fetch your account.</p>
           </div>
         </IonContent>
       </IonPage>
@@ -115,7 +115,7 @@ const CustomerDashboard: React.FC = () => {
           <div style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
             <div className="rider-header">
               <div>
-                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0] || 'Guest'} 👋</h2>
+                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0] || 'Guest'}</h2>
                 <p className="welcome-subtitle">Ready for your next ride?</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -172,7 +172,7 @@ const CustomerDashboard: React.FC = () => {
                 </h3>
                 <p className="stat-label">Wallet</p>
                 {walletError && (
-                  <span style={{ fontSize: 10, color: '#94A3B8', marginTop: 4, textAlign: 'center' }}>
+                  <span style={{ fontSize: 10, color: 'var(--nav-text-secondary)', marginTop: 4, textAlign: 'center' }}>
                     Offline — cached
                   </span>
                 )}
@@ -233,7 +233,7 @@ const CustomerDashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <IonIcon icon={arrowForwardOutline} style={{ color: '#64748B', fontSize: 16 }} />
+              <IonIcon icon={arrowForwardOutline} style={{ color: 'var(--nav-text-muted)', fontSize: 16 }} />
             </div>
           ))}
         </div>

@@ -121,9 +121,9 @@ const AdminUsers: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
         <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/admin/dashboard" style={{color: '#fff'}} /></IonButtons>
-          <IonTitle style={{color: '#fff'}}>User Management</IonTitle>
-          <IonButton slot="end" fill="clear"><IonIcon icon={downloadOutline} style={{color: '#FF6B35'}} /></IonButton>
+          <IonButtons slot="start"><IonBackButton defaultHref="/admin/dashboard" style={{color: 'var(--nav-text)'}} /></IonButtons>
+          <IonTitle style={{color: 'var(--nav-text)'}}>User Management</IonTitle>
+          <IonButton slot="end" fill="clear"><IonIcon icon={downloadOutline} style={{color: 'var(--navigo-orange)'}} /></IonButton>
         </IonToolbar>
       </IonHeader>
 
@@ -135,8 +135,8 @@ const AdminUsers: React.FC = () => {
           <div className="stats-grid">
             {[{label: 'Total', value: stats.total}, {label: 'Customers', value: stats.riders}, {label: 'Drivers', value: stats.drivers + stats.motorists}, {label: 'Suspended', value: stats.suspended}, {label: 'Banned', value: stats.banned}].map(s => (
               <div key={s.label} className="stat-card">
-                <div style={{fontSize: 16, fontWeight: 700, color: '#FF6B35'}}>{s.value}</div>
-                <div style={{fontSize: 9, color: '#D1D5DB'}}>{s.label}</div>
+                <div style={{fontSize: 16, fontWeight: 700, color: 'var(--navigo-orange)'}}>{s.value}</div>
+                <div style={{fontSize: 9, color: 'var(--nav-text-secondary)'}}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -147,10 +147,10 @@ const AdminUsers: React.FC = () => {
 
           {/* Role Filter */}
           <IonSegment value={activeFilter} onIonChange={e => setActiveFilter(e.detail.value as any)} style={{marginBottom: 8}}>
-            <IonSegmentButton value="all"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="rider"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="driver"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="motorist"><IonLabel style={{fontSize: 11, color: '#D1D5DB'}}>Motorists</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="all"><IonLabel style={{fontSize: 11, color: 'var(--nav-text-secondary)'}}>All</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="rider"><IonLabel style={{fontSize: 11, color: 'var(--nav-text-secondary)'}}>Customers</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="driver"><IonLabel style={{fontSize: 11, color: 'var(--nav-text-secondary)'}}>Drivers</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="motorist"><IonLabel style={{fontSize: 11, color: 'var(--nav-text-secondary)'}}>Motorists</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* Status Filter */}
@@ -164,28 +164,28 @@ const AdminUsers: React.FC = () => {
           </div>
 
           {/* User List */}
-          <h3 style={{color: '#fff', fontSize: 14, marginBottom: 10}}>Users ({filteredUsers.length})</h3>
+          <h3 style={{color: 'var(--nav-text)', fontSize: 14, marginBottom: 10}}>Users ({filteredUsers.length})</h3>
           {filteredUsers.map(user => {
             const sc = getStatusColor(user.status);
             return (
               <div key={user.id} onClick={() => { setSelectedUser(user); setShowDetail(true); }}
-                style={{background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.04)'}}>
-                <IonAvatar style={{width: 40, height: 40, background: '#2A2A2A'}}>
+                style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.04)'}}>
+                <IonAvatar style={{width: 40, height: 40, background: 'var(--nav-card)'}}>
                   <InitialsAvatar name={user.fullName} size={40} color="#64748B" />
                 </IonAvatar>
                 <div style={{flex: 1}}>
                   <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                    <span style={{color: '#fff', fontSize: 13, fontWeight: 600}}>{user.fullName}</span>
+                    <span style={{color: 'var(--nav-text)', fontSize: 13, fontWeight: 600}}>{user.fullName}</span>
                     <IonIcon icon={getRoleIcon(user.role)} style={{color: getRoleColor(user.role), fontSize: 14}} />
                   </div>
-                  <p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{user.email || user.phone} • Joined {new Date(user.createdAt).toLocaleDateString()}</p>
+                  <p style={{color: 'var(--nav-text-dim)', fontSize: 10, margin: 2}}>{user.email || user.phone} • Joined {new Date(user.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end'}}>
                   <span style={{background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, padding: '3px 8px', borderRadius: 6, fontSize: 9, fontWeight: 600}}>
                     {user.status}
                   </span>
                   <IonButton fill="clear" size="small" onClick={(e) => { e.stopPropagation(); setSelectedUser(user); setShowActionSheet(true); }}>
-                    <IonIcon icon={ellipsisVerticalOutline} style={{color: '#fff'}} />
+                    <IonIcon icon={ellipsisVerticalOutline} style={{color: 'var(--nav-text)'}} />
                   </IonButton>
                 </div>
               </div>
@@ -196,24 +196,24 @@ const AdminUsers: React.FC = () => {
         {/* Detail Modal */}
         <IonModal isOpen={showDetail} onDidDismiss={() => setShowDetail(false)}>
           {selectedUser && (
-            <div style={{padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', overflow: 'auto'}}>
+            <div style={{padding: 20, background: 'var(--nav-bg-soft)', color: 'var(--nav-text)', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
                 <h2 style={{margin: 0}}>{selectedUser.fullName}</h2>
-                <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{color: '#fff', fontSize: 22}} /></IonButton>
+                <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{color: 'var(--nav-text)', fontSize: 22}} /></IonButton>
               </div>
               <div style={{textAlign: 'center', marginBottom: 20}}>
-                <IonAvatar style={{width: 80, height: 80, margin: '0 auto 10px', background: '#2A2A2A'}}>
+                <IonAvatar style={{width: 80, height: 80, margin: '0 auto 10px', background: 'var(--nav-card)'}}>
                   <InitialsAvatar name={selectedUser.fullName} size={80} color="#64748B" />
                 </IonAvatar>
                 {(() => { const sc = getStatusColor(selectedUser.status); return <span style={{background: sc.bg, border: `1px solid ${sc.border}`, color: sc.text, padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600}}>{selectedUser.status}</span>; })()}
               </div>
-              <div style={{background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 16}}>
-                <p>📞 {selectedUser.phone}</p>
-                <p>📧 {selectedUser.email || 'No email'}</p>
-                <p>🔄 Role: {selectedUser.role}</p>
-                <p>⭐ Rating: {selectedUser.rating || 'N/A'}</p>
-                <p>🚗 Rides: {selectedUser.totalRides || 0}</p>
-                <p>📅 Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+              <div style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 16, marginBottom: 16}}>
+                <p>Phone: {selectedUser.phone}</p>
+                <p>Email: {selectedUser.email || 'No email'}</p>
+                <p>Role: {selectedUser.role}</p>
+                <p>Rating: {selectedUser.rating || 'N/A'}</p>
+                <p>Rides: {selectedUser.totalRides || 0}</p>
+                <p>Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}</p>
               </div>
               <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
                 {selectedUser.status !== 'active' && (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar,
-  IonIcon, IonText, IonToggle,
+  IonIcon, IonText, IonToggle, IonToast,
   IonAvatar, IonRefresher, IonRefresherContent
 } from '@ionic/react';
 import {
@@ -107,8 +107,8 @@ const DriverHome: React.FC = () => {
                 <InitialsAvatar name={user?.fullName || 'D'} size={36} />
               </IonAvatar>
               <div>
-                <h2 className="driver-welcome-text">Hello, {user?.fullName?.split(' ')[0] || 'Driver'} 👋</h2>
-                <p className={`driver-status-text ${isOnline ? 'online' : 'offline'}`}>{isOnline ? '🟢 Online' : '🔴 Offline'}</p>
+                <h2 className="driver-welcome-text">Hello, {user?.fullName?.split(' ')[0] || 'Driver'}</h2>
+                <p className={`driver-status-text ${isOnline ? 'online' : 'offline'}`}>{isOnline ? 'Online' : 'Offline'}</p>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -173,7 +173,7 @@ const DriverHome: React.FC = () => {
               </div>
             ))
           ) : (
-            <div style={{ textAlign: 'center', padding: 20, color: '#64748B', fontSize: 13 }}>No recent activity yet</div>
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--nav-text-muted)', fontSize: 13 }}>No recent activity yet</div>
           )}
 
           <div className="bottom-stats-grid">

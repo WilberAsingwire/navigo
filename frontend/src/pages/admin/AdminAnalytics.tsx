@@ -36,9 +36,9 @@ const AdminAnalytics: React.FC = () => {
     try {
       // These endpoints are designed to return synthesized analytics data
       const [statsRes, dailyRes, topRes] = await Promise.all([
-        api.get('/admin/analytics/summary'),
-        api.get('/admin/analytics/daily'),
-        api.get('/admin/analytics/top-drivers')
+        api.get('/admin/summary'),
+        api.get('/admin/daily'),
+        api.get('/admin/top-drivers')
       ]);
 
       // Backend returns { ok, ...summary }, { ok, daily }, { ok, drivers }
@@ -100,13 +100,13 @@ const AdminAnalytics: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
         <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-          <IonTitle style={{color: '#fff'}}>Business Intelligence</IonTitle>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Business Intelligence</IonTitle>
           <div slot="end" style={{display: 'flex', gap: 8}}>
             <IonButton fill="clear" onClick={fetchAnalytics}>
-              <IonIcon icon={refreshOutline} style={{color: '#FF6B35'}} />
+              <IonIcon icon={refreshOutline} style={{color: 'var(--navigo-orange)'}} />
             </IonButton>
             <IonButton fill="clear" onClick={() => window.print()}>
-              <IonIcon icon={downloadOutline} style={{color: '#FF6B35'}} />
+              <IonIcon icon={downloadOutline} style={{color: 'var(--navigo-orange)'}} />
             </IonButton>
           </div>
         </IonToolbar>
@@ -117,8 +117,8 @@ const AdminAnalytics: React.FC = () => {
 
           <div className="analytics-header">
             <div>
-              <h2 style={{ color: '#fff', margin: 0 }}>Market Overview</h2>
-              <p style={{ color: '#94A3B8', fontSize: 13 }}>Real-time performance tracking for Kampala</p>
+              <h2 style={{ color: 'var(--nav-text)', margin: 0 }}>Market Overview</h2>
+              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13 }}>Real-time performance tracking for Kampala</p>
             </div>
             <div className="growth-badge">
               <IonIcon icon={trendingUpOutline} />
@@ -129,7 +129,7 @@ const AdminAnalytics: React.FC = () => {
           {/* KPI Grid */}
           <div className="kpi-grid">
             <div className="kpi-card">
-              <div className="kpi-icon-box" style={{ background: 'rgba(255,107,53,0.1)', color: '#FF6B35' }}>
+              <div className="kpi-icon-box" style={{ background: 'rgba(255,107,53,0.1)', color: 'var(--navigo-orange)' }}>
                 <IonIcon icon={peopleOutline} />
               </div>
               <div className="kpi-data">

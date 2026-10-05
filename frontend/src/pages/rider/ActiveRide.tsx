@@ -94,10 +94,10 @@ const ActiveRide: React.FC = () => {
     const onStatus = (data: { rideId: string; status: string }) => {
       if (data.rideId !== rideIdRef.current) return;
       setRide(prev => (prev ? { ...prev, status: data.status as Ride['status'] } : prev));
-      if (data.status === 'accepted') { setToastMsg('🚕 Your driver has accepted!'); setShowToast(true); }
-      if (data.status === 'arrived') { setToastMsg('📍 Your driver has arrived at pickup.'); setShowToast(true); }
-      if (data.status === 'ongoing') { setToastMsg('🚗 Your ride has started.'); setShowToast(true); }
-      if (data.status === 'completed') { setToastMsg('✅ Ride completed.'); setShowToast(true); }
+      if (data.status === 'accepted') { setToastMsg('Your driver has accepted'); setShowToast(true); }
+      if (data.status === 'arrived') { setToastMsg('Your driver has arrived at pickup'); setShowToast(true); }
+      if (data.status === 'ongoing') { setToastMsg('Your ride has started'); setShowToast(true); }
+      if (data.status === 'completed') { setToastMsg('Ride completed'); setShowToast(true); }
     };
     const onLocation = (data: { lat: number; lng: number }) => setDriverPos({ lat: data.lat, lng: data.lng });
     const onCancelled = (data: { rideId: string; message: string }) => {
@@ -122,7 +122,7 @@ const ActiveRide: React.FC = () => {
     try {
       const res = await api.post(`/rides/${ride.id}/tip`, { amount });
       setTip(amount);
-      setToastMsg(`❤️ Tip of UGX ${amount.toLocaleString()} sent!`);
+      setToastMsg(`Tip of UGX ${amount.toLocaleString()} sent`);
       setShowToast(true);
     } catch (e: any) {
       setToastMsg(e.response?.data?.message || 'Failed to send tip');
@@ -158,7 +158,7 @@ const ActiveRide: React.FC = () => {
         <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="active-ride-wrapper">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <IonSpinner name="crescent" color="warning" />
-            <p style={{ color: '#94A3B8' }}>Loading your ride…</p>
+            <p style={{ color: 'var(--nav-text-secondary)' }}>Loading your ride…</p>
           </div>
         </IonContent>
       </IonPage>
@@ -170,7 +170,7 @@ const ActiveRide: React.FC = () => {
       <IonPage>
         <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
           <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
-            <IonTitle style={{ color: '#fff' }}>My Ride</IonTitle>
+            <IonTitle style={{ color: 'var(--nav-text)' }}>My Ride</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="active-ride-wrapper">
@@ -196,7 +196,7 @@ const ActiveRide: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
         <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
-          <IonTitle style={{ color: '#fff' }}>
+          <IonTitle style={{ color: 'var(--nav-text)' }}>
             {isDelivery ? 'My Delivery' : 'My Ride'}
           </IonTitle>
           <IonBadge
@@ -235,28 +235,28 @@ const ActiveRide: React.FC = () => {
                 <InitialsAvatar name={driverName} size={48} />
               </IonAvatar>
               <div style={{ flex: 1 }}>
-                <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>{driverName}</h3>
-                <p style={{ color: '#94A3B8', margin: '2px 0 0', fontSize: 12 }}>
+                <h3 style={{ color: 'var(--nav-text)', margin: 0, fontSize: 15 }}>{driverName}</h3>
+                <p style={{ color: 'var(--nav-text-secondary)', margin: '2px 0 0', fontSize: 12 }}>
                   {driver?.plate ? `${driver.plate} • ` : ''}{vehicleLabel}
-                  {driver?.rating ? ` • ⭐ ${Number(driver.rating).toFixed(1)}` : ''}
+                  {driver?.rating ? ` · ${Number(driver.rating).toFixed(1)}★` : ''}
                 </p>
               </div>
               {driver?.phone && (
                 <IonButton fill="clear" size="small" onClick={() => window.open(`tel:${driver.phone}`)}>
-                  <IonIcon icon={callOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
+                  <IonIcon icon={callOutline} style={{ color: 'var(--navigo-orange)', fontSize: 20 }} />
                 </IonButton>
               )}
               <IonButton fill="clear" size="small" onClick={() => setShowChat(true)}>
-                <IonIcon icon={chatbubbleOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
+                <IonIcon icon={chatbubbleOutline} style={{ color: 'var(--navigo-orange)', fontSize: 20 }} />
               </IonButton>
             </div>
           )}
 
           {phase === 'requested' && (
             <div style={{ textAlign: 'center', padding: '10px 0 14px' }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>🚕</div>
-              <h3 style={{ color: '#fff', margin: '0 0 4px' }}>Finding your driver…</h3>
-              <p style={{ color: '#94A3B8', fontSize: 13, margin: 0 }}>We're alerting available drivers near you.</p>
+              <IonIcon icon={carOutline} style={{ fontSize: 36, color: 'var(--navigo-orange)', marginBottom: 8 }} />
+              <h3 style={{ color: 'var(--nav-text)', margin: '0 0 4px' }}>Finding your driver…</h3>
+              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13, margin: 0 }}>We're alerting available drivers near you.</p>
             </div>
           )}
 
@@ -265,10 +265,10 @@ const ActiveRide: React.FC = () => {
             <div style={{ background: 'rgba(77,166,255,0.08)', border: '1px solid rgba(77,166,255,0.25)', borderRadius: 12, padding: 12, marginBottom: 12, display: 'flex', gap: 10 }}>
               <IonIcon icon={paperPlaneOutline} style={{ color: '#4DA6FF', fontSize: 20 }} />
               <div>
-                <p style={{ color: '#fff', margin: 0, fontSize: 13, fontWeight: 600 }}>
+                <p style={{ color: 'var(--nav-text)', margin: 0, fontSize: 13, fontWeight: 600 }}>
                   Delivering: {ride.packageDetails || 'Package'}
                 </p>
-                <p style={{ color: '#94A3B8', margin: '2px 0 0', fontSize: 12 }}>
+                <p style={{ color: 'var(--nav-text-secondary)', margin: '2px 0 0', fontSize: 12 }}>
                   To: {ride.receiverName || '—'} {ride.receiverPhone ? `• ${ride.receiverPhone}` : ''}
                 </p>
               </div>
@@ -281,21 +281,21 @@ const ActiveRide: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4 }}>
                 <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#2D6A4F', border: '2px solid #fff' }} />
                 <div style={{ width: 2, height: 26, background: 'rgba(255,255,255,0.15)', margin: '4px 0' }} />
-                <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#FF6B35', border: '2px solid #fff' }} />
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--navigo-orange)', border: '2px solid #fff' }} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ marginBottom: 10 }}>
-                  <p style={{ color: '#94A3B8', margin: 0, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Pickup</p>
-                  <p style={{ color: '#fff', margin: '2px 0 0', fontSize: 14 }}>{ride.pickup.address}</p>
+                  <p style={{ color: 'var(--nav-text-secondary)', margin: 0, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>Pickup</p>
+                  <p style={{ color: 'var(--nav-text)', margin: '2px 0 0', fontSize: 14 }}>{ride.pickup.address}</p>
                 </div>
                 <div>
-                  <p style={{ color: '#94A3B8', margin: 0, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>{isDelivery ? 'Deliver to' : 'Destination'}</p>
-                  <p style={{ color: '#fff', margin: '2px 0 0', fontSize: 14 }}>{ride.destination.address}</p>
+                  <p style={{ color: 'var(--nav-text-secondary)', margin: 0, fontSize: 10, textTransform: 'uppercase', letterSpacing: 1 }}>{isDelivery ? 'Deliver to' : 'Destination'}</p>
+                  <p style={{ color: 'var(--nav-text)', margin: '2px 0 0', fontSize: 14 }}>{ride.destination.address}</p>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ color: '#94A3B8', margin: 0, fontSize: 10 }}>Fare</p>
-                <p style={{ color: '#FF6B35', margin: '2px 0 0', fontSize: 16, fontWeight: 700 }}>UGX {ride.fareFinal?.toLocaleString()}</p>
+                <p style={{ color: 'var(--nav-text-secondary)', margin: 0, fontSize: 10 }}>Fare</p>
+                <p style={{ color: 'var(--navigo-orange)', margin: '2px 0 0', fontSize: 16, fontWeight: 700 }}>UGX {ride.fareFinal?.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -303,7 +303,7 @@ const ActiveRide: React.FC = () => {
           {/* Status-driven actions */}
           {phase === 'ongoing' && (
             <div className="tip-banner">
-              <p style={{ color: '#FF6B35', margin: '0 0 10px', fontSize: 13, fontWeight: 600 }}>Support your driver</p>
+              <p style={{ color: 'var(--navigo-orange)', margin: '0 0 10px', fontSize: 13, fontWeight: 600 }}>Support your driver</p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
                 {[1000, 2000, 5000].map(amt => (
                   <button
@@ -312,8 +312,8 @@ const ActiveRide: React.FC = () => {
                     disabled={isTipping}
                     style={{
                       padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(255,107,53,0.4)',
-                      background: tip === amt ? '#FF6B35' : 'transparent',
-                      color: tip === amt ? '#fff' : '#FF6B35',
+                      background: tip === amt ? 'var(--navigo-orange)' : 'transparent',
+                      color: tip === amt ? '#fff' : 'var(--navigo-orange)',
                       fontSize: '12px', fontWeight: 700, cursor: 'pointer'
                     }}
                   >
@@ -327,8 +327,8 @@ const ActiveRide: React.FC = () => {
           {phase === 'completed' && (
             <div style={{ textAlign: 'center', padding: '6px 0 12px' }}>
               <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 44, color: '#10B981' }} />
-              <h3 style={{ color: '#fff' }}>Ride completed</h3>
-              <p style={{ color: '#94A3B8', fontSize: 13 }}>Paid: UGX {ride.fareFinal?.toLocaleString()}</p>
+              <h3 style={{ color: 'var(--nav-text)' }}>Ride completed</h3>
+              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13 }}>Paid: UGX {ride.fareFinal?.toLocaleString()}</p>
               {!showRating && (
                 <IonButton expand="block" color="warning" onClick={() => setShowRating(true)} style={{ borderRadius: 12 }}>
                   <IonIcon icon={starOutline} slot="start" /> Rate your driver
@@ -340,7 +340,7 @@ const ActiveRide: React.FC = () => {
           {phase === 'cancelled' && (
             <div style={{ textAlign: 'center', padding: '6px 0 12px' }}>
               <IonIcon icon={closeOutline} style={{ fontSize: 44, color: '#EF4444' }} />
-              <h3 style={{ color: '#fff' }}>Ride cancelled</h3>
+              <h3 style={{ color: 'var(--nav-text)' }}>Ride cancelled</h3>
               <IonButton expand="block" fill="outline" color="light" onClick={() => history.push('/customer/home')} style={{ borderRadius: 12 }}>
                 Back to home
               </IonButton>
@@ -373,9 +373,9 @@ const ActiveRide: React.FC = () => {
 
         {/* Rating */}
         <IonModal isOpen={showRating} onDidDismiss={() => setShowRating(false)}>
-          <div style={{ padding: 24, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', textAlign: 'center' }}>
-            <h2 style={{ margin: '12px 0 4px' }}>⭐ Rate {driverName.split(' ')[0]}</h2>
-            <p style={{ color: '#94A3B8', fontSize: 13 }}>How was your {isDelivery ? 'delivery' : 'ride'}?</p>
+          <div style={{ padding: 24, background: 'var(--nav-bg-soft)', color: 'var(--nav-text)', height: '100%', textAlign: 'center' }}>
+            <h2 style={{ margin: '12px 0 4px' }}>Rate {driverName.split(' ')[0]}</h2>
+            <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13 }}>How was your {isDelivery ? 'delivery' : 'ride'}?</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 10, margin: '20px 0' }}>
               {[1, 2, 3, 4, 5].map(s => (
                 <IonIcon

@@ -5,8 +5,7 @@
 .ride-history-container {
   --background: var(--nav-bg);
   background: var(--nav-bg);
-  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
+  background-image: none;
 }
 
 /* Stats Grid */
@@ -18,9 +17,8 @@
 }
 
 .history-stat-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 12px;
   text-align: center;
   border: 1px solid var(--nav-border);
@@ -51,9 +49,8 @@
 
 /* Ride Card */
 .history-ride-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 16px;
   margin-bottom: 12px;
   cursor: pointer;
@@ -118,16 +115,14 @@
 .history-detail-modal {
   padding: 30px 20px;
   background: rgba(8, 12, 20, 0.9) !important;
-  backdrop-filter: blur(30px);
   color: #fff;
   height: 100%;
   overflow: auto;
 }
 
 .detail-glass-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 16px;
   margin-bottom: 16px;
   border: 1px solid var(--nav-border);
@@ -156,7 +151,7 @@
 .fare-highlight-card {
   background: var(--navigo-orange-ghost);
   border: 1px solid rgba(255, 107, 53, 0.2);
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   padding: 20px;
   text-align: center;
   margin-bottom: 20px;
@@ -175,8 +170,8 @@
 }
 
 .book-similar-btn {
-  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
-  --border-radius: 16px !important;
+  --background: var(--navigo-orange) !important;
+  --border-radius: var(--radius-md) !important;
   font-weight: 700 !important;
   height: 52px !important;
 }

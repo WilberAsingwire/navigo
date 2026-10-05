@@ -1,8 +1,24 @@
 import React, { useEffect, useState } from 'react';
+import { IonIcon } from '@ionic/react';
+import { locateOutline, warningOutline } from 'ionicons/icons';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useTheme } from '../context/ThemeContext';
+import api from '../services/api';
+
+// FREE MAP STACK: OpenStreetMap tiles for the standard view and Esri World
+// Imagery for satellite — both free, no API key, no Google dependency. The
+// paid upgrade path (Google/Mapbox tiles) is a one-line TileLayer URL swap.
+const TILE_LAYERS = {
+  standard: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
+  },
+} as const;
 import bodaNew from '../assets/vehicles/boda-new.png';
 import goNew from '../assets/vehicles/go-new.png';
 import comfortNew from '../assets/vehicles/comfort-new.png';
@@ -30,7 +46,7 @@ const destIcon = L.divIcon({
 const createVehicleIcon = (url: string, color: string) => L.divIcon({
   className: 'navigo-vehicle',
   html: `<div class="nv-wrap">
-           <div class="nv-shadow"></div>
+           
            <div class="nv-body" style="border-color:${color}"><img src="${url}" alt=""/></div>
          </div>`,
   iconSize: [40, 40],
@@ -130,15 +146,27 @@ const NavigoMap: React.FC<MapProps> = ({
 
   // Track zoom changes
 
+  // REAL nearby drivers (was: 4 hardcoded fake markers). Refreshes every 15 s
+  // while the map is visible; silently shows none if the request fails.
+  const nearbyKey = isValidLatLng(userLocation)
+    ? `${userLocation!.lat.toFixed(3)},${userLocation!.lng.toFixed(3)}`
+    : null;
   useEffect(() => {
-    if (!showNearbyDrivers || !isValidLatLng(userLocation)) return;
-    setNearbyDrivers([
-      { id: '1', lat: userLocation!.lat + 0.005, lng: userLocation!.lng + 0.003, type: 'boda' },
-      { id: '2', lat: userLocation!.lat - 0.003, lng: userLocation!.lng + 0.005, type: 'go' },
-      { id: '3', lat: userLocation!.lat + 0.002, lng: userLocation!.lng - 0.004, type: 'comfort' },
-      { id: '4', lat: userLocation!.lat - 0.006, lng: userLocation!.lng - 0.002, type: 'boda' },
-    ]);
-  }, [showNearbyDrivers, userLocation]);
+    if (!showNearbyDrivers || !nearbyKey) { setNearbyDrivers([]); return; }
+    let cancelled = false;
+    const [lat, lng] = nearbyKey.split(',').map(Number);
+    const load = async () => {
+      try {
+        const res = await api.get('/drivers/nearby', { params: { lat, lng } });
+        if (!cancelled) setNearbyDrivers(res.data?.drivers || []);
+      } catch {
+        if (!cancelled) setNearbyDrivers([]);
+      }
+    };
+    load();
+    const timer = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [showNearbyDrivers, nearbyKey]);
 
   useEffect(() => {
     if (!showRoute || !isValidLatLng(userLocation) || !isValidLatLng(destination as any)) { setRoutePoints([]); return; }
@@ -167,63 +195,6 @@ const NavigoMap: React.FC<MapProps> = ({
     fetchRoute();
   }, [userLocation, destination, showRoute]);
 
-  // Google Maps embed URL generator
-  // t=m roadmap, t=k satellite, t=h hybrid, t=p terrain
-  const getGoogleEmbedUrl = (
-    c: [number, number],
-    z: number,
-    style: 'standard' | 'satellite'
-  ) => {
-    const typeParam = style === 'satellite' ? 'k' : 'm';
-    return `https://maps.google.com/maps?q=${c[0].toFixed(5)},${c[1].toFixed(5)}&z=${z}&t=${typeParam}&output=embed&hl=en&iwloc=near`;
-  };
-
-  // Double-buffer iframes to eliminate white flash during zoom / pan / style changes
-  const [activeBuffer, setActiveBuffer] = useState<0 | 1>(0);
-  const [bufferUrls, setBufferUrls] = useState<[string, string]>(() => {
-    const init = getGoogleEmbedUrl(center, mapZoom, mapStyle);
-    return [init, init];
-  });
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const pendingUpdateRef = React.useRef<{
-    center: [number, number];
-    zoom: number;
-    style: 'standard' | 'satellite' | 'terrain';
-  } | null>(null);
-  const updateTimerRef = React.useRef<any>(null);
-
-  const scheduleBufferUpdate = (
-    c: [number, number],
-    z: number,
-    s: 'standard' | 'satellite',
-    delay = 320
-  ) => {
-    pendingUpdateRef.current = { center: c, zoom: z, style: s };
-    if (updateTimerRef.current) clearTimeout(updateTimerRef.current);
-
-    updateTimerRef.current = setTimeout(() => {
-      if (!pendingUpdateRef.current) return;
-      const { center: targetCenter, zoom: targetZoom, style: targetStyle } = pendingUpdateRef.current;
-      const nextBuffer = activeBuffer === 0 ? 1 : 0;
-      const nextUrl = getGoogleEmbedUrl(targetCenter, targetZoom, targetStyle);
-
-      setBufferUrls((prev) => {
-        const next: [string, string] = [...prev];
-        next[nextBuffer] = nextUrl;
-        return next;
-      });
-      setIsTransitioning(true);
-    }, delay);
-  };
-
-  const handleBufferLoad = (bufferIndex: 0 | 1) => {
-    if (bufferIndex !== activeBuffer && isTransitioning) {
-      setActiveBuffer(bufferIndex);
-      setIsTransitioning(false);
-      setVisualScale(1);
-    }
-  };
-
   const handleMyLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -234,7 +205,6 @@ const NavigoMap: React.FC<MapProps> = ({
           if (mapRef.current) {
             try { mapRef.current.flyTo(ll, 16, { duration: 1 }); } catch { /* noop */ }
           }
-          scheduleBufferUpdate(ll, 16, mapStyle, 100);
         },
         () => {},
         { enableHighAccuracy: true, timeout: 8000 }
@@ -243,62 +213,25 @@ const NavigoMap: React.FC<MapProps> = ({
   };
 
   const handleZoomIn = () => {
-    const nextZoom = Math.min(mapZoom + 1, 20);
+    const nextZoom = Math.min(mapZoom + 1, 19);
     if (nextZoom === mapZoom) return;
-
     setMapZoom(nextZoom);
-
-    // 2. Animate Leaflet overlay pins smoothly
     if (mapRef.current) {
-      try {
-        mapRef.current.setZoom(nextZoom, { animate: true });
-      } catch { /* noop */ }
+      try { mapRef.current.setZoom(nextZoom, { animate: true }); } catch { /* noop */ }
     }
-
-    // 3. Update background buffer URL debounced
-    scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
 
   const handleZoomOut = () => {
     const nextZoom = Math.max(mapZoom - 1, 5);
     if (nextZoom === mapZoom) return;
-
     setMapZoom(nextZoom);
-
-    // 2. Animate Leaflet overlay pins smoothly
     if (mapRef.current) {
-      try {
-        mapRef.current.setZoom(nextZoom, { animate: true });
-      } catch { /* noop */ }
+      try { mapRef.current.setZoom(nextZoom, { animate: true }); } catch { /* noop */ }
     }
-
-    // 3. Update background buffer URL debounced
-    scheduleBufferUpdate(center, nextZoom, mapStyle, 320);
   };
 
   const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
-    if (newStyle === mapStyle) return;
     setMapStyle(newStyle);
-    scheduleBufferUpdate(center, mapZoom, newStyle, 50);
-  };
-
-  const getIframeStyle = (bufferIndex: 0 | 1): React.CSSProperties => {
-    const isActive = bufferIndex === activeBuffer;
-    return {
-      position: 'absolute',
-      inset: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      pointerEvents: 'none',
-      zIndex: isActive ? 1 : 0,
-      opacity: isActive ? 1 : 0,
-      transformOrigin: 'center center',
-      transition: isActive
-        ? 'opacity 0.3s ease-in-out'
-        : 'opacity 0.3s ease-in-out',
-      willChange: 'opacity',
-    };
   };
 
   return (
@@ -314,24 +247,6 @@ const NavigoMap: React.FC<MapProps> = ({
         overflow: 'hidden',
       }}
     >
-      {/* DOUBLE-BUFFERED GOOGLE MAPS IFRAMES — Zero white flash on zoom, smooth animated scale */}
-      <iframe
-        src={bufferUrls[0]}
-        style={getIframeStyle(0)}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Google Maps Primary"
-        onLoad={() => handleBufferLoad(0)}
-      />
-      <iframe
-        src={bufferUrls[1]}
-        style={getIframeStyle(1)}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Google Maps Secondary"
-        onLoad={() => handleBufferLoad(1)}
-      />
-
       {loading && (
         <div className="map-overlay-state loading">
           <div className="map-state-card">
@@ -344,30 +259,36 @@ const NavigoMap: React.FC<MapProps> = ({
       {error && (
         <div className="map-overlay-state error">
           <div className="map-state-card">
-            <div className="map-error-icon">⚠️</div>
+            <div className="map-error-icon"><IonIcon icon={warningOutline} /></div>
             <p>{error}</p>
             <button className="map-retry-btn" onClick={() => window.location.reload()}>Retry</button>
           </div>
         </div>
       )}
 
-      {/* LEAFLET OVERLAY — Transparent, only for markers, route polyline, and touch events */}
+      {/* LEAFLET MAP — real OSM/Esri tiles + markers, routes, and touch events */}
       <MapContainer
         center={center}
         zoom={mapZoom}
+        maxZoom={19}
         zoomAnimation={true}
         fadeAnimation={true}
         markerZoomAnimation={true}
         style={{
           height: '100%',
           width: '100%',
-          background: 'transparent',
           zIndex: 2,
         }}
         zoomControl={false}
-        attributionControl={false}
+        attributionControl={true}
         ref={mapRef as any}
       >
+        <TileLayer
+          key={mapStyle}
+          url={TILE_LAYERS[mapStyle].url}
+          attribution={TILE_LAYERS[mapStyle].attribution}
+          maxZoom={19}
+        />
         <MapEvents
           onMapClick={onMapClick}
           userLocation={userLocation}
@@ -375,7 +296,7 @@ const NavigoMap: React.FC<MapProps> = ({
           onMove={(c, z) => {
             if (!isNaN(c[0]) && !isNaN(c[1])) {
               setMapCenter(c);
-              scheduleBufferUpdate(c, z, mapStyle, 600);
+              setMapZoom(z);
             }
           }}
         />
@@ -412,89 +333,57 @@ const NavigoMap: React.FC<MapProps> = ({
 
       <div className="map-controls-top">
         <div className="map-controls-left">
-          <div className="map-badge live"><span className="bdot"></span> LIVE GPS</div>
-          <div className="map-badge rt">● REAL-TIME</div>
           <div className="map-style-toggle">
-            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => handleStyleChange('standard')}>STANDARD</button>
-            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>SATELLITE</button>
+            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => handleStyleChange('standard')}>Map</button>
+            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>Satellite</button>
           </div>
-          {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
-          {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
+          {routeDistance > 0 && <div className="map-badge route">{routeDistance} km · {routeDuration} min</div>}
+          {nearbyDrivers.length > 0 && <div className="map-badge drv">{nearbyDrivers.length} driver{nearbyDrivers.length > 1 ? 's' : ''} nearby</div>}
         </div>
         <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
           <div className="map-zoom-controls">
-            <button className="mz-btn" onClick={handleZoomIn}>+</button>
-            <button className="mz-btn" onClick={handleZoomOut}>−</button>
+            <button className="mz-btn" aria-label="Zoom in" onClick={handleZoomIn}>+</button>
+            <button className="mz-btn" aria-label="Zoom out" onClick={handleZoomOut}>−</button>
           </div>
-          <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
+          <button className="my-location-btn" onClick={handleMyLocation}>
+            <IonIcon icon={locateOutline} aria-hidden="true" /> My location
+          </button>
         </div>
       </div>
 
-      <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
-
       <style>{`
-        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: transparent !important; }
-        .navigo-map-root .leaflet-tile-pane { display: none; }
+        .navigo-map-root .leaflet-container { font-family: var(--font-body); background: ${mapStyle === 'satellite' ? '#0c1524' : '#e5e7eb'} !important; }
+        .navigo-map-root .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,0.75); }
         .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
         .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
         .navigo-map-root .leaflet-control-zoom a:hover { background: #FF6B35 !important; }
         .np-wrap, .nd-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
-        .np-dot { width: 18px; height: 18px; background: #FF6B35; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(255,107,53,0.5); z-index: 2; position: relative; }
+        .np-dot { width: 18px; height: 18px; background: #FF6B35; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.35); z-index: 2; position: relative; }
         .nd-dot { width: 18px; height: 18px; background: #0F172A; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(0,0,0,0.4); z-index: 2; position: relative; }
         .np-pulse { position: absolute; inset: 0; background: #FF6B35; border-radius: 50%; animation: npPulse 2s infinite; }
         @keyframes npPulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.8); opacity: 0; } }
-        .nv-wrap { position: relative; width: 40px; height: 40px; perspective: 500px; }
-        .nv-shadow {
-          position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-          width: 24px; height: 8px; background: rgba(0,0,0,0.2);
-          border-radius: 50%; filter: blur(2px); z-index: 1;
-          animation: nvShadow 3s ease-in-out infinite;
-        }
+        .nv-wrap { position: relative; width: 40px; height: 40px; }
         .nv-body {
           width: 40px; height: 40px; background: white; border-radius: 50%; border: 3px solid;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.35); z-index: 2; position: relative;
-          animation: nvFloat 3s ease-in-out infinite;
-          transform-style: preserve-3d;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35); z-index: 2; position: relative;
         }
-        .nv-body img {
-          width: 70%; height: 70%; object-fit: contain;
-          animation: nvTilt 3s ease-in-out infinite;
-        }
-        @keyframes nvTilt {
-          0%, 100% { transform: rotate(0deg) scale(1); }
-          50% { transform: rotate(5deg) scale(1.1); }
-        }
-        @keyframes nvFloat {
-          0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-          25% { transform: translateY(-4px) rotateX(15deg) rotateY(5deg) rotateZ(2deg); }
-          50% { transform: translateY(-8px) rotateX(0deg) rotateY(15deg) rotateZ(-2deg); }
-          75% { transform: translateY(-4px) rotateX(-15deg) rotateY(5deg) rotateZ(2deg); }
-          100% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-        }
-        @keyframes nvShadow {
-          0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.3; }
-          50% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
-        }
+        .nv-body img { width: 70%; height: 70%; object-fit: contain; }
         .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
         .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
         .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }
-        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.12); background: rgba(255,255,255,0.95); color: #0F172A; }
-        .map-badge.live { background: rgba(16,185,129,0.12); color: #059669; }
-        .map-badge.rt { background: rgba(245,158,11,0.12); color: #D97706; }
-        .map-badge.route { background: rgba(15,23,42,0.9); color: white; }
-        .map-badge.drv { background: rgba(14,165,233,0.12); color: #0284C7; }
-        .bdot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: bdot 1.5s infinite; }
-        @keyframes bdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        .map-style-toggle { display: flex; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
-        .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; }
-        .ms-btn.active { background: #FF6B35; color: white; }
-        .map-zoom-controls { display: flex; flex-direction: column; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-        .mz-btn { width: 44px; height: 44px; border: none; background: white; color: #0F172A; font-size: 20px; font-weight: 800; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 1px 3px rgba(0,0,0,0.12); background: #ffffff; color: #0F172A; }
+        .map-badge.route { background: #0F172A; border-color: #0F172A; color: white; font-variant-numeric: tabular-nums; }
+        .map-style-toggle { display: flex; background: #ffffff; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .ms-btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; border: none; background: transparent; color: #64748B; cursor: pointer; }
+        .ms-btn.active { background: #0F172A; color: white; }
+        .map-zoom-controls { display: flex; flex-direction: column; background: #ffffff; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .mz-btn { width: 40px; height: 40px; border: none; background: transparent; color: #0F172A; font-size: 18px; font-weight: 600; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.08); }
         .mz-btn:last-child { border-bottom: none; }
-        .mz-btn:hover { background: #FF6B35; color: white; }
-        .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); align-self: flex-start; }
-        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,107,53,0.2); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .mz-btn:hover { background: rgba(0,0,0,0.05); }
+        .my-location-btn { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: #0F172A; border: 1px solid rgba(0,0,0,0.1); padding: 10px 14px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.12); align-self: flex-start; }
+        .my-location-btn ion-icon { color: #FF6B35; font-size: 15px; }
+        .my-location-btn:hover { background: #F8FAFC; }
       `}</style>
     </div>
   );

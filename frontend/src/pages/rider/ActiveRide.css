@@ -5,8 +5,7 @@
 .active-ride-content {
   --background: var(--nav-bg);
   background: var(--nav-bg);
-  background-image: radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%);
+  background-image: none;
 }
 
 .ride-distance-info {
@@ -25,8 +24,7 @@
 
 .driver-card {
   background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 14px;
   display: flex;
   align-items: center;
@@ -39,7 +37,7 @@
 .route-card {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 12px;
 }
@@ -47,7 +45,7 @@
 .tip-banner {
   background: rgba(255, 107, 53, 0.05);
   border: 1px solid rgba(255, 107, 53, 0.2);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 14px;
   margin-bottom: 12px;
   text-align: center;
@@ -89,15 +87,14 @@
 }
 
 .fare-card {
-  background: var(--nav-card-glass);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
+  background: var(--nav-card);
+  border-radius: var(--radius-md);
   padding: 16px;
   display: flex;
   align-items: center;
   gap: 14px;
   border: 1px solid rgba(255, 107, 53, 0.2);
-  background-image: linear-gradient(135deg, rgba(255, 107, 53, 0.1), transparent);
+  background-image: none;
 }
 
 .fare-card ion-icon {
@@ -135,23 +132,22 @@
 }
 
 .start-btn, .complete-btn, .rate-btn {
-  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange) 100%) !important;
+  --background: var(--navigo-orange) !important;
   --color: #fff !important;
-  --border-radius: 16px !important;
+  --border-radius: var(--radius-md) !important;
   font-weight: 700 !important;
   height: 52px !important;
-  box-shadow: 0 8px 16px rgba(255, 107, 53, 0.3);
+  box-shadow: none;
 }
 
 .complete-btn {
-  --background: linear-gradient(135deg, #2D6A4F 0%, #1B4965 100%) !important;
+  --background: var(--nav-success) !important;
 }
 
 /* Modals - Glassmorphism */
 .glass-modal {
   padding: 30px 20px;
   background: rgba(8, 12, 20, 0.8) !important;
-  backdrop-filter: blur(30px);
   color: #fff;
   height: 100%;
   display: flex;
@@ -180,7 +176,7 @@
 .payment-radio-item {
   --background: var(--nav-card-soft) !important;
   --color: #fff !important;
-  border-radius: 16px !important;
+  border-radius: var(--radius-md) !important;
   margin-bottom: 10px !important;
   border: 1px solid var(--nav-border);
 }
@@ -192,7 +188,7 @@
 .cash-confirmation ion-item {
   --background: var(--nav-card-glass) !important;
   --color: #fff !important;
-  border-radius: 16px !important;
+  border-radius: var(--radius-md) !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 

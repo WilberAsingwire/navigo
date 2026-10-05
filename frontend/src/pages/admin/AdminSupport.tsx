@@ -64,7 +64,7 @@ const AdminSupport: React.FC = () => {
     if (!reply.trim()) return presentToast({ message: 'Please type a response', color: 'warning', duration: 2000 });
     try {
       await api.post('/support/admin/resolve', { ticketId: id, message: reply });
-      presentToast({ message: '✅ Ticket resolved & user notified!', color: 'success', duration: 2000 });
+      presentToast({ message: 'Ticket resolved — user notified', color: 'success', duration: 2000 });
       setSelectedTicket(null); setReply('');
       await fetchTickets();
     } catch (e) {
@@ -76,7 +76,7 @@ const AdminSupport: React.FC = () => {
     if (!reply.trim()) return presentToast({ message: 'Please type a response', color: 'warning', duration: 2000 });
     try {
       await api.post('/support/admin/reply', { ticketId: id, message: reply });
-      presentToast({ message: '✅ Reply sent!', color: 'success', duration: 2000 });
+      presentToast({ message: 'Reply sent', color: 'success', duration: 2000 });
       setReply('');
       await fetchTickets();
     } catch (e) {
@@ -114,10 +114,10 @@ const AdminSupport: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
         <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/admin/dashboard" style={{color: '#fff'}} /></IonButtons>
-          <IonTitle style={{color: '#fff'}}>Support Tickets</IonTitle>
+          <IonButtons slot="start"><IonBackButton defaultHref="/admin/dashboard" style={{color: 'var(--nav-text)'}} /></IonButtons>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Support Tickets</IonTitle>
           <IonButton slot="end" fill="clear" onClick={fetchTickets}>
-            <IonIcon icon={refreshOutline} style={{color: '#FF6B35'}} />
+            <IonIcon icon={refreshOutline} style={{color: 'var(--navigo-orange)'}} />
           </IonButton>
         </IonToolbar>
       </IonHeader>
@@ -132,9 +132,9 @@ const AdminSupport: React.FC = () => {
               {label: 'Open', value: stats.open}, {label: 'In Progress', value: stats.inProgress},
               {label: 'Resolved', value: stats.resolved}, {label: 'Urgent', value: stats.urgent},
             ].map(s => (
-              <div key={s.label} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 10, textAlign: 'center'}}>
-                <div style={{fontSize: 18, fontWeight: 700, color: '#FF6B35'}}>{s.value}</div>
-                <div style={{fontSize: 9, color: '#D1D5DB'}}>{s.label}</div>
+              <div key={s.label} style={{background: 'var(--nav-card-soft)', borderRadius: 8, padding: 10, textAlign: 'center'}}>
+                <div style={{fontSize: 18, fontWeight: 700, color: 'var(--navigo-orange)'}}>{s.value}</div>
+                <div style={{fontSize: 9, color: 'var(--nav-text-secondary)'}}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -144,7 +144,7 @@ const AdminSupport: React.FC = () => {
             style={{'--background': 'rgba(255,255,255,0.05)', '--color': '#fff', borderRadius: 12, marginBottom: 10} as any} debounce={300} />
 
           {/* Priority Filter */}
-          <div style={{background: '#1A1A1A', padding: 6, borderRadius: 12, display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap'}}>
+          <div style={{background: 'var(--nav-card)', padding: 6, borderRadius: 12, display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap'}}>
             {['all', 'urgent', 'high', 'medium', 'low'].map(p => (
               <IonChip key={p} outline={priorityFilter !== p} color={priorityFilter === p ? 'warning' : 'medium'}
                 onClick={() => setPriorityFilter(p)} style={{fontSize: 10}}>
@@ -155,14 +155,14 @@ const AdminSupport: React.FC = () => {
 
           {/* Tabs */}
           <IonSegment value={segment} onIonChange={e => setSegment(e.detail.value as any)} style={{marginBottom: 14}}>
-            <IonSegmentButton value="open"><IonLabel style={{fontSize: 12, color: '#D1D5DB'}}>Open ({stats.open})</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="in-progress"><IonLabel style={{fontSize: 12, color: '#D1D5DB'}}>In Progress</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="resolved"><IonLabel style={{fontSize: 12, color: '#D1D5DB'}}>Resolved</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="open"><IonLabel style={{fontSize: 12, color: 'var(--nav-text-secondary)'}}>Open ({stats.open})</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="in-progress"><IonLabel style={{fontSize: 12, color: 'var(--nav-text-secondary)'}}>In Progress</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="resolved"><IonLabel style={{fontSize: 12, color: 'var(--nav-text-secondary)'}}>Resolved</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* Ticket List */}
           {filteredTickets.length === 0 ? (
-            <div style={{textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.4)'}}>
+            <div style={{textAlign: 'center', padding: 40, color: 'var(--nav-text-dim)'}}>
               <IonIcon icon={checkmarkCircleOutline} style={{fontSize: 40}} />
               <p>No tickets in this category</p>
             </div>
@@ -172,24 +172,24 @@ const AdminSupport: React.FC = () => {
               const statusStyle = getStatusStyle(ticket.status);
               return (
                 <div key={ticket.id} onClick={() => setSelectedTicket(ticket)}
-                  style={{background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 14, marginBottom: 8, cursor: 'pointer', border: '1px solid rgba(255,255,255,0.05)'}}>
+                  style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14, marginBottom: 8, cursor: 'pointer', border: '1px solid var(--nav-border)'}}>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8}}>
                     <div>
-                      <span style={{color: '#D1D5DB', fontSize: 11, marginRight: 8}}>#{ticket.id}</span>
-                      <span style={{color: '#fff', fontSize: 14, fontWeight: 600}}>{ticket.type}</span>
+                      <span style={{color: 'var(--nav-text-secondary)', fontSize: 11, marginRight: 8}}>#{ticket.id}</span>
+                      <span style={{color: 'var(--nav-text)', fontSize: 14, fontWeight: 600}}>{ticket.type}</span>
                     </div>
                     <div style={{display: 'flex', gap: 6}}>
                       <span style={{background: statusStyle.bg, border: `1px solid ${statusStyle.border}`, color: statusStyle.text, padding: '3px 8px', borderRadius: 6, fontSize: 9, fontWeight: 600}}>{statusStyle.label}</span>
                       <span style={{background: priorityStyle.bg, border: `1px solid ${priorityStyle.border}`, color: priorityStyle.text, padding: '3px 8px', borderRadius: 6, fontSize: 9, fontWeight: 600}}>{priorityStyle.label}</span>
                     </div>
                   </div>
-                  <p style={{color: '#D1D5DB', fontSize: 13, margin: '0 0 8px', paddingLeft: 4, lineHeight: 1.4}}>{ticket.description.substring(0, 100)}...</p>
+                  <p style={{color: 'var(--nav-text-secondary)', fontSize: 13, margin: '0 0 8px', paddingLeft: 4, lineHeight: 1.4}}>{ticket.description.substring(0, 100)}...</p>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <div style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                      <IonIcon icon={personOutline} style={{color: 'rgba(255,255,255,0.4)', fontSize: 14}} />
+                      <IonIcon icon={personOutline} style={{color: 'var(--nav-text-dim)', fontSize: 14}} />
                       <span style={{color: 'rgba(255,255,0.5)', fontSize: 11}}>{ticket.userName} • {ticket.userRole}</span>
                     </div>
-                    <span style={{color: 'rgba(255,255,255,0.3)', fontSize: 10}}>{new Date(ticket.createdAt).toLocaleString()}</span>
+                    <span style={{color: 'var(--nav-text-dim)', fontSize: 10}}>{new Date(ticket.createdAt).toLocaleString()}</span>
                   </div>
                   {ticket.replies.length > 0 && (
                     <div style={{marginTop: 8, padding: 8, background: 'rgba(45,106,79,0.08)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6}}>
@@ -206,29 +206,29 @@ const AdminSupport: React.FC = () => {
         {/* Detail Modal */}
         <IonModal isOpen={!!selectedTicket} onDidDismiss={() => setSelectedTicket(null)}>
           {selectedTicket && (
-            <div style={{padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%', overflow: 'auto'}}>
+            <div style={{padding: 20, background: 'var(--nav-bg-soft)', color: 'var(--nav-text)', height: '100%', overflow: 'auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
                 <h2 style={{margin: 0, fontSize: 18}}>#{selectedTicket.id} - {selectedTicket.type}</h2>
-                <IonButton fill="clear" onClick={() => setSelectedTicket(null)}><IonIcon icon={closeCircleOutline} style={{color: '#fff', fontSize: 22}} /></IonButton>
+                <IonButton fill="clear" onClick={() => setSelectedTicket(null)}><IonIcon icon={closeCircleOutline} style={{color: 'var(--nav-text)', fontSize: 22}} /></IonButton>
               </div>
-              <div style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 14, marginBottom: 16}}>
-                <p style={{color: '#D1D5DB', margin: '0 0 8px', fontSize: 14, lineHeight: 1.5}}>{selectedTicket.description}</p>
+              <div style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14, marginBottom: 16}}>
+                <p style={{color: 'var(--nav-text-secondary)', margin: '0 0 8px', fontSize: 14, lineHeight: 1.5}}>{selectedTicket.description}</p>
                 <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>
-                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>👤 {selectedTicket.userName}</span>
-                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>📋 {selectedTicket.userRole}</span>
-                  <span style={{color: 'rgba(255,255,255,0.5)', fontSize: 11}}>🕐 {new Date(selectedTicket.createdAt).toLocaleString()}</span>
+                  <span style={{color: 'var(--nav-text-secondary)', fontSize: 11}}>{selectedTicket.userName}</span>
+                  <span style={{color: 'var(--nav-text-secondary)', fontSize: 11}}>{selectedTicket.userRole}</span>
+                  <span style={{color: 'var(--nav-text-secondary)', fontSize: 11}}>{new Date(selectedTicket.createdAt).toLocaleString()}</span>
                 </div>
               </div>
               {selectedTicket.replies.length > 0 && (
                 <div style={{marginBottom: 16}}>
-                  <h4 style={{color: '#fff', fontSize: 13, marginBottom: 8}}>Previous Replies</h4>
+                  <h4 style={{color: 'var(--nav-text)', fontSize: 13, marginBottom: 8}}>Previous Replies</h4>
                   {selectedTicket.replies.map((r, i) => (
-                    <div key={i} style={{background: 'rgba(45,106,79,0.08)', borderRadius: 10, padding: 10, marginBottom: 6}}>
+                    <div key={i} style={{background: 'rgba(45,106,79,0.08)', borderRadius: 8, padding: 10, marginBottom: 6}}>
                       <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 4}}>
                         <span style={{color: '#2D6A4F', fontSize: 11, fontWeight: 600}}>{r.from}</span>
-                        <span style={{color: 'rgba(255,255,255,0.3)', fontSize: 10}}>{new Date(r.time).toLocaleString()}</span>
+                        <span style={{color: 'var(--nav-text-dim)', fontSize: 10}}>{new Date(r.time).toLocaleString()}</span>
                       </div>
-                      <p style={{color: '#D1D5DB', fontSize: 12, margin: 0}}>{r.text}</p>
+                      <p style={{color: 'var(--nav-text-secondary)', fontSize: 12, margin: 0}}>{r.text}</p>
                     </div>
                   ))}
                 </div>

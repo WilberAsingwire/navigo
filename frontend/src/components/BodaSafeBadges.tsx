@@ -1,7 +1,8 @@
 import React from 'react';
 import { IonIcon, IonProgressBar } from '@ionic/react';
 import { 
-  shieldCheckmarkOutline, starOutline, waterOutline, 
+  shieldCheckmarkOutline, starOutline, waterOutline,
+  diamondOutline, trophyOutline, medalOutline, ellipseOutline, 
   cardOutline, schoolOutline, ribbonOutline, 
   checkmarkCircleOutline, lockClosedOutline 
 } from 'ionicons/icons';
@@ -26,7 +27,7 @@ const BodaSafeBadge: React.FC<BadgeProps> = ({ type, earned, count }) => {
   return (
     <div style={{ 
       display: 'flex', alignItems: 'center', gap: 8, 
-      padding: '8px 12px', borderRadius: 10,
+      padding: '8px 12px', borderRadius: 8,
       background: earned ? `${config.color}18` : 'rgba(255,255,255,0.03)',
       border: `1px solid ${earned ? config.color + '40' : 'rgba(255,255,255,0.05)'}`,
       opacity: earned ? 1 : 0.5,
@@ -46,12 +47,12 @@ const BodaSafeBadge: React.FC<BadgeProps> = ({ type, earned, count }) => {
         <div style={{ fontSize: 12, fontWeight: 600, color: earned ? config.color : 'rgba(255,255,255,0.4)' }}>
           {config.label}
         </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--nav-text-dim)', marginTop: 2 }}>
           {earned ? 'Verified ✓' : 'Pending'}
         </div>
       </div>
       {count !== undefined && (
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>+{count}</span>
+        <span style={{ fontSize: 10, color: 'var(--nav-text-dim)' }}>+{count}</span>
       )}
     </div>
   );
@@ -75,38 +76,38 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
   const score = Math.min(100, Math.round((earnedBadges / maxBadges * 40) + (rating / 5 * 40) + Math.min(totalRides / 500 * 20, 20)));
   
   const getLevel = () => {
-    if (score >= 90) return { name: 'Elite', color: '#00e676', emoji: '💎' };
-    if (score >= 75) return { name: 'Diamond', color: '#4da6ff', emoji: '🔷' };
-    if (score >= 60) return { name: 'Gold', color: '#FFC107', emoji: '🥇' };
-    if (score >= 40) return { name: 'Silver', color: '#c0c0c0', emoji: '🥈' };
-    if (score >= 20) return { name: 'Bronze', color: '#cd7f32', emoji: '🥉' };
-    return { name: 'New', color: '#ff5252', emoji: '🔴' };
+    if (score >= 90) return { name: 'Elite', color: '#00e676', icon: diamondOutline };
+    if (score >= 75) return { name: 'Diamond', color: '#4da6ff', icon: diamondOutline };
+    if (score >= 60) return { name: 'Gold', color: '#FFC107', icon: trophyOutline };
+    if (score >= 40) return { name: 'Silver', color: '#c0c0c0', icon: medalOutline };
+    if (score >= 20) return { name: 'Bronze', color: '#cd7f32', icon: medalOutline };
+    return { name: 'New', color: '#ff5252', icon: ellipseOutline };
   };
 
   const level = getLevel();
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
-      borderRadius: 20,
+      background: 'var(--nav-card)',
+      borderRadius: 12,
       padding: 20,
       marginBottom: 16,
-      border: '1px solid rgba(255,255,255,0.08)'
+      border: '1px solid var(--nav-border)'
     }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 28 }}>{level.emoji}</span>
+            <IonIcon icon={level.icon} style={{ fontSize: 26, color: level.color }} />
             <div>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: 16, fontWeight: 700 }}>Boda Safe™ Score</h3>
+              <h3 style={{ color: 'var(--nav-text)', margin: 0, fontSize: 16, fontWeight: 700 }}>Boda Safe™ Score</h3>
               <span style={{ color: level.color, fontSize: 12, fontWeight: 600 }}>{level.name} Driver</span>
             </div>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 36, fontWeight: 800, color: level.color, lineHeight: 1 }}>{score}%</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Safety Score</div>
+          <div style={{ fontSize: 10, color: 'var(--nav-text-dim)' }}>Safety Score</div>
         </div>
       </div>
 
@@ -116,8 +117,8 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
         style={{ height: 8, borderRadius: 4, marginBottom: 16 }}
         color={score >= 60 ? 'success' : score >= 40 ? 'warning' : 'danger'}
       />
-      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '0 0 16px', textAlign: 'center' }}>
-        {level.name === 'Elite' ? '🏆 Maximum safety level achieved!' : 
+      <p style={{ color: 'var(--nav-text-dim)', fontSize: 11, margin: '0 0 16px', textAlign: 'center' }}>
+        {level.name === 'Elite' ? 'Maximum safety level achieved' : 
          `${Math.max(0, 90 - score)}% to next level • ${maxBadges - earnedBadges} more badges needed`}
       </p>
 
@@ -133,24 +134,24 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
       {/* Stats */}
       <div style={{ 
         display: 'flex', justifyContent: 'space-around', 
-        padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.06)',
+        padding: '12px 0', borderTop: '1px solid var(--nav-border)',
         marginTop: 4
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{completedRides}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Safe Rides</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--nav-text)' }}>{completedRides}</div>
+          <div style={{ fontSize: 10, color: 'var(--nav-text-dim)' }}>Safe Rides</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{rating.toFixed(1)}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Rating</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--nav-text)' }}>{rating.toFixed(1)}</div>
+          <div style={{ fontSize: 10, color: 'var(--nav-text-dim)' }}>Rating</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{earnedBadges}/{maxBadges}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Badges</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--nav-text)' }}>{earnedBadges}/{maxBadges}</div>
+          <div style={{ fontSize: 10, color: 'var(--nav-text-dim)' }}>Badges</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{joinDate}</div>
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Member Since</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--nav-text)' }}>{joinDate}</div>
+          <div style={{ fontSize: 10, color: 'var(--nav-text-dim)' }}>Member Since</div>
         </div>
       </div>
     </div>

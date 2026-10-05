@@ -38,6 +38,51 @@ const DriverDocuments: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [isFemaleDriver, setIsFemaleDriver] = useState(false);
+  const [vehiclePhoto, setVehiclePhoto] = useState<string | null>(null);
+  const [selfiePhoto, setSelfiePhoto] = useState<string | null>(null);
+
+  // Compress a picked image to a ≤900px JPEG data-URL (~100-300 KB) so
+  // verification photos upload fast on Ugandan mobile data and stay well
+  // under the server's 600 KB per-image cap.
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('read failed'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('not an image'));
+        img.onload = () => {
+          const maxSide = 900;
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return reject(new Error('canvas unavailable'));
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = String(reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const pickPhoto = (setter: (v: string | null) => void) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    (input as any).capture = 'environment';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        setter(await compressImage(file));
+      } catch {
+        setError('Could not read that photo. Try another one.');
+      }
+    };
+    input.click();
+  };
 
   const verificationStatus = user?.verificationStatus || 'unverified';
 
@@ -50,6 +95,8 @@ const DriverDocuments: React.FC = () => {
     if (vehiclePlate.trim().length < 3) return setError('Plate number too short');
     if (!vehicleModel.trim()) return setError('Vehicle model is required');
     if (!vehicleType) return setError('Please select vehicle type');
+    if (!vehiclePhoto) return setError('Please add a photo of your vehicle');
+    if (!selfiePhoto) return setError('Please add a selfie with your vehicle');
 
     setIsLoading(true);
     try {
@@ -62,8 +109,10 @@ const DriverDocuments: React.FC = () => {
         vehicleColor: vehicleColor.trim() || undefined,
         vehicleType: vehicleType === 'standard' ? 'economy' : vehicleType,
         isFemaleDriver,
-        vehiclePhoto: 'uploaded',
-        selfieWithVehicle: 'uploaded'
+        // Real verification photos — compressed JPEG data-URLs stored
+        // server-side and shown to the admin during review.
+        vehiclePhoto,
+        selfieWithVehicle: selfiePhoto,
       });
 
       setSuccess('Documents submitted! Admin will review within 24-48 hours.');
@@ -98,9 +147,9 @@ const DriverDocuments: React.FC = () => {
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/driver/home" style={{color: '#fff'}} />
+            <IonBackButton defaultHref="/driver/home" style={{color: 'var(--nav-text)'}} />
           </IonButtons>
-          <IonTitle style={{color: '#fff'}}>Driver Verification</IonTitle>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Driver Verification</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -116,13 +165,13 @@ const DriverDocuments: React.FC = () => {
                 <p>Submit your documents below to start driving with NAVIGO.</p>
               )}
               {verificationStatus === 'pending' && (
-                <p>⏳ Your documents are being reviewed. This usually takes 24-48 hours.</p>
+                <p>Your documents are being reviewed. This usually takes 24–48 hours.</p>
               )}
               {verificationStatus === 'approved' && (
-                <p>🎉 You're verified! You can now accept rides.</p>
+                <p>You're verified — you can now accept rides.</p>
               )}
               {verificationStatus === 'rejected' && (
-                <p>❌ Your documents were rejected. Please re-submit with correct information.</p>
+                <p>Your documents were rejected. Please re-submit with correct information.</p>
               )}
             </IonCardContent>
           </IonCard>
@@ -142,17 +191,17 @@ const DriverDocuments: React.FC = () => {
                     onClick={() => setVehicleType(type.id)}
                     style={{
                       background: vehicleType === type.id ? 'rgba(255, 107, 51, 0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `2px solid ${vehicleType === type.id ? '#FF6B35' : 'rgba(255,255,255,0.1)'}`,
-                      borderRadius: '16px', padding: '16px', textAlign: 'center', cursor: 'pointer',
+                      border: `2px solid ${vehicleType === type.id ? 'var(--navigo-orange)' : 'var(--nav-border-strong)'}`,
+                      borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer',
                       transition: '0.2s', position: 'relative'
                     }}
                   >
                     <IonIcon icon={type.icon} style={{
-                      fontSize: '24px', color: vehicleType === type.id ? '#FF6B35' : '#fff',
+                      fontSize: '24px', color: vehicleType === type.id ? 'var(--navigo-orange)' : 'var(--nav-text)',
                       marginBottom: '8px', display: 'block', margin: '0 auto 8px'
                     }} />
-                    <strong style={{ color: '#fff', display: 'block', fontSize: '14px' }}>{type.label}</strong>
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>{type.desc}</span>
+                    <strong style={{ color: 'var(--nav-text)', display: 'block', fontSize: '14px' }}>{type.label}</strong>
+                    <span style={{ color: 'var(--nav-text-dim)', fontSize: '11px' }}>{type.desc}</span>
                     {vehicleType === type.id && (
                       <IonBadge color="warning" style={{
                         position: 'absolute', top: '8px', right: '8px', fontSize: '10px'
@@ -221,7 +270,7 @@ const DriverDocuments: React.FC = () => {
               {/* Female Driver Toggle */}
               <div className={`female-driver-toggle ${isFemaleDriver ? 'active' : ''}`}>
                 <div className="female-driver-info">
-                  <span style={{ fontSize: 24 }}>👩</span>
+                  <IonIcon icon={personOutline} style={{ fontSize: 24, color: 'var(--navigo-orange)' }} />
                   <div>
                     <strong className="female-driver-title">Female Driver</strong>
                     <p className="female-driver-desc">Enable to appear in Women Preferred searches</p>
@@ -229,7 +278,7 @@ const DriverDocuments: React.FC = () => {
                   <div
                     onClick={() => setIsFemaleDriver(!isFemaleDriver)}
                     style={{
-                      width: 52, height: 28, borderRadius: 14,
+                      width: 52, height: 28, borderRadius: 12,
                       background: isFemaleDriver ? '#FF69B4' : 'rgba(255,255,255,0.2)',
                       position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0
                     }}
@@ -243,15 +292,41 @@ const DriverDocuments: React.FC = () => {
               </div>
 
               <div className="photo-uploads">
-                <div className="photo-upload-box">
-                  <IonIcon icon={cloudUploadOutline} />
-                  <p>Vehicle Photo</p>
-                  <IonText className="hint" color="medium">Coming soon</IonText>
+                <div
+                  className="photo-upload-box"
+                  onClick={() => pickPhoto(setVehiclePhoto)}
+                  style={{ cursor: 'pointer', borderColor: vehiclePhoto ? '#10B981' : undefined, overflow: 'hidden', position: 'relative' }}
+                >
+                  {vehiclePhoto ? (
+                    <>
+                      <img src={vehiclePhoto} alt="Vehicle" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+                      <IonBadge color="success" style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', fontSize: 9 }}>Tap to retake</IonBadge>
+                    </>
+                  ) : (
+                    <>
+                      <IonIcon icon={cloudUploadOutline} />
+                      <p>Vehicle Photo *</p>
+                      <IonText className="hint" color="medium">Tap to take / choose</IonText>
+                    </>
+                  )}
                 </div>
-                <div className="photo-upload-box">
-                  <IonIcon icon={personOutline} />
-                  <p>Selfie with Vehicle</p>
-                  <IonText className="hint" color="medium">Coming soon</IonText>
+                <div
+                  className="photo-upload-box"
+                  onClick={() => pickPhoto(setSelfiePhoto)}
+                  style={{ cursor: 'pointer', borderColor: selfiePhoto ? '#10B981' : undefined, overflow: 'hidden', position: 'relative' }}
+                >
+                  {selfiePhoto ? (
+                    <>
+                      <img src={selfiePhoto} alt="Selfie with vehicle" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} />
+                      <IonBadge color="success" style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', fontSize: 9 }}>Tap to retake</IonBadge>
+                    </>
+                  ) : (
+                    <>
+                      <IonIcon icon={personOutline} />
+                      <p>Selfie with Vehicle *</p>
+                      <IonText className="hint" color="medium">Tap to take / choose</IonText>
+                    </>
+                  )}
                 </div>
               </div>
 

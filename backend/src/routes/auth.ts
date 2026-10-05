@@ -1,9 +1,12 @@
 import express, { Request, Response } from 'express';
+import crypto from 'crypto';
 import { getDB } from '../config/database';
 import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 import { notificationService } from '../services/notificationService';
 import { authLimiter, smsLimiter } from '../middleware/rateLimit';
+import { invalidateUserStatus } from '../utils/userStatus';
+import { disconnectUserSockets } from '../socket/socketHandler';
 
 const router = express.Router();
 
@@ -41,6 +44,10 @@ const sanitizeUser = (user: any) => {
   const { password, ...clean } = user;
   return clean;
 };
+
+// Reset codes are stored hashed — a DB leak must not expose live reset codes.
+const hashResetCode = (code: string) =>
+  crypto.createHash('sha256').update(String(code)).digest('hex');
 
 const normalizePhone = (phone: string) => {
   let cleaned = phone.replace(/\D/g, '');
@@ -103,6 +110,11 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     const needsVerification = userRole === 'driver';
     const hashedPassword = await hashPassword(password);
 
+    // Phone-OTP enforcement is opt-in (REQUIRE_PHONE_VERIFICATION=1) so the
+    // app keeps working in free mode without an SMS provider. The OTP
+    // endpoints below are fully functional either way.
+    const requireOtp = process.env.REQUIRE_PHONE_VERIFICATION === '1';
+
     const userId = `user_${Math.random().toString(36).substring(2, 11)}${Date.now()}`;
     const newUser: any = {
       id: userId,
@@ -111,7 +123,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       email: processedEmail,
       password: hashedPassword,
       role: userRole,
-      phoneVerified: true,
+      phoneVerified: !requireOtp,
       verificationStatus: needsVerification ? 'unverified' : 'approved',
       createdAt: new Date().toISOString()
     };
@@ -128,11 +140,8 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       );
     } catch (dbError: any) {
       console.error('DATABASE INSERT ERROR:', dbError);
-      return res.status(500).json({
-        message: 'Database insertion failed',
-        detail: dbError.detail,
-        error: dbError.message
-      });
+      // Never leak DB internals (constraint names, column details) to clients.
+      return res.status(500).json({ message: 'Registration failed. Please try again.' });
     }
 
     const token = generateToken({ id: newUser.id, role: newUser.role });
@@ -146,7 +155,6 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     res.status(500).json({
       message: 'Registration failed.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      details: error.detail // PostgreSQL often puts the specific error here
     });
   }
 });
@@ -175,6 +183,18 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     const passwordMatch = await comparePassword(password, user.password);
     if (!passwordMatch) {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
+    }
+
+    // Blocked accounts may not log in — checked AFTER the password so we don't
+    // leak account status to someone guessing credentials.
+    if (user.status === 'banned') {
+      return res.status(403).json({ message: 'This account has been banned. Contact NAVIGO support if you believe this is a mistake.' });
+    }
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'This account is suspended. Contact NAVIGO support for more information.' });
+    }
+    if (user.status === 'deleted') {
+      return res.status(403).json({ message: 'This account has been closed.' });
     }
 
     let message = `Welcome back, ${user.fullName}!`;
@@ -279,14 +299,46 @@ router.post('/upload-documents', authenticate, async (req: Request, res: Respons
       return res.status(400).json({ message: 'Invalid plate number format.' });
     }
 
+    // REAL verification photos: accept compressed JPEG/PNG/WebP data-URLs
+    // (client compresses to ~900px before upload), max 600 KB each, stored in
+    // driver_doc_images. The driverDocs JSON only records WHETHER a photo
+    // exists — the actual image is served to admins via /admin/driver-docs.
+    const MAX_IMG_BYTES = 600 * 1024;
+    const isImageDataUrl = (v: unknown): v is string =>
+      typeof v === 'string' && /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+    const imageUploads: Array<{ kind: string; data: string }> = [];
+    for (const [kind, value] of [['vehiclePhoto', vehiclePhoto], ['selfieWithVehicle', selfieWithVehicle]] as const) {
+      if (value == null || value === '' || value === 'uploaded') continue;
+      if (!isImageDataUrl(value)) {
+        return res.status(400).json({ message: `Invalid ${kind}: must be a JPEG/PNG/WebP image.` });
+      }
+      const approxBytes = Math.floor((value.length - value.indexOf(',') - 1) * 3 / 4);
+      if (approxBytes > MAX_IMG_BYTES) {
+        return res.status(400).json({ message: `The ${kind === 'vehiclePhoto' ? 'vehicle photo' : 'selfie'} is too large. Please retake it.` });
+      }
+      imageUploads.push({ kind, data: value });
+    }
+    for (const img of imageUploads) {
+      await db.run(
+        `INSERT INTO driver_doc_images (userId, kind, data) VALUES (?, ?, ?)
+         ON CONFLICT (userId, kind) DO UPDATE SET data = EXCLUDED.data, createdAt = CURRENT_TIMESTAMP`,
+        [userId, img.kind, img.data]
+      );
+    }
+
+    // A photo counts as present if it was just uploaded OR already stored
+    // (drivers resubmitting text corrections shouldn't lose their photos).
+    const existingImgs = await db.all('SELECT kind FROM driver_doc_images WHERE userId = ?', [userId]);
+    const hasPhoto = (kind: string) =>
+      imageUploads.some(i => i.kind === kind) || (existingImgs || []).some((e: any) => e.kind === kind);
     const driverDocs = JSON.stringify({
       nationalId: nationalId?.trim() || null,
       drivingLicense: drivingLicense.trim(),
-      vehiclePhoto: vehiclePhoto || 'uploaded',
+      vehiclePhoto: hasPhoto('vehiclePhoto') ? 'stored' : null,
       vehiclePlate: cleanPlate,
       vehicleModel: vehicleModel.trim(),
       vehicleColor: vehicleColor?.trim() || null,
-      selfieWithVehicle: selfieWithVehicle || 'uploaded',
+      selfieWithVehicle: hasPhoto('selfieWithVehicle') ? 'stored' : null,
       isFemaleDriver: !!isFemaleDriver,
     });
 
@@ -311,11 +363,28 @@ router.post('/upload-documents', authenticate, async (req: Request, res: Respons
   }
 });
 
+// ─── ADMIN: DRIVER VERIFICATION PHOTOS ────────────────────────
+// Serves the stored verification images for one driver (admin review screen).
+router.get('/admin/driver-docs/:userId', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
+  try {
+    const db = getDB();
+    const images = await db.all(
+      'SELECT kind, data, createdAt FROM driver_doc_images WHERE userId = ?',
+      [String(req.params.userId)]
+    );
+    res.json({ ok: true, images: images || [] });
+  } catch (error) {
+    console.error('Driver docs fetch error:', error);
+    res.status(500).json({ ok: false, message: 'Failed to load driver documents' });
+  }
+});
+
 // ─── ADMIN: GET ALL USERS ────────────────────────────
 router.get('/admin/users', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
-    const users = await db.all('SELECT * FROM users');
+    // Soft-deleted accounts are hidden from the default admin list.
+    const users = await db.all("SELECT * FROM users WHERE COALESCE(status, 'active') != 'deleted'");
     res.json(users.map(sanitizeUser));
   } catch (error) {
     console.error('Fetch users error:', error);
@@ -390,19 +459,33 @@ router.post('/admin/update-user-status', authenticate, authorize(['admin']), asy
     }
     const db = getDB();
     await db.run('UPDATE users SET status = ? WHERE id = ?', [status, userId]);
+    // Make the new status bite immediately: drop the status cache and kick live sockets.
+    invalidateUserStatus(userId);
+    if (status !== 'active') disconnectUserSockets(userId);
     res.json({ message: `User status updated to ${status}` });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update user status' });
   }
 });
 
-// ─── ADMIN: DELETE USER ──────────────────────
+// ─── ADMIN: DELETE USER (soft) ──────────────────────
+// SOFT delete: hard-deleting cascaded into wallets/transactions and nulled
+// rides — destroying the financial ledger needed for taxes and disputes.
+// The account is blocked immediately; money records stay immutable.
 router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const db = getDB();
-    await db.run('DELETE FROM users WHERE id = ?', [id]);
-    res.json({ message: 'User deleted successfully' });
+    const target = await db.get('SELECT role FROM users WHERE id = ?', [id]);
+    if (!target) return res.status(404).json({ message: 'User not found.' });
+    if (target.role === 'admin') return res.status(403).json({ message: 'Admin accounts cannot be deleted from here.' });
+    await db.run(
+      "UPDATE users SET status = 'deleted', isOnline = FALSE, isAvailable = FALSE WHERE id = ?",
+      [id]
+    );
+    invalidateUserStatus(id);
+    disconnectUserSockets(id);
+    res.json({ message: 'Account closed. Ride and wallet history is preserved for auditing.' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete user' });
   }
@@ -427,7 +510,7 @@ router.get('/admin/live-locations', authenticate, authorize(['admin']), async (r
 router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
-    const drivers = await db.all('SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ?', ['driver', 'motorist', 'pending']);
+    const drivers = await db.all("SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND COALESCE(status, 'active') != 'deleted'", ['driver', 'motorist', 'pending']);
     res.json({ count: drivers.length, drivers: drivers.map(sanitizeUser) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch pending drivers.' });
@@ -465,7 +548,7 @@ router.post('/forgot-password', authLimiter, smsLimiter, async (req: Request, re
 
     await db.run(
       'INSERT INTO password_resets (phone, code, expires) VALUES (?, ?, ?) ON CONFLICT (phone) DO UPDATE SET code = EXCLUDED.code, expires = EXCLUDED.expires',
-      [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]
+      [cleanPhone, hashResetCode(resetCode), new Date(Date.now() + 10 * 60 * 1000).toISOString()]
     );
 
     const smsResult = await notificationService.sendSMS(cleanPhone, `Your NAVIGO reset code is: ${resetCode}. Valid for 10 minutes.`);
@@ -521,7 +604,7 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
     }
 
     const reset = await db.get('SELECT * FROM password_resets WHERE phone = ?', [cleanPhone]);
-    if (!reset || reset.code !== String(code)) {
+    if (!reset || reset.code !== hashResetCode(String(code))) {
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
     if (new Date() > new Date(reset.expires)) {
@@ -539,14 +622,127 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
   }
 });
 
-router.get('/_dev/users', authenticate, authorize(['admin']), async (_req: Request, res: Response) => {
+// ─── PHONE VERIFICATION (real OTP — C10) ─────────────────────────────────
+// Codes are 6 digits, stored SHA-256 hashed, expire in 10 minutes, capped at
+// 5 wrong attempts. Delivery: SMS (Africa's Talking) when configured, else
+// the account's email, else — in non-production only — returned as devCode.
+
+router.post('/send-verification', smsLimiter, async (req: Request, res: Response) => {
   try {
+    const { phone } = req.body;
+    if (!phone || typeof phone !== 'string') {
+      return res.status(400).json({ message: 'Phone number is required.' });
+    }
+    const cleanPhone = normalizePhone(phone);
+    if (!/^07\d{8}$/.test(cleanPhone)) {
+      return res.status(400).json({ message: 'Enter a valid Ugandan phone number (07XXXXXXXX).' });
+    }
+
     const db = getDB();
-    const rows = await db.all('SELECT * FROM users');
-    res.json({ count: rows?.length || 0, users: rows?.map(sanitizeUser) || [] });
-  } catch (e) {
-    console.error('Dev users fetch failed:', e);
-    res.status(500).json({ message: 'Dev users fetch failed.' });
+    // Generic response regardless of account existence — don't leak who is registered.
+    const generic = { message: 'If this number is registered, a verification code has been sent.' };
+    const user = await db.get('SELECT id, email, phoneVerified FROM users WHERE phone = ?', [cleanPhone]);
+    if (!user) return res.json(generic);
+    if (user.phoneVerified === true || user.phoneVerified === 't') {
+      return res.json({ message: 'This phone number is already verified.', alreadyVerified: true });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await db.run(
+      `INSERT INTO phone_verifications (phone, codeHash, attempts, expiresAt, lastSentAt)
+       VALUES (?, ?, 0, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (phone) DO UPDATE SET codeHash = EXCLUDED.codeHash, attempts = 0, expiresAt = EXCLUDED.expiresAt, lastSentAt = CURRENT_TIMESTAMP`,
+      [cleanPhone, hashResetCode(code), expiresAt]
+    );
+
+    const text = `Your NAVIGO verification code is: ${code}. Valid for 10 minutes. Never share this code.`;
+    const sms = await notificationService.sendSMS(cleanPhone, text);
+    if (!sms.success && user.email) {
+      await notificationService.sendEmail(user.email, 'Your NAVIGO verification code', text);
+    }
+
+    res.json({
+      ...generic,
+      // QA convenience outside production only — mirrors the reset-code pattern.
+      devCode: process.env.NODE_ENV !== 'production' ? code : undefined,
+    });
+  } catch (error) {
+    console.error('Send verification error:', error);
+    res.status(500).json({ message: 'Could not send verification code. Try again.' });
+  }
+});
+
+router.post('/verify-phone', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { phone, code } = req.body;
+    if (!phone || !code || !/^\d{6}$/.test(String(code))) {
+      return res.status(400).json({ message: 'Phone and 6-digit code are required.' });
+    }
+    const cleanPhone = normalizePhone(String(phone));
+    const db = getDB();
+
+    const row = await db.get('SELECT * FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+    if (!row) return res.status(400).json({ message: 'Invalid or expired code. Request a new one.' });
+    if (new Date() > new Date(row.expiresAt)) {
+      await db.run('DELETE FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+      return res.status(400).json({ message: 'Code expired. Request a new one.' });
+    }
+    if (Number(row.attempts) >= 5) {
+      await db.run('DELETE FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+      return res.status(429).json({ message: 'Too many wrong attempts. Request a new code.' });
+    }
+    if (row.codeHash !== hashResetCode(String(code))) {
+      await db.run('UPDATE phone_verifications SET attempts = attempts + 1 WHERE phone = ?', [cleanPhone]);
+      return res.status(400).json({ message: 'Incorrect code. Please try again.' });
+    }
+
+    await db.run('DELETE FROM phone_verifications WHERE phone = ?', [cleanPhone]);
+    await db.run('UPDATE users SET phoneVerified = TRUE WHERE phone = ?', [cleanPhone]);
+    res.json({ message: 'Phone number verified! 🎉', verified: true });
+  } catch (error) {
+    console.error('Verify phone error:', error);
+    res.status(500).json({ message: 'Verification failed. Try again.' });
+  }
+});
+
+// ─── OAUTH CODE EXCHANGE (H9) ────────────────────────────────────────────
+// Social login redirects now carry a one-time 60-second code instead of the
+// JWT, so tokens never appear in URLs, browser history, or server logs.
+router.post('/exchange-code', authLimiter, async (req: Request, res: Response) => {
+  try {
+    const { code } = req.body;
+    if (!code || typeof code !== 'string' || code.length < 32 || code.length > 128) {
+      return res.status(400).json({ message: 'Invalid sign-in code.' });
+    }
+    const db = getDB();
+
+    // Atomic single-use claim: expired or already-used codes match nothing.
+    const claim = await db.run(
+      `UPDATE oauth_codes SET usedAt = CURRENT_TIMESTAMP
+       WHERE code = ? AND usedAt IS NULL AND expiresAt > CURRENT_TIMESTAMP
+       RETURNING userId`,
+      [code]
+    );
+    const userId = claim.rows?.[0]?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'Sign-in link expired or already used. Please sign in again.' });
+    }
+
+    const user = await db.get('SELECT * FROM users WHERE id = ?', [userId]);
+    if (!user) return res.status(401).json({ message: 'Account not found.' });
+    if (user.status === 'banned' || user.status === 'suspended') {
+      return res.status(403).json({ message: 'This account is blocked. Contact NAVIGO support.' });
+    }
+
+    res.json({
+      message: `Welcome back, ${user.fullName}!`,
+      user: sanitizeUser(user),
+      token: generateToken({ id: user.id, role: user.role }),
+    });
+  } catch (error) {
+    console.error('Exchange code error:', error);
+    res.status(500).json({ message: 'Sign-in failed. Please try again.' });
   }
 });
 

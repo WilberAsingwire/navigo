@@ -3,11 +3,10 @@
 .loyalty-card {
   background: var(--nav-card);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
+  border-radius: var(--radius-md);
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
   margin-bottom: 1.5rem;
   overflow: hidden;
-  backdrop-filter: blur(10px);
 }
 
 .loyalty-content {
@@ -117,7 +116,7 @@
 .loyalty-tab-active {
   background: var(--navigo-orange);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: none;
 }
 
 /* Reward Tiles */
@@ -129,7 +128,7 @@
 
 .reward-tile {
   padding: 1rem;
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;

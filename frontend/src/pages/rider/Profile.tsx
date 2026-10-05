@@ -39,7 +39,7 @@ const Profile: React.FC = () => {
 
       updateUser({ fullName: editName, email: editEmail });
       setShowEdit(false);
-      setToastMsg('Profile updated successfully! ✅');
+      setToastMsg('Profile updated');
       setShowToast(true);
     } catch (err: any) {
       setToastMsg(err.response?.data?.message || 'Failed to update profile');
@@ -56,7 +56,7 @@ const Profile: React.FC = () => {
 
   const stats = [
     { label: 'Total Rides', value: '45', icon: carOutline },
-    { label: 'Rating', value: '4.8 ⭐', icon: starOutline },
+    { label: 'Rating', value: '4.8', icon: starOutline },
     { label: 'Points', value: '280', icon: giftOutline },
   ];
 
@@ -67,7 +67,7 @@ const Profile: React.FC = () => {
           <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" /></IonButtons>
           <IonTitle>Profile</IonTitle>
           <IonButton slot="end" fill="clear" onClick={() => { setEditName(user?.fullName || ''); setEditEmail(user?.email || ''); setShowEdit(true); }}>
-            <IonIcon icon={createOutline} style={{ color: '#FF6B35' }} />
+            <IonIcon icon={createOutline} style={{ color: 'var(--navigo-orange)' }} />
           </IonButton>
         </IonToolbar>
       </IonHeader>
@@ -82,7 +82,7 @@ const Profile: React.FC = () => {
             </div>
             <h2 className="profile-name">{user?.fullName || 'Customer'}</h2>
             <p className="profile-phone">
-              {user?.role === 'rider' ? '🚗 Customer' : user?.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'} • {user?.phone || 'No phone'}
+              {user?.role === 'rider' ? 'Customer' : user?.role === 'driver' ? 'Driver' : 'Motorist'} • {user?.phone || 'No phone'}
             </p>
             {user?.verificationStatus === 'approved' && (
               <span className="profile-verified-badge">✓ Verified Account</span>
@@ -101,40 +101,40 @@ const Profile: React.FC = () => {
           </div>
 
           {/* Account Info */}
-          <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Account Information</h3>
+          <h3 style={{ color: 'var(--nav-text)', fontSize: 14, marginBottom: 10 }}>Account Information</h3>
           <IonList style={{ background: 'transparent' }}>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any}>
-              <IonIcon icon={personOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: 'var(--nav-text)' } as any}>
+              <IonIcon icon={personOutline} slot="start" style={{ color: 'var(--navigo-orange)', fontSize: 18 }} />
               <IonLabel>
-                <h3 style={{ color: '#fff', fontSize: 13, margin: 0 }}>Full Name</h3>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>{user?.fullName || 'Not set'}</p>
+                <h3 style={{ color: 'var(--nav-text)', fontSize: 13, margin: 0 }}>Full Name</h3>
+                <p style={{ color: 'var(--nav-text-secondary)', fontSize: 11, margin: 2 }}>{user?.fullName || 'Not set'}</p>
               </IonLabel>
             </IonItem>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any}>
-              <IonIcon icon={phonePortraitOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: 'var(--nav-text)' } as any}>
+              <IonIcon icon={phonePortraitOutline} slot="start" style={{ color: 'var(--navigo-orange)', fontSize: 18 }} />
               <IonLabel>
-                <h3 style={{ color: '#fff', fontSize: 13, margin: 0 }}>Phone Number</h3>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>{user?.phone || 'Not set'}</p>
+                <h3 style={{ color: 'var(--nav-text)', fontSize: 13, margin: 0 }}>Phone Number</h3>
+                <p style={{ color: 'var(--nav-text-secondary)', fontSize: 11, margin: 2 }}>{user?.phone || 'Not set'}</p>
               </IonLabel>
             </IonItem>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any}>
-              <IonIcon icon={mailOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: 'var(--nav-text)' } as any}>
+              <IonIcon icon={mailOutline} slot="start" style={{ color: 'var(--navigo-orange)', fontSize: 18 }} />
               <IonLabel>
-                <h3 style={{ color: '#fff', fontSize: 13, margin: 0 }}>Email</h3>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>{user?.email || 'Not set'}</p>
+                <h3 style={{ color: 'var(--nav-text)', fontSize: 13, margin: 0 }}>Email</h3>
+                <p style={{ color: 'var(--nav-text-secondary)', fontSize: 11, margin: 2 }}>{user?.email || 'Not set'}</p>
               </IonLabel>
             </IonItem>
           </IonList>
 
           {/* Settings */}
-          <h3 style={{ color: '#fff', fontSize: 14, margin: '20px 0 10px' }}>Settings</h3>
+          <h3 style={{ color: 'var(--nav-text)', fontSize: 14, margin: '20px 0 10px' }}>Settings</h3>
           <IonList style={{ background: 'transparent' }}>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any} button onClick={() => history.push('/customer/support')}>
-              <IonIcon icon={helpCircleOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: 'var(--nav-text)' } as any} button onClick={() => history.push('/customer/support')}>
+              <IonIcon icon={helpCircleOutline} slot="start" style={{ color: 'var(--navigo-orange)', fontSize: 18 }} />
               <IonLabel>Help & Support</IonLabel>
             </IonItem>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: '#fff' } as any} button>
-              <IonIcon icon={informationCircleOutline} slot="start" style={{ color: '#FF6B35', fontSize: 18 }} />
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 12, marginBottom: 6, color: 'var(--nav-text)' } as any} button>
+              <IonIcon icon={informationCircleOutline} slot="start" style={{ color: 'var(--navigo-orange)', fontSize: 18 }} />
               <IonLabel>About NAVIGO</IonLabel>
               <IonBadge color="medium">v1.0</IonBadge>
             </IonItem>
@@ -150,20 +150,20 @@ const Profile: React.FC = () => {
 
         {/* Edit Modal */}
         <IonModal isOpen={showEdit} onDidDismiss={() => setShowEdit(false)}>
-          <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%' }}>
+          <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: 'var(--nav-text)', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0 }}>Edit Profile</h2>
-              <IonButton fill="clear" onClick={() => setShowEdit(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
+              <IonButton fill="clear" onClick={() => setShowEdit(false)}><IonIcon icon={closeOutline} style={{ color: 'var(--nav-text)', fontSize: 22 }} /></IonButton>
             </div>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 12, color: '#fff' } as any}>
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.05)', borderRadius: 8, marginBottom: 12, color: 'var(--nav-text)' } as any}>
               <IonLabel position="stacked">Full Name</IonLabel>
               <IonInput value={editName} onIonInput={e => setEditName(e.detail.value!)} />
             </IonItem>
-            <IonItem style={{ '--background': 'rgba(255,255,255,0.05)', borderRadius: 10, marginBottom: 12, color: '#fff' } as any}>
+            <IonItem style={{ '--background': 'rgba(255,255,255,0.05)', borderRadius: 8, marginBottom: 12, color: 'var(--nav-text)' } as any}>
               <IonLabel position="stacked">Email</IonLabel>
               <IonInput value={editEmail} onIonInput={e => setEditEmail(e.detail.value!)} />
             </IonItem>
-            <IonButton expand="block" onClick={handleSave} disabled={isLoading} style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700, marginTop: 16 } as any}>
+            <IonButton expand="block" onClick={handleSave} disabled={isLoading} style={{ '--background': 'var(--navigo-orange)', '--border-radius': 12, fontWeight: 700, marginTop: 16 } as any}>
               {isLoading ? <IonSpinner name="crescent" /> : <><IonIcon icon={checkmarkCircleOutline} slot="start" /> Save Changes</>}
             </IonButton>
           </div>

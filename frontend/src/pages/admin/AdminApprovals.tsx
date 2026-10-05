@@ -43,6 +43,17 @@ const AdminApprovals: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [docImages, setDocImages] = useState<{ kind: string; data: string }[]>([]);
+
+  // Load the driver's real verification photos when the review modal opens.
+  useEffect(() => {
+    if (!selectedDriver) { setDocImages([]); return; }
+    let cancelled = false;
+    api.get(`/auth/admin/driver-docs/${selectedDriver.id}`)
+      .then(res => { if (!cancelled) setDocImages(res.data?.images || []); })
+      .catch(() => { if (!cancelled) setDocImages([]); });
+    return () => { cancelled = true; };
+  }, [selectedDriver]);
 
   const fetchPendingDrivers = async () => {
     setIsLoading(true);
@@ -53,7 +64,7 @@ const AdminApprovals: React.FC = () => {
       setFilteredDrivers(fetchedDrivers);
     } catch (e) {
       console.error('Failed to fetch pending drivers:', e);
-      setToastMsg('❌ Failed to load pending drivers');
+      setToastMsg('Failed to load pending drivers');
       setShowToast(true);
     } finally {
       setIsLoading(false);
@@ -89,12 +100,12 @@ const AdminApprovals: React.FC = () => {
         action,
         reason: action === 'reject' ? 'Documents not satisfactory' : undefined
       });
-      setToastMsg(res.data.message || (action === 'approve' ? '✅ Driver approved!' : '❌ Driver rejected'));
+      setToastMsg(res.data.message || (action === 'approve' ? 'Driver approved' : 'Driver rejected'));
       setShowToast(true);
       await fetchPendingDrivers(); // Refresh the list
     } catch (e: any) {
       console.error('Verification failed:', e);
-      setToastMsg(`❌ ${e.response?.data?.message || 'Verification failed'}`);
+      setToastMsg(e.response?.data?.message || 'Verification failed');
       setShowToast(true);
     }
   };
@@ -103,9 +114,9 @@ const AdminApprovals: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
         <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-          <IonTitle style={{color: '#fff'}}>Driver Approvals</IonTitle>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Driver Approvals</IonTitle>
           <IonButton slot="end" fill="clear" onClick={() => window.location.reload()}>
-            <IonIcon icon={refreshOutline} style={{color: '#FF6B35'}} />
+            <IonIcon icon={refreshOutline} style={{color: 'var(--navigo-orange)'}} />
           </IonButton>
         </IonToolbar>
       </IonHeader>
@@ -116,7 +127,7 @@ const AdminApprovals: React.FC = () => {
             {[{label: 'Total', value: stats.total, color: '#4da6ff'}, {label: 'Pending', value: stats.pending, color: '#F59E0B'}, {label: 'Approved', value: stats.approved, color: '#10B981'}, {label: 'Rejected', value: stats.rejected, color: '#EF4444'}].map(s => (
               <div key={s.label} className="stat-card">
                 <div style={{fontSize: 20, fontWeight: 700, color: s.color}}>{s.value}</div>
-                <div style={{fontSize: 14, color: '#D1D5DB'}}>{s.label}</div>
+                <div style={{fontSize: 14, color: 'var(--nav-text-secondary)'}}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -125,10 +136,10 @@ const AdminApprovals: React.FC = () => {
             style={{'--background': 'rgba(255,255,255,0.06)', '--color': '#fff', borderRadius: 12, marginBottom: 12} as any} debounce={300} />
 
           <IonSegment value={activeFilter} onIonChange={e => setActiveFilter(e.detail.value as any)} style={{marginBottom: 16}}>
-            <IonSegmentButton value="all"><IonLabel style={{color: '#D1D5DB'}}>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="pending"><IonBadge style={{background:'rgba(245,158,11,0.15)', color:'#F59E0B'}}>{stats.pending}</IonBadge><IonLabel style={{color: '#D1D5DB'}}>Pending</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="approved"><IonLabel style={{color: '#D1D5DB'}}>Approved</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="rejected"><IonLabel style={{color: '#D1D5DB'}}>Rejected</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="all"><IonLabel style={{color: 'var(--nav-text-secondary)'}}>All</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="pending"><IonBadge style={{background:'rgba(245,158,11,0.15)', color:'#F59E0B'}}>{stats.pending}</IonBadge><IonLabel style={{color: 'var(--nav-text-secondary)'}}>Pending</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="approved"><IonLabel style={{color: 'var(--nav-text-secondary)'}}>Approved</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="rejected"><IonLabel style={{color: 'var(--nav-text-secondary)'}}>Rejected</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {isLoading ? (
@@ -147,9 +158,9 @@ const AdminApprovals: React.FC = () => {
                       <InitialsAvatar name={driver.fullName} size={40} />
                     </IonAvatar>
                     <div className="driver-info">
-                      <h3>{driver.fullName} {driver.isFemaleDriver && '👩'}</h3>
+                      <h3>{driver.fullName}{driver.isFemaleDriver ? ' · Female driver' : ''}</h3>
                       <div style={{display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4}}>
-                        <IonBadge style={{background: '#1E1E1E', color: '#fff'}}>{driver.role === 'driver' ? '🚗 Driver' : '🏍️ Motorist'}</IonBadge>
+                        <IonBadge style={{background: 'var(--nav-card)', color: 'var(--nav-text)'}}>{driver.role === 'driver' ? 'Driver' : 'Motorist'}</IonBadge>
                         <IonBadge style={{
                           background: driver.verificationStatus === 'approved' ? 'rgba(16,185,129,0.15)' : driver.verificationStatus === 'pending' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)',
                           color: driver.verificationStatus === 'approved' ? '#10B981' : driver.verificationStatus === 'pending' ? '#F59E0B' : '#EF4444',
@@ -157,8 +168,8 @@ const AdminApprovals: React.FC = () => {
                         }}>{driver.verificationStatus}</IonBadge>
                       </div>
                     </div>
-                    <IonButton fill="clear" size="small" onClick={() => setSelectedDriver(driver)} style={{'--border-radius': '50%', width: 36, height: 36, background: '#1E1E1E'} as any}>
-                      <IonIcon icon={eyeOutline} style={{color: '#FF6B35', fontSize: 18}} />
+                    <IonButton fill="clear" size="small" onClick={() => setSelectedDriver(driver)} style={{'--border-radius': '50%', width: 36, height: 36, background: 'var(--nav-card)'} as any}>
+                      <IonIcon icon={eyeOutline} style={{color: 'var(--navigo-orange)', fontSize: 18}} />
                     </IonButton>
                   </div>
 
@@ -171,11 +182,11 @@ const AdminApprovals: React.FC = () => {
                   {driver.verificationStatus === 'pending' && (
                     <div style={{display: 'flex', gap: 8, marginTop: 12}}>
                       <IonButton expand="block" size="small" onClick={() => handleVerify(driver.id, 'approve')}
-                        style={{'--background': '#FF6B35', '--color': '#fff', '--border-radius': 10, fontWeight: 600} as any}>
+                        style={{'--background': 'var(--navigo-orange)', '--color': '#fff', '--border-radius': 10, fontWeight: 600} as any}>
                         Approve
                       </IonButton>
                       <IonButton expand="block" size="small" fill="outline" onClick={() => handleVerify(driver.id, 'reject')}
-                        style={{'--background': '#2A2A2A', '--color': '#EF4444', '--border-color': '#EF4444', '--border-radius': 10, fontWeight: 600} as any}>
+                        style={{'--background': 'var(--nav-card)', '--color': '#EF4444', '--border-color': '#EF4444', '--border-radius': 10, fontWeight: 600} as any}>
                         Reject
                       </IonButton>
                     </div>
@@ -190,22 +201,45 @@ const AdminApprovals: React.FC = () => {
           <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1000, padding: 20, overflow: 'auto'}}>
             <div style={{maxWidth: 500, margin: '0 auto'}}>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
-                <h2 style={{color: '#fff', margin: 0}}>Driver Details</h2>
-                <IonButton fill="clear" onClick={() => setSelectedDriver(null)}><IonIcon icon={closeOutline} style={{color: '#fff', fontSize: 24}} /></IonButton>
+                <h2 style={{color: 'var(--nav-text)', margin: 0}}>Driver Details</h2>
+                <IonButton fill="clear" onClick={() => setSelectedDriver(null)}><IonIcon icon={closeOutline} style={{color: 'var(--nav-text)', fontSize: 24}} /></IonButton>
               </div>
               <BodaSafeScore badges={['helmet','sanitized','idverified']} rating={4.5} totalRides={50} />
-              <div style={{background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: 16, marginBottom: 16}}>
-                <h3 style={{color: '#fff', margin: '0 0 12px'}}>{selectedDriver.fullName} {selectedDriver.isFemaleDriver && '👩'}</h3>
-                <p style={{color: '#D1D5DB'}}>📞 {selectedDriver.phone}</p>
-                <p style={{color: '#D1D5DB'}}>📧 {selectedDriver.email || 'No email'}</p>
-                <p style={{color: '#D1D5DB'}}>🚗 {selectedDriver.driverDocs?.vehiclePlate} • {selectedDriver.driverDocs?.vehicleModel}</p>
-                <p style={{color: '#D1D5DB'}}>🆔 NIN: {selectedDriver.driverDocs?.nationalId || 'N/A'}</p>
-                <p style={{color: '#D1D5DB'}}>📋 License: {selectedDriver.driverDocs?.drivingLicense || 'N/A'}</p>
+              <div style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 16, marginBottom: 16}}>
+                <h3 style={{color: 'var(--nav-text)', margin: '0 0 12px'}}>{selectedDriver.fullName}{selectedDriver.isFemaleDriver ? ' · Female driver' : ''}</h3>
+                <p style={{color: 'var(--nav-text-secondary)'}}>Phone: {selectedDriver.phone}</p>
+                <p style={{color: 'var(--nav-text-secondary)'}}>Email: {selectedDriver.email || 'No email'}</p>
+                <p style={{color: 'var(--nav-text-secondary)'}}>Vehicle: {selectedDriver.driverDocs?.vehiclePlate} • {selectedDriver.driverDocs?.vehicleModel}</p>
+                <p style={{color: 'var(--nav-text-secondary)'}}>🆔 NIN: {selectedDriver.driverDocs?.nationalId || 'N/A'}</p>
+                <p style={{color: 'var(--nav-text-secondary)'}}>License: {selectedDriver.driverDocs?.drivingLicense || 'N/A'}</p>
+              </div>
+
+              {/* Verification photos */}
+              <div style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 16, marginBottom: 16}}>
+                <h3 style={{color: 'var(--nav-text)', margin: '0 0 12px', fontSize: 15}}>Verification Photos</h3>
+                {docImages.length === 0 ? (
+                  <p style={{color: 'var(--nav-text-dim)', fontSize: 12, margin: 0}}>No photos submitted.</p>
+                ) : (
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10}}>
+                    {docImages.map(img => (
+                      <div key={img.kind}>
+                        <p style={{color: 'var(--nav-text-secondary)', fontSize: 11, margin: '0 0 4px'}}>
+                          {img.kind === 'vehiclePhoto' ? 'Vehicle' : 'Selfie with vehicle'}
+                        </p>
+                        <img
+                          src={img.data}
+                          alt={img.kind}
+                          style={{width: '100%', borderRadius: 8, border: '1px solid var(--nav-border-strong)'}}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {selectedDriver.verificationStatus === 'pending' && (
                 <div style={{display: 'flex', gap: 10}}>
-                  <IonButton expand="block" onClick={() => handleVerify(selectedDriver.id, 'approve')} style={{'--background': '#FF6B35', '--color': '#fff'} as any}>✅ Approve</IonButton>
-                  <IonButton expand="block" fill="outline" onClick={() => handleVerify(selectedDriver.id, 'reject')} style={{'--background': '#2A2A2A', '--color': '#EF4444', '--border-color': '#EF4444'} as any}>❌ Reject</IonButton>
+                  <IonButton expand="block" onClick={() => handleVerify(selectedDriver.id, 'approve')} style={{'--background': 'var(--navigo-orange)', '--color': '#fff'} as any}>Approve</IonButton>
+                  <IonButton expand="block" fill="outline" onClick={() => handleVerify(selectedDriver.id, 'reject')} style={{'--background': 'var(--nav-card)', '--color': '#EF4444', '--border-color': '#EF4444'} as any}>Reject</IonButton>
                 </div>
               )}
             </div>

@@ -11,6 +11,66 @@ const convertPlaceholders = (query: string) => {
   return query.replace(/\?/g, () => `$${index++}`);
 };
 
+/**
+ * CRITICAL camelCase compatibility layer.
+ *
+ * PostgreSQL folds unquoted identifiers to lowercase, so `SELECT fareFinal`
+ * comes back keyed as `farefinal` — but this codebase (originally written
+ * against case-preserving SQLite) reads `row.fareFinal`, `row.driverId`,
+ * `row.fullName`, etc. everywhere. Without normalization those reads are all
+ * `undefined` on PG, silently breaking settlement, authorization checks and
+ * most API responses.
+ *
+ * Every known camelCase column/alias is mirrored back onto each returned row
+ * (the lowercase key is kept too, so both spellings work).
+ */
+const CAMEL_COLUMNS = [
+  // users
+  'fullName', 'phoneVerified', 'verificationStatus', 'driverDocs', 'rejectionReason',
+  'socialProvider', 'socialId', 'createdAt', 'isOnline', 'isAvailable', 'isBot',
+  'vehicleType', 'currentLat', 'currentLng',
+  // sessions / generic
+  'userId', 'expiresAt', 'updatedAt',
+  // driver_profiles
+  'ratingCount', 'totalTrips',
+  // rides
+  'driverId', 'serviceType', 'paymentMethod',
+  'pickupName', 'pickupLat', 'pickupLng', 'dropName', 'dropLat', 'dropLng',
+  'distanceKm', 'durationMin', 'fareRecommended', 'fareOffered', 'fareFinal',
+  'packageDetails', 'receiverName', 'receiverPhone', 'driverStartLat', 'driverStartLng',
+  'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt',
+  'etaAccepted', 'etaArrive', 'etaStart', 'etaComplete', 'riderRating', 'riderTags', 'requestedAt',
+  // wallet_transactions / payouts
+  'rideId', 'gatewayRef',
+  // topup_requests / ride_messages
+  'senderPhone', 'momoRef', 'reviewedBy', 'reviewNote', 'reviewedAt', 'senderId', 'senderName', 'senderRole',
+  // phone_verifications / oauth_codes
+  'codeHash', 'lastSentAt', 'usedAt',
+  // support
+  'ticketId', 'fromUser',
+  // common query aliases
+  'totalEarnings', 'todayEarnings', 'weeklyEarnings', 'completedCount', 'curStatus',
+  'driverName', 'driverRating', 'userName', 'userPhone', 'userRole',
+];
+const CASE_MAP: Record<string, string> = {};
+for (const col of CAMEL_COLUMNS) CASE_MAP[col.toLowerCase()] = col;
+
+const normalizeRow = <T extends Record<string, any>>(row: T): T => {
+  if (!row || typeof row !== 'object') return row;
+  for (const key of Object.keys(row)) {
+    const camel = CASE_MAP[key];
+    if (camel && camel !== key && !(camel in row)) {
+      (row as any)[camel] = row[key];
+    }
+  }
+  return row;
+};
+
+const normalizeResult = (res: QueryResult<any>): QueryResult<any> => {
+  if (res && Array.isArray(res.rows)) res.rows.forEach(normalizeRow);
+  return res;
+};
+
 export const initDB = async () => {
   if (pool) return pool;
 
@@ -189,6 +249,69 @@ export const initDB = async () => {
           completedAt TIMESTAMP WITH TIME ZONE
         );
 
+        -- Manual (free-mode) wallet top-ups: the rider sends Mobile Money to the
+        -- NAVIGO MoMo number person-to-person (no gateway fees), submits the
+        -- MoMo transaction ID here, and an admin verifies & approves it.
+        -- When a payment gateway is enabled later, the same wallet credit flow
+        -- is reused — only the verification step changes.
+        CREATE TABLE IF NOT EXISTS topup_requests (
+          id TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          amount INTEGER NOT NULL,
+          provider TEXT NOT NULL,          -- mtn | airtel
+          senderPhone TEXT NOT NULL,       -- number the money was sent FROM
+          momoRef TEXT NOT NULL,           -- Mobile Money transaction ID
+          status TEXT NOT NULL DEFAULT 'pending',  -- pending | approved | rejected
+          reviewedBy TEXT,
+          reviewNote TEXT,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          reviewedAt TIMESTAMP WITH TIME ZONE
+        );
+
+        -- Persisted ride chat — survives reconnects and provides an audit trail
+        -- for disputes and safety investigations.
+        CREATE TABLE IF NOT EXISTS ride_messages (
+          id TEXT PRIMARY KEY,
+          rideId TEXT REFERENCES rides(id) ON DELETE CASCADE,
+          senderId TEXT REFERENCES users(id) ON DELETE SET NULL,
+          senderName TEXT,
+          senderRole TEXT,
+          text TEXT NOT NULL,
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- Driver verification photos (vehicle photo, selfie-with-vehicle).
+        -- FREE MODE: compressed JPEGs stored as data-URLs in PostgreSQL —
+        -- zero external services. PAID LATER: swap storage for S3/Cloudinary
+        -- and keep the same API (data becomes a URL instead of a data-URL).
+        CREATE TABLE IF NOT EXISTS driver_doc_images (
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL,              -- vehiclePhoto | selfieWithVehicle
+          data TEXT NOT NULL,              -- data:image/jpeg;base64,...
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (userId, kind)
+        );
+
+        -- Phone verification OTPs — codes stored HASHED (a DB leak must not
+        -- expose live codes), 10-minute expiry, attempt-capped.
+        CREATE TABLE IF NOT EXISTS phone_verifications (
+          phone TEXT PRIMARY KEY,
+          codeHash TEXT NOT NULL,
+          attempts INTEGER NOT NULL DEFAULT 0,
+          expiresAt TIMESTAMP WITH TIME ZONE NOT NULL,
+          lastSentAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- One-time OAuth exchange codes (H9): social login redirects carry a
+        -- short-lived random code instead of the JWT itself, so tokens never
+        -- land in browser history, server logs, or Referer headers.
+        CREATE TABLE IF NOT EXISTS oauth_codes (
+          code TEXT PRIMARY KEY,
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          expiresAt TIMESTAMP WITH TIME ZONE NOT NULL,
+          usedAt TIMESTAMP WITH TIME ZONE
+        );
+
         -- Migration: Remove role check constraint and rename 'name' to 'fullName'
         DO $$
         BEGIN
@@ -213,7 +336,34 @@ export const initDB = async () => {
             ALTER TABLE users ADD COLUMN currentLng DECIMAL;
           END IF;
         END $$;
+
+        -- Indexes for the hot query paths (rides by user/driver+status, wallet
+        -- history, online-driver lookups). Idempotent via IF NOT EXISTS.
+        CREATE INDEX IF NOT EXISTS idx_rides_user_status ON rides (userId, status);
+        CREATE INDEX IF NOT EXISTS idx_rides_driver_status ON rides (driverId, status);
+        CREATE INDEX IF NOT EXISTS idx_rides_requested_at ON rides (requestedAt);
+        CREATE INDEX IF NOT EXISTS idx_wtx_user_created ON wallet_transactions (userId, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_users_role_online ON users (role, isOnline, isAvailable);
+        CREATE INDEX IF NOT EXISTS idx_payouts_user ON payouts (userId, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_topups_user ON topup_requests (userId, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_topups_status ON topup_requests (status, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_ride_messages ON ride_messages (rideId, createdAt);
+
+        -- One MoMo transaction ID can only ever be claimed once.
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_topup_momoref ON topup_requests (momoRef);
       `);
+
+      // A payment reference may only ever be credited ONCE — closes the
+      // concurrent double-topup race at the database level. Run separately so
+      // pre-existing duplicate rows (if any) don't block server startup.
+      try {
+        await client.query(
+          'CREATE UNIQUE INDEX IF NOT EXISTS uq_wtx_reference ON wallet_transactions (reference) WHERE reference IS NOT NULL'
+        );
+      } catch (idxErr: any) {
+        console.warn('⚠️ Could not create unique index on wallet_transactions.reference (duplicate refs exist?):', idxErr?.message);
+      }
+
       console.log('✅ Database tables initialized');
     } finally {
 
@@ -223,6 +373,16 @@ export const initDB = async () => {
     return pool;
   } catch (error) {
     console.error('❌ PostgreSQL connection failed:', (error as any)?.message || error);
+
+    // SAFETY: never silently serve a fake in-memory DB in production — that
+    // would accept registrations/rides into RAM and lose them, while
+    // /api/health kept reporting "ok". Fail fast so the platform restarts us
+    // and the outage is visible. The mock remains available for local dev
+    // previews (or explicitly via USE_MOCK_DB=1).
+    if (process.env.NODE_ENV === 'production' && process.env.USE_MOCK_DB !== '1') {
+      throw error;
+    }
+
     console.warn('⚠️ Falling back to in-memory mock DB for dev preview (no PG). API will run degraded.');
     // Create a mock pool that satisfies getDB interface but stores nothing
     const mockStore: Record<string, any[]> = {
@@ -237,6 +397,10 @@ export const initDB = async () => {
       saved_places: [],
       support_tickets: [],
       driver_profiles: [],
+      topup_requests: [],
+      payouts: [],
+      ride_messages: [],
+      phone_verifications: [],
     };
     // Minimal mock pool object to prevent null checks
     const emptyResult = (): QueryResult<any> => ({ rows: [], rowCount: 0, command: '', oid: 0, fields: [] });
@@ -272,6 +436,9 @@ export const getDB = () => {
         if (q.includes('from wallets')) {
           return mockStore.wallets.find((w: any) => w.userId === params[0]);
         }
+        if (q.includes('from phone_verifications')) {
+          return mockStore.phone_verifications.find((p: any) => p.phone === params[0]);
+        }
         if (q.includes('select 1')) return { ok: 1 };
         return undefined;
       },
@@ -281,6 +448,17 @@ export const getDB = () => {
         if (q.includes('from rides')) return mockStore.rides;
         if (q.includes('from wallets')) return mockStore.wallets;
         if (q.includes('from support_tickets')) return mockStore.support_tickets;
+        if (q.includes('from topup_requests')) {
+          // Rider's own list filters by userId (first param); admin list may filter by status.
+          if (q.includes('where userid')) return mockStore.topup_requests.filter((t: any) => t.userId === params[0]);
+          if (q.includes('t.status = ?')) return mockStore.topup_requests.filter((t: any) => t.status === params[0]);
+          return mockStore.topup_requests;
+        }
+        if (q.includes('from payouts')) {
+          if (q.includes('where userid')) return mockStore.payouts.filter((p: any) => p.userId === params[0]);
+          return mockStore.payouts;
+        }
+        if (q.includes('from ride_messages')) return mockStore.ride_messages.filter((m: any) => m.rideId === params[0]);
         return [];
       },
       run: async (query: string, params: any[] = []) => {
@@ -289,7 +467,7 @@ export const getDB = () => {
           const [id, fullName, phone, email] = params;
           const existing = mockStore.users.find((u: any) => u.email === email || u.phone === phone);
           if (!existing) {
-            mockStore.users.push({ id, fullName, phone, email, role: params[5] || 'rider', phoneVerified: true, verificationStatus: 'approved', createdAt: new Date().toISOString() });
+            mockStore.users.push({ id, fullName, phone, email, role: params[5] || 'rider', phoneVerified: params[6] !== false && params[6] !== 'false', verificationStatus: 'approved', createdAt: new Date().toISOString() });
           }
           return emptyResult();
         }
@@ -301,6 +479,40 @@ export const getDB = () => {
           const ticketId = mockStore.support_tickets.length + 1;
           mockStore.support_tickets.push({ id: ticketId, userId: params[0], type: params[1], description: params[2], priority: params[3] });
           return emptyResult([{ id: ticketId }]);
+        }
+        if (q.includes('insert into topup_requests')) {
+          const [id, userId, amount, provider, senderPhone, momoRef] = params;
+          if (mockStore.topup_requests.some((t: any) => t.momoRef === momoRef)) {
+            const err: any = new Error('duplicate momoRef'); err.code = '23505'; throw err;
+          }
+          mockStore.topup_requests.push({ id, userId, amount, provider, senderPhone, momoRef, status: 'pending', createdAt: new Date().toISOString() });
+          return emptyResult();
+        }
+        if (q.includes('insert into phone_verifications')) {
+          const [phone, codeHash, expiresAt] = params;
+          const existing = mockStore.phone_verifications.find((p: any) => p.phone === phone);
+          if (existing) { existing.codeHash = codeHash; existing.attempts = 0; existing.expiresAt = expiresAt; }
+          else mockStore.phone_verifications.push({ phone, codeHash, attempts: 0, expiresAt });
+          return emptyResult();
+        }
+        if (q.includes('update phone_verifications')) {
+          const row = mockStore.phone_verifications.find((p: any) => p.phone === params[0]);
+          if (row) row.attempts = Number(row.attempts || 0) + 1;
+          return emptyResult();
+        }
+        if (q.includes('delete from phone_verifications')) {
+          mockStore.phone_verifications = mockStore.phone_verifications.filter((p: any) => p.phone !== params[0]);
+          return emptyResult();
+        }
+        if (q.includes('update users set phoneverified')) {
+          const u = mockStore.users.find((x: any) => x.phone === params[0]);
+          if (u) u.phoneVerified = true;
+          return emptyResult();
+        }
+        if (q.includes('insert into ride_messages')) {
+          const [id, rideId, senderId, senderName, senderRole, text] = params;
+          mockStore.ride_messages.push({ id, rideId, senderId, senderName, senderRole, text, createdAt: new Date().toISOString() });
+          return emptyResult();
         }
         return emptyResult();
       },
@@ -317,7 +529,7 @@ export const getDB = () => {
       return {
         query: async (query: string, params: any[] = []) => {
           const convertedQuery = convertPlaceholders(query);
-          return client.query(convertedQuery, params);
+          return normalizeResult(await client.query(convertedQuery, params));
         },
         release: () => client.release(),
       };
@@ -325,17 +537,17 @@ export const getDB = () => {
     get: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res.rows[0];
+      return normalizeRow(res.rows[0]);
     },
     all: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res.rows;
+      return res.rows.map(normalizeRow);
     },
     run: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res;
+      return normalizeResult(res);
     },
     exec: async (query: string) => {
       const statements = query.split(';').filter(s => s.trim());

@@ -11,8 +11,8 @@
 
 /* Balance Card */
 .balance-card {
-  background: linear-gradient(135deg, #1B4965, #0d2137);
-  border-radius: 16px;
+  background: var(--nav-bg-raised);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 24px;
 }
@@ -93,7 +93,7 @@
 /* Add Mobile Form */
 .add-mobile-form {
   background: var(--nav-card-soft);
-  border-radius: 16px;
+  border-radius: var(--radius-md);
   padding: 16px;
   margin-bottom: 20px;
   border: 1px solid rgba(255, 107, 53, 0.2);

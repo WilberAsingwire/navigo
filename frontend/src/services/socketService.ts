@@ -16,12 +16,12 @@ class SocketService {
     });
 
     this.socket.on('connect', () => {
-      console.log('🔌 Connected to NAVIGO Socket Server');
+      console.log('Connected to NAVIGO socket server');
       this.socket.emit('join', userId);
     });
 
     this.socket.on('connect_error', (err: any) => {
-      console.error('❌ Socket Connection Error:', err.message);
+      console.error('Socket connection error:', err.message);
     });
 
     return this.socket;

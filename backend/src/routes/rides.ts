@@ -96,6 +96,13 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
       return res.status(400).json({ message: 'Invalid distance or duration' });
     }
 
+    // Auto-expire this rider's stale unaccepted requests first, so an old
+    // request that nobody accepted doesn't lock them out of booking forever.
+    await db.run(
+      "UPDATE rides SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP WHERE userId = ? AND status = 'requested' AND expiresAt IS NOT NULL AND expiresAt < CURRENT_TIMESTAMP",
+      [userId]
+    );
+
     // Prevent duplicate active requests
     const existingActive = await db.get(
       "SELECT id FROM rides WHERE userId = ? AND status IN ('requested','accepted','arrived','ongoing') LIMIT 1",
@@ -141,7 +148,8 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
         durNum,
         fareRecommended,
         finalFareOffered,
-        fareRecommended,
+        finalFareOffered, // fareFinal = the rider's clamped offer — what settlement actually charges
+
         packageDetails ? String(packageDetails).slice(0, 500) : null,
         receiverName ? String(receiverName).slice(0, 100) : null,
         receiverPhone ? String(receiverPhone).slice(0, 20) : null,
@@ -167,10 +175,12 @@ router.get('/active', authenticate, async (req: Request, res: Response) => {
     const db = getDB();
 
     // Most recent ride the user is part of that isn't finished/cancelled.
+    // Expired unaccepted requests are NOT active — don't resurrect them.
     const ride = await db.get(
       `SELECT * FROM rides
        WHERE (userId = ? OR driverId = ?)
          AND status IN ('requested', 'accepted', 'arrived', 'ongoing')
+         AND NOT (status = 'requested' AND expiresAt IS NOT NULL AND expiresAt < CURRENT_TIMESTAMP)
        ORDER BY requestedAt DESC
        LIMIT 1`,
       [userId, userId]
@@ -255,7 +265,7 @@ router.post('/:rideId/status', authenticate, async (req: Request, res: Response)
     const userId = (req as AuthRequest).user?.userId as string | undefined;
     const db = getDB();
 
-    const ride = await db.get('SELECT driverId, userId, status as curStatus FROM rides WHERE id = ?', [rideId]);
+    const ride = await db.get('SELECT driverId, userId, status as curStatus, expiresAt FROM rides WHERE id = ?', [rideId]);
     if (!ride) return res.status(404).json({ message: 'Ride not found' });
     if (ride.driverId !== userId) {
       return res.status(403).json({ message: 'Only the assigned driver can update status' });
@@ -271,11 +281,32 @@ router.post('/:rideId/status', authenticate, async (req: Request, res: Response)
       return res.status(400).json({ message: `Can't move a ${ride.curStatus} ride to ${status}` });
     }
 
+    // Expired unaccepted requests can't be accepted via the REST fallback either.
+    if (ride.curStatus === 'requested' && status === 'accepted') {
+      const expiresRaw = ride.expiresat || ride.expiresAt;
+      if (expiresRaw) {
+        const expiry = new Date(expiresRaw);
+        if (!isNaN(expiry.getTime()) && expiry < new Date()) {
+          await db.run(
+            "UPDATE rides SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP WHERE id = ? AND status = 'requested'",
+            [rideId]
+          );
+          return res.status(400).json({ message: 'This ride request has expired.' });
+        }
+      }
+    }
+
     await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
 
     let settlementResult = null;
     if (status === 'completed') {
       settlementResult = await settleRidePayment(rideId);
+      if (settlementResult?.fallback === 'cash') {
+        notifyRide(String(rideId), ride.userId ?? null, userId ?? null, 'payment-fallback-cash', {
+          rideId: String(rideId),
+          message: 'Wallet balance was insufficient — please settle this fare in cash.',
+        });
+      }
     }
 
     notifyRide(String(rideId), ride.userId ?? null, userId ?? null, 'status-changed', { rideId: String(rideId), status });
@@ -535,19 +566,22 @@ router.get('/history/:userId', authenticate, async (req: Request, res: Response)
     const statusFilter = req.query.status as string;
 
     let query = `
-      SELECT r.*, u.fullName as driverName, u.verificationStatus as driverRating
+      SELECT r.*, u.fullName as driverName, COALESCE(dp.rating, 5) as driverRating
       FROM rides r
       LEFT JOIN users u ON r.driverId = u.id
+      LEFT JOIN driver_profiles dp ON dp.userId = r.driverId
       WHERE (r.userId = ? OR r.driverId = ?)
     `;
     const params: any[] = [userId, userId];
 
     if (statusFilter && statusFilter !== 'all') {
-      query += ' AND status = ?';
+      // Qualify with r. — both rides and users have a `status` column, and the
+      // unqualified reference is ambiguous after the joins.
+      query += ' AND r.status = ?';
       params.push(statusFilter);
     }
 
-    query += ' ORDER BY requestedAt DESC';
+    query += ' ORDER BY r.requestedAt DESC';
 
     const rides = await db.all(query, params);
 

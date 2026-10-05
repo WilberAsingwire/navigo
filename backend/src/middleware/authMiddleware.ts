@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/auth';
+import { getBlockMessage } from '../utils/userStatus';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -9,7 +10,7 @@ export interface AuthRequest extends Request {
 }
 
 // Use Request type for compatibility with Express 5 types — cast internally to AuthRequest
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -29,6 +30,13 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
   const decoded = verifyToken(token);
   if (!decoded || !decoded.id || !decoded.role) {
     return res.status(401).json({ message: 'Invalid or expired token. Please login again.' });
+  }
+
+  // Enforce account status — a valid JWT is not enough if the account was
+  // banned/suspended/deleted after the token was issued.
+  const blockMessage = await getBlockMessage(decoded.id);
+  if (blockMessage) {
+    return res.status(403).json({ message: blockMessage });
   }
 
   (req as AuthRequest).user = {

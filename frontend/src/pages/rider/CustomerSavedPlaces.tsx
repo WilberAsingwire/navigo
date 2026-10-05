@@ -25,6 +25,7 @@ const CustomerSavedPlaces: React.FC = () => {
   const [placeLabel, setPlaceLabel] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
+  const [toastColor, setToastColor] = useState<'success' | 'danger'>('success');
 
   useEffect(() => {
     fetchPlaces();
@@ -73,7 +74,7 @@ const CustomerSavedPlaces: React.FC = () => {
 
   const saveNewPlace = async () => {
     if (!selectedPlace || !placeLabel) {
-      setToastMsg('Please provide a label and select a place');
+      setToastColor('danger'); setToastMsg('Please provide a label and select a place');
       setShowToast(true);
       return;
     }
@@ -89,14 +90,14 @@ const CustomerSavedPlaces: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setToastMsg('Place saved successfully! ✅');
+      setToastColor('success'); setToastMsg('Place saved');
       setShowToast(true);
       setShowAddModal(false);
       setPlaceLabel('');
       setSelectedPlace(null);
       fetchPlaces();
     } catch (err: any) {
-      setToastMsg(err.response?.data?.message || 'Failed to save place');
+      setToastColor('danger'); setToastMsg(err.response?.data?.message || 'Failed to save place');
       setShowToast(true);
     }
   };
@@ -108,7 +109,7 @@ const CustomerSavedPlaces: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPlaces(places.filter(p => p.id !== placeId));
-      setToastMsg('Place removed');
+      setToastColor('success'); setToastMsg('Place removed');
       setShowToast(true);
     } catch (err) {
       console.error('Delete error:', err);
@@ -145,10 +146,10 @@ const CustomerSavedPlaces: React.FC = () => {
         ) : (
           <IonList style={{background: 'transparent'}}>
             {places.map(place => (
-              <div key={place.id} style={{background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 14, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10}}>
-                <IonIcon icon={getIcon(place.label)} style={{fontSize: 24, color: '#FF6B35'}} />
+              <div key={place.id} style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10}}>
+                <IonIcon icon={getIcon(place.label)} style={{fontSize: 24, color: 'var(--navigo-orange)'}} />
                 <div style={{flex: 1}}>
-                  <h3 style={{color: '#fff', margin: 0}}>{place.label}</h3>
+                  <h3 style={{color: 'var(--nav-text)', margin: 0}}>{place.label}</h3>
                   <p style={{color: 'rgba(255,248,240,0.5)', margin: '4px 0', fontSize: 12}}>{place.address}</p>
                 </div>
                 <IonButton fill="clear" color="danger" onClick={() => deletePlace(place.id)}>
@@ -159,29 +160,29 @@ const CustomerSavedPlaces: React.FC = () => {
           </IonList>
         )}
 
-        <IonButton expand="block" fill="outline" style={{'--color': '#FF6B35', marginTop: 16} as any} onClick={() => setShowAddModal(true)}>
+        <IonButton expand="block" fill="outline" style={{'--color': 'var(--navigo-orange)', marginTop: 16} as any} onClick={() => setShowAddModal(true)}>
           <IonIcon icon={addCircleOutline} slot="start" /> Add New Place
         </IonButton>
 
         <IonModal isOpen={showAddModal} onDidDismiss={() => setShowAddModal(false)}>
-          <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: '#fff', height: '100%' }}>
+          <div style={{ padding: 20, background: 'var(--nav-bg-soft)', color: 'var(--nav-text)', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0 }}>Save New Place</h2>
-              <IonButton fill="clear" onClick={() => setShowAddModal(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
+              <IonButton fill="clear" onClick={() => setShowAddModal(false)}><IonIcon icon={closeOutline} style={{ color: 'var(--nav-text)', fontSize: 22 }} /></IonButton>
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <IonLabel position="stacked" style={{ color: '#fff', marginBottom: 8 }}>Place Label (e.g. Home, Work, Gym)</IonLabel>
+              <IonLabel position="stacked" style={{ color: 'var(--nav-text)', marginBottom: 8 }}>Place Label (e.g. Home, Work, Gym)</IonLabel>
               <IonInput
                 value={placeLabel}
                 onIonInput={e => setPlaceLabel(e.detail.value!)}
                 placeholder="Enter a name for this place"
-                style={{ color: '#fff', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px' }}
+                style={{ color: 'var(--nav-text)', background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px' }}
               />
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <IonLabel position="stacked" style={{ color: '#fff', marginBottom: 8 }}>Search Location</IonLabel>
+              <IonLabel position="stacked" style={{ color: 'var(--nav-text)', marginBottom: 8 }}>Search Location</IonLabel>
               <IonSearchbar
                 value={searchQuery}
                 onIonInput={e => handleSearch(e.detail.value!)}
@@ -190,15 +191,15 @@ const CustomerSavedPlaces: React.FC = () => {
               />
 
               {searchResults.length > 0 && (
-                <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 8, marginTop: 8, maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ background: 'var(--nav-card-soft)', borderRadius: 8, marginTop: 8, maxHeight: '200px', overflowY: 'auto' }}>
                   {searchResults.map((res, i) => (
                     <div
                       key={i}
                       onClick={() => selectPlace(res)}
-                      style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontSize: 12, color: '#fff' }}
+                      style={{ padding: '12px', borderBottom: '1px solid var(--nav-border-strong)', cursor: 'pointer', fontSize: 12, color: 'var(--nav-text)' }}
                     >
                       {res.properties.name || res.properties.street || 'Unnamed Place'}
-                      <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', margin: 0 }}>{res.properties.city || ''}, {res.properties.country || ''}</p>
+                      <p style={{ fontSize: 10, color: 'var(--nav-text-dim)', margin: 0 }}>{res.properties.city || ''}, {res.properties.country || ''}</p>
                     </div>
                   ))}
                 </div>
@@ -208,20 +209,20 @@ const CustomerSavedPlaces: React.FC = () => {
                 <div style={{ background: 'rgba(0, 230, 118, 0.1)', border: '1px solid #00e676', borderRadius: 8, padding: '12px', marginTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
                   <IonIcon icon={checkmarkCircleOutline} style={{ color: '#00e676' }} />
                   <div style={{ flex: 1 }}>
-                    <p style={{ margin: 0, fontSize: 13, color: '#fff' }}>{selectedPlace.address}</p>
-                    <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>Selected ✅</p>
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--nav-text)' }}>{selectedPlace.address}</p>
+                    <p style={{ margin: 0, fontSize: 10, color: 'var(--nav-text-dim)' }}>Selected</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <IonButton expand="block" onClick={saveNewPlace} style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700, marginTop: 20 } as any}>
+            <IonButton expand="block" onClick={saveNewPlace} style={{ '--background': 'var(--navigo-orange)', '--border-radius': '12px', fontWeight: 700, marginTop: 20 } as any}>
               Save Place
             </IonButton>
           </div>
         </IonModal>
 
-        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={2000} position="top" color={toastMsg.includes('✅') ? 'success' : 'danger'} />
+        <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={2000} position="top" color={toastColor} />
       </IonContent>
     </IonPage>
   );

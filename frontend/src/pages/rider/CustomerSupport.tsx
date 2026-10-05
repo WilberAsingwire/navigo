@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar, IonTitle, IonButtons,
   IonBackButton, IonSegment, IonSegmentButton, IonLabel, IonList,
@@ -13,24 +13,84 @@ import {
   checkmarkCircleOutline, documentTextOutline, starOutline,
   shieldCheckmarkOutline, timeOutline, cardOutline
 } from 'ionicons/icons';
+import api from '../../services/api';
 import './CustomerSupport.css';
+
+interface TicketReply {
+  id: number;
+  fromUser: string;
+  message: string;
+  createdAt: string;
+}
+
+interface Ticket {
+  id: number;
+  type: string;
+  description: string;
+  priority: string;
+  status: 'open' | 'in-progress' | 'resolved';
+  createdAt: string;
+  replies: TicketReply[];
+}
+
+const TICKET_STATUS_COLORS: Record<string, string> = {
+  open: 'warning', 'in-progress': 'primary', resolved: 'success',
+};
 
 const RiderSupport: React.FC = () => {
   const history = useHistory();
-  const [segment, setSegment] = useState<'faq' | 'report' | 'contact'>('faq');
+  const [segment, setSegment] = useState<'faq' | 'report' | 'tickets' | 'contact'>('faq');
   const [reportType, setReportType] = useState('');
   const [reportDescription, setReportDescription] = useState('');
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [presentToast] = useIonToast();
 
-  const handleReportSubmit = () => {
+  const loadTickets = async () => {
+    setLoadingTickets(true);
+    try {
+      const res = await api.get('/support/mine');
+      setTickets(res.data?.tickets || []);
+    } catch {
+      setTickets([]);
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (segment === 'tickets') loadTickets();
+  }, [segment]);
+
+  const handleReportSubmit = async () => {
     if (!reportType) {
       presentToast({ message: 'Please select an issue type', color: 'warning', duration: 2000 });
       return;
     }
-    presentToast({ message: '✅ Ticket #NT-' + Math.floor(Math.random() * 9000 + 1000) + ' submitted! We\'ll respond within 2 hours.', duration: 3000, color: 'success' });
-    setReportType('');
-    setReportDescription('');
-    setSegment('faq');
+    if (!reportDescription.trim() || reportDescription.trim().length < 10) {
+      presentToast({ message: 'Please describe the issue (at least 10 characters)', color: 'warning', duration: 2500 });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const res = await api.post('/support', {
+        type: reportType,
+        description: reportDescription.trim(),
+        priority: reportType === 'safety' ? 'urgent' : 'medium',
+      });
+      presentToast({
+        message: `Ticket #${res.data?.ticketId ?? ''} submitted — track it under My Tickets`,
+        duration: 3500, color: 'success',
+      });
+      setReportType('');
+      setReportDescription('');
+      setSegment('tickets');
+    } catch (e: any) {
+      presentToast({ message: e?.response?.data?.message || 'Could not submit the ticket. Try again.', color: 'danger', duration: 3000 });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const faqs = [
@@ -48,14 +108,15 @@ const RiderSupport: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
-          <IonTitle style={{color: '#fff'}}>Support Center</IonTitle>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: 'var(--nav-text)'}} /></IonButtons>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Support Center</IonTitle>
         </IonToolbar>
         <IonToolbar style={{'--background': '#080c14'} as any}>
           <IonSegment value={segment} onIonChange={e => setSegment(e.detail.value as any)}>
-            <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📖 FAQs</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>🚨 Report</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>📞 Contact</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="faq"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text-secondary)' }}>FAQs</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="report"><IonLabel style={{ fontSize: 11, color: "#D1D5DB" }}>Report</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="tickets"><IonLabel style={{ fontSize: 11, color: "#D1D5DB" }}>My Tickets</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="contact"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text-secondary)' }}>Contact</IonLabel></IonSegmentButton>
           </IonSegment>
         </IonToolbar>
       </IonHeader>
@@ -66,7 +127,7 @@ const RiderSupport: React.FC = () => {
           {segment === 'faq' && (
             <>
               <div className="support-info-banner">
-                <IonIcon icon={helpCircleOutline} style={{ color: '#FF6B35', fontSize: 22 }} />
+                <IonIcon icon={helpCircleOutline} style={{ color: 'var(--navigo-orange)', fontSize: 22 }} />
                 <p className="support-info-text">Can't find what you're looking for? <span className="support-info-link" onClick={() => setSegment('report')}>Open a ticket</span> or <span className="support-info-link" onClick={() => setSegment('contact')}>contact us</span>.</p>
               </div>
 
@@ -74,7 +135,7 @@ const RiderSupport: React.FC = () => {
                 {faqs.map(faq => (
                   <IonAccordion key={faq.id} value={faq.id} className="support-accordion">
                     <IonItem slot="header">
-                      <IonIcon icon={helpCircleOutline} slot="start" style={{ color: '#FF6B35', fontSize: 16 }} />
+                      <IonIcon icon={helpCircleOutline} slot="start" style={{ color: 'var(--navigo-orange)', fontSize: 16 }} />
                       <IonLabel>{faq.question}</IonLabel>
                     </IonItem>
                     <div className="support-accordion-content" slot="content">
@@ -88,17 +149,17 @@ const RiderSupport: React.FC = () => {
 
           {segment === 'report' && (
             <div className="report-form">
-              <h3 className="report-title">🚨 Report an Issue</h3>
+              <h3 className="report-title">Report an Issue</h3>
               <p className="report-subtitle">We'll get back to you within 2 hours</p>
 
               <IonItem className="support-input-field">
                 <IonSelect placeholder="Select issue type" value={reportType} onIonChange={e => setReportType(e.detail.value)}>
-                  <IonSelectOption value="billing">💰 Billing / Payment Issue</IonSelectOption>
-                  <IonSelectOption value="lost">🎒 Lost Item in Vehicle</IonSelectOption>
-                  <IonSelectOption value="safety">🛡️ Safety Concern</IonSelectOption>
-                  <IonSelectOption value="driver">👤 Driver Behavior</IonSelectOption>
-                  <IonSelectOption value="app">📱 App Bug / Crash</IonSelectOption>
-                  <IonSelectOption value="other">📋 Other Issue</IonSelectOption>
+                  <IonSelectOption value="billing">Billing / Payment Issue</IonSelectOption>
+                  <IonSelectOption value="lost">Lost Item in Vehicle</IonSelectOption>
+                  <IonSelectOption value="safety">Safety Concern</IonSelectOption>
+                  <IonSelectOption value="driver">Driver Behavior</IonSelectOption>
+                  <IonSelectOption value="app">App Bug / Crash</IonSelectOption>
+                  <IonSelectOption value="other">Other Issue</IonSelectOption>
                 </IonSelect>
               </IonItem>
 
@@ -110,15 +171,57 @@ const RiderSupport: React.FC = () => {
                 className="support-textarea"
               />
 
-              <IonButton expand="block" onClick={handleReportSubmit} className="support-submit-btn">
-                <IonIcon icon={alertCircleOutline} slot="start" /> Submit Ticket
+              <IonButton expand="block" onClick={handleReportSubmit} disabled={isSubmitting} className="support-submit-btn">
+                <IonIcon icon={alertCircleOutline} slot="start" /> {isSubmitting ? 'Submitting…' : 'Submit Ticket'}
               </IonButton>
+            </div>
+          )}
+
+          {segment === 'tickets' && (
+            <div className="tickets-section">
+              <h3 className="report-title">My Tickets</h3>
+              {loadingTickets ? (
+                <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13, textAlign: 'center', marginTop: 24 }}>Loading…</p>
+              ) : tickets.length === 0 ? (
+                <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13, textAlign: 'center', marginTop: 24 }}>
+                  No tickets yet. Report an issue and it will appear here with our replies.
+                </p>
+              ) : (
+                tickets.map(t => (
+                  <IonCard key={t.id} style={{ background: 'var(--nav-card-soft)', borderRadius: 12, marginBottom: 10, border: '1px solid var(--nav-border)' }}>
+                    <IonCardContent style={{ padding: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                        <span style={{ color: 'var(--nav-text)', fontSize: 13, fontWeight: 700 }}>#{t.id} • {t.type}</span>
+                        <IonBadge color={TICKET_STATUS_COLORS[t.status] || 'medium'} style={{ fontSize: 9, textTransform: 'uppercase' }}>{t.status}</IonBadge>
+                      </div>
+                      <p style={{ color: 'var(--nav-text-secondary)', fontSize: 12, margin: '0 0 4px' }}>{t.description}</p>
+                      <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: 0 }}>
+                        {new Date(t.createdAt).toLocaleString('en-UG')}
+                      </p>
+                      {t.replies.length > 0 && (
+                        <div style={{ marginTop: 10, borderTop: '1px solid var(--nav-border)', paddingTop: 8 }}>
+                          {t.replies.map(r => (
+                            <div key={r.id} style={{ background: 'rgba(255,107,53,0.07)', borderLeft: '3px solid #FF6B35', borderRadius: 8, padding: '8px 10px', marginBottom: 6 }}>
+                              <span style={{ color: 'var(--navigo-orange)', fontSize: 10, fontWeight: 800 }}>NAVIGO SUPPORT</span>
+                              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 12, margin: '3px 0 2px' }}>{r.message}</p>
+                              <span style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>{new Date(r.createdAt).toLocaleString('en-UG')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {t.replies.length === 0 && t.status !== 'resolved' && (
+                        <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: '8px 0 0' }}>Our team is on it — replies show up here.</p>
+                      )}
+                    </IonCardContent>
+                  </IonCard>
+                ))
+              )}
             </div>
           )}
 
           {segment === 'contact' && (
             <div className="contact-section">
-              <h3 className="report-title" style={{ marginBottom: 16 }}>📞 Contact Us</h3>
+              <h3 className="report-title" style={{ marginBottom: 16 }}>Contact Us</h3>
 
               <div className="support-contact-grid">
                 <div onClick={() => window.open('https://wa.me/256800100200', '_blank')}

@@ -30,7 +30,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div style={{ padding: 24, maxWidth: 600, margin: '0 auto', color: '#fff', background: 'var(--nav-bg)', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ padding: 24, maxWidth: 600, margin: '0 auto', color: 'var(--nav-text)', background: 'var(--nav-bg)', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
           <h2 style={{ color: '#ff6b6b', marginBottom: 12 }}>Something went wrong</h2>
           <p style={{ color: '#ccc', marginBottom: 8 }}>A render error occurred on this page.</p>
           {this.state.error && (

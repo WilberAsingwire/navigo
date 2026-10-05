@@ -72,8 +72,8 @@ const CustomerRideHistory: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
-          <IonTitle style={{color: '#fff'}}>Ride History</IonTitle>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: 'var(--nav-text)'}} /></IonButtons>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Ride History</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -101,9 +101,9 @@ const CustomerRideHistory: React.FC = () => {
             style={{ '--background': 'rgba(255,255,255,0.05)', '--color': '#fff', borderRadius: 12, marginBottom: 10 } as any} debounce={300} />
 
           <IonSegment value={statusFilter} onIonChange={e => setStatusFilter(e.detail.value as any)} style={{ marginBottom: 14 }}>
-            <IonSegmentButton value="all"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>All</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="completed"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>Completed</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="cancelled"><IonLabel style={{ fontSize: 11, color: '#D1D5DB' }}>Cancelled</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="all"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text-secondary)' }}>All</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="completed"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text-secondary)' }}>Completed</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="cancelled"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text-secondary)' }}>Cancelled</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* Ride List */}
@@ -134,7 +134,7 @@ const CustomerRideHistory: React.FC = () => {
                   <IonBadge color={ride.status === 'completed' || ride.status === 'Completed' ? 'success' : 'danger'} style={{ fontSize: 9 }}>{ride.status}</IonBadge>
                 </div>
                 <div className="ride-footer">
-                  <span className="ride-meta">🚗 {ride.paymentMethod}</span>
+                  <span className="ride-meta">{ride.paymentMethod}</span>
                   <span className="ride-fare">UGX {(Number(ride.fare) || 0).toLocaleString()}</span>
                 </div>
               </div>
@@ -148,7 +148,7 @@ const CustomerRideHistory: React.FC = () => {
             <div className="history-detail-modal">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Trip Details</h2>
-                <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
+                <IonButton fill="clear" onClick={() => setShowDetail(false)}><IonIcon icon={closeOutline} style={{ color: 'var(--nav-text)', fontSize: 22 }} /></IonButton>
               </div>
 
               <IonBadge color={selectedRide.status === 'completed' || selectedRide.status === 'Completed' ? 'success' : 'danger'} style={{ marginBottom: 16, fontSize: 11 }}>
@@ -158,11 +158,11 @@ const CustomerRideHistory: React.FC = () => {
               <div className="detail-glass-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                   <IonIcon icon={locationOutline} style={{ color: '#2D6A4F' }} />
-                  <span style={{ color: '#fff', fontSize: 14 }}>{selectedRide.pickup?.address || 'Unknown'}</span>
+                  <span style={{ color: 'var(--nav-text)', fontSize: 14 }}>{selectedRide.pickup?.address || 'Unknown'}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <IonIcon icon={locationOutline} style={{ color: '#E85D75' }} />
-                  <span style={{ color: '#fff', fontSize: 14 }}>{selectedRide.destination?.address || 'Unknown'}</span>
+                  <span style={{ color: 'var(--nav-text)', fontSize: 14 }}>{selectedRide.destination?.address || 'Unknown'}</span>
                 </div>
               </div>
 
@@ -177,7 +177,7 @@ const CustomerRideHistory: React.FC = () => {
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Ride Type</span>
-                  <p className="detail-item-value">{selectedRide.rideType === 'boda' ? '🏍️ Boda' : selectedRide.rideType === 'comfort' ? '🚙 Comfort' : '🚗 Economy'}</p>
+                  <p className="detail-item-value">{selectedRide.rideType === 'boda' ? 'Boda' : selectedRide.rideType === 'comfort' ? 'Comfort' : 'Economy'}</p>
                 </div>
                 <div className="detail-glass-card">
                   <span className="detail-item-label">Payment</span>
