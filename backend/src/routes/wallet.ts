@@ -200,9 +200,14 @@ router.post('/topup', authenticate, async (req: Request, res: Response) => {
       await tx.query('COMMIT');
       tx.release();
       res.json({ ok: true, message: 'Wallet top-up successful!' });
-    } catch (e) {
+    } catch (e: any) {
       await tx.query('ROLLBACK');
       tx.release();
+      // 23505 = unique_violation on wallet_transactions.reference — a concurrent
+      // request already credited this payment. Never credit twice.
+      if (e?.code === '23505') {
+        return res.status(400).json({ ok: false, message: 'This payment reference has already been processed.' });
+      }
       throw e;
     }
   } catch (error) {

@@ -1,9 +1,12 @@
 import express, { Request, Response } from 'express';
+import crypto from 'crypto';
 import { getDB } from '../config/database';
 import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 import { notificationService } from '../services/notificationService';
 import { authLimiter, smsLimiter } from '../middleware/rateLimit';
+import { invalidateUserStatus } from '../utils/userStatus';
+import { disconnectUserSockets } from '../socket/socketHandler';
 
 const router = express.Router();
 
@@ -41,6 +44,10 @@ const sanitizeUser = (user: any) => {
   const { password, ...clean } = user;
   return clean;
 };
+
+// Reset codes are stored hashed — a DB leak must not expose live reset codes.
+const hashResetCode = (code: string) =>
+  crypto.createHash('sha256').update(String(code)).digest('hex');
 
 const normalizePhone = (phone: string) => {
   let cleaned = phone.replace(/\D/g, '');
@@ -128,11 +135,8 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       );
     } catch (dbError: any) {
       console.error('DATABASE INSERT ERROR:', dbError);
-      return res.status(500).json({
-        message: 'Database insertion failed',
-        detail: dbError.detail,
-        error: dbError.message
-      });
+      // Never leak DB internals (constraint names, column details) to clients.
+      return res.status(500).json({ message: 'Registration failed. Please try again.' });
     }
 
     const token = generateToken({ id: newUser.id, role: newUser.role });
@@ -146,7 +150,6 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     res.status(500).json({
       message: 'Registration failed.',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      details: error.detail // PostgreSQL often puts the specific error here
     });
   }
 });
@@ -175,6 +178,15 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     const passwordMatch = await comparePassword(password, user.password);
     if (!passwordMatch) {
       return res.status(401).json({ message: 'Invalid credentials. Please check your email/phone or password.' });
+    }
+
+    // Blocked accounts may not log in — checked AFTER the password so we don't
+    // leak account status to someone guessing credentials.
+    if (user.status === 'banned') {
+      return res.status(403).json({ message: 'This account has been banned. Contact NAVIGO support if you believe this is a mistake.' });
+    }
+    if (user.status === 'suspended') {
+      return res.status(403).json({ message: 'This account is suspended. Contact NAVIGO support for more information.' });
     }
 
     let message = `Welcome back, ${user.fullName}!`;
@@ -390,6 +402,9 @@ router.post('/admin/update-user-status', authenticate, authorize(['admin']), asy
     }
     const db = getDB();
     await db.run('UPDATE users SET status = ? WHERE id = ?', [status, userId]);
+    // Make the new status bite immediately: drop the status cache and kick live sockets.
+    invalidateUserStatus(userId);
+    if (status !== 'active') disconnectUserSockets(userId);
     res.json({ message: `User status updated to ${status}` });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update user status' });
@@ -399,9 +414,11 @@ router.post('/admin/update-user-status', authenticate, authorize(['admin']), asy
 // ─── ADMIN: DELETE USER ──────────────────────
 router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id);
     const db = getDB();
     await db.run('DELETE FROM users WHERE id = ?', [id]);
+    invalidateUserStatus(id);
+    disconnectUserSockets(id);
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete user' });
@@ -465,7 +482,7 @@ router.post('/forgot-password', authLimiter, smsLimiter, async (req: Request, re
 
     await db.run(
       'INSERT INTO password_resets (phone, code, expires) VALUES (?, ?, ?) ON CONFLICT (phone) DO UPDATE SET code = EXCLUDED.code, expires = EXCLUDED.expires',
-      [cleanPhone, resetCode, new Date(Date.now() + 10 * 60 * 1000).toISOString()]
+      [cleanPhone, hashResetCode(resetCode), new Date(Date.now() + 10 * 60 * 1000).toISOString()]
     );
 
     const smsResult = await notificationService.sendSMS(cleanPhone, `Your NAVIGO reset code is: ${resetCode}. Valid for 10 minutes.`);
@@ -521,7 +538,7 @@ router.post('/reset-password', authLimiter, async (req: Request, res: Response) 
     }
 
     const reset = await db.get('SELECT * FROM password_resets WHERE phone = ?', [cleanPhone]);
-    if (!reset || reset.code !== String(code)) {
+    if (!reset || reset.code !== hashResetCode(String(code))) {
       return res.status(400).json({ message: 'Invalid reset code.' });
     }
     if (new Date() > new Date(reset.expires)) {

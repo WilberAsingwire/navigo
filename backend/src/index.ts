@@ -1,6 +1,6 @@
+import './loadEnv'; // MUST be first — loads .env before any module reads process.env at import time
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { createServer } from 'http';
@@ -16,8 +16,6 @@ import adminRoutes from './routes/admin';
 import { initDB } from './config/database';
 import { setupSocketHandlers, setIO } from './socket/socketHandler';
 import { generalLimiter } from './middleware/rateLimit';
-
-dotenv.config();
 
 const app = express();
 app.set('trust proxy', 1); // Trust Render's proxy to ensure HTTPS is detected correctly

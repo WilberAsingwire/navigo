@@ -1,8 +1,13 @@
 import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
+import { COMMISSION_RATE, driverShare } from '../utils/fare';
 
 const router = express.Router();
+
+// SQL expression for the driver's take-home on a ride (fare minus commission).
+// COMMISSION_RATE is a server-side constant (clamped 0.05–0.2 in fare.ts), not user input.
+const DRIVER_SHARE_SQL = `(fareFinal - ROUND(fareFinal * ${COMMISSION_RATE}))`;
 
 // ─── Toggle Online Status ─────────────────────────────
 router.post('/status/online', authenticate, async (req: any, res: Response) => {
@@ -73,21 +78,21 @@ router.get('/stats', authenticate, async (req: any, res: Response) => {
     const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
-    // Total earnings and completed rides
+    // Total earnings (driver's 90% share, matching what settlement actually pays) and completed rides
     const totals = await db.get(
-      'SELECT SUM(fareFinal) as totalEarnings, COUNT(*) as completedCount FROM rides WHERE driverId = ? AND status = \'completed\'',
+      `SELECT SUM(${DRIVER_SHARE_SQL}) as totalEarnings, COUNT(*) as completedCount FROM rides WHERE driverId = ? AND status = 'completed'`,
       [userId]
     );
 
     // Today's earnings
     const today = await db.get(
-      'SELECT SUM(fareFinal) as todayEarnings FROM rides WHERE driverId = ? AND status = \'completed\' AND requestedAt >= CURRENT_DATE',
+      `SELECT SUM(${DRIVER_SHARE_SQL}) as todayEarnings FROM rides WHERE driverId = ? AND status = 'completed' AND requestedAt >= CURRENT_DATE`,
       [userId]
     );
 
     // Weekly earnings
     const weekly = await db.get(
-      'SELECT SUM(fareFinal) as weeklyEarnings FROM rides WHERE driverId = ? AND status = \'completed\' AND requestedAt >= CURRENT_DATE - INTERVAL \'7 days\'',
+      `SELECT SUM(${DRIVER_SHARE_SQL}) as weeklyEarnings FROM rides WHERE driverId = ? AND status = 'completed' AND requestedAt >= CURRENT_DATE - INTERVAL '7 days'`,
       [userId]
     );
 
@@ -119,7 +124,7 @@ router.get('/stats', authenticate, async (req: any, res: Response) => {
       },
       activity: activity.map((r: any) => ({
         id: r.id,
-        text: r.status === 'completed' ? `Ride completed to ${r.dropName} — UGX ${r.fareFinal.toLocaleString()}` : `Ride ${r.status} to ${r.dropName}`,
+        text: r.status === 'completed' ? `Ride completed to ${r.dropName} — UGX ${driverShare(Number(r.fareFinal) || 0).toLocaleString()} earned` : `Ride ${r.status} to ${r.dropName}`,
         time: r.requestedAt,
         icon: 'checkmarkCircleOutline',
         color: r.status === 'completed' ? '#2D6A4F' : '#4da6ff'

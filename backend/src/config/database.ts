@@ -11,6 +11,62 @@ const convertPlaceholders = (query: string) => {
   return query.replace(/\?/g, () => `$${index++}`);
 };
 
+/**
+ * CRITICAL camelCase compatibility layer.
+ *
+ * PostgreSQL folds unquoted identifiers to lowercase, so `SELECT fareFinal`
+ * comes back keyed as `farefinal` — but this codebase (originally written
+ * against case-preserving SQLite) reads `row.fareFinal`, `row.driverId`,
+ * `row.fullName`, etc. everywhere. Without normalization those reads are all
+ * `undefined` on PG, silently breaking settlement, authorization checks and
+ * most API responses.
+ *
+ * Every known camelCase column/alias is mirrored back onto each returned row
+ * (the lowercase key is kept too, so both spellings work).
+ */
+const CAMEL_COLUMNS = [
+  // users
+  'fullName', 'phoneVerified', 'verificationStatus', 'driverDocs', 'rejectionReason',
+  'socialProvider', 'socialId', 'createdAt', 'isOnline', 'isAvailable', 'isBot',
+  'vehicleType', 'currentLat', 'currentLng',
+  // sessions / generic
+  'userId', 'expiresAt', 'updatedAt',
+  // driver_profiles
+  'ratingCount', 'totalTrips',
+  // rides
+  'driverId', 'serviceType', 'paymentMethod',
+  'pickupName', 'pickupLat', 'pickupLng', 'dropName', 'dropLat', 'dropLng',
+  'distanceKm', 'durationMin', 'fareRecommended', 'fareOffered', 'fareFinal',
+  'packageDetails', 'receiverName', 'receiverPhone', 'driverStartLat', 'driverStartLng',
+  'acceptedAt', 'arrivedAt', 'startedAt', 'completedAt', 'cancelledAt',
+  'etaAccepted', 'etaArrive', 'etaStart', 'etaComplete', 'riderRating', 'riderTags', 'requestedAt',
+  // wallet_transactions / payouts
+  'rideId', 'gatewayRef',
+  // support
+  'ticketId', 'fromUser',
+  // common query aliases
+  'totalEarnings', 'todayEarnings', 'weeklyEarnings', 'completedCount', 'curStatus',
+  'driverName', 'driverRating', 'userName', 'userPhone', 'userRole',
+];
+const CASE_MAP: Record<string, string> = {};
+for (const col of CAMEL_COLUMNS) CASE_MAP[col.toLowerCase()] = col;
+
+const normalizeRow = <T extends Record<string, any>>(row: T): T => {
+  if (!row || typeof row !== 'object') return row;
+  for (const key of Object.keys(row)) {
+    const camel = CASE_MAP[key];
+    if (camel && camel !== key && !(camel in row)) {
+      (row as any)[camel] = row[key];
+    }
+  }
+  return row;
+};
+
+const normalizeResult = (res: QueryResult<any>): QueryResult<any> => {
+  if (res && Array.isArray(res.rows)) res.rows.forEach(normalizeRow);
+  return res;
+};
+
 export const initDB = async () => {
   if (pool) return pool;
 
@@ -213,7 +269,28 @@ export const initDB = async () => {
             ALTER TABLE users ADD COLUMN currentLng DECIMAL;
           END IF;
         END $$;
+
+        -- Indexes for the hot query paths (rides by user/driver+status, wallet
+        -- history, online-driver lookups). Idempotent via IF NOT EXISTS.
+        CREATE INDEX IF NOT EXISTS idx_rides_user_status ON rides (userId, status);
+        CREATE INDEX IF NOT EXISTS idx_rides_driver_status ON rides (driverId, status);
+        CREATE INDEX IF NOT EXISTS idx_rides_requested_at ON rides (requestedAt);
+        CREATE INDEX IF NOT EXISTS idx_wtx_user_created ON wallet_transactions (userId, createdAt);
+        CREATE INDEX IF NOT EXISTS idx_users_role_online ON users (role, isOnline, isAvailable);
+        CREATE INDEX IF NOT EXISTS idx_payouts_user ON payouts (userId, createdAt);
       `);
+
+      // A payment reference may only ever be credited ONCE — closes the
+      // concurrent double-topup race at the database level. Run separately so
+      // pre-existing duplicate rows (if any) don't block server startup.
+      try {
+        await client.query(
+          'CREATE UNIQUE INDEX IF NOT EXISTS uq_wtx_reference ON wallet_transactions (reference) WHERE reference IS NOT NULL'
+        );
+      } catch (idxErr: any) {
+        console.warn('⚠️ Could not create unique index on wallet_transactions.reference (duplicate refs exist?):', idxErr?.message);
+      }
+
       console.log('✅ Database tables initialized');
     } finally {
 
@@ -223,6 +300,16 @@ export const initDB = async () => {
     return pool;
   } catch (error) {
     console.error('❌ PostgreSQL connection failed:', (error as any)?.message || error);
+
+    // SAFETY: never silently serve a fake in-memory DB in production — that
+    // would accept registrations/rides into RAM and lose them, while
+    // /api/health kept reporting "ok". Fail fast so the platform restarts us
+    // and the outage is visible. The mock remains available for local dev
+    // previews (or explicitly via USE_MOCK_DB=1).
+    if (process.env.NODE_ENV === 'production' && process.env.USE_MOCK_DB !== '1') {
+      throw error;
+    }
+
     console.warn('⚠️ Falling back to in-memory mock DB for dev preview (no PG). API will run degraded.');
     // Create a mock pool that satisfies getDB interface but stores nothing
     const mockStore: Record<string, any[]> = {
@@ -317,7 +404,7 @@ export const getDB = () => {
       return {
         query: async (query: string, params: any[] = []) => {
           const convertedQuery = convertPlaceholders(query);
-          return client.query(convertedQuery, params);
+          return normalizeResult(await client.query(convertedQuery, params));
         },
         release: () => client.release(),
       };
@@ -325,17 +412,17 @@ export const getDB = () => {
     get: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res.rows[0];
+      return normalizeRow(res.rows[0]);
     },
     all: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res.rows;
+      return res.rows.map(normalizeRow);
     },
     run: async (query: string, params: any[] = []) => {
       const convertedQuery = convertPlaceholders(query);
       const res = await pool!.query(convertedQuery, params);
-      return res;
+      return normalizeResult(res);
     },
     exec: async (query: string) => {
       const statements = query.split(';').filter(s => s.trim());

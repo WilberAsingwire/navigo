@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar,
-  IonIcon, IonText, IonToggle,
+  IonIcon, IonText, IonToggle, IonToast,
   IonAvatar, IonRefresher, IonRefresherContent
 } from '@ionic/react';
 import {

@@ -51,6 +51,9 @@ const Home: React.FC = () => {
       features: ['Helmet included', 'Boda Safe™ verified'],
       color: '#FF6B35',
       popular: true,
+      price: '450',
+      minFare: '1,500',
+      eta: '2-5 min',
     },
     {
       id: 'go',
@@ -61,6 +64,10 @@ const Home: React.FC = () => {
       seats: '4',
       features: ['4 seats', 'AC comfort'],
       color: '#0EA5E9',
+      popular: false,
+      price: '750',
+      minFare: '3,000',
+      eta: '4-9 min',
     },
     {
       id: 'comfort',
@@ -71,6 +78,10 @@ const Home: React.FC = () => {
       seats: '4',
       features: ['4.8+ rated', 'Professional drivers'],
       color: '#111827',
+      popular: false,
+      price: '950',
+      minFare: '5,000',
+      eta: '5-12 min',
     },
     {
       id: 'xl',
@@ -81,6 +92,10 @@ const Home: React.FC = () => {
       seats: '6',
       features: ['6 seats', 'Luggage space'],
       color: '#6366F1',
+      popular: false,
+      price: '1,300',
+      minFare: '8,000',
+      eta: '6-15 min',
     },
   ];
 
@@ -208,7 +223,7 @@ const Home: React.FC = () => {
                     <span className="fare-label">Estimated Fare</span>
                     <span className="fare-sub">{active.desc}</span>
                   </div>
-                  <span className="fare-amount">UGX {active.price}</span>
+                  <span className="fare-amount">from UGX {active.minFare}</span>
                 </div>
 
                 <button className="preview-book-btn" onClick={() => navigate('/register')}>

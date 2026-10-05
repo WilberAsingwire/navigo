@@ -77,23 +77,53 @@ const IncomingRequest: React.FC = () => {
   }, [timeLeft, requestData, history]);
 
   const handleAccept = async () => {
-    setIsAccepting(true);
-    try {
-      const socket = socketService.getSocket();
-      if (!socket) throw new Error('Socket not connected');
-
-      socket.emit('accept-ride', {
-        driverId: user?.id,
-        rideId: requestData?.id,
-        riderId: requestData?.userId || requestData?.rider?.id || 'unknown'
-      });
-
-      presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
-      setTimeout(() => history.push('/driver/active-ride'), 800);
-    } catch (e: any) {
-      presentToast({ message: 'Ride no longer available', color: 'danger', duration: 3000 });
-      history.replace('/driver/home');
+    const socket = socketService.getSocket();
+    const rideId = requestData?.id;
+    if (!socket || !rideId) {
+      presentToast({ message: 'Connection lost. Please try again.', color: 'danger', duration: 3000 });
+      return;
     }
+
+    setIsAccepting(true);
+
+    // Wait for the server to CONFIRM the acceptance — another driver may win
+    // the race, in which case we get an 'error' event instead.
+    let settled = false;
+    const cleanup = () => {
+      socket.off('accept-confirmed', onConfirmed);
+      socket.off('error', onError);
+      clearTimeout(timer);
+    };
+
+    const onConfirmed = (d: { rideId: string }) => {
+      if (settled || d.rideId !== rideId) return;
+      settled = true;
+      cleanup();
+      presentToast({ message: '✅ Ride accepted! Navigate to pickup.', color: 'success', duration: 2000 });
+      history.push('/driver/active-ride');
+    };
+
+    const onError = (e: { message?: string }) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      setIsAccepting(false);
+      presentToast({ message: e?.message || 'Ride no longer available', color: 'danger', duration: 3000 });
+      setRequestData(null);
+      history.replace('/driver/home');
+    };
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      setIsAccepting(false);
+      presentToast({ message: 'No response from server. Please try again.', color: 'warning', duration: 3000 });
+    }, 10000);
+
+    socket.on('accept-confirmed', onConfirmed);
+    socket.on('error', onError);
+    socket.emit('accept-ride', { driverId: user?.id, rideId });
   };
 
   const handleDecline = () => {

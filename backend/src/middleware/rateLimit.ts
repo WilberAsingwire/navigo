@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 
-// General API rate limiter: 100 req / 15 min per IP
+// General API rate limiter: 150 req / 15 min per IP
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 150,

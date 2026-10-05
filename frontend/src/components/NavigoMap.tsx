@@ -188,7 +188,7 @@ const NavigoMap: React.FC<MapProps> = ({
   const pendingUpdateRef = React.useRef<{
     center: [number, number];
     zoom: number;
-    style: 'standard' | 'satellite' | 'terrain';
+    style: 'standard' | 'satellite';
   } | null>(null);
   const updateTimerRef = React.useRef<any>(null);
 
@@ -220,7 +220,6 @@ const NavigoMap: React.FC<MapProps> = ({
     if (bufferIndex !== activeBuffer && isTransitioning) {
       setActiveBuffer(bufferIndex);
       setIsTransitioning(false);
-      setVisualScale(1);
     }
   };
 

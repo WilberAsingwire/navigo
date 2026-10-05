@@ -2,11 +2,19 @@ import { Server, Socket } from 'socket.io';
 import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
+import { getBlockMessage } from '../utils/userStatus';
 
 let ioInstance: Server | null = null;
 
 /** Called from index.ts so REST routes can emit socket events (e.g. cancellations). */
 export const setIO = (io: Server) => { ioInstance = io; };
+
+/** Force-disconnect every live socket belonging to a user (used when banning/suspending/deleting). */
+export const disconnectUserSockets = (userId: string) => {
+  if (!ioInstance) return;
+  // Each user auto-joins a personal room named after their userId.
+  ioInstance.in(userId).disconnectSockets(true);
+};
 
 /** Emit to the ride room + the rider's and driver's personal rooms. */
 export const notifyRide = (rideId: string, riderId: string | null, driverId: string | null, event: string, payload: any) => {
@@ -38,7 +46,7 @@ const checkSocketRateLimit = (key: string, max: number, windowMs: number): boole
 
 export const setupSocketHandlers = (io: Server) => {
   // ─── Authentication Middleware ──────────────────────────
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth.token || socket.handshake.query.token;
     if (!token) {
       return next(new Error('Authentication error: Token is required'));
@@ -46,6 +54,11 @@ export const setupSocketHandlers = (io: Server) => {
     const decoded = verifyToken(token);
     if (!decoded) {
       return next(new Error('Authentication error: Invalid or expired token'));
+    }
+    // Banned/suspended accounts may not open realtime connections either.
+    const blockMessage = await getBlockMessage(decoded.id);
+    if (blockMessage) {
+      return next(new Error(blockMessage));
     }
     socket.data.userId = decoded.id;
     socket.data.role = decoded.role;
@@ -157,9 +170,20 @@ export const setupSocketHandlers = (io: Server) => {
           return socket.emit('error', { message: 'You already have an active ride. Complete it first.' });
         }
 
-        const ride = await db.get('SELECT userId, status FROM rides WHERE id = ?', [rideId]);
+        const ride = await db.get('SELECT userId, status, expiresAt FROM rides WHERE id = ?', [rideId]);
         if (!ride) return socket.emit('error', { message: 'Ride not found.' });
         if (ride.status !== 'requested') return socket.emit('error', { message: 'Ride is no longer available.' });
+        // Enforce request expiry — stale requests can't be accepted hours later.
+        if (ride.expiresat || ride.expiresAt) {
+          const expiry = new Date(ride.expiresat || ride.expiresAt);
+          if (!isNaN(expiry.getTime()) && expiry < new Date()) {
+            await db.run(
+              "UPDATE rides SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP WHERE id = ? AND status = 'requested'",
+              [rideId]
+            );
+            return socket.emit('error', { message: 'This ride request has expired.' });
+          }
+        }
         const actualRiderId = ride.userId;
 
         const tx = await db.getTransactionClient();
@@ -178,6 +202,10 @@ export const setupSocketHandlers = (io: Server) => {
           tx.release();
           throw e;
         }
+
+        // Confirm to the accepting driver FIRST — the frontend must wait for
+        // this (not assume success) because another driver may have won the race.
+        socket.emit('accept-confirmed', { rideId, timestamp: new Date().toISOString() });
 
         io.to(actualRiderId).emit('ride-accepted', {
           rideId,

@@ -667,7 +667,11 @@ const RideRequest: React.FC = () => {
                   <span className="fare-value">{fare?.distance ?? 0} km • {fare?.duration ?? 0} min</span>
                 </div>
                 <div className="fare-total">{fare?.formattedTotal || 'Calculating...'}</div>
-                {discount > 0 && <div style={{ fontSize: 12, color: '#10B981', marginTop: 4 }}>Discount: -UGX {discount.toLocaleString()}</div>}
+                {discount === 'free' ? (
+                  <div style={{ fontSize: 12, color: '#10B981', marginTop: 4 }}>🎉 Free ride applied</div>
+                ) : discount > 0 ? (
+                  <div style={{ fontSize: 12, color: '#10B981', marginTop: 4 }}>Discount: -UGX {discount.toLocaleString()}</div>
+                ) : null}
               </div>
 
               {fare && (

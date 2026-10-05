@@ -8,9 +8,15 @@ interface DriverAlertOverlayProps {
   request: any;
   onAccept: () => void;
   onReject: () => void;
+  isAccepting?: boolean;
+  error?: string | null;
 }
 
-const DriverAlertOverlay: React.FC<DriverAlertOverlayProps> = ({ request, onAccept, onReject }) => {
+const VEHICLE_LABELS: Record<string, string> = {
+  boda: 'Boda Boda', go: 'NAVIGO Go', economy: 'NAVIGO Go', comfort: 'NAVIGO Comfort', xl: 'NAVIGO XL',
+};
+
+const DriverAlertOverlay: React.FC<DriverAlertOverlayProps> = ({ request, onAccept, onReject, isAccepting = false, error = null }) => {
 
   // Play alert sound on mount
   React.useEffect(() => {
@@ -41,19 +47,29 @@ const DriverAlertOverlay: React.FC<DriverAlertOverlayProps> = ({ request, onAcce
           <h1 className="alert-title">Ride Request!</h1>
 
           <div className="request-details">
-            <div className="detail-item">
-              <IonIcon icon={timerOutline} />
-              <span>Starts in <strong>{request?.duration || '2'} mins</strong></span>
-            </div>
+            {request?.pickup?.address && (
+              <div className="detail-item">
+                <IonIcon icon={timerOutline} />
+                <span>Pickup: <strong>{request.pickup.address}</strong></span>
+              </div>
+            )}
             <div className="detail-item">
               <IonIcon icon={carOutline} />
-              <span><strong>{request?.vehicleType || 'Boda'}</strong> Ride</span>
+              <span><strong>{VEHICLE_LABELS[(request?.vehicleType || '').toLowerCase()] || 'NAVIGO'}</strong> ride</span>
             </div>
-            <div className="detail-item">
-              <IonIcon icon={checkmarkCircleOutline} />
-              <span>Earnings: <strong>UGX {request?.fare || '8,500'}</strong></span>
-            </div>
+            {request?.fare != null && (
+              <div className="detail-item">
+                <IonIcon icon={checkmarkCircleOutline} />
+                <span>Fare: <strong>UGX {Number(request.fare).toLocaleString()}</strong></span>
+              </div>
+            )}
           </div>
+
+          {error && (
+            <div style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, margin: '8px 0', textAlign: 'center' }}>
+              {error}
+            </div>
+          )}
 
           <div className="alert-actions">
             <IonButton
@@ -61,6 +77,7 @@ const DriverAlertOverlay: React.FC<DriverAlertOverlayProps> = ({ request, onAcce
               color="danger"
               className="btn-reject"
               onClick={onReject}
+              disabled={isAccepting}
             >
               <IonIcon slot="start" icon={closeCircleOutline} />
               Reject
@@ -68,8 +85,9 @@ const DriverAlertOverlay: React.FC<DriverAlertOverlayProps> = ({ request, onAcce
             <IonButton
               className="btn-accept"
               onClick={onAccept}
+              disabled={isAccepting || !!error}
             >
-              Accept Ride <IonIcon slot="end" icon={checkmarkCircleOutline} />
+              {isAccepting ? 'Accepting…' : 'Accept Ride'} <IonIcon slot="end" icon={checkmarkCircleOutline} />
             </IonButton>
           </div>
         </div>
