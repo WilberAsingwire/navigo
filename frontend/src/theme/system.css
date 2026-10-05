@@ -1,0 +1,73 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGO SYSTEM LAYER — loaded last, wins last.
+   Non-negotiable interaction discipline for every control in the
+   app. Individual screens may style appearance, never behaviour.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. Keyboard focus: visible, consistent, everywhere ───────── */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role='button']:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+ion-button:focus-within {
+  --box-shadow: var(--focus-ring);
+}
+
+/* Never strip outlines for mouse users without the ring replacing it */
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── 2. Press feedback: one physical response, no scale "pops" ── */
+button:not(:disabled):active,
+[role='button']:active {
+  transform: translateY(1px);
+}
+
+/* ── 3. Disabled: unmistakable and un-clickable ───────────────── */
+button:disabled,
+button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── 4. Inputs: crisp border change on focus, no glow ─────────── */
+input:focus,
+textarea:focus {
+  border-color: var(--navigo-orange) !important;
+}
+
+/* ── 5. Motion discipline ─────────────────────────────────────── */
+/* Decorative infinite animations are banned from functional UI.   */
+.shimmer, .glow, .sparkle,
+[class*='shimmer']:not(.skeleton):not([class*='skeleton']) {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 6. Type rendering ────────────────────────────────────────── */
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Numbers in fares, ETAs, balances must not jitter while updating */
+.tabular, .fare-total, .fare-value, .bid-amount {
+  font-variant-numeric: tabular-nums;
+}

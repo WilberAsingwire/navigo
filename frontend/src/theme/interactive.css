@@ -154,7 +154,6 @@ input, .input-field, .location-input, ion-input input {
 
 input:focus, .input-field:focus, .location-input:focus {
   border-color: var(--navigo-orange) !important;
-  box-shadow: 0 0 0 3px var(--navigo-orange-soft), 0 0 12px var(--navigo-orange-glow) !important;
   outline: none;
 }
 
@@ -216,23 +215,20 @@ ion-toast, ion-modal {
   padding: 40px 20px;
 }
 .empty-state ion-icon {
-  animation: navigo-float 3s ease-in-out infinite;
+  opacity: 0.6;
 }
 
 /* ── Vehicle Cards — Selected Glow ────────────────────────── */
 .vehicle-option-card.selected {
   border-color: var(--navigo-orange) !important;
   background: rgba(255,107,53,0.08) !important;
-  box-shadow: 0 0 0 2px var(--navigo-orange-soft), 0 8px 24px rgba(255,107,53,0.2) !important;
-  animation: navigo-glow 2s ease-in-out infinite;
+  box-shadow: inset 0 0 0 1px var(--navigo-orange) !important;
 }
 body.light .vehicle-option-card.selected {
   background: rgba(255,107,53,0.08) !important;
 }
 .vehicle-option-card.selected .vehicle-price-badge {
-  background: var(--navigo-orange);
-  color: #fff;
-  transform: scale(1.05);
+  color: var(--navigo-orange);
 }
 
 /* ── Promo Code — Success Bounce ──────────────────────────── */
@@ -241,28 +237,10 @@ body.light .vehicle-option-card.selected {
   50% { transform: scale(1.08); }
 }
 .promo-applied {
-  animation: navigo-bounce 0.5s ease;
   border-color: var(--nav-success) !important;
   background: rgba(16,185,129,0.08) !important;
 }
 
-/* ── Matching — Pulse ─────────────────────────────────────── */
-.matching-emoji.pulse-soft {
-  animation: navigo-pulse 1.2s ease-in-out infinite;
-}
-
-/* ── Loyalty — Progress Shine ─────────────────────────────── */
-.loyalty-progress-bar::after {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  animation: navigo-shimmer 2s infinite;
-}
-body.light .loyalty-progress-bar::after {
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-}
 
 /* ── Map Controls — Hover Lift ────────────────────────────── */
 .leaflet-control, .leaflet-control-zoom a, .leaflet-control-locate {

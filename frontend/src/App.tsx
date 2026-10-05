@@ -26,6 +26,7 @@ import './theme/interactive.css';
 import './theme/polish.css';
 import './theme/design-polish.css';
 import './theme/light-mode.css';
+import './theme/system.css'; /* interaction discipline — must load last */
 
 setupIonicReact({ mode: 'md' });
 

@@ -115,7 +115,7 @@ const CustomerDashboard: React.FC = () => {
           <div style={{ maxWidth: 500, margin: '0 auto', width: '100%' }}>
             <div className="rider-header">
               <div>
-                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0] || 'Guest'} 👋</h2>
+                <h2 className="welcome-text">Hello, {(user?.fullName || 'there').split(' ')[0] || 'Guest'}</h2>
                 <p className="welcome-subtitle">Ready for your next ride?</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

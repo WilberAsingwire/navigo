@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { IonIcon } from '@ionic/react';
+import { locateOutline, warningOutline } from 'ionicons/icons';
 import { MapContainer, TileLayer, Marker, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -257,7 +259,7 @@ const NavigoMap: React.FC<MapProps> = ({
       {error && (
         <div className="map-overlay-state error">
           <div className="map-state-card">
-            <div className="map-error-icon">⚠️</div>
+            <div className="map-error-icon"><IonIcon icon={warningOutline} /></div>
             <p>{error}</p>
             <button className="map-retry-btn" onClick={() => window.location.reload()}>Retry</button>
           </div>
@@ -331,25 +333,23 @@ const NavigoMap: React.FC<MapProps> = ({
 
       <div className="map-controls-top">
         <div className="map-controls-left">
-          <div className="map-badge live"><span className="bdot"></span> LIVE GPS</div>
-          <div className="map-badge rt">● REAL-TIME</div>
           <div className="map-style-toggle">
-            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => handleStyleChange('standard')}>STANDARD</button>
-            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>SATELLITE</button>
+            <button className={`ms-btn ${mapStyle === 'standard' ? 'active' : ''}`} onClick={() => handleStyleChange('standard')}>Map</button>
+            <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>Satellite</button>
           </div>
-          {routeDistance > 0 && <div className="map-badge route">{routeDistance}km • {routeDuration}min</div>}
-          {nearbyDrivers.length > 0 && <div className="map-badge drv">🚗 {nearbyDrivers.length} nearby</div>}
+          {routeDistance > 0 && <div className="map-badge route">{routeDistance} km · {routeDuration} min</div>}
+          {nearbyDrivers.length > 0 && <div className="map-badge drv">{nearbyDrivers.length} driver{nearbyDrivers.length > 1 ? 's' : ''} nearby</div>}
         </div>
         <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
           <div className="map-zoom-controls">
-            <button className="mz-btn" onClick={handleZoomIn}>+</button>
-            <button className="mz-btn" onClick={handleZoomOut}>−</button>
+            <button className="mz-btn" aria-label="Zoom in" onClick={handleZoomIn}>+</button>
+            <button className="mz-btn" aria-label="Zoom out" onClick={handleZoomOut}>−</button>
           </div>
-          <button className="my-location-btn" onClick={handleMyLocation}>📍 My Location</button>
+          <button className="my-location-btn" onClick={handleMyLocation}>
+            <IonIcon icon={locateOutline} aria-hidden="true" /> My location
+          </button>
         </div>
       </div>
-
-      <div className="boda-safe-badge">🛡️ Boda Safe™ • 1km</div>
 
       <style>{`
         .navigo-map-root .leaflet-container { font-family: var(--font-body); background: ${mapStyle === 'satellite' ? '#0c1524' : '#e5e7eb'} !important; }
@@ -398,22 +398,18 @@ const NavigoMap: React.FC<MapProps> = ({
         .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
         .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
         .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }
-        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 10px rgba(0,0,0,0.12); background: rgba(255,255,255,0.95); color: #0F172A; }
-        .map-badge.live { background: rgba(16,185,129,0.12); color: #059669; }
-        .map-badge.rt { background: rgba(245,158,11,0.12); color: #D97706; }
-        .map-badge.route { background: rgba(15,23,42,0.9); color: white; }
-        .map-badge.drv { background: rgba(14,165,233,0.12); color: #0284C7; }
-        .bdot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: bdot 1.5s infinite; }
-        @keyframes bdot { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        .map-style-toggle { display: flex; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 9999px; padding: 3px; box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
-        .ms-btn { padding: 6px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: none; background: transparent; color: #64748B; cursor: pointer; }
-        .ms-btn.active { background: #FF6B35; color: white; }
-        .map-zoom-controls { display: flex; flex-direction: column; background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-        .mz-btn { width: 44px; height: 44px; border: none; background: white; color: #0F172A; font-size: 20px; font-weight: 800; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 1px 3px rgba(0,0,0,0.12); background: #ffffff; color: #0F172A; }
+        .map-badge.route { background: #0F172A; border-color: #0F172A; color: white; font-variant-numeric: tabular-nums; }
+        .map-style-toggle { display: flex; background: #ffffff; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .ms-btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; border: none; background: transparent; color: #64748B; cursor: pointer; }
+        .ms-btn.active { background: #0F172A; color: white; }
+        .map-zoom-controls { display: flex; flex-direction: column; background: #ffffff; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .mz-btn { width: 40px; height: 40px; border: none; background: transparent; color: #0F172A; font-size: 18px; font-weight: 600; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.08); }
         .mz-btn:last-child { border-bottom: none; }
-        .mz-btn:hover { background: #FF6B35; color: white; }
-        .my-location-btn { pointer-events: auto; background: #FF6B35; color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; box-shadow: 0 4px 16px rgba(255,107,53,0.35); align-self: flex-start; }
-        .boda-safe-badge { position: absolute; bottom: 20px; left: 16px; z-index: 1000; background: rgba(255,255,255,0.95); border: 1px solid rgba(255,107,53,0.2); color: #FF6B35; padding: 7px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .mz-btn:hover { background: rgba(0,0,0,0.05); }
+        .my-location-btn { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: #0F172A; border: 1px solid rgba(0,0,0,0.1); padding: 10px 14px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.12); align-self: flex-start; }
+        .my-location-btn ion-icon { color: #FF6B35; font-size: 15px; }
+        .my-location-btn:hover { background: #F8FAFC; }
       `}</style>
     </div>
   );

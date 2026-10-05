@@ -9,9 +9,7 @@
 .active-ride-content, .payments-container, .ride-history-container, .places-bg, .support-container, .profile-content, .payments-content,
 .driver-active-container, .admin-dashboard-container, .admin-approvals-container, .admin-settings-container, .admin-live-map, .admin-bg {
   background: var(--nav-bg) !important;
-  background-image:
-    radial-gradient(circle at 10% 10%, var(--navigo-orange-ghost) 0%, transparent 40%),
-    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.05) 0%, transparent 40%) !important;
+  background-image: none !important;
   min-height: 100vh;
 }
 
@@ -29,20 +27,16 @@ body.light .admin-settings-container,
 body.light .admin-live-map,
 body.light .admin-bg {
   background: var(--nav-bg) !important;
-  background-image:
-    radial-gradient(circle at 10% 10%, rgba(255, 107, 53, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 90% 90%, rgba(255, 107, 53, 0.03) 0%, transparent 40%) !important;
+  background-image: none !important;
 }
 
 .driver-card, .rider-info-card, .fare-card, .route-card, .wallet-balance-card, .balance-card,
 .history-stat-card, .stat-card, .settings-section-card, .support-accordion, .admin-kpi-card, .admin-quick-action-card,
 .ticket-item, .place-item, .support-info-banner {
-  background: var(--nav-card-glass) !important;
-  backdrop-filter: blur(20px) saturate(1.1) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.1) !important;
+  background: var(--nav-card) !important;
   border: 1px solid var(--nav-border) !important;
-  border-radius: var(--radius-2xl) !important;
-  transition: all var(--duration-normal) var(--ease-spring) !important;
+  border-radius: var(--radius-md) !important;
+  transition: border-color var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out) !important;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -53,9 +47,8 @@ body.light .admin-bg {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,107,53,0.25), transparent);
+  background: transparent;
   opacity: 0;
-  transition: opacity var(--duration-normal);
 }
 .driver-card:hover, .rider-info-card:hover, .fare-card:hover, .route-card:hover, .wallet-balance-card:hover,
 .history-stat-card:hover, .stat-card:hover, .settings-section-card:hover, .support-accordion:hover, .admin-kpi-card:hover, .admin-quick-action-card:hover {
@@ -108,16 +101,15 @@ body.light .admin-kpi-card:hover {
 
 /* ── Wallet Balance — Hero Glow ───────────────────────────── */
 .wallet-balance-card, .balance-card {
-  background: linear-gradient(135deg, rgba(27,73,101,0.35), rgba(13,33,55,0.6)) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  box-shadow: var(--shadow-float) !important;
+  background: var(--nav-bg-raised) !important;
+  border: 1px solid var(--nav-border-strong) !important;
+  box-shadow: var(--shadow-card) !important;
   text-align: center;
   padding: 24px !important;
-  animation: float 6s ease-in-out infinite;
 }
 body.light .wallet-balance-card,
 body.light .balance-card {
-  background: linear-gradient(135deg, #1B4965 0%, #0D2137 100%) !important;
+  background: #0F172A !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
   color: #FFFFFF !important;
 }
@@ -185,12 +177,11 @@ body.light .chat-box {
 body.light .chat-box .message-text { color: var(--nav-text) !important; }
 
 /* ── Incoming Request — Timer Pulse ───────────────────────── */
-.timer-circle { animation: pulse 1.5s ease-in-out infinite; }
-@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+.timer-circle { /* static — countdown text itself conveys urgency */ }
 .route-card { background: var(--nav-card-glass) !important; border: 1px solid var(--nav-border) !important; border-radius: var(--radius-xl) !important; padding: 16px !important; transition: all var(--duration-normal) var(--ease-spring) !important; }
 .route-card:hover { background: var(--nav-card-hover) !important; border-color: var(--nav-border-orange) !important; transform: translateY(-1px); }
-.accept-btn { --background: linear-gradient(135deg, var(--navigo-green), #1B4965) !important; --box-shadow: 0 8px 20px rgba(45,106,79,0.3) !important; }
-.accept-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.accept-btn { --background: var(--nav-success) !important; --box-shadow: none !important; }
+.accept-btn:hover { filter: brightness(1.05); }
 
 /* ── Leaflet Map — Dark + Interactive Controls ────────────── */
 .leaflet-container { background: var(--nav-bg) !important; border-radius: var(--radius-lg) !important; }

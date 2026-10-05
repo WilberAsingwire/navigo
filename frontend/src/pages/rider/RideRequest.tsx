@@ -6,7 +6,8 @@ import {
 import {
   locationOutline, carOutline, arrowBackOutline,
   globeOutline, checkmarkCircleOutline, searchOutline,
-  timeOutline
+  timeOutline, cubeOutline, cashOutline, walletOutline,
+  pricetagOutline
 } from 'ionicons/icons';
 import axios from 'axios';
 import api from '../../services/api';
@@ -49,25 +50,20 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
 
 const MATCHING_TIMEOUT_MS = 120000; // 2 minutes — auto-cancel if no driver
 
+/** Linear progress segments — one per booking step, filled as the
+ *  rider advances. Tapping a completed segment navigates back. */
 const Stepper: React.FC<{ currentStep: BookingStep; onStepClick: (step: BookingStep) => void }> = ({ currentStep, onStepClick }) => {
-  const steps = [
-    { id: BookingStep.LOCATION, label: 'Pickup', icon: locationOutline },
-    { id: BookingStep.RIDE_TYPE, label: 'Vehicle', icon: carOutline },
-    { id: BookingStep.PAYMENT, label: 'Payment', icon: checkmarkCircleOutline },
-  ];
+  const steps = [BookingStep.LOCATION, BookingStep.RIDE_TYPE, BookingStep.PAYMENT];
 
   return (
-    <div className="booking-stepper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, position: 'relative' }}>
-      <div className="stepper-line" style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.1)', zIndex: 0 }}>
-        <div className="stepper-progress" style={{ height: '100%', background: '#FF6B35', transition: 'width 0.3s ease', width: `${(currentStep / 4) * 100}%` }} />
-      </div>
-      {steps.map((s, i) => (
-        <div key={s.id} className="stepper-item" style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }} onClick={() => onStepClick(s.id)}>
-          <div className={`stepper-dot ${currentStep >= s.id ? 'active' : ''}`} style={{ width: 24, height: 24, borderRadius: '50%', background: currentStep >= s.id ? '#FF6B35' : '#3F3F46', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, border: '2px solid #121212', transition: '0.3s' }}>
-            {currentStep > s.id ? <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 14 }} /> : i + 1}
-          </div>
-          <span className={`stepper-label ${currentStep === s.id ? 'active' : ''}`} style={{ fontSize: 10, color: currentStep === s.id ? '#fff' : '#94A3B8', marginTop: 4, fontWeight: 600 }}>{s.label}</span>
-        </div>
+    <div className="booking-stepper" role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={Math.min(currentStep, steps.length)}>
+      {steps.map((s) => (
+        <div
+          key={s}
+          className={`booking-stepper-seg ${currentStep >= s ? 'done' : ''}`}
+          onClick={() => currentStep > s && onStepClick(s)}
+          style={currentStep > s ? { cursor: 'pointer' } : undefined}
+        />
       ))}
     </div>
   );
@@ -385,10 +381,10 @@ const RideRequest: React.FC = () => {
     }
     if (promo.discount === 'free') {
       setDiscount('free');
-      setToastMsg(`🎉 ${promo.label}! Free ride applied.`);
+      setToastMsg(`${promo.label} — free ride applied`);
     } else {
       setDiscount(promo.discount);
-      setToastMsg(`🎉 ${promo.label}! UGX ${promo.discount.toLocaleString()} off.`);
+      setToastMsg(`${promo.label} — UGX ${promo.discount.toLocaleString()} off`);
     }
     setShowToast(true);
   };
@@ -524,8 +520,8 @@ const RideRequest: React.FC = () => {
             <div className="space-y-6">
               <div className="welcome-header">
                 <span className="welcome-eyebrow">Welcome Back</span>
-                <h1 className="welcome-title">Hello, {user?.fullName?.split(' ')[0] || 'Guest'}!</h1>
-                <p style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>Where would you like to go today?</p>
+                <h1 className="welcome-title">Hello, {user?.fullName?.split(' ')[0] || 'Guest'}</h1>
+                <p className="welcome-sub">Where would you like to go today?</p>
               </div>
 
               <button className="quick-action-btn" onClick={() => { setStep(BookingStep.LOCATION); setSearchingPickup(false); }}>
@@ -562,9 +558,7 @@ const RideRequest: React.FC = () => {
                       </div>
                     ))
                   ) : (
-                    <div style={{ padding: '12px', textAlign: 'center', fontSize: '12px', color: '#64748B', background: 'rgba(255,255,255,0.03)', borderRadius: '16px' }}>
-                      No recent trips yet
-                    </div>
+                    <div className="empty-note">No recent trips yet</div>
                   )}
                 </div>
               </div>
@@ -573,14 +567,17 @@ const RideRequest: React.FC = () => {
 
           {step === BookingStep.LOCATION && (
             <div className="space-y-6">
-              <h1 className="card-title" style={{ textAlign: 'center' }}>Book Your Ride</h1>
-              <div className="service-toggle" style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 20 }}>
-                <button onClick={() => setServiceType('ride')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: serviceType === 'ride' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>🚗 Ride</button>
-                <button onClick={() => setServiceType('delivery')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: serviceType === 'delivery' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>📦 Delivery</button>
+              <h1 className="card-title">Where to?</h1>
+              <div className="seg-control" role="tablist" aria-label="Service type">
+                <button role="tab" aria-selected={serviceType === 'ride'} className={`seg-btn ${serviceType === 'ride' ? 'active' : ''}`} onClick={() => setServiceType('ride')}>
+                  <IonIcon icon={carOutline} /> Ride
+                </button>
+                <button role="tab" aria-selected={serviceType === 'delivery'} className={`seg-btn ${serviceType === 'delivery' ? 'active' : ''}`} onClick={() => setServiceType('delivery')}>
+                  <IonIcon icon={cubeOutline} /> Delivery
+                </button>
               </div>
 
               <div className="location-input-group">
-                <h2 className="section-label" style={{ textAlign: 'center', fontSize: '18px', color: '#fff', textTransform: 'none', marginBottom: '15px' }}>Where to?</h2>
                 <div className="location-search-container">
                   <div className="location-input-group-relative" style={{ position: 'relative' }}>
                     <div className="location-input-wrapper">
@@ -639,16 +636,16 @@ const RideRequest: React.FC = () => {
                 })}
               </div>
 
-              <button className="btn-continue" disabled={!pickup || !destination} onClick={() => setStep(BookingStep.PAYMENT)}>CONTINUE</button>
+              <button className="btn-continue" disabled={!pickup || !destination} onClick={() => setStep(BookingStep.PAYMENT)}>Continue</button>
             </div>
           )}
 
           {step === BookingStep.PAYMENT && (
             <div className="space-y-6">
-              <h2 className="card-title" style={{ textAlign: 'center', fontSize: '20px' }}>{serviceType === 'ride' ? 'Fare Summary' : 'Delivery Details'}</h2>
+              <h2 className="card-title">{serviceType === 'ride' ? 'Confirm your ride' : 'Delivery details'}</h2>
 
               {serviceType === 'delivery' && (
-                <div className="space-y-3" style={{ marginBottom: 20 }}>
+                <div className="space-y-3">
                   <div className="location-input-wrapper">
                     <input className="location-input" placeholder="What are we delivering?" value={packageDetails} onChange={e => setPackageDetails(e.target.value)} />
                   </div>
@@ -661,83 +658,71 @@ const RideRequest: React.FC = () => {
                 </div>
               )}
 
+              {/* Fare: total is the headline, route meta is supporting */}
               <div className="fare-summary-box">
                 <div className="fare-detail">
-                  <span className="fare-label">Distance</span>
-                  <span className="fare-value">{fare?.distance ?? 0} km • {fare?.duration ?? 0} min</span>
+                  <span className="fare-label">{selectedRide.name}</span>
+                  <span className="fare-value">{fare?.distance ?? 0} km · {fare?.duration ?? 0} min</span>
+                  {discount === 'free' ? (
+                    <span className="promo-note"><IonIcon icon={checkmarkCircleOutline} /> Free ride applied</span>
+                  ) : discount > 0 ? (
+                    <span className="promo-note"><IonIcon icon={checkmarkCircleOutline} /> −UGX {discount.toLocaleString()} promo</span>
+                  ) : null}
                 </div>
-                <div className="fare-total">{fare?.formattedTotal || 'Calculating...'}</div>
-                {discount === 'free' ? (
-                  <div style={{ fontSize: 12, color: '#10B981', marginTop: 4 }}>🎉 Free ride applied</div>
-                ) : discount > 0 ? (
-                  <div style={{ fontSize: 12, color: '#10B981', marginTop: 4 }}>Discount: -UGX {discount.toLocaleString()}</div>
-                ) : null}
+                <div className="fare-total">{fare?.formattedTotal || '—'}</div>
               </div>
 
               {fare && (
-                <div className="fare-bid-container" style={{ textAlign: 'center', padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="section-label" style={{ marginBottom: '8px' }}>Adjust Your Offer</p>
-                  <div className="fare-bid-controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-                    <button className="bid-btn" onClick={() => setUserOffer(Math.max(selectedRide.basePrice, (userOffer ?? fare.totalFare) - 500))} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>−</button>
-                    <span className="bid-amount" style={{ fontWeight: 700, color: '#fff' }}>UGX {(userOffer ?? fare.totalFare).toLocaleString()}</span>
-                    <button className="bid-btn" onClick={() => setUserOffer((userOffer ?? fare.totalFare) + 500)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>+</button>
+                <div>
+                  <span className="section-label">Your offer</span>
+                  <div className="bid-stepper">
+                    <button className="bid-step-btn" aria-label="Decrease offer by 500 shillings" onClick={() => setUserOffer(Math.max(selectedRide.basePrice, (userOffer ?? fare.totalFare) - 500))}>−</button>
+                    <span className="bid-amount">UGX {(userOffer ?? fare.totalFare).toLocaleString()}</span>
+                    <button className="bid-step-btn" aria-label="Increase offer by 500 shillings" onClick={() => setUserOffer((userOffer ?? fare.totalFare) + 500)}>+</button>
                   </div>
-                  <p style={{ fontSize: '11px', color: '#94A3B8', marginTop: '8px' }}>Higher offers get picked up faster</p>
+                  <p className="bid-hint">Higher offers get picked up faster</p>
                 </div>
               )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#94A3B8', padding: '0 4px' }}>
-                <span style={{ textTransform: 'capitalize' }}>{serviceType}: {selectedRide.name}</span>
-                <span style={{ color: 'white', fontWeight: 600 }}>Balance: UGX {walletBalance.toLocaleString()}</span>
-              </div>
-
-              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 4, marginBottom: 15 }}>
-                <button onClick={() => setPaymentMethod('cash')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: paymentMethod === 'cash' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>💵 Cash</button>
-                <button onClick={() => setPaymentMethod('wallet')} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', background: paymentMethod === 'wallet' ? '#FF6B35' : 'transparent', color: '#fff', fontWeight: 600, fontSize: '13px', transition: '0.3s' }}>💳 Wallet</button>
+              <div>
+                <span className="section-label">Payment</span>
+                <div className="seg-control" role="tablist" aria-label="Payment method">
+                  <button role="tab" aria-selected={paymentMethod === 'cash'} className={`seg-btn ${paymentMethod === 'cash' ? 'active' : ''}`} onClick={() => setPaymentMethod('cash')}>
+                    <IonIcon icon={cashOutline} /> Cash
+                  </button>
+                  <button role="tab" aria-selected={paymentMethod === 'wallet'} className={`seg-btn ${paymentMethod === 'wallet' ? 'active' : ''}`} onClick={() => setPaymentMethod('wallet')}>
+                    <IonIcon icon={walletOutline} /> Wallet · UGX {walletBalance.toLocaleString()}
+                  </button>
+                </div>
               </div>
 
               <div className="location-input-wrapper">
-                <div className="input-icon"><IonIcon icon={checkmarkCircleOutline} /></div>
-                <input className="location-input" placeholder="Promo Code" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} />
-                <button className="back-nav-btn" style={{ fontWeight: 'bold', color: '#FF6B35', marginBottom: 0, position: 'static', background: 'none', border: 'none', padding: '0 10px', cursor: 'pointer' }} onClick={applyPromo}>Apply</button>
+                <div className="input-icon"><IonIcon icon={pricetagOutline} /></div>
+                <input className="location-input" placeholder="Promo code" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} />
+                <button className="promo-apply-btn" onClick={applyPromo}>Apply</button>
               </div>
-              <div style={{ fontSize: 11, color: '#64748B', padding: '0 4px' }}>Try: {Object.keys(PROMO_CODES).join(', ')}</div>
 
-              <button className="btn-continue" disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
-                {isLoading ? <IonSpinner name="crescent" /> : serviceType === 'ride' ? 'CONFIRM BOOKING' : 'CONFIRM DELIVERY'}
+              <button className="btn-continue" data-loading={isLoading || undefined} disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
+                {isLoading ? <IonSpinner name="crescent" /> : serviceType === 'ride' ? 'Confirm booking' : 'Confirm delivery'}
               </button>
-              <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '12px' }} onClick={() => setStep(BookingStep.LOCATION)}>Change Details</button>
+              <button className="btn-secondary-outline" onClick={() => setStep(BookingStep.LOCATION)}>Change details</button>
             </div>
           )}
 
           {step === BookingStep.MATCHING && (
-            <div className="matching-state" style={{ textAlign: 'center', padding: 20 }}>
-              <div className="matching-emoji pulse-soft" style={{ fontSize: 48, marginBottom: 16 }}>🚕</div>
-              <div className="space-y-2">
-                <h2 className="card-title" style={{ textAlign: 'center' }}>Finding your driver… {matchingSeconds}s</h2>
-                <p style={{ color: '#94A3B8', fontSize: '14px', margin: 0 }}>
-                  We've alerted drivers near {pickup?.name || 'you'}. Auto-cancels in {Math.max(0, 120 - matchingSeconds)}s if no driver accepts.
+            <div className="matching-state" role="status" aria-live="polite">
+              <div className="matching-spinner-ring" aria-hidden="true" />
+              <div>
+                <h2 className="matching-title">Finding your driver</h2>
+                <p className="matching-sub">
+                  Drivers near {pickup?.name || 'you'} have been alerted.
+                  Auto-cancels in <span className="matching-countdown">{Math.max(0, 120 - matchingSeconds)}s</span> if nobody accepts.
                 </p>
-                <div style={{ width: '100%', height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, marginTop: 16, overflow: 'hidden' }}>
-                  <div style={{ width: `${(matchingSeconds / 120) * 100}%`, height: '100%', background: '#FF6B35', transition: 'width 1s linear' }} />
-                </div>
               </div>
-              <button
-                onClick={handleCancelRequest}
-                disabled={cancellingRequest}
-                style={{
-                  marginTop: 18,
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: 12,
-                  border: '1px solid rgba(239,68,68,0.4)',
-                  background: 'rgba(239,68,68,0.08)',
-                  color: '#EF4444',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
+              <div style={{ width: '100%', height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 9999, overflow: 'hidden' }}>
+                <div style={{ width: `${(matchingSeconds / 120) * 100}%`, height: '100%', background: 'var(--navigo-orange)', transition: 'width 1s linear' }} />
+              </div>
+              <button className="btn-cancel-request" onClick={handleCancelRequest} disabled={cancellingRequest}>
                 {cancellingRequest ? 'Cancelling…' : 'Cancel request'}
               </button>
             </div>
@@ -771,11 +756,11 @@ const RideRequest: React.FC = () => {
 
       <IonToast isOpen={showToast} onDidDismiss={() => setShowToast(false)} message={toastMsg} duration={3000} color="dark" position="top" />
       <IonModal isOpen={showLoginPrompt} onDidDismiss={() => setShowLoginPrompt(false)}>
-        <div className="glass-booking-card" style={{ maxWidth: '400px', margin: '100px auto', textAlign: 'center', padding: 24, background: '#121212', borderRadius: 16 }}>
-          <h2 className="card-title" style={{ color: '#fff' }}>Ready to Ride?</h2>
-          <p style={{ color: '#94A3B8', marginBottom: '24px' }}>Sign in to book rides and earn rewards.</p>
-          <button className="btn-continue" style={{ width: '100%', padding: 12, background: '#FF6B35', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }} onClick={() => { setShowLoginPrompt(false); ionRouter.push('/login'); }}>Sign In</button>
-          <button className="back-nav-btn" style={{ width: '100%', justifyContent: 'center', marginTop: '16px', background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }} onClick={() => { setShowLoginPrompt(false); ionRouter.push('/register'); }}>Create Account</button>
+        <div className="login-modal-card">
+          <h2 className="login-modal-title">Ready to ride?</h2>
+          <p className="login-modal-sub">Sign in to book rides and earn rewards.</p>
+          <button className="btn-continue" onClick={() => { setShowLoginPrompt(false); ionRouter.push('/login'); }}>Sign in</button>
+          <button className="btn-secondary-outline" onClick={() => { setShowLoginPrompt(false); ionRouter.push('/register'); }}>Create account</button>
         </div>
       </IonModal>
     </div>

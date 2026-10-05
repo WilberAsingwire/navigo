@@ -496,6 +496,7 @@ body.light .btn-primary,
 body.light .btn-continue,
 body.light .btn-request-ride,
 body.light .nav-signup-btn {
-  --background: linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange-active) 100%) !important;
+  --background: var(--navigo-orange) !important;
+  background: var(--navigo-orange) !important;
   color: #FFFFFF !important;
 }
