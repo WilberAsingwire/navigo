@@ -280,6 +280,18 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        -- Driver verification photos (vehicle photo, selfie-with-vehicle).
+        -- FREE MODE: compressed JPEGs stored as data-URLs in PostgreSQL —
+        -- zero external services. PAID LATER: swap storage for S3/Cloudinary
+        -- and keep the same API (data becomes a URL instead of a data-URL).
+        CREATE TABLE IF NOT EXISTS driver_doc_images (
+          userId TEXT REFERENCES users(id) ON DELETE CASCADE,
+          kind TEXT NOT NULL,              -- vehiclePhoto | selfieWithVehicle
+          data TEXT NOT NULL,              -- data:image/jpeg;base64,...
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (userId, kind)
+        );
+
         -- Phone verification OTPs — codes stored HASHED (a DB leak must not
         -- expose live codes), 10-minute expiry, attempt-capped.
         CREATE TABLE IF NOT EXISTS phone_verifications (

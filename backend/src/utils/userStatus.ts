@@ -22,6 +22,7 @@ const cache = new Map<string, CacheEntry>();
 const BLOCK_MESSAGES: Record<string, string> = {
   banned: 'This account has been banned. Contact NAVIGO support if you believe this is a mistake.',
   suspended: 'This account is suspended. Contact NAVIGO support for more information.',
+  deleted: 'This account has been closed.',
 };
 
 /** Returns the user's current status ('active' | 'suspended' | 'banned' | ...), or null if the user no longer exists. */

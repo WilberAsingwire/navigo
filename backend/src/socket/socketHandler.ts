@@ -19,9 +19,15 @@ export const disconnectUserSockets = (userId: string) => {
 /** Emit to the ride room + the rider's and driver's personal rooms. */
 export const notifyRide = (rideId: string, riderId: string | null, driverId: string | null, event: string, payload: any) => {
   if (!ioInstance) return;
-  ioInstance.to(rideId).emit(event, payload);
-  if (riderId) ioInstance.to(riderId).emit(event, payload);
-  if (driverId) ioInstance.to(driverId).emit(event, payload);
+  // De-duplicated delivery (M10): participants who joined the ride room AND
+  // have personal rooms used to receive every event twice. Emit to personal
+  // rooms when we know them; use the ride room only as the fallback.
+  if (riderId || driverId) {
+    if (riderId) ioInstance.to(riderId).emit(event, payload);
+    if (driverId) ioInstance.to(driverId).emit(event, payload);
+  } else {
+    ioInstance.to(rideId).emit(event, payload);
+  }
 };
 
 // Helper to verify if a user is part of a ride

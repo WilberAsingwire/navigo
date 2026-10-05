@@ -73,6 +73,21 @@ Design constraint: **everything must work today with zero paid services**, while
 | DX | Live preview / remote dev couldn't reach the API (frontend hardcoded localhost backend) | Vite dev proxy for `/api`, `/socket.io` (ws) and `/auth/google` — set `VITE_API_URL=/api` and everything flows same-origin. |
 
 **Still open (backlog):** driver-doc object storage (currently text fields only), OSRM/Nominatim self-hosting or rate-limit handling at scale, e2e Cypress runs in CI, and the remaining Medium/Low cosmetic items below.
+
+---
+
+## 🛠️ FIX LOG — Round 5 (2026-10-06 — Medium-findings round; verified: backend `tsc`+21 tests ✅, frontend `tsc`+tests+build ✅, live API smoke test ✅)
+
+| # | Issue | Fix |
+|---|---|---|
+| M1 | Hard-deleting users cascaded into wallets/transactions and nulled rides — **destroying the financial ledger** | Soft delete: `status='deleted'` (blocked at login, `authenticate`, and socket handshake via the same status layer as bans), forced offline + sockets disconnected, hidden from admin lists; rides and wallet history stay immutable for taxes/disputes. Admin accounts can't be deleted from the endpoint. |
+| Docs | Driver verification photos were **fake** — the app literally sent the string `"uploaded"`; admins approved drivers without ever seeing a vehicle or a face | Real photo pipeline, 100 % free: DriverDocuments now captures vehicle photo + selfie-with-vehicle (required), compresses client-side to ≤900 px JPEG; backend validates data-URLs (type + 600 KB cap, scoped 2 MB body parser for this one route only) and stores them in a `driver_doc_images` PG table; AdminApprovals displays both photos in the review modal via `GET /auth/admin/driver-docs/:userId`. Paid-later swap: S3/Cloudinary behind the same API. |
+| M9 + fake | Support "Report an Issue" showed a **made-up ticket number** without calling the API; users could never see admin replies | Real submission (`POST /support`, safety issues auto-flagged urgent) + new `GET /support/mine` returning the user's tickets **with the admin's replies**; new "🎫 My Tickets" tab shows status badges and the reply thread. |
+| M4 | Legacy double-mounting of the admin router (`/api/auth/admin/payouts`, `/api/admin/analytics`) created ghost endpoints | Frontend callers moved to the canonical `/admin/*` paths; both shim mounts deleted (verified old path now 404s). |
+| M7 | `GET /auth/_dev/users` dead-weight endpoint in production | Removed. |
+| M10 | `notifyRide` triple-emitted (ride room + both personal rooms) — participants received every event twice | Emits to personal rooms when known; ride room only as fallback. |
+
+**Accepted trade-offs (documented, not bugs):** JWT in localStorage (standard PWA trade-off; mitigated by helmet CSP + short status-cache bans), role aliases rider/customer & driver/motorist normalized at boundaries (a rename migration risks breaking live data for cosmetic gain), public OSRM/Nominatim fine at launch scale (self-host when volume demands).
 **Scope:** Entire repo — backend (Express + PostgreSQL + Socket.io), frontend (Ionic React + Vite), infra/config, repo hygiene. Both projects were dependency-installed, type-checked (`tsc --noEmit`) and production-built as part of this audit.
 
 ---

@@ -58,8 +58,12 @@ app.use((req, _res, next) => {
   next();
 });
 
-// Scoped body limit (H11): every JSON payload in the app is text-only
-// (driver docs are license/plate strings, not images), so 100 KB is generous.
+// Scoped body limits (H11): almost every JSON payload in the app is text-only,
+// so 100 KB is generous. The ONE exception is the driver-document upload,
+// which carries two compressed verification photos as data-URLs (~300 KB
+// each) — it gets its own 2 MB parser, mounted BEFORE the global one so it
+// wins for that path.
+app.use('/api/auth/upload-documents', express.json({ limit: '2mb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(passport.initialize());
 
@@ -133,10 +137,6 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/poi', poiRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/admin', adminRoutes);
-// Some screens (AdminAnalytics, AdminPayouts) still call the legacy /auth/admin/* path.
-// Mount sub-routers for the specific endpoints that don't already exist under auth routes.
-app.use('/api/auth/admin/payouts', adminRoutes);
-app.use('/api/admin/analytics', adminRoutes);
 
 app.get('/api/health', async (_req: any, res: any) => {
   try {

@@ -193,6 +193,9 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     if (user.status === 'suspended') {
       return res.status(403).json({ message: 'This account is suspended. Contact NAVIGO support for more information.' });
     }
+    if (user.status === 'deleted') {
+      return res.status(403).json({ message: 'This account has been closed.' });
+    }
 
     let message = `Welcome back, ${user.fullName}!`;
     if (user.verificationStatus === 'pending') {
@@ -296,14 +299,46 @@ router.post('/upload-documents', authenticate, async (req: Request, res: Respons
       return res.status(400).json({ message: 'Invalid plate number format.' });
     }
 
+    // REAL verification photos: accept compressed JPEG/PNG/WebP data-URLs
+    // (client compresses to ~900px before upload), max 600 KB each, stored in
+    // driver_doc_images. The driverDocs JSON only records WHETHER a photo
+    // exists — the actual image is served to admins via /admin/driver-docs.
+    const MAX_IMG_BYTES = 600 * 1024;
+    const isImageDataUrl = (v: unknown): v is string =>
+      typeof v === 'string' && /^data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(v);
+    const imageUploads: Array<{ kind: string; data: string }> = [];
+    for (const [kind, value] of [['vehiclePhoto', vehiclePhoto], ['selfieWithVehicle', selfieWithVehicle]] as const) {
+      if (value == null || value === '' || value === 'uploaded') continue;
+      if (!isImageDataUrl(value)) {
+        return res.status(400).json({ message: `Invalid ${kind}: must be a JPEG/PNG/WebP image.` });
+      }
+      const approxBytes = Math.floor((value.length - value.indexOf(',') - 1) * 3 / 4);
+      if (approxBytes > MAX_IMG_BYTES) {
+        return res.status(400).json({ message: `The ${kind === 'vehiclePhoto' ? 'vehicle photo' : 'selfie'} is too large. Please retake it.` });
+      }
+      imageUploads.push({ kind, data: value });
+    }
+    for (const img of imageUploads) {
+      await db.run(
+        `INSERT INTO driver_doc_images (userId, kind, data) VALUES (?, ?, ?)
+         ON CONFLICT (userId, kind) DO UPDATE SET data = EXCLUDED.data, createdAt = CURRENT_TIMESTAMP`,
+        [userId, img.kind, img.data]
+      );
+    }
+
+    // A photo counts as present if it was just uploaded OR already stored
+    // (drivers resubmitting text corrections shouldn't lose their photos).
+    const existingImgs = await db.all('SELECT kind FROM driver_doc_images WHERE userId = ?', [userId]);
+    const hasPhoto = (kind: string) =>
+      imageUploads.some(i => i.kind === kind) || (existingImgs || []).some((e: any) => e.kind === kind);
     const driverDocs = JSON.stringify({
       nationalId: nationalId?.trim() || null,
       drivingLicense: drivingLicense.trim(),
-      vehiclePhoto: vehiclePhoto || 'uploaded',
+      vehiclePhoto: hasPhoto('vehiclePhoto') ? 'stored' : null,
       vehiclePlate: cleanPlate,
       vehicleModel: vehicleModel.trim(),
       vehicleColor: vehicleColor?.trim() || null,
-      selfieWithVehicle: selfieWithVehicle || 'uploaded',
+      selfieWithVehicle: hasPhoto('selfieWithVehicle') ? 'stored' : null,
       isFemaleDriver: !!isFemaleDriver,
     });
 
@@ -328,11 +363,28 @@ router.post('/upload-documents', authenticate, async (req: Request, res: Respons
   }
 });
 
+// ─── ADMIN: DRIVER VERIFICATION PHOTOS ────────────────────────
+// Serves the stored verification images for one driver (admin review screen).
+router.get('/admin/driver-docs/:userId', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
+  try {
+    const db = getDB();
+    const images = await db.all(
+      'SELECT kind, data, createdAt FROM driver_doc_images WHERE userId = ?',
+      [String(req.params.userId)]
+    );
+    res.json({ ok: true, images: images || [] });
+  } catch (error) {
+    console.error('Driver docs fetch error:', error);
+    res.status(500).json({ ok: false, message: 'Failed to load driver documents' });
+  }
+});
+
 // ─── ADMIN: GET ALL USERS ────────────────────────────
 router.get('/admin/users', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
-    const users = await db.all('SELECT * FROM users');
+    // Soft-deleted accounts are hidden from the default admin list.
+    const users = await db.all("SELECT * FROM users WHERE COALESCE(status, 'active') != 'deleted'");
     res.json(users.map(sanitizeUser));
   } catch (error) {
     console.error('Fetch users error:', error);
@@ -416,15 +468,24 @@ router.post('/admin/update-user-status', authenticate, authorize(['admin']), asy
   }
 });
 
-// ─── ADMIN: DELETE USER ──────────────────────
+// ─── ADMIN: DELETE USER (soft) ──────────────────────
+// SOFT delete: hard-deleting cascaded into wallets/transactions and nulled
+// rides — destroying the financial ledger needed for taxes and disputes.
+// The account is blocked immediately; money records stay immutable.
 router.delete('/admin/user/:id', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
     const db = getDB();
-    await db.run('DELETE FROM users WHERE id = ?', [id]);
+    const target = await db.get('SELECT role FROM users WHERE id = ?', [id]);
+    if (!target) return res.status(404).json({ message: 'User not found.' });
+    if (target.role === 'admin') return res.status(403).json({ message: 'Admin accounts cannot be deleted from here.' });
+    await db.run(
+      "UPDATE users SET status = 'deleted', isOnline = FALSE, isAvailable = FALSE WHERE id = ?",
+      [id]
+    );
     invalidateUserStatus(id);
     disconnectUserSockets(id);
-    res.json({ message: 'User deleted successfully' });
+    res.json({ message: 'Account closed. Ride and wallet history is preserved for auditing.' });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete user' });
   }
@@ -449,7 +510,7 @@ router.get('/admin/live-locations', authenticate, authorize(['admin']), async (r
 router.get('/admin/pending-drivers', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
     const db = getDB();
-    const drivers = await db.all('SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ?', ['driver', 'motorist', 'pending']);
+    const drivers = await db.all("SELECT * FROM users WHERE (role = ? OR role = ?) AND verificationStatus = ? AND COALESCE(status, 'active') != 'deleted'", ['driver', 'motorist', 'pending']);
     res.json({ count: drivers.length, drivers: drivers.map(sanitizeUser) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch pending drivers.' });
@@ -682,17 +743,6 @@ router.post('/exchange-code', authLimiter, async (req: Request, res: Response) =
   } catch (error) {
     console.error('Exchange code error:', error);
     res.status(500).json({ message: 'Sign-in failed. Please try again.' });
-  }
-});
-
-router.get('/_dev/users', authenticate, authorize(['admin']), async (_req: Request, res: Response) => {
-  try {
-    const db = getDB();
-    const rows = await db.all('SELECT * FROM users');
-    res.json({ count: rows?.length || 0, users: rows?.map(sanitizeUser) || [] });
-  } catch (e) {
-    console.error('Dev users fetch failed:', e);
-    res.status(500).json({ message: 'Dev users fetch failed.' });
   }
 });
 

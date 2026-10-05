@@ -36,9 +36,9 @@ const AdminAnalytics: React.FC = () => {
     try {
       // These endpoints are designed to return synthesized analytics data
       const [statsRes, dailyRes, topRes] = await Promise.all([
-        api.get('/admin/analytics/summary'),
-        api.get('/admin/analytics/daily'),
-        api.get('/admin/analytics/top-drivers')
+        api.get('/admin/summary'),
+        api.get('/admin/daily'),
+        api.get('/admin/top-drivers')
       ]);
 
       // Backend returns { ok, ...summary }, { ok, daily }, { ok, drivers }

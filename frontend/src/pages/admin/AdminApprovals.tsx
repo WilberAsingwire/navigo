@@ -43,6 +43,17 @@ const AdminApprovals: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [docImages, setDocImages] = useState<{ kind: string; data: string }[]>([]);
+
+  // Load the driver's real verification photos when the review modal opens.
+  useEffect(() => {
+    if (!selectedDriver) { setDocImages([]); return; }
+    let cancelled = false;
+    api.get(`/auth/admin/driver-docs/${selectedDriver.id}`)
+      .then(res => { if (!cancelled) setDocImages(res.data?.images || []); })
+      .catch(() => { if (!cancelled) setDocImages([]); });
+    return () => { cancelled = true; };
+  }, [selectedDriver]);
 
   const fetchPendingDrivers = async () => {
     setIsLoading(true);
@@ -201,6 +212,29 @@ const AdminApprovals: React.FC = () => {
                 <p style={{color: '#D1D5DB'}}>🚗 {selectedDriver.driverDocs?.vehiclePlate} • {selectedDriver.driverDocs?.vehicleModel}</p>
                 <p style={{color: '#D1D5DB'}}>🆔 NIN: {selectedDriver.driverDocs?.nationalId || 'N/A'}</p>
                 <p style={{color: '#D1D5DB'}}>📋 License: {selectedDriver.driverDocs?.drivingLicense || 'N/A'}</p>
+              </div>
+
+              {/* Verification photos */}
+              <div style={{background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: 16, marginBottom: 16}}>
+                <h3 style={{color: '#fff', margin: '0 0 12px', fontSize: 15}}>📸 Verification Photos</h3>
+                {docImages.length === 0 ? (
+                  <p style={{color: 'rgba(255,255,255,0.45)', fontSize: 12, margin: 0}}>No photos submitted.</p>
+                ) : (
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10}}>
+                    {docImages.map(img => (
+                      <div key={img.kind}>
+                        <p style={{color: 'rgba(255,255,255,0.6)', fontSize: 11, margin: '0 0 4px'}}>
+                          {img.kind === 'vehiclePhoto' ? 'Vehicle' : 'Selfie with vehicle'}
+                        </p>
+                        <img
+                          src={img.data}
+                          alt={img.kind}
+                          style={{width: '100%', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)'}}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {selectedDriver.verificationStatus === 'pending' && (
                 <div style={{display: 'flex', gap: 10}}>

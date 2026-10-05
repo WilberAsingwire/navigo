@@ -64,7 +64,7 @@ const AdminPayouts: React.FC = () => {
     setLoading(true);
     try {
       if (view === 'payouts') {
-        const res = await api.get('/auth/admin/payouts', {
+        const res = await api.get('/admin/payouts', {
           params: filter !== 'all' ? { status: filter } : {}
         });
         setPayouts(res.data?.payouts || []);
@@ -86,7 +86,7 @@ const AdminPayouts: React.FC = () => {
   const markPaid = async (p: Payout) => {
     setBusyId(p.id);
     try {
-      const res = await api.post(`/auth/admin/payouts/${p.id}/complete`, {
+      const res = await api.post(`/admin/payouts/${p.id}/complete`, {
         note: `Sent via NAVIGO ${p.provider.toUpperCase()} wallet`
       });
       presentToast({ message: res.data?.message || 'Marked as paid', color: 'success', duration: 2500 });
@@ -111,7 +111,7 @@ const AdminPayouts: React.FC = () => {
           handler: async (data) => {
             setBusyId(p.id);
             try {
-              const res = await api.post(`/auth/admin/payouts/${p.id}/reject`, { reason: data?.reason });
+              const res = await api.post(`/admin/payouts/${p.id}/reject`, { reason: data?.reason });
               presentToast({ message: res.data?.message || 'Payout rejected and refunded', color: 'success', duration: 2500 });
               load();
             } catch (e: any) {

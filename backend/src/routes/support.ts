@@ -27,6 +27,39 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+// ─── USER: MY TICKETS (with the admin's replies — M9) ───────────────────
+// Riders/drivers could create tickets but never see the answer in-app.
+router.get('/mine', authenticate, async (req: Request, res: Response) => {
+  try {
+    const db = getDB();
+    const userId = (req as AuthRequest).user?.userId;
+    const tickets = await db.all(
+      'SELECT id, type, description, priority, status, createdAt, updatedAt FROM support_tickets WHERE userId = ? ORDER BY createdAt DESC LIMIT 50',
+      [userId]
+    );
+    if (!tickets || tickets.length === 0) return res.json({ ok: true, tickets: [] });
+
+    const ids = tickets.map((t: any) => t.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const replies = await db.all(
+      `SELECT id, ticketId, fromUser, message, createdAt FROM support_replies
+       WHERE ticketId IN (${placeholders}) ORDER BY createdAt ASC`,
+      ids
+    );
+    const byTicket: Record<string, any[]> = {};
+    for (const r of replies || []) {
+      (byTicket[r.ticketId] = byTicket[r.ticketId] || []).push(r);
+    }
+    res.json({
+      ok: true,
+      tickets: tickets.map((t: any) => ({ ...t, replies: byTicket[t.id] || [] })),
+    });
+  } catch (error) {
+    console.error('My tickets error:', error);
+    res.status(500).json({ ok: false, message: 'Failed to fetch your tickets' });
+  }
+});
+
 // ─── ADMIN: GET ALL TICKETS ─────────────────────────
 router.get('/admin/tickets', authenticate, authorize(['admin']), async (req: Request, res: Response) => {
   try {
