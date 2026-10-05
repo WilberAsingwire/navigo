@@ -234,7 +234,7 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.25);
 }
 
-.back-nav-btn:active { transform: scale(0.96); }
+.back-nav-btn:active { transform: translateY(1px); }
 
 /* Booking sheet: solid surface, crisp border — Uber/Bolt-style panel,
    not a "glass" effect. Content legibility beats decoration on the
@@ -661,8 +661,8 @@
   gap: 6px;
 }
 
-.place-chip:hover { background: rgba(255,255,255,0.1); border-color: #FF6B35; color: #F5F7FA; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-.place-chip:active { transform: scale(0.95); }
+.place-chip:hover { background: var(--nav-card-hover); border-color: var(--nav-border-strong); color: var(--nav-text); }
+.place-chip:active { transform: translateY(1px); }
 
 .recent-trip-item {
   display: flex; align-items: center; gap: 14px;
@@ -699,7 +699,7 @@
   display: flex; align-items: center; justify-content: center;
 }
 
-.bid-btn:hover { background: rgba(255,255,255,0.1); border-color: #FF6B35; color: #FF6B35; transform: scale(1.06); }
+.bid-btn:hover { background: var(--nav-card-hover); border-color: var(--navigo-orange); color: var(--navigo-orange); }
 .bid-amount { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; color: #F5F7FA; min-width: 100px; text-align: center; }
 
 .ride-request-content {

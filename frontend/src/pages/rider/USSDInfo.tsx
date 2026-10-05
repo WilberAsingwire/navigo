@@ -21,7 +21,7 @@ const USSDInfo: React.FC = () => {
           <p style={{ color: 'rgba(255,248,240,0.6)' }}>Works on ANY phone — even kabiriti!</p>
         </div>
 
-        <IonCard style={{ background: 'linear-gradient(135deg, #FF6B35, #E85D75)', borderRadius: 16, textAlign: 'center', padding: 20 }}>
+        <IonCard style={{ background: 'var(--navigo-orange)', borderRadius: 12, textAlign: 'center', padding: 20 }}>
           <IonCardContent>
             <h1 style={{ color: '#fff', fontSize: 36, margin: 0, letterSpacing: 4 }}>*284*624#</h1>
             <p style={{ color: 'rgba(255,255,255,0.8)', marginTop: 8 }}>Dial this number to book a ride</p>

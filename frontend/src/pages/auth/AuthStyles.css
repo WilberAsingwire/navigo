@@ -149,7 +149,7 @@
   transition: transform var(--duration-normal) var(--ease-spring);
   cursor: default;
 }
-.trust-item:hover { transform: translateY(-2px); }
+.trust-item:hover { border-color: var(--nav-border-strong); }
 .trust-icon {
   width: 36px; height: 36px;
   border: 1px solid var(--nav-border);

@@ -199,7 +199,6 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="preview-vehicle">
-                    <div className="vehicle-glow" style={{ background: `radial-gradient(circle, ${active.color}18 0%, transparent 70%)` }} />
                     <img src={active.image} alt={active.name} className="preview-vehicle-img" />
                     <div className="vehicle-meta">
                       <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
@@ -247,7 +246,6 @@ const Home: React.FC = () => {
                 <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
                   {ride.popular && <div className="ride-badge">Most Popular</div>}
                   <div className="card-img-wrap">
-                    <div className="card-img-glow" style={{ background: `radial-gradient(circle, ${ride.color}15 0%, transparent 70%)` }} />
                     <img src={ride.image} alt={ride.name} className="card-vehicle-img" />
                   </div>
                   <h3 className="card-title">{ride.name}</h3>

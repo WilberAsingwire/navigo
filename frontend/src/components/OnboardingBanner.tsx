@@ -33,7 +33,7 @@ const OnboardingBanner: React.FC = () => {
   if (!visible) return null;
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,107,53,0.05))',
+      background: 'var(--navigo-orange-soft)',
       border: '1px solid rgba(255,107,53,0.3)',
       borderRadius: 16,
       padding: '16px 20px',

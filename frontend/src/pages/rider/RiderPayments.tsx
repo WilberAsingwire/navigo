@@ -169,7 +169,7 @@ const RiderPayments: React.FC = () => {
           <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
             {segment === 'wallet' && (
               <>
-                <IonCard style={{ background: 'linear-gradient(135deg, #1B4965, #0d2137)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', marginBottom: 16 }}>
+                <IonCard style={{ background: 'var(--nav-bg-raised)', borderRadius: 12, border: '1px solid var(--nav-border-strong)', marginBottom: 16 }}>
                   <IonCardContent style={{ textAlign: 'center', padding: 24 }}>
                     <IonIcon icon={walletOutline} style={{ fontSize: 36, color: '#FF6B35', marginBottom: 8 }} />
                     <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, margin: 0 }}>Available Balance</p>

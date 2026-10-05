@@ -190,8 +190,8 @@
   background: var(--navigo-orange-ghost);
   border: 1px solid transparent;
 }
-.view-map-link:hover { background: var(--navigo-orange-soft); border-color: var(--nav-border-orange); transform: translateX(2px); color: var(--navigo-orange-hover); }
-.view-map-link:active { transform: scale(0.95); }
+.view-map-link:hover { background: var(--navigo-orange-soft); border-color: var(--nav-border-orange); color: var(--navigo-orange-hover); }
+.view-map-link:active { transform: translateY(1px); }
 
 .driver-row {
   background: var(--nav-card-glass);

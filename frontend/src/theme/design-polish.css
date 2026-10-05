@@ -220,10 +220,10 @@ ion-button.button-ghost {
 .payment-option,
 .vehicle-card {
   border: 2px solid transparent !important;
-  border-radius: var(--radius-xl) !important;
+  border-radius: var(--radius-md) !important;
   padding: 14px 16px !important;
   background: var(--nav-card-soft) !important;
-  transition: all var(--duration-normal) var(--ease-spring) !important;
+  transition: all var(--duration-normal) var(--ease-out) !important;
   cursor: pointer;
   position: relative;
 }
@@ -262,10 +262,10 @@ ion-button.button-ghost {
   box-shadow: var(--shadow-card);
   min-height: 44px;
   font-weight: 700;
-  transition: all var(--duration-normal) var(--ease-spring);
+  transition: all var(--duration-normal) var(--ease-out);
 }
 .my-location-btn { background: var(--navigo-orange) !important; color: #fff !important; border-color: var(--navigo-orange); }
-.my-location-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-orange); }
+.my-location-btn:hover { background: var(--nav-card); }
 
 .map-controls-top button { font-family: var(--font-body); }
 

@@ -88,7 +88,7 @@ const BodaSafeScore: React.FC<BodaSafeScoreProps> = ({
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+      background: 'var(--nav-card)',
       borderRadius: 20,
       padding: 20,
       marginBottom: 16,

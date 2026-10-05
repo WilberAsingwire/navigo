@@ -53,9 +53,7 @@ body.light .admin-bg {
 .driver-card:hover, .rider-info-card:hover, .fare-card:hover, .route-card:hover, .wallet-balance-card:hover,
 .history-stat-card:hover, .stat-card:hover, .settings-section-card:hover, .support-accordion:hover, .admin-kpi-card:hover, .admin-quick-action-card:hover {
   background: var(--nav-card-hover) !important;
-  border-color: var(--nav-border-orange) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow-card) !important;
+  border-color: var(--nav-border-strong) !important;
 }
 .driver-card:hover::before, .rider-info-card:hover::before, .fare-card:hover::before, .wallet-balance-card:hover::before { opacity: 1; }
 .driver-card:active, .rider-info-card:active, .fare-card:active, .history-stat-card:active, .admin-kpi-card:active {
@@ -117,37 +115,37 @@ body.light .wallet-balance-card *,
 body.light .balance-card * {
   color: #FFFFFF !important;
 }
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.wallet-amount, .balance-amount { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; transition: transform var(--duration-normal) var(--ease-spring); }
-.wallet-balance-card:hover .wallet-amount { transform: scale(1.03); }
+
+.wallet-amount, .balance-amount { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
 
 /* ── Buttons Everywhere — Press + Glow ────────────────────── */
 ion-button, .topup-actions ion-button, .action-grid ion-button, .add-funds-btn {
   --border-radius: var(--radius-md) !important;
   font-weight: 700 !important;
-  transition: all var(--duration-normal) var(--ease-spring) !important;
+  transition: all var(--duration-normal) var(--ease-out) !important;
   position: relative;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
 }
-ion-button:hover { transform: translateY(-1px); filter: brightness(1.08); }
-ion-button:active { transform: scale(0.97); }
+ion-button:hover { filter: brightness(1.05); }
+ion-button:active { transform: translateY(1px); }
 
 /* ── Search Results, Chips, Badges — Interactive ──────────── */
 .search-result-item, .place-chip, .recent-trip-item, .quick-action-btn, .place-item, .activity-item, .history-item {
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-spring) !important;
+  transition: all var(--duration-normal) var(--ease-out) !important;
   -webkit-tap-highlight-color: transparent;
 }
 .search-result-item:hover { background: var(--nav-card-hover) !important; transform: translateX(2px); }
-.search-result-item:active, .place-chip:active, .recent-trip-item:active { transform: scale(0.96) !important; }
+.search-result-item:active, .place-chip:active, .recent-trip-item:active { transform: translateY(1px) !important; }
 
 body.light .search-result-item:hover { background: rgba(0,0,0,0.03) !important; }
 
 /* ── Admin — Tables + Cards — Hover Lift ──────────────────── */
-.admin-kpi-grid, .stats-grid, .kpi-grid, .admin-quick-actions-grid { animation: staggerIn 0.5s var(--ease-spring) both; }
+.admin-kpi-grid, .stats-grid, .kpi-grid, .admin-quick-actions-grid { animation: staggerIn 0.5s var(--ease-out) both; }
 @keyframes staggerIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
-.admin-kpi-card, .stat-card, .kpi-card { animation: staggerIn 0.4s var(--ease-spring) both; }
+.admin-kpi-card, .stat-card, .kpi-card { animation: staggerIn 0.4s var(--ease-out) both; }
 .admin-kpi-card:nth-child(1) { animation-delay: 0.05s; }
 .admin-kpi-card:nth-child(2) { animation-delay: 0.1s; }
 .admin-kpi-card:nth-child(3) { animation-delay: 0.15s; }
@@ -157,7 +155,7 @@ body.light .search-result-item:hover { background: rgba(0,0,0,0.03) !important; 
 .loading-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--nav-text-secondary); animation: fadeIn 0.4s ease; }
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 .empty-state { text-align: center; padding: 60px 20px; animation: fadeIn 0.5s ease; }
-.empty-state ion-icon { font-size: 48px; color: var(--nav-text-muted); margin-bottom: 12px; animation: float 3s ease-in-out infinite; }
+.empty-state ion-icon { font-size: 48px; color: var(--nav-text-muted); margin-bottom: 12px; opacity: 0.6; }
 .empty-state p { color: var(--nav-text-secondary); font-size: 0.9rem; }
 
 /* ── ChatBox, DriverAlert, Loyalty, Onboarding ────────────── */
@@ -166,7 +164,7 @@ body.light .search-result-item:hover { background: rgba(0,0,0,0.03) !important; 
   -webkit-backdrop-filter: blur(20px) saturate(1.1);
   border: 1px solid var(--nav-border);
   border-radius: var(--radius-2xl);
-  transition: all var(--duration-normal) var(--ease-spring);
+  transition: all var(--duration-normal) var(--ease-out);
 }
 
 body.light .chat-box {
@@ -178,36 +176,36 @@ body.light .chat-box .message-text { color: var(--nav-text) !important; }
 
 /* ── Incoming Request — Timer Pulse ───────────────────────── */
 .timer-circle { /* static — countdown text itself conveys urgency */ }
-.route-card { background: var(--nav-card-glass) !important; border: 1px solid var(--nav-border) !important; border-radius: var(--radius-xl) !important; padding: 16px !important; transition: all var(--duration-normal) var(--ease-spring) !important; }
-.route-card:hover { background: var(--nav-card-hover) !important; border-color: var(--nav-border-orange) !important; transform: translateY(-1px); }
+.route-card { background: var(--nav-card) !important; border: 1px solid var(--nav-border) !important; border-radius: var(--radius-md) !important; padding: 16px !important; transition: all var(--duration-normal) var(--ease-out) !important; }
+.route-card:hover { background: var(--nav-card-hover) !important; border-color: var(--nav-border-strong) !important; }
 .accept-btn { --background: var(--nav-success) !important; --box-shadow: none !important; }
 .accept-btn:hover { filter: brightness(1.05); }
 
 /* ── Leaflet Map — Dark + Interactive Controls ────────────── */
 .leaflet-container { background: var(--nav-bg) !important; border-radius: var(--radius-lg) !important; }
-.leaflet-control-zoom a { background: var(--nav-card) !important; color: var(--nav-text) !important; border-color: var(--nav-border) !important; transition: all var(--duration-normal) var(--ease-spring) !important; }
-.leaflet-control-zoom a:hover { background: var(--navigo-orange) !important; color: #fff !important; transform: scale(1.05); }
-.admin-live-map ion-chip { background: var(--nav-card) !important; border: 1px solid var(--nav-border) !important; border-radius: var(--radius-pill) !important; transition: all var(--duration-normal) var(--ease-spring) !important; cursor: pointer; }
-.admin-live-map ion-chip:hover { transform: translateY(-1px) scale(1.02); border-color: var(--nav-border-orange) !important; }
+.leaflet-control-zoom a { background: var(--nav-card) !important; color: var(--nav-text) !important; border-color: var(--nav-border) !important; transition: all var(--duration-normal) var(--ease-out) !important; }
+.leaflet-control-zoom a:hover { background: var(--nav-card-hover) !important; }
+.admin-live-map ion-chip { background: var(--nav-card) !important; border: 1px solid var(--nav-border) !important; border-radius: var(--radius-pill) !important; transition: all var(--duration-normal) var(--ease-out) !important; cursor: pointer; }
+.admin-live-map ion-chip:hover { border-color: var(--nav-border-strong) !important; }
 .admin-live-map ion-chip[color="warning"] { background: var(--navigo-orange) !important; color: #fff !important; border-color: var(--navigo-orange) !important; box-shadow: var(--shadow-orange) !important; }
 
 /* ── Inputs Global — Focus Glow ───────────────────────────── */
 ion-input, ion-textarea, .input-field, .location-input-wrapper {
-  transition: all var(--duration-normal) var(--ease-spring) !important;
+  transition: all var(--duration-normal) var(--ease-out) !important;
 }
 ion-input:focus-within, ion-textarea:focus-within { --border-color: var(--navigo-orange) !important; box-shadow: 0 0 0 3px var(--navigo-orange-soft) !important; }
 
 /* ── Segments — Orange Active ─────────────────────────────── */
-ion-segment { background: var(--nav-card-glass) !important; border-radius: var(--radius-pill) !important; padding: 4px !important; border: 1px solid var(--nav-border) !important; }
-ion-segment-button { --indicator-color: var(--navigo-orange) !important; --color-checked: var(--navigo-orange) !important; --border-radius: var(--radius-pill) !important; transition: all var(--duration-normal) var(--ease-spring) !important; }
-ion-segment-button:hover { transform: scale(1.02); }
+ion-segment { background: var(--nav-card) !important; border-radius: var(--radius-pill) !important; padding: 4px !important; border: 1px solid var(--nav-border) !important; }
+ion-segment-button { --indicator-color: var(--navigo-orange) !important; --color-checked: var(--navigo-orange) !important; --border-radius: var(--radius-pill) !important; transition: all var(--duration-normal) var(--ease-out) !important; }
+
 
 body.light ion-segment { background: var(--nav-bg-deep) !important; }
 body.light ion-segment-button { --color: var(--nav-text-secondary) !important; }
 
 /* ── Badges — Muted + Interactive ─────────────────────────── */
-ion-badge { transition: all var(--duration-normal) var(--ease-spring) !important; cursor: default; }
-ion-badge:hover { transform: scale(1.05); }
+ion-badge { transition: all var(--duration-normal) var(--ease-out) !important; cursor: default; }
+
 
 /* ── Skeleton Shimmer — Global ────────────────────────────── */
 .skeleton, [class*="skeleton"], .loading-shimmer {
@@ -243,5 +241,5 @@ ion-refresher-content { background: transparent !important; }
 *::-webkit-scrollbar-thumb:hover { background: var(--nav-text-muted); }
 
 /* ── Page Transitions — Smooth ────────────────────────────── */
-ion-page { animation: pageIn 0.35s var(--ease-spring); }
+ion-page { animation: pageIn 0.35s var(--ease-out); }
 @keyframes pageIn { from { opacity:0; transform: translateY(8px) scale(0.98); } to { opacity:1; transform: translateY(0) scale(1); } }

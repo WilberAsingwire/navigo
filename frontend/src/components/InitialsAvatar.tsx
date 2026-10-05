@@ -25,7 +25,7 @@ const InitialsAvatar: React.FC<InitialsAvatarProps> = ({ name, size = 40, color 
         width: size,
         height: size,
         borderRadius: '50%',
-        background: `linear-gradient(135deg, ${color}, #c2410c)`,
+        background: color,
         color: '#fff',
         display: 'flex',
         alignItems: 'center',

@@ -33,10 +33,6 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
-@keyframes navigo-glow {
-  0%, 100% { box-shadow: 0 0 12px var(--navigo-orange-glow); }
-  50% { box-shadow: 0 0 24px var(--navigo-orange-glow), 0 0 36px rgba(255,107,53,0.15); }
-}
 @keyframes navigo-ripple {
   to { transform: scale(4); opacity: 0; }
 }
@@ -58,9 +54,7 @@ ion-page {
 
 /* Hover — dark mode */
 [class*="card"]:hover, [class*="pill"]:hover, .action-btn:hover, .action-card:hover, .stat-pill:hover, .kpi-card:hover, .driver-row:hover, .place-chip:hover, .recent-trip-item:hover, .vehicle-option-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255,107,53,0.25) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,107,53,0.08);
+  border-color: var(--nav-border-strong) !important;
 }
 
 /* Hover — light mode */
@@ -74,15 +68,13 @@ body.light .driver-row:hover,
 body.light .place-chip:hover,
 body.light .recent-trip-item:hover,
 body.light .vehicle-option-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255,107,53,0.25) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,107,53,0.06);
+  border-color: var(--nav-border-strong) !important;
   background: #FFFFFF !important;
 }
 
 /* Active / Tap */
 [class*="card"]:active, [class*="pill"]:active, .action-btn:active, .action-card:active, .stat-pill:active, .kpi-card:active, .driver-row:active, .place-chip:active, .recent-trip-item:active, .vehicle-option-card:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(1px);
   transition-duration: 0.1s;
 }
 
@@ -103,9 +95,7 @@ button, .btn-primary, .btn-continue, .btn-request-ride, .btn-copy-code, ion-butt
 }
 
 button:hover, .btn-primary:hover, .btn-continue:hover, .btn-request-ride:hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(255,107,53,0.35);
+  filter: brightness(1.05);
 }
 
 button:active, .btn-primary:active, .btn-continue:active, .btn-request-ride:active {
@@ -278,12 +268,12 @@ body {
 
 /* ── Loading Screen — Branded ─────────────────────────────── */
 .loading-screen, [class*="loading"] {
-  background: radial-gradient(120% 90% at 50% 0%, #101a2c 0%, #0a101c 55%, #070b12 100%);
+  background: var(--nav-bg);
   animation: navigo-fade-in 0.4s ease;
 }
 body.light .loading-screen,
 body.light [class*="loading"] {
-  background: radial-gradient(120% 90% at 50% 0%, #F8FAFC 0%, #F1F5F9 55%, #E2E8F0 100%);
+  background: #F8FAFC;
 }
 
 /* ── Quick Actions — Stagger In ───────────────────────────── */

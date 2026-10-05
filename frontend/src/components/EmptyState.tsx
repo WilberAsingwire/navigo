@@ -28,9 +28,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, actionLa
       }}
     >
       <style>{`
-        @keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform: translateY(0); } }
-        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-        @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 12px rgba(255,107,53,0.2); } 50% { box-shadow: 0 0 20px rgba(255,107,53,0.4); } }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
       `}</style>
       <div
         style={{
@@ -45,8 +43,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, actionLa
           marginBottom: 8,
           color: 'var(--navigo-orange)',
           fontSize: 28,
-          animation: 'float 3s ease-in-out infinite, pulseGlow 2.5s ease-in-out infinite',
-          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.1) rotate(5deg)';
@@ -74,19 +71,18 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, actionLa
           onPointerLeave={() => setPressed(false)}
           style={{
             marginTop: 18,
-            background: 'linear-gradient(135deg, var(--navigo-orange) 0%, var(--navigo-orange-active) 100%)',
+            background: pressed ? 'var(--navigo-orange-active)' : 'var(--navigo-orange)',
             color: '#fff',
             border: 'none',
-            borderRadius: 9999,
+            borderRadius: 10,
             padding: '12px 24px',
             fontSize: 13,
             fontWeight: 700,
             cursor: 'pointer',
             fontFamily: 'var(--font-display, Sora)',
             letterSpacing: '0.02em',
-            boxShadow: 'var(--shadow-orange)',
-            transform: pressed ? 'scale(0.96)' : 'scale(1)',
-            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            transform: pressed ? 'translateY(1px)' : 'none',
+            transition: 'background 150ms ease',
           }}
           onMouseEnter={() => light()}
         >
