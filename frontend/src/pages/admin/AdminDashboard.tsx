@@ -83,7 +83,7 @@ const AdminDashboard: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: 36, color: 'var(--navigo-orange)' }} />
             <IonSpinner name="crescent" color="warning" />
-            <p style={{ color: 'rgba(255,255,255,0.5)' }}>Loading admin panel...</p>
+            <p style={{ color: 'var(--nav-text-secondary)' }}>Loading admin panel...</p>
           </div>
         </IonContent>
       </IonPage>
@@ -94,9 +94,9 @@ const AdminDashboard: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#121212'} as any}>
         <IonToolbar style={{'--background': '#121212'}}>
-          <IonTitle style={{ color: '#fff', fontSize: 18 }}>Admin Dashboard</IonTitle>
+          <IonTitle style={{ color: 'var(--nav-text)', fontSize: 18 }}>Admin Dashboard</IonTitle>
           <IonButton slot="end" fill="clear" onClick={() => window.location.reload()}>
-            <IonIcon icon={refreshOutline} style={{ color: '#FF6B35' }} />
+            <IonIcon icon={refreshOutline} style={{ color: 'var(--navigo-orange)' }} />
           </IonButton>
         </IonToolbar>
       </IonHeader>
@@ -107,10 +107,10 @@ const AdminDashboard: React.FC = () => {
           {/* Welcome */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, Admin</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, margin: '4px 0 0' }}>System is running normally</p>
+              <h2 style={{ color: 'var(--nav-text)', margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, Admin</h2>
+              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 14, margin: '4px 0 0' }}>System is running normally</p>
             </div>
-            <IonBadge style={{ background: 'rgba(16,185,129,0.2)', color: '#10B981', padding: '6px 14px', borderRadius: 20, fontSize: 12 }}>● Online</IonBadge>
+            <IonBadge style={{ background: 'rgba(16,185,129,0.2)', color: '#10B981', padding: '6px 14px', borderRadius: 12, fontSize: 12 }}>● Online</IonBadge>
           </div>
 
           {/* KPI Cards */}
@@ -118,13 +118,13 @@ const AdminDashboard: React.FC = () => {
             <IonRow>
               {kpiCards.map((kpi, i) => (
                 <IonCol size="6" sizeMd="4" key={i}>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 14, marginBottom: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid var(--nav-border)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <IonIcon icon={kpi.icon} style={{ fontSize: 22, color: kpi.color }} />
                       <span style={{ fontSize: 10, color: kpi.color, fontWeight: 600 }}>{kpi.change}</span>
                     </div>
-                    <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: '6px 0' }}>{kpi.value}</div>
-                    <div style={{ fontSize: 11, color: '#D1D5DB' }}>{kpi.label}</div>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--nav-text)', margin: '6px 0' }}>{kpi.value}</div>
+                    <div style={{ fontSize: 11, color: 'var(--nav-text-secondary)' }}>{kpi.label}</div>
                   </div>
                 </IonCol>
               ))}
@@ -132,13 +132,13 @@ const AdminDashboard: React.FC = () => {
           </IonGrid>
 
           {/* Quick Actions */}
-          <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Quick Actions</h3>
+          <h3 style={{ color: 'var(--nav-text)', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Quick Actions</h3>
           <div className="admin-quick-actions-grid">
             {quickActions.map((action, i) => (
               <div key={i} onClick={() => history.push(action.path)}
-                style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, textAlign: 'center', cursor: 'pointer', position: 'relative', border: '1px solid rgba(255,255,255,0.06)', transition: 'all 0.2s' }}>
-                <IonIcon icon={action.icon} style={{ fontSize: 24, color: '#FF6B35' }} />
-                <p style={{ color: '#D1D5DB', fontSize: 11, margin: '6px 0 0' }}>{action.label}</p>
+                style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer', position: 'relative', border: '1px solid var(--nav-border)', transition: 'all 0.2s' }}>
+                <IonIcon icon={action.icon} style={{ fontSize: 24, color: 'var(--navigo-orange)' }} />
+                <p style={{ color: 'var(--nav-text-secondary)', fontSize: 11, margin: '6px 0 0' }}>{action.label}</p>
                 {action.badge && (
                   <IonBadge style={{ position: 'absolute', top: 6, right: 6, fontSize: 10, padding: '2px 6px', background: 'rgba(245,158,11,0.2)', color: '#F59E0B' }}>
                     {action.badge}
@@ -149,27 +149,27 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Revenue Chart */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 16, padding: 20, marginBottom: 24, border: '1px solid rgba(255,255,255,0.06)' }}>
-            <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>Revenue Overview</h3>
-            <p style={{ color: '#D1D5DB', fontSize: 12, margin: '0 0 16px' }}>Last 7 days</p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
+          <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 20, marginBottom: 24, border: '1px solid var(--nav-border)' }}>
+            <h3 style={{ color: 'var(--nav-text)', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>Revenue Overview</h3>
+            <p style={{ color: 'var(--nav-text-secondary)', fontSize: 12, margin: '0 0 16px' }}>Last 7 days</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: 'var(--nav-text-dim)', fontSize: 12 }}>
               No data available for this period
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-              {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => <span key={d} style={{ fontSize: 9, color: '#D1D5DB' }}>{d}</span>)}
+              {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => <span key={d} style={{ fontSize: 9, color: 'var(--nav-text-secondary)' }}>{d}</span>)}
             </div>
           </div>
 
           {/* Recent Alerts */}
-          <h3 style={{ color: '#fff', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Recent Activity</h3>
+          <h3 style={{ color: 'var(--nav-text)', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Recent Activity</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 30 }}>
             {alerts.map((alert, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${alert.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <IonIcon icon={alert.icon} style={{ color: alert.color, fontSize: 14 }} />
                 </div>
-                <span style={{ color: '#D1D5DB', fontSize: 13, flex: 1 }}>{alert.text}</span>
-                <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, whiteSpace: 'nowrap' }}>{alert.time}</span>
+                <span style={{ color: 'var(--nav-text-secondary)', fontSize: 13, flex: 1 }}>{alert.text}</span>
+                <span style={{ color: 'var(--nav-text-dim)', fontSize: 10, whiteSpace: 'nowrap' }}>{alert.time}</span>
               </div>
             ))}
           </div>

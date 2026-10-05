@@ -85,7 +85,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               expand="block"
               className="btn-finish"
               onClick={nextStep}
-              style={{ '--background': '#FF6B35' }}
+              style={{ '--background': 'var(--navigo-orange)' }}
             >
               Get Started <IonIcon slot="end" icon={checkmarkCircleOutline} />
             </IonButton>

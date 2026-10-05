@@ -46,7 +46,7 @@ const destIcon = L.divIcon({
 const createVehicleIcon = (url: string, color: string) => L.divIcon({
   className: 'navigo-vehicle',
   html: `<div class="nv-wrap">
-           <div class="nv-shadow"></div>
+           
            <div class="nv-body" style="border-color:${color}"><img src="${url}" alt=""/></div>
          </div>`,
   iconSize: [40, 40],
@@ -362,39 +362,13 @@ const NavigoMap: React.FC<MapProps> = ({
         .nd-dot { width: 18px; height: 18px; background: #0F172A; border: 3px solid white; border-radius: 50%; box-shadow: 0 3px 12px rgba(0,0,0,0.4); z-index: 2; position: relative; }
         .np-pulse { position: absolute; inset: 0; background: #FF6B35; border-radius: 50%; animation: npPulse 2s infinite; }
         @keyframes npPulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(2.8); opacity: 0; } }
-        .nv-wrap { position: relative; width: 40px; height: 40px; perspective: 500px; }
-        .nv-shadow {
-          position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
-          width: 24px; height: 8px; background: rgba(0,0,0,0.2);
-          border-radius: 50%; filter: blur(2px); z-index: 1;
-          animation: nvShadow 3s ease-in-out infinite;
-        }
+        .nv-wrap { position: relative; width: 40px; height: 40px; }
         .nv-body {
           width: 40px; height: 40px; background: white; border-radius: 50%; border: 3px solid;
           display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.35); z-index: 2; position: relative;
-          animation: nvFloat 3s ease-in-out infinite;
-          transform-style: preserve-3d;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35); z-index: 2; position: relative;
         }
-        .nv-body img {
-          width: 70%; height: 70%; object-fit: contain;
-          animation: nvTilt 3s ease-in-out infinite;
-        }
-        @keyframes nvTilt {
-          0%, 100% { transform: rotate(0deg) scale(1); }
-          50% { transform: rotate(5deg) scale(1.1); }
-        }
-        @keyframes nvFloat {
-          0% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-          25% { transform: translateY(-4px) rotateX(15deg) rotateY(5deg) rotateZ(2deg); }
-          50% { transform: translateY(-8px) rotateX(0deg) rotateY(15deg) rotateZ(-2deg); }
-          75% { transform: translateY(-4px) rotateX(-15deg) rotateY(5deg) rotateZ(2deg); }
-          100% { transform: translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
-        }
-        @keyframes nvShadow {
-          0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.3; }
-          50% { transform: translateX(-50%) scale(0.7); opacity: 0.15; }
-        }
+        .nv-body img { width: 70%; height: 70%; object-fit: contain; }
         .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
         .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
         .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }

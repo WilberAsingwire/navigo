@@ -57,14 +57,6 @@ const Logo: React.FC<LogoProps> = ({ variant = 'full', size = 'medium', onClick,
           justifyContent: 'center',
           transition: 'transform 0.35s cubic-bezier(0.16,1,0.3,1), filter 0.3s',
         }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.08) rotate(4deg)';
-          (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1.1)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'scale(1) rotate(0deg)';
-          (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1)';
-        }}
       >
         {IconImg}
       </div>
@@ -106,14 +98,6 @@ const Logo: React.FC<LogoProps> = ({ variant = 'full', size = 'medium', onClick,
         height: s.height,
         userSelect: 'none',
         transition: 'transform 0.3s cubic-bezier(0.16,1,0.3,1), filter 0.3s',
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.03)';
-        (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1.08)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'scale(1)';
-        (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1)';
       }}
     >
       {IconImg}

@@ -190,7 +190,7 @@ const Login: React.FC = () => {
               <button
                 style={{
                   width: '100%', height: '48px', borderRadius: '12px', border: '1px solid var(--navigo-white-10)',
-                  background: 'var(--navigo-white-5)', color: 'white', cursor: 'pointer',
+                  background: 'var(--navigo-white-5)', color: 'var(--nav-text)', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', fontSize: '14px'
                 }}
                 onClick={() => window.location.href = `${BACKEND_ORIGIN}/auth/google`}

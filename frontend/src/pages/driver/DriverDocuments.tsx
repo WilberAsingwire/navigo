@@ -147,9 +147,9 @@ const DriverDocuments: React.FC = () => {
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/driver/home" style={{color: '#fff'}} />
+            <IonBackButton defaultHref="/driver/home" style={{color: 'var(--nav-text)'}} />
           </IonButtons>
-          <IonTitle style={{color: '#fff'}}>Driver Verification</IonTitle>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Driver Verification</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -191,17 +191,17 @@ const DriverDocuments: React.FC = () => {
                     onClick={() => setVehicleType(type.id)}
                     style={{
                       background: vehicleType === type.id ? 'rgba(255, 107, 51, 0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `2px solid ${vehicleType === type.id ? '#FF6B35' : 'rgba(255,255,255,0.1)'}`,
-                      borderRadius: '16px', padding: '16px', textAlign: 'center', cursor: 'pointer',
+                      border: `2px solid ${vehicleType === type.id ? 'var(--navigo-orange)' : 'var(--nav-border-strong)'}`,
+                      borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer',
                       transition: '0.2s', position: 'relative'
                     }}
                   >
                     <IonIcon icon={type.icon} style={{
-                      fontSize: '24px', color: vehicleType === type.id ? '#FF6B35' : '#fff',
+                      fontSize: '24px', color: vehicleType === type.id ? 'var(--navigo-orange)' : 'var(--nav-text)',
                       marginBottom: '8px', display: 'block', margin: '0 auto 8px'
                     }} />
-                    <strong style={{ color: '#fff', display: 'block', fontSize: '14px' }}>{type.label}</strong>
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>{type.desc}</span>
+                    <strong style={{ color: 'var(--nav-text)', display: 'block', fontSize: '14px' }}>{type.label}</strong>
+                    <span style={{ color: 'var(--nav-text-dim)', fontSize: '11px' }}>{type.desc}</span>
                     {vehicleType === type.id && (
                       <IonBadge color="warning" style={{
                         position: 'absolute', top: '8px', right: '8px', fontSize: '10px'
@@ -278,7 +278,7 @@ const DriverDocuments: React.FC = () => {
                   <div
                     onClick={() => setIsFemaleDriver(!isFemaleDriver)}
                     style={{
-                      width: 52, height: 28, borderRadius: 14,
+                      width: 52, height: 28, borderRadius: 12,
                       background: isFemaleDriver ? '#FF69B4' : 'rgba(255,255,255,0.2)',
                       position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0
                     }}

@@ -51,8 +51,8 @@ const InteractiveCard: React.FC<InteractiveCardProps> = ({
       style={{
         cursor: onClick && !disabled ? 'pointer' : 'default',
         opacity: disabled ? 0.5 : 1,
-        transform: pressed ? 'scale(0.97)' : hoverLift ? undefined : 'none',
-        transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+        transform: pressed ? 'translateY(1px)' : 'none',
+        transition: 'transform 100ms ease, opacity 150ms ease',
         willChange: 'transform',
         position: 'relative',
         overflow: 'hidden',
@@ -62,10 +62,7 @@ const InteractiveCard: React.FC<InteractiveCardProps> = ({
     >
       {children}
       <style>{`
-        .interactive-card:hover { 
-          transform: ${hoverLift && !pressed ? 'translateY(-2px)' : pressed ? 'scale(0.97)' : 'none'}; 
-        }
-        .interactive-card:active { transform: scale(0.97) !important; }
+        .interactive-card:active { transform: translateY(1px) !important; }
         .interactive-card:focus-visible { outline: 2px solid var(--navigo-orange); outline-offset: 2px; }
       `}</style>
     </div>

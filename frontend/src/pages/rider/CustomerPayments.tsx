@@ -61,13 +61,13 @@ const RiderPayments: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#080c14'} as any}>
         <IonToolbar style={{'--background': '#080c14', '--color': '#fff'} as any}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: '#fff'}} /></IonButtons>
-          <IonTitle style={{color: '#fff'}}>Wallet & Payments</IonTitle>
+          <IonButtons slot="start"><IonBackButton defaultHref="/customer/home" style={{color: 'var(--nav-text)'}} /></IonButtons>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Wallet & Payments</IonTitle>
         </IonToolbar>
         <IonToolbar style={{'--background': '#080c14'} as any}>
           <IonSegment value={segment} onIonChange={(e) => setSegment(e.detail.value as any)}>
-            <IonSegmentButton value="methods"><IonLabel style={{ fontSize: 12, color: '#D1D5DB' }}>Methods</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="history"><IonLabel style={{ fontSize: 12, color: '#D1D5DB' }}>History</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="methods"><IonLabel style={{ fontSize: 12, color: 'var(--nav-text-secondary)' }}>Methods</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="history"><IonLabel style={{ fontSize: 12, color: 'var(--nav-text-secondary)' }}>History</IonLabel></IonSegmentButton>
           </IonSegment>
         </IonToolbar>
       </IonHeader>
@@ -92,13 +92,13 @@ const RiderPayments: React.FC = () => {
                   + UGX 50,000
                 </IonButton>
               </div>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '16px 0 0' }}>You'll receive a prompt on your phone to confirm</p>
+              <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: '16px 0 0' }}>You'll receive a prompt on your phone to confirm</p>
             </div>
           </div>
 
           {segment === 'methods' ? (
             <>
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Saved Payment Methods</h3>
+              <h3 style={{ color: 'var(--nav-text)', fontSize: 14, marginBottom: 10 }}>Saved Payment Methods</h3>
               {savedMethods.map(method => (
                 <div key={method.id} onClick={() => setDefault(method.id)}
                   className={`payment-method-card ${method.isDefault ? 'default' : ''}`}>
@@ -114,7 +114,7 @@ const RiderPayments: React.FC = () => {
                 </div>
               ))}
               <IonButton expand="block" fill="outline" onClick={() => setShowAddModal(true)}
-                style={{ '--border-color': 'rgba(255,255,255,0.12)', '--color': '#fff', '--border-radius': 16, marginTop: 8, fontSize: 13, height: 48 } as any}>
+                style={{ '--border-color': 'rgba(255,255,255,0.12)', '--color': '#fff', '--border-radius': 12, marginTop: 8, fontSize: 13, height: 48 } as any}>
                 <IonIcon icon={addOutline} slot="start" /> Add Mobile Money
               </IonButton>
               <div className="security-banner">
@@ -124,7 +124,7 @@ const RiderPayments: React.FC = () => {
             </>
           ) : (
             <>
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Transaction History</h3>
+              <h3 style={{ color: 'var(--nav-text)', fontSize: 14, marginBottom: 10 }}>Transaction History</h3>
               {transactions.map(t => (
                 <div key={t.id} className="transaction-card">
                   <div className={`transaction-icon ${t.type === 'credit' ? 'icon-credit' : 'icon-debit'}`}>
@@ -148,7 +148,7 @@ const RiderPayments: React.FC = () => {
           <div className="glass-modal">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 className="modal-title">Add Mobile Money</h2>
-              <IonButton fill="clear" onClick={() => setShowAddModal(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
+              <IonButton fill="clear" onClick={() => setShowAddModal(false)}><IonIcon icon={closeOutline} style={{ color: 'var(--nav-text)', fontSize: 22 }} /></IonButton>
             </div>
             <p className="modal-subtitle">Select provider and enter your phone number</p>
 

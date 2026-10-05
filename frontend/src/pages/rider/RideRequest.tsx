@@ -499,7 +499,7 @@ const RideRequest: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--nav-bg)', color: '#fff', gap: 16 }}>
+      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--nav-bg)', color: 'var(--nav-text)', gap: 16 }}>
         <IonSpinner name="crescent" color="warning" />
         <p>Initializing NAVIGO...</p>
       </div>
@@ -596,14 +596,14 @@ const RideRequest: React.FC = () => {
                   {isSearching && (
                     <div className="search-results-list" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', textAlign: 'center' }}>
                       <IonSpinner name="crescent" color="warning" />
-                      <span style={{ marginLeft: '10px', fontSize: '12px', color: '#94A3B8' }}>Searching Uganda...</span>
+                      <span style={{ marginLeft: '10px', fontSize: '12px', color: 'var(--nav-text-secondary)' }}>Searching Uganda...</span>
                     </div>
                   )}
                   {!isSearching && searchResults.length > 0 && (
                     <div className="search-results-list">
                       {searchResults.map((r, i) => (
                         <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
-                          <IonIcon icon={locationOutline} style={{ color: '#FF6B35' }} />
+                          <IonIcon icon={locationOutline} style={{ color: 'var(--navigo-orange)' }} />
                           <div className="result-info">
                             <span className="result-name">{r.name || r.address.split(',')[0]}</span>
                             <span className="result-addr">{r.address}</span>

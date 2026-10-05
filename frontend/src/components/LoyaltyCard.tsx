@@ -3,7 +3,7 @@ import { IonToast, IonProgressBar, IonIcon } from '@ionic/react';
 import {
   medalOutline, trophyOutline, diamondOutline, cashOutline, bicycleOutline,
   phonePortraitOutline, carOutline, carSportOutline, globeOutline, busOutline,
-  walletOutline, locateOutline, peopleOutline, starOutline, personOutline
+  walletOutline, locateOutline, peopleOutline, starOutline, personOutline, giftOutline
 } from 'ionicons/icons';
 import { useAuth } from '../context/AuthContext';
 import { Haptic } from '../services/HapticService';
@@ -62,7 +62,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
         redeemedRewards.push(reward.name);
         localStorage.setItem('navigo_redeemed', JSON.stringify(redeemedRewards));
         const discountAmount = reward.points * 10;
-        setToastMsg(`🎉 Redeemed: ${reward.name}! UGX ${discountAmount.toLocaleString()} discount applied.`);
+        setToastMsg(`Redeemed ${reward.name} — UGX ${discountAmount.toLocaleString()} discount applied`);
       } else {
         Haptic.error();
         setToastMsg(`Already redeemed: ${reward.name}`);
@@ -79,7 +79,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
     navigator.clipboard?.writeText(referralCode);
     const current = parseInt(localStorage.getItem('navigo_referrals') || '0');
     localStorage.setItem('navigo_referrals', String(current + 1));
-    setToastMsg('📋 Code copied! Share to earn 50 pts.');
+    setToastMsg('Code copied — share to earn 50 pts');
     setShowToast(true);
   };
 
@@ -110,7 +110,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
             className="loyalty-progress-bar"
           />
           <p className="loyalty-progress-text">
-            {tier !== 'platinum' ? `${config.nextTier - points} pts to next tier` : '👑 Max tier!'}
+            {tier !== 'platinum' ? `${config.nextTier - points} pts to next tier` : 'Max tier reached'}
           </p>
         </div>
 
@@ -122,7 +122,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
               onClick={() => setActiveTab(tab)}
               className={`loyalty-tab ${activeTab === tab ? 'loyalty-tab-active' : 'loyalty-tab-inactive'}`}
             >
-              {tab === 'rewards' ? '🎁' : tab === 'challenges' ? '🎯' : '👥'} {tab}
+              <IonIcon icon={tab === 'rewards' ? giftOutline : tab === 'challenges' ? locateOutline : peopleOutline} style={{ marginRight: 4, verticalAlign: '-2px' }} /> {tab}
             </button>
           ))}
         </div>
@@ -144,7 +144,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
                     <span className="reward-action action-redeem">Redeem</span>
                   ) : (
                     <span className="reward-action action-locked">
-                      🔒 {reward.points} pts
+                      {reward.points} pts
                     </span>
                   )}
                 </div>
@@ -163,7 +163,7 @@ const LoyaltyCard: React.FC<LoyaltyCardProps> = ({
             ].map(c => (
               <div key={c.name} className="challenge-item" onClick={() => {
                 if (c.check()) {
-                  setToastMsg(`✅ Challenge completed! +${c.points} pts`);
+                  setToastMsg(`Challenge completed — +${c.points} pts`);
                 } else {
                   setToastMsg(`Not yet: ${c.name}`);
                 }

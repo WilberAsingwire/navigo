@@ -173,7 +173,7 @@ const DriverHome: React.FC = () => {
               </div>
             ))
           ) : (
-            <div style={{ textAlign: 'center', padding: 20, color: '#64748B', fontSize: 13 }}>No recent activity yet</div>
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--nav-text-muted)', fontSize: 13 }}>No recent activity yet</div>
           )}
 
           <div className="bottom-stats-grid">

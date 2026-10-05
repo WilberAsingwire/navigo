@@ -60,7 +60,7 @@ const AuthCallback: React.FC = () => {
   return (
     <IonPage>
       <IonContent style={{ '--background': '#080c14', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' } as any}>
-        <div style={{ textAlign: 'center', color: '#fff' }}>
+        <div style={{ textAlign: 'center', color: 'var(--nav-text)' }}>
           {error ? (
             <>
               <p style={{ color: '#ff5252' }}>{error}</p>

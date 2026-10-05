@@ -229,12 +229,15 @@ body.light {
   --nav-input-text: #0F172A;
   --nav-input-placeholder: #94A3B8;
 
-  /* Elevation — softer for light */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.08);
-  --shadow-orange: 0 8px 24px rgba(255, 107, 53, 0.18);
-  --shadow-orange-lg: 0 12px 32px rgba(255, 107, 53, 0.22);
+  /* Elevation — softer for light, neutral only (no glows) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-float: 0 8px 24px rgba(0, 0, 0, 0.10);
+  --shadow-orange: var(--shadow-card);
+  --shadow-orange-lg: var(--shadow-float);
+
+  /* Focus ring on light surfaces */
+  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 4px var(--navigo-orange);
 }
 
 body.light html,

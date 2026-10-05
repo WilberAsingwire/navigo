@@ -5,7 +5,7 @@ export default class SafeRender extends React.Component<{ children: React.ReactN
   static getDerivedStateFromError(e: any) { return { error: true, msg: e?.message || 'Unknown error' }; }
   render() {
     if (this.state.error) {
-      return this.props.fallback || <div style={{ padding: 20, color: '#fff', textAlign: 'center' }}>Component failed: {this.state.msg}</div>;
+      return this.props.fallback || <div style={{ padding: 20, color: 'var(--nav-text)', textAlign: 'center' }}>Component failed: {this.state.msg}</div>;
     }
     return this.props.children;
   }

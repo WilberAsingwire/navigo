@@ -111,7 +111,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ rideId, currentUser, otherUser, onClo
   const shareLocation = () => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
-        const locText = `📍 https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+        const locText = `My location: https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
         sendMessage(locText, 'location');
       });
     }

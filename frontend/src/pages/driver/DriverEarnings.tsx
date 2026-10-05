@@ -144,8 +144,8 @@ const DriverEarnings: React.FC = () => {
       <IonPage>
         <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
           <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
-            <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{ color: '#fff' }} /></IonButtons>
-            <IonTitle style={{ color: '#fff' }}>Earnings</IonTitle>
+            <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{ color: 'var(--nav-text)' }} /></IonButtons>
+            <IonTitle style={{ color: 'var(--nav-text)' }}>Earnings</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonContent className="driver-earnings-container driver-earnings-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
@@ -159,8 +159,8 @@ const DriverEarnings: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
         <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
-          <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{ color: '#fff' }} /></IonButtons>
-          <IonTitle style={{ color: '#fff' }}>Earnings</IonTitle>
+          <IonButtons slot="start"><IonBackButton defaultHref="/driver/home" style={{ color: 'var(--nav-text)' }} /></IonButtons>
+          <IonTitle style={{ color: 'var(--nav-text)' }}>Earnings</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -185,7 +185,7 @@ const DriverEarnings: React.FC = () => {
                 <IonIcon icon={arrowDownOutline} slot="start" /> Request Payout
               </IonButton>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, margin: '8px 0 0' }}>
+            <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: '8px 0 0' }}>
               {balance !== null && balance < MIN_PAYOUT
                 ? `Minimum payout is UGX ${MIN_PAYOUT.toLocaleString()} — keep earning!`
                 : 'Sent to your Mobile Money — you receive the full amount, NAVIGO covers the fee'}
@@ -222,15 +222,15 @@ const DriverEarnings: React.FC = () => {
 
           {/* Tabs */}
           <IonSegment value={activeTab} onIonChange={e => setActiveTab(e.detail.value as any)} style={{ marginBottom: 14 }}>
-            <IonSegmentButton value="overview"><IonLabel style={{ fontSize: 11, color: '#fff' }}>Overview</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="history"><IonLabel style={{ fontSize: 11, color: '#fff' }}>History</IonLabel></IonSegmentButton>
-            <IonSegmentButton value="payouts"><IonLabel style={{ fontSize: 11, color: '#fff' }}>Payouts</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="overview"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text)' }}>Overview</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="history"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text)' }}>History</IonLabel></IonSegmentButton>
+            <IonSegmentButton value="payouts"><IonLabel style={{ fontSize: 11, color: 'var(--nav-text)' }}>Payouts</IonLabel></IonSegmentButton>
           </IonSegment>
 
           {/* History Tab */}
           {activeTab === 'history' && (
             <div className="history-section">
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Earnings ({earnings.length} trips)</h3>
+              <h3 style={{ color: 'var(--nav-text)', fontSize: 14, marginBottom: 10 }}>Earnings ({earnings.length} trips)</h3>
               {earnings.length === 0 ? (
                 <EmptyState
                   icon={<IonIcon icon={receiptOutline} style={{ fontSize: 26 }} />}
@@ -242,7 +242,7 @@ const DriverEarnings: React.FC = () => {
                   <div key={trip.id} className="earnings-history-card">
                     <div className="history-header">
                       <div className="history-rider-info">
-                        <IonIcon icon={receiptOutline} style={{ color: '#FF6B35' }} />
+                        <IonIcon icon={receiptOutline} style={{ color: 'var(--navigo-orange)' }} />
                         <div>
                           <span className="history-rider-name">Trip earnings</span>
                           <p className="history-ride-meta">{trip.rideId || 'Ride'}</p>
@@ -263,7 +263,7 @@ const DriverEarnings: React.FC = () => {
           {/* Payouts Tab */}
           {activeTab === 'payouts' && (
             <div className="payouts-section">
-              <h3 style={{ color: '#fff', fontSize: 14, marginBottom: 10 }}>Payout History</h3>
+              <h3 style={{ color: 'var(--nav-text)', fontSize: 14, marginBottom: 10 }}>Payout History</h3>
               {payouts.length === 0 ? (
                 <EmptyState
                   icon={<IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 26 }} />}
@@ -274,11 +274,11 @@ const DriverEarnings: React.FC = () => {
                 />
               ) : (
                 payouts.map(p => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 12, marginBottom: 8 }}>
-                    <IonIcon icon={arrowDownOutline} style={{ color: '#FF6B35', fontSize: 18 }} />
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--nav-card-soft)', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                    <IonIcon icon={arrowDownOutline} style={{ color: 'var(--navigo-orange)', fontSize: 18 }} />
                     <div style={{ flex: 1 }}>
-                      <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>UGX {p.amount.toLocaleString()}</span>
-                      <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2 }}>
+                      <span style={{ color: 'var(--nav-text)', fontSize: 13, fontWeight: 600 }}>UGX {p.amount.toLocaleString()}</span>
+                      <p style={{ color: 'var(--nav-text-dim)', fontSize: 10, margin: 2 }}>
                         {p.provider.toUpperCase()} {p.phone} • {new Date(p.createdAt).toLocaleDateString('en-UG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -312,24 +312,24 @@ const DriverEarnings: React.FC = () => {
 
         {/* Payout Request Modal */}
         <IonModal isOpen={showPayout} onDidDismiss={() => setShowPayout(false)}>
-          <div style={{ padding: 20, background: 'var(--nav-bg-soft, #0d1420)', color: '#fff', height: '100%' }}>
+          <div style={{ padding: 20, background: 'var(--nav-bg-soft, #0d1420)', color: 'var(--nav-text)', height: '100%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <h2 style={{ margin: 0 }}>Request Payout</h2>
-              <IonButton fill="clear" onClick={() => setShowPayout(false)}><IonIcon icon={closeOutline} style={{ color: '#fff', fontSize: 22 }} /></IonButton>
+              <IonButton fill="clear" onClick={() => setShowPayout(false)}><IonIcon icon={closeOutline} style={{ color: 'var(--nav-text)', fontSize: 22 }} /></IonButton>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, marginBottom: 16 }}>
+            <p style={{ color: 'var(--nav-text-secondary)', fontSize: 12, marginBottom: 16 }}>
               Available: <strong style={{ color: '#10B981' }}>UGX {(balance ?? 0).toLocaleString()}</strong> • You receive the full amount — NAVIGO covers the transfer fee.
             </p>
 
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginBottom: 6 }}>Send to</p>
+            <p style={{ fontSize: 12, color: 'var(--nav-text-secondary)', marginBottom: 6 }}>Send to</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
               {(['mtn', 'airtel'] as const).map(p => (
                 <button key={p} onClick={() => setPayoutProvider(p)}
                   style={{
-                    padding: '12px', borderRadius: 10, cursor: 'pointer', fontWeight: 700, fontSize: 13,
-                    border: payoutProvider === p ? '2px solid #FF6B35' : '1px solid rgba(255,255,255,0.12)',
+                    padding: '12px', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 13,
+                    border: payoutProvider === p ? '2px solid #FF6B35' : '1px solid var(--nav-border-strong)',
                     background: payoutProvider === p ? 'rgba(255,107,53,0.12)' : 'rgba(255,255,255,0.04)',
-                    color: payoutProvider === p ? '#FF6B35' : 'rgba(255,255,255,0.7)',
+                    color: payoutProvider === p ? 'var(--navigo-orange)' : 'var(--nav-text-secondary)',
                   }}>
                   {p === 'mtn' ? 'MTN MoMo' : 'Airtel Money'}
                 </button>
@@ -341,21 +341,21 @@ const DriverEarnings: React.FC = () => {
               value={payoutPhone}
               onIonInput={e => setPayoutPhone(e.detail.value!)}
               placeholder="Mobile Money number (07XXXXXXXX)"
-              style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 10, color: '#fff', '--padding-start': '12px' } as any}
+              style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 8, marginBottom: 10, color: 'var(--nav-text)', '--padding-start': '12px' } as any}
             />
             <IonInput
               type="number"
               value={payoutAmount}
               onIonInput={e => setPayoutAmount(e.detail.value!)}
               placeholder={`Amount (minimum ${MIN_PAYOUT.toLocaleString()})`}
-              style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 16, color: '#fff', '--padding-start': '12px' } as any}
+              style={{ '--background': 'rgba(255,255,255,0.04)', borderRadius: 8, marginBottom: 16, color: 'var(--nav-text)', '--padding-start': '12px' } as any}
             />
 
             <IonButton expand="block" onClick={handleRequestPayout} disabled={isRequesting}
-              style={{ '--background': '#FF6B35', '--border-radius': 12, fontWeight: 700 } as any}>
+              style={{ '--background': 'var(--navigo-orange)', '--border-radius': 12, fontWeight: 700 } as any}>
               {isRequesting ? <IonSpinner name="crescent" /> : 'Request Payout'}
             </IonButton>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, textAlign: 'center', marginTop: 12 }}>
+            <p style={{ color: 'var(--nav-text-dim)', fontSize: 11, textAlign: 'center', marginTop: 12 }}>
               The amount is reserved from your balance immediately and sent to your Mobile Money — usually within a few hours. If it can't be sent, it's refunded automatically.
             </p>
           </div>

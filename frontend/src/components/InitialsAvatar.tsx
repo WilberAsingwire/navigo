@@ -26,7 +26,7 @@ const InitialsAvatar: React.FC<InitialsAvatarProps> = ({ name, size = 40, color 
         height: size,
         borderRadius: '50%',
         background: color,
-        color: '#fff',
+        color: 'var(--nav-text)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

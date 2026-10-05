@@ -122,8 +122,8 @@ const Register: React.FC = () => {
 
             {roleInfo && (
               <div style={{
-                display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '12px',
+                display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--nav-card-soft)',
+                border: '1px solid var(--nav-border-strong)', borderRadius: '12px', padding: '12px',
                 fontSize: '13px', color: 'var(--navigo-zinc-400)', marginBottom: '24px'
               }}>
                 <IonIcon icon={informationCircleOutline} style={{ color: 'var(--navigo-ember)' }} />

@@ -28,7 +28,7 @@ const FlyToButton: React.FC<{ center: [number, number] }> = ({ center }) => {
     <div className="leaflet-top leaflet-right" style={{ marginTop: 80 }}>
       <div className="leaflet-control leaflet-bar">
         <a onClick={() => map.flyTo(center, 15, { duration: 1 })}
-          style={{ cursor: 'pointer', padding: '6px 10px', display: 'block', background: '#FF6B35', color: '#fff', fontWeight: 'bold', fontSize: 11, border: 'none', textDecoration: 'none' }}>
+          style={{ cursor: 'pointer', padding: '6px 10px', display: 'block', background: 'var(--navigo-orange)', color: '#fff', fontWeight: 'bold', fontSize: 11, border: 'none', textDecoration: 'none' }}>
           Center
         </a>
       </div>
@@ -190,13 +190,13 @@ const AdminLiveMap: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{'--background': '#1A1A1A'} as any}>
         <IonToolbar style={{'--background': '#1A1A1A', '--color': '#fff'} as any}>
-          <IonTitle style={{color: '#fff'}}>Live Map</IonTitle>
+          <IonTitle style={{color: 'var(--nav-text)'}}>Live Map</IonTitle>
           <div slot="end" style={{display: 'flex', gap: 4}}>
             <IonButton fill="clear" onClick={() => setAutoRefresh(!autoRefresh)}>
               <IonIcon icon={autoRefresh ? pauseOutline : playOutline} style={{color: autoRefresh ? '#2D6A4F' : '#FF6B35'}} />
             </IonButton>
             <IonButton fill="clear" onClick={loadData}>
-              <IonIcon icon={refreshOutline} style={{color: '#FF6B35'}} />
+              <IonIcon icon={refreshOutline} style={{color: 'var(--navigo-orange)'}} />
             </IonButton>
           </div>
         </IonToolbar>
@@ -205,19 +205,19 @@ const AdminLiveMap: React.FC = () => {
       <IonContent style={{'--background': 'var(--nav-bg)'} as any} className="admin-container admin-live-map">
         <div style={{display: 'flex', gap: 6, padding: '8px 12px', overflowX: 'auto'}}>
           {[{label: 'Drivers', value: stats.drivers, color: '#FF6B35'}, {label: 'Motorists', value: stats.motorists, color: '#FF6B35'}, {label: 'Customers', value: stats.riders, color: '#FF6B35'}, {label: 'Active Trips', value: stats.activeTrips, color: '#FF6B35'}].map(s => (
-            <div key={s.label} style={{background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '8px 12px', textAlign: 'center', flex: 1, minWidth: 70}}>
+            <div key={s.label} style={{background: 'var(--nav-card-soft)', borderRadius: 8, padding: '8px 12px', textAlign: 'center', flex: 1, minWidth: 70}}>
               <div style={{fontSize: 16, fontWeight: 700, color: s.color}}>{s.value}</div>
-              <div style={{fontSize: 10, color: '#D1D5DB', whiteSpace: 'nowrap'}}>{s.label}</div>
+              <div style={{fontSize: 10, color: 'var(--nav-text-secondary)', whiteSpace: 'nowrap'}}>{s.label}</div>
             </div>
           ))}
         </div>
 
         <IonSegment value={activeFilter} onIonChange={e => setActiveFilter(e.detail.value as any)} style={{margin: '0 12px 8px'}}>
-          <IonSegmentButton value="all"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>All</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="drivers"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Drivers</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="motorists"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Boda</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="riders"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Customers</IonLabel></IonSegmentButton>
-          <IonSegmentButton value="heatmap"><IonLabel style={{fontSize: 10, color: '#D1D5DB'}}>Demand</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="all"><IonLabel style={{fontSize: 10, color: 'var(--nav-text-secondary)'}}>All</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="drivers"><IonLabel style={{fontSize: 10, color: 'var(--nav-text-secondary)'}}>Drivers</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="motorists"><IonLabel style={{fontSize: 10, color: 'var(--nav-text-secondary)'}}>Boda</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="riders"><IonLabel style={{fontSize: 10, color: 'var(--nav-text-secondary)'}}>Customers</IonLabel></IonSegmentButton>
+          <IonSegmentButton value="heatmap"><IonLabel style={{fontSize: 10, color: 'var(--nav-text-secondary)'}}>Demand</IonLabel></IonSegmentButton>
         </IonSegment>
 
         {loading ? (
@@ -239,13 +239,13 @@ const AdminLiveMap: React.FC = () => {
 
         <div style={{padding: 14}}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10}}>
-            <h3 style={{color: '#fff', margin: 0, fontSize: 15}}>Active Users ({filteredUsers.length})</h3>
+            <h3 style={{color: 'var(--nav-text)', margin: 0, fontSize: 15}}>Active Users ({filteredUsers.length})</h3>
             {autoRefresh && <span style={{color: '#2D6A4F', fontSize: 10}}>● Live</span>}
           </div>
           {filteredUsers.map(u => (
-            <div key={u.id} onClick={() => handleFlyToUser(u.lat, u.lng)} style={{background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'background 0.2s'}}>
+            <div key={u.id} onClick={() => handleFlyToUser(u.lat, u.lng)} style={{background: 'var(--nav-card-soft)', borderRadius: 12, padding: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', transition: 'background 0.2s'}}>
               <IonIcon icon={getRoleIcon(u.role)} style={{color: u.role === 'driver' ? '#4da6ff' : u.role === 'motorist' ? '#ffab40' : '#00e676', fontSize: 18}} />
-              <div style={{flex: 1}}><span style={{color: '#fff', fontSize: 13}}>{u.fullName}</span><p style={{color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 2}}>{u.lat?.toFixed(4)}, {u.lng?.toFixed(4)}</p></div>
+              <div style={{flex: 1}}><span style={{color: 'var(--nav-text)', fontSize: 13}}>{u.fullName}</span><p style={{color: 'var(--nav-text-dim)', fontSize: 10, margin: 2}}>{u.lat?.toFixed(4)}, {u.lng?.toFixed(4)}</p></div>
               <IonBadge style={{background: 'rgba(16,185,129,0.15)', color: '#10B981', border: '1px solid #10B981', fontSize: 10}}>{u.status === 'active' ? 'Active' : 'Idle'}</IonBadge>
             </div>
           ))}

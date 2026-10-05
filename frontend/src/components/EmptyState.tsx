@@ -45,12 +45,6 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, actionLa
           fontSize: 28,
 
         }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'scale(1.1) rotate(5deg)';
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'scale(1) rotate(0deg)';
-        }}
       >
         {icon}
       </div>
@@ -74,7 +68,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, subtitle, actionLa
             background: pressed ? 'var(--navigo-orange-active)' : 'var(--navigo-orange)',
             color: '#fff',
             border: 'none',
-            borderRadius: 10,
+            borderRadius: 8,
             padding: '12px 24px',
             fontSize: 13,
             fontWeight: 700,

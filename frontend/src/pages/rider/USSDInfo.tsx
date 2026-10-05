@@ -16,15 +16,15 @@ const USSDInfo: React.FC = () => {
       <IonContent className="ion-padding auth-container" style={{'--background': 'var(--nav-bg)', '--color': '#fff8f0'} as any}>
         
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <IonIcon icon={phonePortraitOutline} style={{ fontSize: 64, color: '#FF6B35' }} />
-          <h2 style={{ color: '#fff' }}>Book Without Internet</h2>
+          <IonIcon icon={phonePortraitOutline} style={{ fontSize: 64, color: 'var(--navigo-orange)' }} />
+          <h2 style={{ color: 'var(--nav-text)' }}>Book Without Internet</h2>
           <p style={{ color: 'rgba(255,248,240,0.6)' }}>Works on ANY phone — even kabiriti!</p>
         </div>
 
         <IonCard style={{ background: 'var(--navigo-orange)', borderRadius: 12, textAlign: 'center', padding: 20 }}>
           <IonCardContent>
-            <h1 style={{ color: '#fff', fontSize: 36, margin: 0, letterSpacing: 4 }}>*284*624#</h1>
-            <p style={{ color: 'rgba(255,255,255,0.8)', marginTop: 8 }}>Dial this number to book a ride</p>
+            <h1 style={{ color: 'var(--nav-text)', fontSize: 36, margin: 0, letterSpacing: 4 }}>*284*624#</h1>
+            <p style={{ color: 'var(--nav-text-secondary)', marginTop: 8 }}>Dial this number to book a ride</p>
             <IonButton expand="block" fill="solid" color="light" onClick={() => window.open('tel:*284*624#', '_system')}>
               <IonIcon icon={callOutline} slot="start" />
               Dial Now
@@ -32,7 +32,7 @@ const USSDInfo: React.FC = () => {
           </IonCardContent>
         </IonCard>
 
-        <h3 style={{ color: '#fff', marginTop: 24 }}>How It Works</h3>
+        <h3 style={{ color: 'var(--nav-text)', marginTop: 24 }}>How It Works</h3>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
@@ -41,12 +41,12 @@ const USSDInfo: React.FC = () => {
             { step: '3', text: 'Enter your pickup location', icon: helpCircleOutline },
             { step: '4', text: 'Receive driver details via SMS', icon: checkmarkCircleOutline },
           ].map(item => (
-            <div key={item.step} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 14 }}>
-              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#FF6B35', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>
+            <div key={item.step} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14 }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--navigo-orange)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 'bold' }}>
                 {item.step}
               </div>
-              <IonIcon icon={item.icon} style={{ color: '#FF6B35', fontSize: 20 }} />
-              <span style={{ color: '#fff', fontSize: 14 }}>{item.text}</span>
+              <IonIcon icon={item.icon} style={{ color: 'var(--navigo-orange)', fontSize: 20 }} />
+              <span style={{ color: 'var(--nav-text)', fontSize: 14 }}>{item.text}</span>
             </div>
           ))}
         </div>

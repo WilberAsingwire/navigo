@@ -36,7 +36,7 @@ const IncomingRequest: React.FC = () => {
     const socket = socketService.connect(user.id);
 
     socket.on('ride-requested', async (data: any) => {
-      console.log('🔔 New ride request received!', data);
+      console.log('New ride request received', data);
       // Start (or restart) the decision timer only when a request actually arrives
       setTimeLeft(20);
       try {
@@ -135,7 +135,7 @@ const IncomingRequest: React.FC = () => {
     return (
       <IonPage>
         <IonContent className="request-bg incoming-wrapper" style={{'--background': 'var(--nav-bg)',  display: 'flex', justifyContent: 'center', alignItems: 'center' } as any}>
-          <div style={{ textAlign: 'center', color: '#fff' }}>
+          <div style={{ textAlign: 'center', color: 'var(--nav-text)' }}>
             <IonSpinner name="crescent" />
             <p>Waiting for ride requests...</p>
           </div>
@@ -152,28 +152,28 @@ const IncomingRequest: React.FC = () => {
         <div className="request-container">
           <div className="timer-section">
             <div className={`timer-circle pulse`}>
-              <h1 className="sora-font" style={{ color: timeLeft <= 5 ? '#ff5252' : '#FF6B35' }}>{timeLeft}</h1>
-              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>sec</span>
+              <h1 className="sora-font" style={{ color: timeLeft <= 5 ? 'var(--nav-danger)' : 'var(--navigo-orange)' }}>{timeLeft}</h1>
+              <span style={{ fontSize: 10, color: 'var(--nav-text-secondary)' }}>sec</span>
             </div>
-            <h2 className="sora-font" style={{ color: '#fff', margin: '8px 0' }}>New ride request</h2>
+            <h2 className="sora-font" style={{ color: 'var(--nav-text)', margin: '8px 0' }}>New ride request</h2>
             <IonProgressBar value={progressPercent / 100} color={timeLeft <= 5 ? 'danger' : 'success'} style={{ height: 6, borderRadius: 3, maxWidth: 200, margin: '0 auto' }} />
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, margin: '6px 0 0' }}>
+            <p style={{ color: 'var(--nav-text-dim)', fontSize: 11, margin: '6px 0 0' }}>
               {timeLeft <= 5 ? 'Request expires soon' : 'Accept before time runs out'}
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 12, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, marginBottom: 14 }}>
             <IonAvatar style={{ width: 44, height: 44 }}>
               <InitialsAvatar name={requestData.riderName} size={44} />
             </IonAvatar>
             <div style={{ flex: 1 }}>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>
+              <h3 style={{ color: 'var(--nav-text)', margin: 0, fontSize: 15 }}>
                 {requestData.riderName}
                 {requestData.serviceType === 'delivery' && (
                   <IonBadge color="light" style={{ marginLeft: 8, fontSize: 9, verticalAlign: 'middle' }}>DELIVERY</IonBadge>
                 )}
               </h3>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, margin: 2 }}>
+              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 11, margin: 2 }}>
                 <IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {Number(requestData.riderRating || 5).toFixed(1)}
                 {VEHICLE_LABELS[requestData.vehicleType] ? ` • ${VEHICLE_LABELS[requestData.vehicleType]}` : requestData.rideType ? ` • ${requestData.rideType}` : ''}
               </p>
@@ -183,8 +183,8 @@ const IncomingRequest: React.FC = () => {
 
           {requestData.serviceType === 'delivery' && (
             <div style={{ background: 'rgba(77,166,255,0.08)', border: '1px solid rgba(77,166,255,0.25)', borderRadius: 12, padding: 12, marginBottom: 14, fontSize: 12 }}>
-              <p style={{ color: '#fff', margin: 0, fontWeight: 600 }}>Package: {requestData.packageDetails || '—'}</p>
-              <p style={{ color: 'rgba(255,255,255,0.6)', margin: '4px 0 0' }}>
+              <p style={{ color: 'var(--nav-text)', margin: 0, fontWeight: 600 }}>Package: {requestData.packageDetails || '—'}</p>
+              <p style={{ color: 'var(--nav-text-secondary)', margin: '4px 0 0' }}>
                 Hand to: {requestData.receiverName || '—'} {requestData.receiverPhone ? `• ${requestData.receiverPhone}` : ''}
               </p>
             </div>
@@ -209,34 +209,34 @@ const IncomingRequest: React.FC = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 16 }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+            <div style={{ background: 'var(--nav-card-soft)', borderRadius: 8, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={mapOutline} style={{ color: '#4da6ff', fontSize: 16, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>
+              <p style={{ color: 'var(--nav-text)', fontSize: 12, fontWeight: 600, margin: 2 }}>
                 {requestData.distanceKm ? `${requestData.distanceKm} km` : (requestData.distance || '—')}
               </p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Distance</span>
+              <span style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>Distance</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+            <div style={{ background: 'var(--nav-card-soft)', borderRadius: 8, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={timeOutline} style={{ color: '#FFC107', fontSize: 16, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>
+              <p style={{ color: 'var(--nav-text)', fontSize: 12, fontWeight: 600, margin: 2 }}>
                 {requestData.durationMin ? `${requestData.durationMin} min` : (requestData.estimatedTime || '—')}
               </p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>ETA</span>
+              <span style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>ETA</span>
             </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+            <div style={{ background: 'var(--nav-card-soft)', borderRadius: 8, padding: 10, textAlign: 'center' }}>
               <IonIcon icon={cashOutline} style={{ color: '#00e676', fontSize: 16, marginBottom: 4 }} />
-              <p style={{ color: '#fff', fontSize: 12, fontWeight: 600, margin: 2 }}>UGX {(requestData.fareFinal || requestData.fareRecommended || requestData.fare || 0).toLocaleString()}</p>
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Fare</span>
+              <p style={{ color: 'var(--nav-text)', fontSize: 12, fontWeight: 600, margin: 2 }}>UGX {(requestData.fareFinal || requestData.fareRecommended || requestData.fare || 0).toLocaleString()}</p>
+              <span style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>Fare</span>
             </div>
           </div>
 
           <div className="action-grid">
             <IonButton expand="block" fill="outline" color="light" onClick={handleDecline} disabled={isAccepting}
-              style={{ '--border-radius': 14, height: 50, fontSize: 15, fontWeight: 600 } as any}>
+              style={{ '--border-radius': 12, height: 50, fontSize: 15, fontWeight: 600 } as any}>
               <IonIcon icon={closeOutline} slot="start" /> Decline
             </IonButton>
             <IonButton expand="block" className="accept-btn" onClick={handleAccept} disabled={isAccepting}
-              style={{ '--border-radius': 14, height: 50, fontSize: 15, fontWeight: 700 } as any}>
+              style={{ '--border-radius': 12, height: 50, fontSize: 15, fontWeight: 700 } as any}>
               {isAccepting ? 'Accepting...' : 'Accept Ride'}
               <IonIcon icon={checkmarkCircleOutline} slot="end" />
             </IonButton>

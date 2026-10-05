@@ -163,7 +163,7 @@ const DriverActiveRide: React.FC = () => {
         <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="driver-active-wrapper">
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 16 }}>
             <IonSpinner name="crescent" color="warning" />
-            <p style={{ color: '#94A3B8' }}>Loading trip details…</p>
+            <p style={{ color: 'var(--nav-text-secondary)' }}>Loading trip details…</p>
           </div>
         </IonContent>
       </IonPage>
@@ -175,7 +175,7 @@ const DriverActiveRide: React.FC = () => {
       <IonPage>
         <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
           <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
-            <IonTitle style={{ color: '#fff' }}>Active Trip</IonTitle>
+            <IonTitle style={{ color: 'var(--nav-text)' }}>Active Trip</IonTitle>
           </IonToolbar>
         </IonHeader>
         <IonContent style={{ '--background': 'var(--nav-bg)' } as any} className="driver-active-wrapper">
@@ -202,7 +202,7 @@ const DriverActiveRide: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border" style={{ '--background': '#080c14' } as any}>
         <IonToolbar style={{ '--background': '#080c14', '--color': '#fff' }}>
-          <IonTitle style={{ color: '#fff' }}>{PHASE_TITLES[phase] || 'Trip'}</IonTitle>
+          <IonTitle style={{ color: 'var(--nav-text)' }}>{PHASE_TITLES[phase] || 'Trip'}</IonTitle>
           <IonBadge
             slot="end"
             color={phase === 'completed' ? 'success' : phase === 'cancelled' ? 'danger' : 'warning'}
@@ -233,24 +233,24 @@ const DriverActiveRide: React.FC = () => {
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
           {/* Rider Card */}
-          <div className="rider-info-card" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+          <div className="rider-info-card" style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--nav-card-soft)', border: '1px solid var(--nav-border)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
             <IonAvatar style={{ width: 48, height: 48 }}>
               <InitialsAvatar name={riderName} size={48} />
             </IonAvatar>
             <div className="rider-details" style={{ flex: 1 }}>
-              <h3 style={{ color: '#fff', margin: 0, fontSize: 15 }}>{riderName}</h3>
-              <p style={{ color: '#94A3B8', margin: '2px 0 0', fontSize: 12 }}>
+              <h3 style={{ color: 'var(--nav-text)', margin: 0, fontSize: 15 }}>{riderName}</h3>
+              <p style={{ color: 'var(--nav-text-secondary)', margin: '2px 0 0', fontSize: 12 }}>
                 <IonIcon icon={starOutline} style={{ color: '#FFC107', fontSize: 12 }} /> {Number(rider?.rating || 5).toFixed(1)} • {VEHICLE_LABELS[ride.vehicleType] || ride.vehicleType}
               </p>
             </div>
             <div className="rider-actions">
               {rider?.phone && (
                 <IonButton fill="clear" size="small" onClick={() => window.open(`tel:${rider.phone}`)}>
-                  <IonIcon icon={callOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
+                  <IonIcon icon={callOutline} style={{ color: 'var(--navigo-orange)', fontSize: 20 }} />
                 </IonButton>
               )}
               <IonButton fill="clear" size="small" onClick={() => setShowChat(true)}>
-                <IonIcon icon={chatbubbleEllipsesOutline} style={{ color: '#FF6B35', fontSize: 20 }} />
+                <IonIcon icon={chatbubbleEllipsesOutline} style={{ color: 'var(--navigo-orange)', fontSize: 20 }} />
               </IonButton>
             </div>
           </div>
@@ -260,10 +260,10 @@ const DriverActiveRide: React.FC = () => {
             <div style={{ background: 'rgba(77,166,255,0.08)', border: '1px solid rgba(77,166,255,0.25)', borderRadius: 12, padding: 12, marginBottom: 12, display: 'flex', gap: 10 }}>
               <IonIcon icon={paperPlaneOutline} style={{ color: '#4DA6FF', fontSize: 20 }} />
               <div>
-                <p style={{ color: '#fff', margin: 0, fontSize: 13, fontWeight: 600 }}>
+                <p style={{ color: 'var(--nav-text)', margin: 0, fontSize: 13, fontWeight: 600 }}>
                   Delivering: {ride.packageDetails || 'Package'}
                 </p>
-                <p style={{ color: '#94A3B8', margin: '2px 0 0', fontSize: 12 }}>
+                <p style={{ color: 'var(--nav-text-secondary)', margin: '2px 0 0', fontSize: 12 }}>
                   Hand to: {ride.receiverName || '—'} {ride.receiverPhone ? `• ${ride.receiverPhone}` : ''}
                 </p>
               </div>
@@ -271,49 +271,49 @@ const DriverActiveRide: React.FC = () => {
           )}
 
           {/* Route Details */}
-          <div className="route-info-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
+          <div className="route-info-card" style={{ background: 'var(--nav-card-soft)', border: '1px solid var(--nav-border)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
             <div className="route-point" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
               <IonIcon icon={locationOutline} style={{ color: '#2D6A4F', fontSize: 16 }} />
-              <span style={{ color: '#fff', fontSize: 13 }}>Pickup: {ride.pickup.address}</span>
+              <span style={{ color: 'var(--nav-text)', fontSize: 13 }}>Pickup: {ride.pickup.address}</span>
             </div>
             <div className="route-point" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <IonIcon icon={flagOutline} style={{ color: '#E85D75', fontSize: 16 }} />
-              <span style={{ color: '#fff', fontSize: 13 }}>{isDelivery ? 'Deliver to:' : 'Destination:'} {ride.destination.address}</span>
+              <span style={{ color: 'var(--nav-text)', fontSize: 13 }}>{isDelivery ? 'Deliver to:' : 'Destination:'} {ride.destination.address}</span>
             </div>
           </div>
 
           {/* Trip Stats */}
           <div className="trip-stats-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
-            <div className="trip-stat-card" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+            <div className="trip-stat-card" style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
               <IonIcon icon={mapOutline} style={{ color: '#4da6ff', fontSize: 18, marginBottom: 4 }} />
-              <p className="trip-stat-value" style={{ color: '#fff', margin: 2, fontSize: 14, fontWeight: 700 }}>{ride.distanceKm ? `${ride.distanceKm} km` : '—'}</p>
-              <span className="trip-stat-label" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Distance</span>
+              <p className="trip-stat-value" style={{ color: 'var(--nav-text)', margin: 2, fontSize: 14, fontWeight: 700 }}>{ride.distanceKm ? `${ride.distanceKm} km` : '—'}</p>
+              <span className="trip-stat-label" style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>Distance</span>
             </div>
-            <div className="trip-stat-card" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+            <div className="trip-stat-card" style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
               <IonIcon icon={timeOutline} style={{ color: '#FFC107', fontSize: 18, marginBottom: 4 }} />
-              <p className="trip-stat-value" style={{ color: '#fff', margin: 2, fontSize: 14, fontWeight: 700 }}>{ride.durationMin ? `${ride.durationMin} min` : '—'}</p>
-              <span className="trip-stat-label" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Duration</span>
+              <p className="trip-stat-value" style={{ color: 'var(--nav-text)', margin: 2, fontSize: 14, fontWeight: 700 }}>{ride.durationMin ? `${ride.durationMin} min` : '—'}</p>
+              <span className="trip-stat-label" style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>Duration</span>
             </div>
-            <div className="trip-stat-card" style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
+            <div className="trip-stat-card" style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, textAlign: 'center' }}>
               <IonIcon icon={cashOutline} style={{ color: '#00e676', fontSize: 18, marginBottom: 4 }} />
-              <p className="trip-stat-value" style={{ color: '#fff', margin: 2, fontSize: 14, fontWeight: 700 }}>UGX {fare.toLocaleString()}</p>
-              <span className="trip-stat-label" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>Fare</span>
+              <p className="trip-stat-value" style={{ color: 'var(--nav-text)', margin: 2, fontSize: 14, fontWeight: 700 }}>UGX {fare.toLocaleString()}</p>
+              <span className="trip-stat-label" style={{ color: 'var(--nav-text-dim)', fontSize: 9 }}>Fare</span>
             </div>
           </div>
 
           {/* Earnings Breakdown */}
           <div className="earnings-card" style={{ background: 'var(--nav-bg-raised)', border: '1px solid var(--nav-border-strong)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
-            <h4 className="earnings-title" style={{ color: '#fff', margin: '0 0 10px', fontSize: 14 }}>
-              <IonIcon icon={cashOutline} style={{ color: '#FF6B35' }} /> Your Earnings
+            <h4 className="earnings-title" style={{ color: 'var(--nav-text)', margin: '0 0 10px', fontSize: 14 }}>
+              <IonIcon icon={cashOutline} style={{ color: 'var(--navigo-orange)' }} /> Your Earnings
             </h4>
-            <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 12, marginBottom: 6 }}>
-              <span>Total Fare</span><span style={{ color: '#fff' }}>UGX {fare.toLocaleString()}</span>
+            <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--nav-text-secondary)', fontSize: 12, marginBottom: 6 }}>
+              <span>Total Fare</span><span style={{ color: 'var(--nav-text)' }}>UGX {fare.toLocaleString()}</span>
             </div>
-            <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: '#94A3B8', fontSize: 12, marginBottom: 10 }}>
+            <div className="earnings-row" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--nav-text-secondary)', fontSize: 12, marginBottom: 10 }}>
               <span>NAVIGO Commission (10%)</span><span style={{ color: '#E85D75' }}>-UGX {commission.toLocaleString()}</span>
             </div>
-            <div className="earnings-total" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>You Earn</span>
+            <div className="earnings-total" style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--nav-border-strong)', paddingTop: 10 }}>
+              <span style={{ color: 'var(--nav-text)', fontWeight: 700, fontSize: 14 }}>You Earn</span>
               <span style={{ color: '#00e676', fontWeight: 800, fontSize: 16 }}>UGX {net.toLocaleString()}</span>
             </div>
           </div>
@@ -338,16 +338,16 @@ const DriverActiveRide: React.FC = () => {
           {phase === 'completed' && (
             <div className="completion-state" style={{ textAlign: 'center', padding: '10px 0' }}>
               <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 48, color: '#10B981' }} />
-              <h3 style={{ color: '#fff' }}>Trip Completed!</h3>
-              <p style={{ color: '#94A3B8', fontSize: 13 }}>You earned <span style={{ color: '#00e676', fontWeight: 700 }}>UGX {net.toLocaleString()}</span></p>
-              <IonNote style={{ color: 'rgba(255,255,255,0.35)' }}>Wallet payments settle automatically.</IonNote>
+              <h3 style={{ color: 'var(--nav-text)' }}>Trip Completed!</h3>
+              <p style={{ color: 'var(--nav-text-secondary)', fontSize: 13 }}>You earned <span style={{ color: '#00e676', fontWeight: 700 }}>UGX {net.toLocaleString()}</span></p>
+              <IonNote style={{ color: 'var(--nav-text-dim)' }}>Wallet payments settle automatically.</IonNote>
             </div>
           )}
 
           {phase === 'cancelled' && (
             <div style={{ textAlign: 'center', padding: '10px 0' }}>
               <IonIcon icon={closeOutline} style={{ fontSize: 48, color: '#EF4444' }} />
-              <h3 style={{ color: '#fff' }}>Trip Cancelled</h3>
+              <h3 style={{ color: 'var(--nav-text)' }}>Trip Cancelled</h3>
               <IonButton expand="block" fill="outline" color="light" onClick={() => history.push('/driver/home')} style={{ borderRadius: 12 }}>
                 Back to home
               </IonButton>

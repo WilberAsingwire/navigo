@@ -57,7 +57,7 @@ body.light .admin-bg {
 }
 .driver-card:hover::before, .rider-info-card:hover::before, .fare-card:hover::before, .wallet-balance-card:hover::before { opacity: 1; }
 .driver-card:active, .rider-info-card:active, .fare-card:active, .history-stat-card:active, .admin-kpi-card:active {
-  transform: translateY(0) scale(0.97) !important;
+  transform: translateY(1px) !important;
   transition-duration: 0.1s !important;
 }
 

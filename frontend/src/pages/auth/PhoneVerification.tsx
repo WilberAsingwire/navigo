@@ -54,7 +54,7 @@ const PhoneVerification: React.FC = () => {
       setInfo(res.data?.message || 'Verification code sent.');
       if (res.data?.devCode) {
         setDevCode(res.data.devCode);
-        console.log('📱 DEV verification code:', res.data.devCode);
+        console.log('DEV verification code:', res.data.devCode);
       }
       startCountdown();
     } catch (err: any) {
@@ -126,9 +126,9 @@ const PhoneVerification: React.FC = () => {
       <IonHeader className="ion-no-border">
         <IonToolbar>
           <IonButton slot="start" fill="clear" onClick={() => history.goBack()}>
-            <IonIcon icon={arrowBackOutline} style={{ color: '#fff' }} />
+            <IonIcon icon={arrowBackOutline} style={{ color: 'var(--nav-text)' }} />
           </IonButton>
-          <IonTitle style={{ color: '#fff' }}>Verify Phone</IonTitle>
+          <IonTitle style={{ color: 'var(--nav-text)' }}>Verify Phone</IonTitle>
         </IonToolbar>
       </IonHeader>
 
@@ -185,15 +185,15 @@ const PhoneVerification: React.FC = () => {
                 Resend Code
               </IonButton>
             ) : (
-              <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
-                Resend code in <strong style={{ color: '#FF6B35' }}>{countdown}s</strong>
+              <p style={{ color: 'var(--nav-text-dim)', fontSize: 12 }}>
+                Resend code in <strong style={{ color: 'var(--navigo-orange)' }}>{countdown}s</strong>
               </p>
             )}
           </div>
 
           {/* Help */}
           <div style={{ textAlign: 'center', marginTop: 24 }}>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>
+            <p style={{ color: 'var(--nav-text-dim)', fontSize: 11 }}>
               Didn't receive the code? Check your SMS inbox{user?.email ? ' or email' : ''}, or contact support.
             </p>
           </div>

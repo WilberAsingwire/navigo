@@ -184,7 +184,7 @@ const ForgotPassword: React.FC = () => {
                     marginTop: '12px',
                     background: 'none',
                     border: 'none',
-                    color: '#FF6B35',
+                    color: 'var(--navigo-orange)',
                     fontWeight: 600,
                     cursor: resending ? 'wait' : 'pointer',
                     fontSize: '14px',
