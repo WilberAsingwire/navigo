@@ -44,7 +44,7 @@ const PremiumExperience: React.FC = () => {
       observer?.observe(node);
     };
 
-    if (!reduced) {
+    if (!reduced && typeof IntersectionObserver !== 'undefined') {
       observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
@@ -56,6 +56,9 @@ const PremiumExperience: React.FC = () => {
     }
 
     document.querySelectorAll<HTMLElement>('[data-reveal]').forEach(reveal);
+    if (!reduced && !observer) {
+      document.querySelectorAll<HTMLElement>('[data-reveal]').forEach(node => node.classList.add('is-visible'));
+    }
 
     const mutationObserver = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
@@ -67,7 +70,9 @@ const PremiumExperience: React.FC = () => {
       }
     });
 
-    mutationObserver.observe(document.body, { childList: true, subtree: true });
+    if (typeof MutationObserver !== 'undefined') {
+      mutationObserver.observe(document.body, { childList: true, subtree: true });
+    }
 
     return () => {
       mutationObserver.disconnect();
