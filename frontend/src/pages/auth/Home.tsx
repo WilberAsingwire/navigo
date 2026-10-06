@@ -20,7 +20,6 @@ import comfortNew from '../../assets/vehicles/comfort-new.png';
 import xlNew from '../../assets/vehicles/xl-new.png';
 
 const Home: React.FC = () => {
-  const history = useHistory();
   const ionRouter = useIonRouter();
   const { light } = useHaptic();
   const [activeRide, setActiveRide] = useState('boda');
