@@ -10,14 +10,15 @@ import api from '../services/api';
 // Imagery for satellite — both free, no API key, no Google dependency. The
 // paid upgrade path (Google/Mapbox tiles) is a one-line TileLayer URL swap.
 const TILE_LAYERS = {
-  standard: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  },
-  satellite: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics',
-  },
+  standard: [
+    { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+    { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', attribution: 'Tiles &copy; Esri' },
+    { url: 'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+  ],
+  satellite: [
+    { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics' },
+    { url: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attribution: 'Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics' },
+  ],
 } as const;
 import bodaNew from '../assets/vehicles/boda-new.png';
 import goNew from '../assets/vehicles/go-new.png';
@@ -137,6 +138,8 @@ const NavigoMap: React.FC<MapProps> = ({
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
   const [tileError, setTileError] = useState(false);
   const [tileReloadKey, setTileReloadKey] = useState(0);
+  const [tileProviderIndex, setTileProviderIndex] = useState(0);
+  const tileFallbackRef = React.useRef(false);
   const mapRef = React.useRef<L.Map | null>(null);
 
   const getValidCenter = (): [number, number] => {
@@ -234,13 +237,32 @@ const NavigoMap: React.FC<MapProps> = ({
 
   const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
     setMapStyle(newStyle);
+    setTileProviderIndex(0);
+    tileFallbackRef.current = false;
     setTileError(false);
     setTileReloadKey(k => k + 1);
   };
 
   const retryMapTiles = () => {
+    setTileProviderIndex(0);
+    tileFallbackRef.current = false;
     setTileError(false);
     setTileReloadKey(k => k + 1);
+  };
+
+  const activeTileLayer = TILE_LAYERS[mapStyle][tileProviderIndex] || TILE_LAYERS[mapStyle][0];
+
+  const handleTileError = () => {
+    if (tileFallbackRef.current) return;
+    tileFallbackRef.current = true;
+    const nextProvider = tileProviderIndex + 1;
+    if (nextProvider < TILE_LAYERS[mapStyle].length) {
+      setTileError(false);
+      setTileProviderIndex(nextProvider);
+      setTileReloadKey(k => k + 1);
+    } else {
+      setTileError(true);
+    }
   };
 
   return (
@@ -305,13 +327,16 @@ const NavigoMap: React.FC<MapProps> = ({
         ref={mapRef as any}
       >
         <TileLayer
-          key={`${mapStyle}-${tileReloadKey}`}
-          url={TILE_LAYERS[mapStyle].url}
-          attribution={TILE_LAYERS[mapStyle].attribution}
+          key={`${mapStyle}-${tileProviderIndex}-${tileReloadKey}`}
+          url={activeTileLayer.url}
+          attribution={activeTileLayer.attribution}
           maxZoom={19}
           eventHandlers={{
-            tileerror: () => setTileError(true),
-            load: () => setTileError(false),
+            tileerror: handleTileError,
+            load: () => {
+              tileFallbackRef.current = false;
+              setTileError(false);
+            },
           }}
         />
         <MapEvents
