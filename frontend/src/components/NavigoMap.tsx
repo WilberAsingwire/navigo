@@ -11,7 +11,7 @@ import api from '../services/api';
 // paid upgrade path (Google/Mapbox tiles) is a one-line TileLayer URL swap.
 const TILE_LAYERS = {
   standard: [
-    { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
+    { url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
     { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', attribution: 'Tiles &copy; Esri' },
     { url: 'https://{s}.tile.openstreetmap.de/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
   ],
@@ -511,6 +511,25 @@ const NavigoMap: React.FC<MapProps> = ({
             },
           }}
         />
+        {mapStyle === 'satellite' && (
+          <>
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
+              attribution="Esri, Garmin, HERE, © OpenStreetMap contributors, and the GIS User Community"
+              opacity={0.72}
+              maxZoom={20}
+              zIndex={210}
+            />
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+              attribution="Esri, Garmin, HERE, © OpenStreetMap contributors, and the GIS User Community"
+              opacity={0.88}
+              maxZoom={20}
+              zIndex={211}
+            />
+          </>
+        )}
+
         <MapEvents
           onMapClick={onMapClick}
           userLocation={userLocation}
@@ -535,6 +554,33 @@ const NavigoMap: React.FC<MapProps> = ({
           }}
         />
         <MapInteractionController interactive={interactive} />
+
+        {mapFeatures.map(feature => (
+          <CircleMarker
+            key={feature.id}
+            center={[feature.lat, feature.lng]}
+            radius={feature.category === 'road' ? 3.5 : 5}
+            pathOptions={{
+              color: FEATURE_COLORS[feature.category] || FEATURE_COLORS.other,
+              fillColor: FEATURE_COLORS[feature.category] || FEATURE_COLORS.other,
+              fillOpacity: feature.category === 'road' ? 0.78 : 0.92,
+              weight: 1.5,
+            }}
+            eventHandlers={{
+              click: () => {
+                try {
+                  mapRef.current?.flyTo([feature.lat, feature.lng], Math.max(15, mapRef.current.getZoom()), { duration: 0.5 });
+                } catch { /* noop */ }
+              },
+            }}
+          >
+            <Popup>
+              <strong>{feature.name}</strong>
+              <br />{feature.address || 'Uganda'}
+              <br /><small>{feature.subtype || feature.category}</small>
+            </Popup>
+          </CircleMarker>
+        ))}
 
         {isValidLatLng(pickupLocation) && (
           <Marker
@@ -634,6 +680,7 @@ const NavigoMap: React.FC<MapProps> = ({
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance.toFixed(2)} km · {routeDuration} min</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">{nearbyDrivers.length} driver{nearbyDrivers.length > 1 ? 's' : ''} nearby</div>}
+          {mapFeatures.length > 0 && <div className="map-badge">{mapFeatures.length} map features</div>}
         </div>
         <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
           <div className="map-zoom-controls">
