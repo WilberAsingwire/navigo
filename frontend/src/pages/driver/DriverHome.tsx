@@ -49,7 +49,7 @@ const DriverHome: React.FC = () => {
     earnings: 0,
     rating: 5,
     completedRides: 0,
-    acceptanceRate: 100,
+    completionRate: 100,
     todayEarnings: 0,
     weeklyEarnings: 0
   });
@@ -174,7 +174,7 @@ const DriverHome: React.FC = () => {
 
           <div className="bottom-stats-grid">
             <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completedRides}</p><span className="bottom-stat-label">Total Rides</span></div>
-            <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.acceptanceRate}%</p><span className="bottom-stat-label">Acceptance</span></div>
+            <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completionRate}%</p><span className="bottom-stat-label">Completion</span></div>
             <div className="bottom-stat-card"><p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p><span className="bottom-stat-label">This Week</span></div>
           </div>
         </div>
