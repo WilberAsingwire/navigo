@@ -73,6 +73,19 @@ const isValidLatLng = (ll: { lat: number; lng: number } | null | undefined): boo
   return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 };
 
+const MapReady: React.FC<{ onReady: (map: L.Map) => void }> = ({ onReady }) => {
+  const map = useMap();
+  useEffect(() => {
+    onReady(map);
+    const refresh = () => {
+      try { map.invalidateSize({ pan: false }); } catch { /* noop */ }
+    };
+    const timers = [0, 100, 350, 800].map(ms => window.setTimeout(refresh, ms));
+    return () => timers.forEach(window.clearTimeout);
+  }, [map, onReady]);
+  return null;
+};
+
 const MapEvents: React.FC<{
   onMapClick?: (ll: [number, number]) => void;
   userLocation: { lat: number; lng: number } | null;
@@ -135,7 +148,16 @@ const NavigoMap: React.FC<MapProps> = ({
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
   const [mapZoom, setMapZoom] = useState(15);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
+  const [tileError, setTileError] = useState(false);
+  const [tileReloadKey, setTileReloadKey] = useState(0);
   const mapRef = React.useRef<L.Map | null>(null);
+
+  const handleMapReady = useCallback((map: L.Map) => {
+    mapRef.current = map;
+    window.setTimeout(() => {
+      try { map.invalidateSize({ pan: false }); } catch { /* noop */ }
+    }, 0);
+  }, []);
 
   const getValidCenter = (): [number, number] => {
     if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
@@ -232,6 +254,13 @@ const NavigoMap: React.FC<MapProps> = ({
 
   const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
     setMapStyle(newStyle);
+    setTileError(false);
+    setTileReloadKey(k => k + 1);
+  };
+
+  const retryMapTiles = () => {
+    setTileError(false);
+    setTileReloadKey(k => k + 1);
   };
 
   return (
@@ -252,6 +281,16 @@ const NavigoMap: React.FC<MapProps> = ({
           <div className="map-state-card">
             <div className="map-spinner"></div>
             <p>Loading map layers...</p>
+          </div>
+        </div>
+      )}
+
+      {tileError && !error && (
+        <div className="map-overlay-state error" style={{ zIndex: 1100 }}>
+          <div className="map-state-card">
+            <div className="map-error-icon"><IonIcon icon={warningOutline} /></div>
+            <p>Map tiles could not be loaded. Check your internet connection and try again.</p>
+            <button className="map-retry-btn" onClick={retryMapTiles}>Retry map</button>
           </div>
         </div>
       )}
@@ -277,17 +316,24 @@ const NavigoMap: React.FC<MapProps> = ({
         style={{
           height: '100%',
           width: '100%',
+          minHeight: 240,
           zIndex: 2,
+          position: 'relative',
         }}
         zoomControl={false}
         attributionControl={true}
         ref={mapRef as any}
       >
+        <MapReady onReady={handleMapReady} />
         <TileLayer
-          key={mapStyle}
+          key={`${mapStyle}-${tileReloadKey}`}
           url={TILE_LAYERS[mapStyle].url}
           attribution={TILE_LAYERS[mapStyle].attribution}
           maxZoom={19}
+          eventHandlers={{
+            tileerror: () => setTileError(true),
+            load: () => setTileError(false),
+          }}
         />
         <MapEvents
           onMapClick={onMapClick}
