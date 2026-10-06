@@ -14,8 +14,6 @@ import { useHistory } from 'react-router-dom';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import BodaSafeScore from '../../components/BodaSafeBadges';
-import LoyaltyCard from '../../components/LoyaltyCard';
 import ThemeToggle from '../../components/ThemeToggle';
 import useHaptic from '../../hooks/useHaptic';
 import './DriverHome.css';
@@ -145,8 +143,6 @@ const DriverHome: React.FC = () => {
             </div>
           </div>
 
-          <BodaSafeScore badges={[]} rating={stats.rating} totalRides={stats.completedRides} />
-          <LoyaltyCard points={0} tier="bronze" />
 
           <h3 className="actions-header">Quick Actions</h3>
           <div className="actions-grid">
