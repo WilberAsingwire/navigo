@@ -221,7 +221,7 @@ export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResu
   // Nominatim is deliberately server-side and cached. The public service
   // explicitly disallows client-side autocomplete and asks applications to
   // cache requests and stay at or below one request per second.
-  if (photonFailed) {
+  if (photonFailed || all.length === 0) {
     try {
       const nom = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
