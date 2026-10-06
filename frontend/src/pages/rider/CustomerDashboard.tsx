@@ -232,6 +232,7 @@ const CustomerDashboard: React.FC = () => {
             <div
               key={dest.id}
               className="driver-row"
+              data-reveal
               style={{ cursor: 'pointer' }}
               onClick={() => navWithHaptic('/customer/book')}
             >
@@ -250,6 +251,7 @@ const CustomerDashboard: React.FC = () => {
               <IonIcon icon={arrowForwardOutline} style={{ color: 'var(--nav-text-muted)', fontSize: 16 }} />
             </div>
           ))}
+          </div>
         </div>
       </IonContent>
     </IonPage>
