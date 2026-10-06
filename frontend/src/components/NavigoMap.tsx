@@ -134,6 +134,7 @@ const NavigoMap: React.FC<MapProps> = ({
 }) => {
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
   const [tileError, setTileError] = useState(false);
+  const [tileFallback, setTileFallback] = useState(false);
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
@@ -237,8 +238,14 @@ const NavigoMap: React.FC<MapProps> = ({
 
   const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
     setTileError(false);
+    setTileFallback(false);
     setMapStyle(newStyle);
   };
+
+  const standardTileUrl = tileFallback
+    ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+    : TILE_LAYERS.standard.url;
+  const activeTileUrl = mapStyle === 'standard' ? standardTileUrl : TILE_LAYERS.satellite.url;
 
   return (
     <div
@@ -298,12 +305,21 @@ const NavigoMap: React.FC<MapProps> = ({
         ref={mapRef as any}
       >
         <TileLayer
-          key={mapStyle}
-          url={TILE_LAYERS[mapStyle].url}
+          key={`${mapStyle}-${tileFallback ? 'direct' : 'proxy'}`}
+          url={activeTileUrl}
           attribution={TILE_LAYERS[mapStyle].attribution}
           maxZoom={19}
           eventHandlers={{
-            tileerror: () => setTileError(true),
+            tileerror: () => {
+              if (mapStyle === 'standard' && !tileFallback) {
+                // If the same-origin Vercel rewrite is unavailable, retry the
+                // canonical OSM endpoint directly before showing an error.
+                setTileFallback(true);
+                setTileError(false);
+              } else {
+                setTileError(true);
+              }
+            },
             load: () => setTileError(false),
           }}
         />
