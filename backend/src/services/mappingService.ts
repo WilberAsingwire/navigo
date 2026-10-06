@@ -74,17 +74,6 @@ const searchTokens = (value: string) =>
     .split(/\s+/)
     .filter(token => token.length >= 2 && token !== 'uganda');
 
-const haversineKm = (a: MapPoint, b: MapPoint) => {
-  const R = 6371;
-  const lat1 = a.lat * Math.PI / 180;
-  const lat2 = b.lat * Math.PI / 180;
-  const dLat = (b.lat - a.lat) * Math.PI / 180;
-  const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const h = Math.sin(dLat / 2) ** 2 +
-    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-};
-
 const withinUganda = (lat: number, lng: number) =>
   lat >= UGANDA_BOUNDS.minLat &&
   lat <= UGANDA_BOUNDS.maxLat &&
@@ -224,15 +213,6 @@ const GENERIC_LOCATION_WORDS = new Set([
   'uganda', 'ug', 'city', 'town', 'municipality', 'district', 'county',
   'ward', 'division', 'region', 'village', 'province', 'capital',
 ]);
-
-const searchTokens = (value: string) =>
-  normaliseSearchQuery(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .split(/\s+/)
-    .filter(token => token.length >= 2 && !GENERIC_LOCATION_WORDS.has(token));
 
 const buildSearchVariants = (query: string) => {
   const original = normaliseSearchQuery(query);
