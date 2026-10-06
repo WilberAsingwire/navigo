@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 import { COMMISSION_RATE, driverShare } from '../utils/fare';
+import { notifyAdminLocation } from '../socket/socketHandler';
 
 const router = express.Router();
 
@@ -76,6 +77,7 @@ router.post('/location', authenticate, authorize(['driver', 'motorist']), async 
       'UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?',
       [lat, lng, userId]
     );
+    notifyAdminLocation(String(userId), lat, lng);
     res.json({ ok: true, lat, lng });
   } catch (error) {
     console.error('Driver location error:', error);
