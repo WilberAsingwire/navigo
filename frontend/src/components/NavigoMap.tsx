@@ -157,7 +157,7 @@ const MapInteractionController: React.FC<{ interactive: boolean }> = ({ interact
 interface MapProps {
   userLocation: { lat: number; lng: number } | null;
   destination?: { lat: number; lng: number; name?: string; address?: string } | null;
-  pickupLocation?: { lat: number; lng: number } | null;
+  pickupLocation?: { lat: number; lng: number; name?: string; address?: string } | null;
   routeOrigin?: { lat: number; lng: number } | null;
   driverLocation?: { lat: number; lng: number } | null;
   driverType?: string;
