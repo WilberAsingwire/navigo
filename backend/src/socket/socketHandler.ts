@@ -313,9 +313,21 @@ export const setupSocketHandlers = (io: Server) => {
       if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return;
       if (lat < -5 || lat > 5 || lng < 29 || lng > 36) return; // Uganda bounds guard
 
+      if (userRole !== 'driver' && userRole !== 'motorist') {
+        return socket.emit('error', { message: 'Unauthorized: only drivers can publish live location' });
+      }
+
       const db = getDB();
       try {
-        // Update both users table (for admin live map) and driver_profiles (for rider tracking)
+        const ride = await db.get(
+          "SELECT driverId, status FROM rides WHERE id = ?",
+          [rideId]
+        );
+        if (!ride || ride.driverId !== userId || !['accepted', 'arrived', 'ongoing'].includes(ride.status)) {
+          return socket.emit('error', { message: 'Unauthorized or inactive ride for location update' });
+        }
+
+        // Update both users table (for admin live map) and driver_profiles (for rider tracking).
         await db.run('UPDATE users SET currentLat = ?, currentLng = ?, lastLocationAt = CURRENT_TIMESTAMP WHERE id = ?', [lat, lng, userId]);
         await db.run('UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?', [lat, lng, userId]);
 
