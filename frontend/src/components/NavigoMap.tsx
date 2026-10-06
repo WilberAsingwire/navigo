@@ -73,19 +73,6 @@ const isValidLatLng = (ll: { lat: number; lng: number } | null | undefined): boo
   return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 };
 
-const MapReady: React.FC<{ onReady: (map: L.Map) => void }> = ({ onReady }) => {
-  const map = useMap();
-  useEffect(() => {
-    onReady(map);
-    const refresh = () => {
-      try { map.invalidateSize({ pan: false }); } catch { /* noop */ }
-    };
-    const timers = [0, 100, 350, 800].map(ms => window.setTimeout(refresh, ms));
-    return () => timers.forEach(window.clearTimeout);
-  }, [map, onReady]);
-  return null;
-};
-
 const MapEvents: React.FC<{
   onMapClick?: (ll: [number, number]) => void;
   userLocation: { lat: number; lng: number } | null;
@@ -151,13 +138,6 @@ const NavigoMap: React.FC<MapProps> = ({
   const [tileError, setTileError] = useState(false);
   const [tileReloadKey, setTileReloadKey] = useState(0);
   const mapRef = React.useRef<L.Map | null>(null);
-
-  const handleMapReady = useCallback((map: L.Map) => {
-    mapRef.current = map;
-    window.setTimeout(() => {
-      try { map.invalidateSize({ pan: false }); } catch { /* noop */ }
-    }, 0);
-  }, []);
 
   const getValidCenter = (): [number, number] => {
     if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
@@ -324,7 +304,6 @@ const NavigoMap: React.FC<MapProps> = ({
         attributionControl={true}
         ref={mapRef as any}
       >
-        <MapReady onReady={handleMapReady} />
         <TileLayer
           key={`${mapStyle}-${tileReloadKey}`}
           url={TILE_LAYERS[mapStyle].url}
