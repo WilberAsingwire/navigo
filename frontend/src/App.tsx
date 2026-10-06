@@ -8,6 +8,7 @@ import { DriverNotificationProvider } from './context/DriverNotificationContext'
 import Home from './pages/auth/Home';
 import Onboarding from './components/Onboarding';
 import ErrorBoundary from './components/ErrorBoundary';
+import PremiumExperience from './components/PremiumExperience';
 import './pages/admin/AdminGlobal.css';
 
 /* Core CSS */
@@ -27,6 +28,7 @@ import './theme/polish.css';
 import './theme/design-polish.css';
 import './theme/light-mode.css';
 import './theme/system.css'; /* interaction discipline — must load last */
+import './theme/premium-v3.css';
 
 setupIonicReact({ mode: 'md' });
 
@@ -143,6 +145,7 @@ const AppContent: React.FC = () => {
 
   return (
     <IonApp>
+      <PremiumExperience />
       <a href="#main-content" className="skip-link">Skip to content</a>
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <IonReactRouter>
