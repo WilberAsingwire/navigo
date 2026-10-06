@@ -186,7 +186,7 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
       [
         rideId,
         userId,
-        serviceType,
+        finalServiceType,
         normalizedRideType,
         'requested',
         paymentMethod || 'cash',
@@ -201,6 +201,7 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
         packageDetails ? String(packageDetails).slice(0, 500) : null,
         receiverName ? String(receiverName).slice(0, 100) : null,
         receiverPhone ? String(receiverPhone).slice(0, 20) : null,
+        JSON.stringify(route.geometry),
         new Date().toISOString(),
         expiresAt
       ]
@@ -208,7 +209,16 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
 
     res.json({
       message: serviceType === 'delivery' ? 'Delivery requested successfully!' : 'Ride requested successfully!',
-      ride: { id: rideId, fareRecommended, status: 'requested', expiresAt }
+      ride: {
+        id: rideId,
+        fareRecommended,
+        fareOffered: finalFareOffered,
+        status: 'requested',
+        expiresAt,
+        distanceKm: distNum,
+        durationMin: durNum,
+        route: { geometry: route.geometry, provider: route.provider }
+      }
     });
   } catch (error) {
     console.error('Request error:', error);
