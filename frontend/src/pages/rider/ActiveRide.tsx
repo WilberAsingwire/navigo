@@ -67,8 +67,10 @@ const ActiveRide: React.FC = () => {
       if (res.data.ride) {
         setRide(res.data.ride);
         setDriver(res.data.driver || null);
-        if (res.data.driver?.currentLat && res.data.driver?.currentLng) {
-          setDriverPos({ lat: res.data.driver.currentLat, lng: res.data.driver.currentLng });
+        const driverLat = Number(res.data.driver?.currentLat);
+        const driverLng = Number(res.data.driver?.currentLng);
+        if (Number.isFinite(driverLat) && Number.isFinite(driverLng)) {
+          setDriverPos({ lat: driverLat, lng: driverLng });
         }
         rideIdRef.current = res.data.ride.id;
       } else {
@@ -86,13 +88,15 @@ const ActiveRide: React.FC = () => {
     loadRide();
   }, []);
 
-  // Live driver tracking + status updates + cancellations
+  // Live driver tracking + status updates + cancellations.
+  // The socket is primary; REST is a 10s safety net when the connection drops.
   useEffect(() => {
     if (!user) return;
     const socket = socketService.connect(user.id);
-    if (rideIdRef.current) {
-      socket.emit('join-ride-room', { rideId: rideIdRef.current });
-    }
+    const joinRide = () => {
+      if (rideIdRef.current) socket.emit('join-ride-room', { rideId: rideIdRef.current });
+    };
+    joinRide();
 
     const onStatus = (data: { rideId: string; status: string }) => {
       if (data.rideId !== rideIdRef.current) return;
@@ -102,23 +106,47 @@ const ActiveRide: React.FC = () => {
       if (data.status === 'ongoing') { setToastMsg('Your ride has started'); setShowToast(true); }
       if (data.status === 'completed') { setToastMsg('Ride completed'); setShowToast(true); }
     };
-    const onLocation = (data: { lat: number; lng: number }) => setDriverPos({ lat: data.lat, lng: data.lng });
+
+    const onLocation = (data: { rideId?: string; lat: number; lng: number }) => {
+      if (data.rideId && data.rideId !== rideIdRef.current) return;
+      const lat = Number(data.lat);
+      const lng = Number(data.lng);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) setDriverPos({ lat, lng });
+    };
+
     const onCancelled = (data: { rideId: string; message: string }) => {
       if (data.rideId !== rideIdRef.current) return;
       setToastMsg(data.message); setShowToast(true);
       setTimeout(() => history.push('/customer/home'), 2200);
     };
 
+    socket.on('connect', joinRide);
     socket.on('status-changed', onStatus);
     socket.on('location-updated', onLocation);
     socket.on('ride-cancelled', onCancelled);
+
+    const fallbackTimer = window.setInterval(async () => {
+      if (socket.connected || !rideIdRef.current) return;
+      try {
+        const res = await api.get('/rides/active');
+        const nextRide = res.data?.ride;
+        if (nextRide?.id === rideIdRef.current) {
+          setRide(prev => (prev ? { ...prev, status: nextRide.status } : prev));
+          const lat = Number(res.data?.driver?.currentLat);
+          const lng = Number(res.data?.driver?.currentLng);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) setDriverPos({ lat, lng });
+        }
+      } catch { /* keep last known state */ }
+    }, 10000);
+
     return () => {
+      socket.off('connect', joinRide);
       socket.off('status-changed', onStatus);
       socket.off('location-updated', onLocation);
       socket.off('ride-cancelled', onCancelled);
+      window.clearInterval(fallbackTimer);
     };
-  }, [user, history, ride?.id]);
-
+  }, [user, history]);
   const handleTip = async (amount: number) => {
     if (!ride) return;
     setIsTipping(true);
@@ -215,13 +243,16 @@ const ActiveRide: React.FC = () => {
       <IonContent className="active-ride-content active-ride-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
         <div style={{ height: '280px', width: '100%', position: 'relative' }}>
           <NavigoMap
-            userLocation={driverPos || ride.pickup}
-            driverLocation={phase === 'accepted' || phase === 'arrived' ? driverPos : null}
-            destination={ride.destination}
+            userLocation={ride.pickup}
+            pickupLocation={ride.pickup}
+            driverLocation={['accepted', 'arrived', 'ongoing'].includes(phase) ? driverPos : null}
+            routeOrigin={driverPos}
+            destination={phase === 'accepted' ? ride.pickup : phase === 'ongoing' ? ride.destination : null}
             height="280px"
-            showRoute={!!(driverPos && (phase === 'accepted' || phase === 'arrived'))}
+            showRoute={!!driverPos && (phase === 'accepted' || phase === 'ongoing')}
             driverType={(ride.vehicleType as any) || 'go'}
             followUser={false}
+            showNearbyDrivers={phase === 'requested'}
           />
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 1000 }}>
             <IonButton color="light" size="small" onClick={openNavigation}>
