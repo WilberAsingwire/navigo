@@ -1,0 +1,544 @@
+/* NAVIGO PREMIUM EXPERIENCE V3
+   A single visual interaction layer for the whole product.
+   Performance-first: CSS/SVG motion, no animation library required.
+*/
+:root {
+  --navigo-cyan: #14B8A6;
+  --navigo-cyan-soft: rgba(20,184,166,.12);
+  --navigo-violet: #8B7CF6;
+  --navigo-surface-1: #0A141D;
+  --navigo-surface-2: #0E1B26;
+  --navigo-surface-3: #142432;
+  --navigo-grid: rgba(165,185,205,.07);
+  --navigo-radius-control: 14px;
+  --navigo-radius-card: 20px;
+  --navigo-scroll-progress: 0;
+  --navigo-pointer-x: 50vw;
+  --navigo-pointer-y: 30vh;
+}
+
+html {
+  background: var(--nav-bg);
+}
+
+body {
+  background:
+    radial-gradient(circle at var(--navigo-pointer-x) var(--navigo-pointer-y), rgba(255,107,53,.065), transparent 30vw),
+    var(--nav-bg);
+}
+
+.navigo-pointer-aura {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    460px circle at var(--navigo-pointer-x) var(--navigo-pointer-y),
+    rgba(255,107,53,.045),
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+  opacity: .7;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  height: 3px;
+  width: calc(var(--navigo-scroll-progress) * 100%);
+  background: linear-gradient(90deg, var(--navigo-orange), #FF9B73, var(--navigo-cyan));
+  box-shadow: 0 0 18px rgba(255,107,53,.26);
+  pointer-events: none;
+}
+
+/* Remove generic Ionic page flash; use soft page continuity instead. */
+ion-page {
+  animation: navigo-premium-page-in .42s var(--ease-spring) both;
+}
+
+@keyframes navigo-premium-page-in {
+  from { opacity: .001; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scroll-reveal utility usable on any screen. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity .55s var(--ease-spring), transform .55s var(--ease-spring);
+}
+[data-reveal="left"] { transform: translateX(-20px); }
+[data-reveal="right"] { transform: translateX(20px); }
+[data-reveal="scale"] { transform: translateY(12px) scale(.97); }
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stronger hierarchy for every main screen. */
+h1, h2, h3, h4, ion-title {
+  font-family: var(--font-display);
+}
+
+/* Interactive surfaces feel tactile without becoming game-like. */
+button,
+ion-button,
+[role="button"],
+.action-card,
+.action-btn,
+.stat-pill,
+.kpi-card,
+.ride-card,
+.driver-row,
+.activity-item,
+.place-chip,
+.vehicle-option-card,
+.quick-action-btn,
+.view-map-link,
+.nav-link-text,
+.footer-link {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .action-card:hover,
+  .action-btn:hover,
+  .stat-pill:hover,
+  .kpi-card:hover,
+  .ride-card:hover,
+  .driver-row:hover,
+  .activity-item:hover,
+  .place-chip:hover,
+  .vehicle-option-card:hover,
+  .quick-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-float);
+  }
+}
+
+button:not(:disabled):active,
+ion-button:not([disabled]):active,
+[role="button"]:active,
+.action-card:active,
+.action-btn:active,
+.stat-pill:active,
+.kpi-card:active,
+.ride-card:active,
+.driver-row:active,
+.place-chip:active,
+.vehicle-option-card:active,
+.quick-action-btn:active {
+  transform: scale(.985);
+}
+
+button:disabled,
+ion-button[disabled] {
+  filter: grayscale(.1);
+}
+
+/* Premium form controls */
+.input-field,
+.location-input,
+.location-input-wrapper,
+method-toggle,
+.method-toggle,
+.quick-action-btn,
+input,
+select,
+textarea,
+ion-input,
+ion-textarea {
+  border-radius: var(--navigo-radius-control);
+}
+
+.input-field:hover,
+.location-input:hover,
+.location-input-wrapper:hover {
+  border-color: color-mix(in srgb, var(--navigo-orange) 35%, var(--nav-border));
+}
+
+.input-field:focus,
+.location-input:focus {
+  box-shadow: 0 0 0 4px rgba(255,107,53,.09), 0 8px 28px rgba(0,0,0,.16);
+}
+
+/* Home: living hero */
+.hero-section {
+  isolation: isolate;
+  min-height: 780px;
+  overflow: hidden;
+  position: relative;
+  background: var(--nav-bg-deep);
+}
+
+.hero-bg {
+  background:
+    linear-gradient(90deg, rgba(5,9,14,.94) 0%, rgba(5,9,14,.78) 42%, rgba(5,9,14,.35) 100%),
+    linear-gradient(180deg, rgba(5,9,14,.04), rgba(5,9,14,.42)),
+    url('/navigo-ambient.svg') center/cover no-repeat;
+  transform: scale(1.03);
+  animation: navigo-hero-breathe 14s ease-in-out infinite alternate;
+}
+.hero-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 58%, rgba(20,184,166,.08), transparent 85%),
+    linear-gradient(0deg, rgba(8,12,20,.95) 0%, transparent 35%);
+  pointer-events: none;
+}
+@keyframes navigo-hero-breathe {
+  from { transform: scale(1.03) translate3d(0,0,0); }
+  to { transform: scale(1.075) translate3d(-10px,-5px,0); }
+}
+
+.hero-gradient-mesh {
+  opacity: .4;
+  background:
+    radial-gradient(circle at 76% 28%, rgba(255,107,53,.22), transparent 18%),
+    radial-gradient(circle at 88% 68%, rgba(20,184,166,.18), transparent 20%),
+    radial-gradient(circle at 62% 58%, rgba(139,124,246,.11), transparent 16%);
+}
+
+.hero-motion-stage {
+  position: absolute;
+  z-index: 3;
+  right: clamp(5%, 7vw, 10%);
+  top: 14%;
+  width: min(46vw, 620px);
+  height: min(68vw, 560px);
+  pointer-events: none;
+}
+
+.hero-media-card {
+  position: absolute;
+  width: min(30vw, 340px);
+  aspect-ratio: 16 / 10;
+  right: 7%;
+  top: 6%;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 28px;
+  overflow: hidden;
+  background: #0A1118 center/cover no-repeat;
+  background-image:
+    linear-gradient(180deg, rgba(6,10,16,.04), rgba(6,10,16,.64)),
+    url('https://images.unsplash.com/photo-1449824913935-59a10b5d7a98?q=82&w=1200&auto=format&fit=crop');
+  box-shadow: 0 30px 70px rgba(0,0,0,.46);
+  transform: perspective(900px) rotateY(-8deg) rotateX(4deg);
+}
+.hero-media-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255,255,255,.12), transparent 30%, transparent 65%, rgba(20,184,166,.09));
+}
+
+.hero-floating-vehicle {
+  position: absolute;
+  filter: drop-shadow(0 22px 28px rgba(0,0,0,.38));
+  animation: navigo-vehicle-float 5.2s ease-in-out infinite;
+}
+.hero-floating-vehicle img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.hero-floating-vehicle.boda { width: min(22vw, 240px); right: 28%; top: 31%; animation-delay: -.7s; }
+.hero-floating-vehicle.go { width: min(24vw, 265px); right: -2%; top: 45%; animation-delay: -2.2s; }
+.hero-floating-vehicle.xl { width: min(20vw, 220px); right: 20%; top: 64%; animation-delay: -3.7s; opacity: .88; }
+
+@keyframes navigo-vehicle-float {
+  0%,100% { transform: translate3d(0,0,0) rotate(-1deg); }
+  50% { transform: translate3d(0,-12px,0) rotate(1deg); }
+}
+
+.hero-live-chip {
+  position: absolute;
+  left: 3%;
+  top: 32%;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 999px;
+  color: #F8FAFC;
+  background: rgba(6,13,19,.62);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 14px 34px rgba(0,0,0,.3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.hero-live-chip .pulse {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--navigo-cyan);
+  box-shadow: 0 0 0 0 rgba(20,184,166,.45);
+  animation: navigo-live-pulse 1.8s ease-out infinite;
+}
+@keyframes navigo-live-pulse {
+  70% { box-shadow: 0 0 0 9px rgba(20,184,166,0); }
+  100% { box-shadow: 0 0 0 0 rgba(20,184,166,0); }
+}
+
+.hero-route-pill {
+  position: absolute;
+  left: 12%;
+  bottom: 11%;
+  width: min(29vw, 270px);
+  padding: 15px 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  background: rgba(7,14,20,.68);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 18px 44px rgba(0,0,0,.34);
+}
+.hero-route-pill .route-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #F8FAFC;
+  font-size: 12px;
+  font-weight: 700;
+}
+.hero-route-pill .route-line {
+  height: 26px;
+  margin: 8px 0;
+  position: relative;
+}
+.hero-route-pill .route-line::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 4px; right: 4px;
+  border-top: 2px dashed rgba(255,255,255,.2);
+}
+.hero-route-pill .route-line::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 20%;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--navigo-orange);
+  box-shadow: 125px 0 0 var(--navigo-cyan);
+  transform: translate(-50%,-50%);
+  animation: navigo-route-travel 2.8s ease-in-out infinite;
+}
+@keyframes navigo-route-travel {
+  0%,100% { left: 20%; opacity: .65; }
+  50% { left: 80%; opacity: 1; }
+}
+.hero-route-pill .route-meta {
+  color: #98A8BA;
+  font-size: 10px;
+}
+
+/* Premium status treatments across dashboards */
+.status-banner.online,
+.driver-status-text.online {
+  border-color: rgba(20,184,166,.28);
+}
+.status-banner.online::before,
+.driver-status-text.online::before {
+  background: var(--navigo-cyan) !important;
+  box-shadow: 0 0 0 5px rgba(20,184,166,.10);
+}
+
+.ride-cta-card,
+.glass-booking-card,
+.booking-bottom-sheet,
+.active-ride-bottom-card {
+  border: 1px solid var(--nav-border-strong);
+  box-shadow: 0 18px 60px rgba(0,0,0,.28);
+}
+
+.ride-cta-card {
+  background:
+    radial-gradient(circle at 85% 20%, rgba(255,107,53,.16), transparent 24%),
+    linear-gradient(135deg, var(--nav-card), var(--navigo-surface-2));
+}
+
+.stats-grid .stat-pill,
+.kpi-grid .kpi-card {
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.045), rgba(255,255,255,.018)),
+    var(--nav-card);
+}
+
+.actions-grid .action-card,
+.quick-actions-grid .action-btn {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+    var(--nav-card);
+}
+
+/* Booking page: make each step feel like a progression, not a form dump. */
+.booking-stepper {
+  position: relative;
+}
+.booking-stepper::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: calc((var(--booking-progress, .34)) * 100%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--navigo-orange), var(--navigo-cyan));
+  transition: width .35s var(--ease-spring);
+}
+
+/* Map UI */
+.map-control-btn,
+.my-location-btn {
+  min-width: 46px !important;
+  min-height: 46px !important;
+  border-radius: 14px !important;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 14px !important;
+}
+.leaflet-popup-content-wrapper {
+  box-shadow: 0 14px 36px rgba(0,0,0,.28);
+}
+
+/* Auth pages get a cinematic frame without hurting form readability. */
+.auth-container {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(110deg, rgba(3,8,13,.91), rgba(7,13,20,.76)),
+    url('https://images.unsplash.com/photo-1449824913935-59a10b5d7a98?q=82&w=2070&auto=format&fit=crop') center/cover no-repeat;
+}
+.auth-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('/navigo-ambient.svg') center/cover no-repeat;
+  opacity: .38;
+  mix-blend-mode: screen;
+  animation: navigo-hero-breathe 16s ease-in-out infinite alternate;
+}
+.auth-card {
+  backdrop-filter: blur(22px) saturate(1.25);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  background: rgba(13,22,31,.78);
+}
+
+/* Mobile: prioritize content and turn off heavy decorative transforms. */
+@media (max-width: 900px) {
+  .hero-section { min-height: 900px; }
+  .hero-motion-stage { width: 62vw; right: -2%; top: 36%; opacity: .72; transform: scale(.86); transform-origin: top right; }
+  .hero-media-card { width: 48vw; }
+  .hero-route-pill { width: 46vw; left: 8%; }
+}
+@media (max-width: 640px) {
+  .navigo-pointer-aura { display: none; }
+  .hero-motion-stage { width: 94vw; right: -18vw; top: 48%; opacity: .48; transform: scale(.72); }
+  .hero-media-card { width: 64vw; right: 12%; }
+  .hero-route-pill { width: 58vw; }
+  .hero-live-chip { left: 0; top: 25%; }
+  .auth-container::before { opacity: .23; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navigo-pointer-aura,
+  .hero-bg,
+  .hero-floating-vehicle,
+  .hero-route-pill .route-line::after,
+  .hero-live-chip .pulse {
+    animation: none !important;
+  }
+  [data-reveal] { opacity: 1; transform: none; }
+}
+
+/* Light mode gets depth from shadow rather than heavy gradients. */
+body.light .navigo-pointer-aura { mix-blend-mode: multiply; opacity: .24; }
+body.light .hero-section {
+  background: #F6F8FA;
+}
+body.light .hero-bg {
+  background:
+    linear-gradient(90deg, rgba(248,250,252,.94) 0%, rgba(248,250,252,.78) 42%, rgba(248,250,252,.45) 100%),
+    url('/navigo-ambient.svg') center/cover no-repeat;
+}
+body.light .hero-media-card {
+  border-color: rgba(15,23,42,.08);
+  box-shadow: 0 24px 50px rgba(15,23,42,.14);
+}
+body.light .hero-live-chip,
+body.light .hero-route-pill {
+  background: rgba(255,255,255,.8);
+  color: var(--nav-text);
+  border-color: rgba(15,23,42,.08);
+}
+body.light .hero-live-chip .pulse { background: var(--navigo-cyan); }
+body.light .auth-container {
+  background:
+    linear-gradient(110deg, rgba(248,250,252,.88), rgba(248,250,252,.72)),
+    url('https://images.unsplash.com/photo-1449824913935-59a10b5d7a98?q=82&w=2070&auto=format&fit=crop') center/cover no-repeat;
+}
+body.light .auth-container::before {
+  opacity: .12;
+}
+body.light .auth-card {
+  background: rgba(255,255,255,.83);
+  box-shadow: 0 24px 60px rgba(15,23,42,.12);
+}
+
+/* Keep old raw styles from fighting the new palette on key controls. */
+.btn-primary,
+.nav-signup-pill,
+.preview-book-btn,
+.btn-request-ride {
+  background: linear-gradient(135deg, var(--navigo-orange), var(--navigo-ember)) !important;
+  color: #fff !important;
+  border: 0 !important;
+}
+
+.btn-primary:hover,
+.nav-signup-pill:hover,
+.preview-book-btn:hover,
+.btn-request-ride:hover {
+  filter: brightness(1.045) saturate(1.05);
+}
+
+body.light .btn-primary,
+body.light .nav-signup-pill,
+body.light .preview-book-btn,
+body.light .btn-request-ride {
+  color: #fff !important;
+}
+
+ion-toast {
+  --background: var(--nav-card) !important;
+  --color: var(--nav-text) !important;
+  --border-color: var(--nav-border-strong);
+}
+
+/* Reduce accidental "every div is clickable" treatment from generic card rules. */
+.interactive-card,
+.action-card,
+.action-btn,
+.stat-pill,
+.kpi-card,
+.ride-card {
+  transform-origin: center;
+}
+
+@media (pointer: coarse) {
+  .action-card:hover,
+  .action-btn:hover,
+  .stat-pill:hover,
+  .kpi-card:hover,
+  .ride-card:hover,
+  .driver-row:hover,
+  .activity-item:hover,
+  .place-chip:hover,
+  .vehicle-option-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
