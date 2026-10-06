@@ -72,6 +72,7 @@ const RideRequest: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Location[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [lastSearchedQuery, setLastSearchedQuery] = useState('');
+  const [searchError, setSearchError] = useState('');
   const [searchingPickup, setSearchingPickup] = useState(true);
   const [selectedRide, setSelectedRide] = useState(RIDE_OPTIONS[1]);
   const [fare, setFare] = useState<FareEstimate | null>(null);
@@ -309,8 +310,8 @@ const RideRequest: React.FC = () => {
             }))
             .filter((item: Location) => Number.isFinite(item.lat) && Number.isFinite(item.lng))
         : [];
-    } catch {
-      return [];
+    } catch (error: any) {
+      throw new Error(error?.response?.data?.message || 'Location search is temporarily unavailable.');
     }
   };
 
@@ -324,17 +325,27 @@ const RideRequest: React.FC = () => {
     if (query.trim().length < 2) {
       setSearchResults([]);
       setLastSearchedQuery('');
+      setSearchError('');
       setIsSearching(false);
       return;
     }
 
+    setSearchError('');
     setIsSearching(true);
     searchTimeoutRef.current = setTimeout(async () => {
-      const results = await searchLocation(query);
-      if (requestId !== searchRequestRef.current) return;
-      setSearchResults(results);
-      setLastSearchedQuery(query.trim());
-      setIsSearching(false);
+      try {
+        const results = await searchLocation(query);
+        if (requestId !== searchRequestRef.current) return;
+        setSearchResults(results);
+        setLastSearchedQuery(query.trim());
+      } catch (error: any) {
+        if (requestId !== searchRequestRef.current) return;
+        setSearchResults([]);
+        setLastSearchedQuery(query.trim());
+        setSearchError(error?.message || 'Location search is temporarily unavailable.');
+      } finally {
+        if (requestId === searchRequestRef.current) setIsSearching(false);
+      }
     }, 500);
   };
 
@@ -343,6 +354,7 @@ const RideRequest: React.FC = () => {
     setSearchingPickup(isPickup);
     setSearchResults([]);
     setLastSearchedQuery('');
+    setSearchError('');
     setIsSearching(false);
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -370,6 +382,7 @@ const RideRequest: React.FC = () => {
     }
     setSearchResults([]);
     setLastSearchedQuery('');
+    setSearchError('');
     setIsSearching(false);
   };
 
@@ -650,7 +663,12 @@ const RideRequest: React.FC = () => {
                       <span style={{ marginLeft: '10px', fontSize: '12px', color: 'var(--nav-text-secondary)' }}>Searching Uganda...</span>
                     </div>
                   )}
-                  {!isSearching && searchResults.length === 0 && lastSearchedQuery === (searchingPickup ? pickupSearch : destSearch).trim() && lastSearchedQuery.length >= 2 && (
+                  {!isSearching && searchError && lastSearchedQuery === (searchingPickup ? pickupSearch : destSearch).trim() && (
+                    <div className="search-results-list" style={{ padding: '14px 16px', textAlign: 'center', color: '#F87171', fontSize: '12px' }}>
+                      {searchError}
+                    </div>
+                  )}
+                  {!isSearching && !searchError && searchResults.length === 0 && lastSearchedQuery === (searchingPickup ? pickupSearch : destSearch).trim() && lastSearchedQuery.length >= 2 && (
                     <div className="search-results-list" style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--nav-text-secondary)', fontSize: '12px' }}>
                       No matching places found in Uganda.
                     </div>
