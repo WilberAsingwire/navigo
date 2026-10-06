@@ -252,7 +252,7 @@ router.get('/transactions', authenticate, async (req: Request, res: Response) =>
   }
 });
 
-router.post('/payout', authenticate, payoutLimiter, async (req: Request, res: Response) => {
+router.post('/payout', authenticate, authorize(['driver', 'motorist']), payoutLimiter, async (req: Request, res: Response) => {
   try {
     const { amount, provider, phone } = req.body;
     const userId = (req as AuthRequest).user?.userId;
