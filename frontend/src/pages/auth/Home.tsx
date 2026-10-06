@@ -132,60 +132,34 @@ const Home: React.FC = () => {
               <div className="hero-overlay" />
             </div>
 
+
+            <div className="hero-story-video" aria-hidden="true">
+              <video
+                ref={streetVideoRef}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                poster="https://images.pexels.com/photos/27731041/pexels-photo-27731041.jpeg?cs=srgb&amp;w=1200&amp;auto=format&amp;fit=crop"
+                onCanPlay={(event) => {
+                  const video = event.currentTarget;
+                  void video.play()
+                    .then(() => setStreetVideoPaused(false))
+                    .catch(() => setStreetVideoPaused(true));
+                }}
+                onError={() => setStreetVideoPaused(true)}
+              >
+                <source
+                  src="https://videos.pexels.com/video-files/30917019/13219337_2560_1440_24fps.mp4"
+                  type="video/mp4"
+                />
+              </video>
+              <div className="hero-story-video-shade" />
+            </div>
             <div className="hero-visual-stage" aria-hidden="true">
               <div className="hero-visual-glow hero-visual-glow-orange" />
               <div className="hero-visual-glow hero-visual-glow-cyan" />
-
-              <div className="hero-story-video">
-                <video
-                  ref={streetVideoRef}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  poster="https://images.pexels.com/photos/27731041/pexels-photo-27731041.jpeg?cs=srgb&amp;w=1200&amp;auto=format&amp;fit=crop"
-                  onLoadedData={(event) => {
-                    const video = event.currentTarget;
-                    if (video.paused) {
-                      void video.play().catch(() => {
-                        setStreetVideoPaused(true);
-                      });
-                    }
-                  }}
-                  onError={() => setStreetVideoPaused(true)}
-                >
-                  <source
-                    src="https://videos.pexels.com/video-files/30917019/13219337_2560_1440_24fps.mp4"
-                    type="video/mp4"
-                  />
-                </video>
-                <div className="hero-story-video-shade" />
-                <div className="hero-story-video-copy">
-                  <span><i className="hero-story-live-dot" /> Life in motion</span>
-                  <strong>Everyday journeys across Africa</strong>
-                  <small>People · roads · riders</small>
-                </div>
-                <button
-                  className="hero-story-video-toggle"
-                  type="button"
-                  tabIndex={-1}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    const video = streetVideoRef.current;
-                    if (!video) return;
-                    if (video.paused) {
-                      void video.play();
-                      setStreetVideoPaused(false);
-                    } else {
-                      video.pause();
-                      setStreetVideoPaused(true);
-                    }
-                  }}
-                >
-                  {streetVideoPaused ? 'Play' : 'Pause'}
-                </button>
-              </div>
 
               <div className="hero-route-art">
                 <span className="hero-route-node start" />
@@ -208,6 +182,28 @@ const Home: React.FC = () => {
                 <strong>Live route preview</strong>
               </div>
             </div>
+
+
+            <button
+              className="hero-story-video-toggle"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                const video = streetVideoRef.current;
+                if (!video) return;
+                if (video.paused) {
+                  void video.play()
+                    .then(() => setStreetVideoPaused(false))
+                    .catch(() => setStreetVideoPaused(true));
+                } else {
+                  video.pause();
+                  setStreetVideoPaused(true);
+                }
+              }}
+            >
+              <span className="video-control-dot" />
+              {streetVideoPaused ? 'Play story' : 'Pause story'}
+            </button>
 
             <div className="hero-text" data-reveal="left">
               <div className="hero-badge">
@@ -294,7 +290,7 @@ const Home: React.FC = () => {
                       className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
                       onClick={() => { light(); setActiveRide(ride.id); }}
                     >
-                      <TransparentVehicleImage src={ride.image} alt="" className="pill-img vehicle-art-clean" />
+                      <TransparentVehicleImage src={ride.image} alt="" className="pill-img vehicle-art-clean" turntable />
                       <span>{ride.short}</span>
                     </button>
                   ))}
