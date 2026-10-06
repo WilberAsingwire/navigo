@@ -243,7 +243,7 @@ const ActiveRide: React.FC = () => {
       <IonContent className="active-ride-content active-ride-wrapper" style={{ '--background': 'var(--nav-bg)' } as any}>
         <div style={{ height: '280px', width: '100%', position: 'relative' }}>
           <NavigoMap
-            userLocation={ride.pickup}
+            userLocation={driverPos || ride.pickup}
             pickupLocation={ride.pickup}
             driverLocation={['accepted', 'arrived', 'ongoing'].includes(phase) ? driverPos : null}
             routeOrigin={driverPos}
