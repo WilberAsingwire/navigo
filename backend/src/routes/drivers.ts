@@ -59,7 +59,7 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
 const DRIVER_SHARE_SQL = `(fareFinal - ROUND(fareFinal * ${COMMISSION_RATE}))`;
 
 // ─── Toggle Online Status ─────────────────────────────
-router.post('/status/online', authenticate, async (req: any, res: Response) => {
+router.post('/status/online', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const { online } = req.body;
     const userId = (req as AuthRequest).user?.userId;
@@ -81,7 +81,7 @@ router.post('/status/online', authenticate, async (req: any, res: Response) => {
 });
 
 // ─── Toggle Availability ─────────────────────────────
-router.post('/status/available', authenticate, async (req: any, res: Response) => {
+router.post('/status/available', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const { available } = req.body;
     const userId = (req as AuthRequest).user?.userId;
@@ -101,7 +101,7 @@ router.post('/status/available', authenticate, async (req: any, res: Response) =
 });
 
 // ─── Get Driver Profile ───────────────────────────────
-router.get('/profile', authenticate, async (req: any, res: Response) => {
+router.get('/profile', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
@@ -122,7 +122,7 @@ router.get('/profile', authenticate, async (req: any, res: Response) => {
 });
 
 // ─── Get Driver Stats & Activity ────────────────────────
-router.get('/stats', authenticate, async (req: any, res: Response) => {
+router.get('/stats', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
