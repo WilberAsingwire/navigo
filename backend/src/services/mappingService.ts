@@ -60,6 +60,31 @@ const cacheSet = (key: string, value: any) => {
 
 const normaliseText = (value: unknown) => String(value || '').trim().replace(/\s+/g, ' ');
 
+const normaliseSearchQuery = (value: unknown) =>
+  normaliseText(value)
+    .replace(/[，、]/g, ',')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const searchTokens = (value: string) =>
+  normaliseSearchQuery(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(/\s+/)
+    .filter(token => token.length >= 2 && token !== 'uganda');
+
+const haversineKm = (a: MapPoint, b: MapPoint) => {
+  const R = 6371;
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+};
+
 const withinUganda = (lat: number, lng: number) =>
   lat >= UGANDA_BOUNDS.minLat &&
   lat <= UGANDA_BOUNDS.maxLat &&
@@ -140,18 +165,42 @@ const toPhotonPlace = (feature: any): PlaceResult | null => {
   const countryCode = String(p.countrycode || p.country_code || '').toLowerCase();
   if (countryCode && countryCode !== 'ug') return null;
 
-  const name = normaliseText(p.name || p.street || p.city || p.county || p.state || 'Selected place');
-  const locality = [p.district, p.city, p.county, p.state, p.country]
+  const name = normaliseText(
+    p.name ||
+    p.street ||
+    p.city ||
+    p.town ||
+    p.village ||
+    p.county ||
+    p.district ||
+    p.state ||
+    'Selected place'
+  );
+
+  const streetLine = normaliseText(
+    [p.street, p.housenumber].filter(Boolean).join(' ')
+  );
+  const locality = [
+    streetLine,
+    p.district,
+    p.city || p.town || p.village || p.county,
+    p.state,
+    p.country,
+  ]
     .map(normaliseText)
     .filter(Boolean);
-  const address = normaliseText([name, ...locality].filter((v, i, arr) => arr.indexOf(v) === i).join(', '));
+
+  const address = normaliseText([name, ...locality]
+    .filter(Boolean)
+    .filter((v, i, arr) => arr.indexOf(v) === i)
+    .join(', '));
 
   return {
     lat,
     lng,
     name,
-    address,
-    type: normaliseText(p.type || p.osm_value || p.osm_key) || undefined,
+    address: address || name,
+    type: normaliseText(p.type || p.osm_value || p.osm_key || p.layer) || undefined,
     source: 'photon',
   };
 };
@@ -184,12 +233,78 @@ const dedupePlaces = (items: PlaceResult[], limit: number) => {
   return output;
 };
 
-export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResult[]> => {
-  const q = normaliseText(query);
+const rankPlaces = (
+  items: PlaceResult[],
+  query: string,
+  focus?: MapPoint | null,
+) => {
+  const tokens = searchTokens(query);
+  const normalisedQuery = normaliseSearchQuery(query)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+  return items
+    .map(place => {
+      const name = normaliseText(place.name).toLowerCase();
+      const address = normaliseText(place.address).toLowerCase();
+      const haystack = `${name} ${address}`;
+      const compactName = name.replace(/[^a-z0-9]+/g, ' ').trim();
+
+      let score = 0;
+      if (compactName === normalisedQuery) score += 1000;
+      if (name === normalisedQuery) score += 900;
+      if (compactName.startsWith(normalisedQuery)) score += 500;
+      if (name.startsWith(normalisedQuery)) score += 450;
+      if (haystack.includes(normalisedQuery)) score += 300;
+
+      const matchedTokens = tokens.filter(token => haystack.includes(token)).length;
+      score += matchedTokens * 80;
+      if (tokens.length > 0 && matchedTokens === tokens.length) score += 180;
+
+      const type = String(place.type || '').toLowerCase();
+      if (['poi', 'amenity', 'city', 'town', 'village', 'locality', 'district', 'street', 'house'].includes(type)) {
+        score += 10;
+      }
+
+      if (focus && isUgandaPoint(focus)) {
+        const distance = haversineKm(focus, place);
+        score += Math.max(0, 120 - Math.min(distance, 120));
+      }
+
+      return { place, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .map(item => item.place);
+};
+
+let nextNominatimRequestAt = 0;
+let nominatimQueue: Promise<void> = Promise.resolve();
+
+const waitForNominatimSlot = async () => {
+  let release!: () => void;
+  const previous = nominatimQueue;
+  nominatimQueue = new Promise<void>(resolve => { release = resolve; });
+  await previous;
+
+  const waitMs = Math.max(0, nextNominatimRequestAt - Date.now());
+  if (waitMs > 0) await new Promise(resolve => setTimeout(resolve, waitMs));
+  nextNominatimRequestAt = Date.now() + 1100;
+  release();
+};
+
+export const searchPlaces = async (
+  query: string,
+  limit = 20,
+  focus?: MapPoint | null,
+): Promise<PlaceResult[]> => {
+  const q = normaliseSearchQuery(query);
   if (q.length < 2) return [];
+  if (focus && !isUgandaPoint(focus)) focus = null;
 
   const safeLimit = Math.min(40, Math.max(5, Number(limit) || 20));
-  const key = `search:${q.toLowerCase()}:${safeLimit}`;
+  const focusKey = focus ? `:${focus.lat.toFixed(3)},${focus.lng.toFixed(3)}` : '';
+  const key = `search:${q.toLowerCase()}:${safeLimit}${focusKey}`;
   const cached = cacheGet<PlaceResult[]>(key);
   if (cached) return cached;
 
@@ -199,10 +314,17 @@ export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResu
   try {
     const photon = await axios.get('https://photon.komoot.io/api/', {
       params: {
-        q: q.toLowerCase().includes('uganda') ? q : `${q}, Uganda`,
+        q,
         bbox: `${UGANDA_BOUNDS.minLng},${UGANDA_BOUNDS.minLat},${UGANDA_BOUNDS.maxLng},${UGANDA_BOUNDS.maxLat}`,
+        countrycode: 'ug',
         limit: safeLimit,
         lang: 'en',
+        ...(focus ? {
+          lat: focus.lat,
+          lon: focus.lng,
+          zoom: 10,
+          location_bias_scale: 0.25,
+        } : {}),
       },
       timeout: 8_000,
     });
@@ -218,19 +340,21 @@ export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResu
     console.warn('Photon search failed:', error?.message || error);
   }
 
-  // Nominatim is deliberately server-side and cached. The public service
-  // explicitly disallows client-side autocomplete and asks applications to
-  // cache requests and stay at or below one request per second.
-  if (photonFailed || all.length === 0) {
+  // Photon remains the fast primary search engine. Nominatim is a secondary
+  // server-side source only when Photon fails or returns too little data.
+  // The queue keeps total fallback traffic at approximately one request/sec.
+  if (photonFailed || all.length < 2) {
     try {
+      await waitForNominatimSlot();
       const nom = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
-          q: `${q}, Uganda`,
+          q,
           format: 'jsonv2',
           addressdetails: 1,
-          limit: Math.min(40, safeLimit),
+          limit: safeLimit,
           countrycodes: 'ug',
           viewbox: `${UGANDA_BOUNDS.minLng},${UGANDA_BOUNDS.minLat},${UGANDA_BOUNDS.maxLng},${UGANDA_BOUNDS.maxLat}`,
+          bounded: 1,
         },
         headers: {
           'User-Agent': process.env.GEOCODING_USER_AGENT || 'NAVIGO/1.0 (contact admin@navigo.ug)',
@@ -250,7 +374,7 @@ export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResu
     }
   }
 
-  const result = dedupePlaces(all, safeLimit);
+  const result = dedupePlaces(rankPlaces(all, q, focus), safeLimit);
   cacheSet(key, result);
   return result;
 };
