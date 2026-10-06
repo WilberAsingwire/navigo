@@ -33,19 +33,11 @@ const PROMO_CODES: Record<string, { discount: number | 'free', label: string }> 
 
 // Vehicle mapping — frontend vehicleType vs DB canonical type
 const RIDE_OPTIONS: RideOption[] = [
-  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 1500, pricePerKm: 600, pricePerMinute: 80, capacity: 1, vehicleType: 'boda', dbVehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', image: bodaImg },
-  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 2000, pricePerKm: 900, pricePerMinute: 100, capacity: 4, vehicleType: 'go', dbVehicleType: 'economy', surgeMultiplier: 1.0, color: '#2D6A4F', image: goImg },
-  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 4000, pricePerKm: 1200, pricePerMinute: 150, capacity: 4, vehicleType: 'comfort', dbVehicleType: 'comfort', surgeMultiplier: 1.0, color: '#1B4965', image: comfortImg },
-  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 6000, pricePerKm: 1800, pricePerMinute: 200, capacity: 6, vehicleType: 'xl', dbVehicleType: 'xl', surgeMultiplier: 1.0, color: '#E8B86D', image: xlImg }
+  { id: 'boda', name: 'Boda Boda', description: 'Fastest through traffic', basePrice: 800, pricePerKm: 450, pricePerMinute: 45, capacity: 1, vehicleType: 'boda', dbVehicleType: 'boda', surgeMultiplier: 1.0, color: '#FF6B35', image: bodaImg },
+  { id: 'economy', name: 'NAVIGO Go', description: 'Affordable everyday rides', basePrice: 1500, pricePerKm: 750, pricePerMinute: 70, capacity: 4, vehicleType: 'go', dbVehicleType: 'economy', surgeMultiplier: 1.0, color: '#2D6A4F', image: goImg },
+  { id: 'comfort', name: 'NAVIGO Comfort', description: 'Newer cars, top drivers', basePrice: 2500, pricePerKm: 950, pricePerMinute: 90, capacity: 4, vehicleType: 'comfort', dbVehicleType: 'comfort', surgeMultiplier: 1.0, color: '#1B4965', image: comfortImg },
+  { id: 'xl', name: 'NAVIGO XL', description: 'Extra space for groups', basePrice: 4000, pricePerKm: 1300, pricePerMinute: 110, capacity: 6, vehicleType: 'xl', dbVehicleType: 'xl', surgeMultiplier: 1.0, color: '#E8B86D', image: xlImg }
 ];
-
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 const MATCHING_TIMEOUT_MS = 120000; // 2 minutes — auto-cancel if no driver
 
@@ -705,9 +697,9 @@ const RideRequest: React.FC = () => {
                 <div>
                   <span className="section-label">Your offer</span>
                   <div className="bid-stepper">
-                    <button className="bid-step-btn" aria-label="Decrease offer by 500 shillings" onClick={() => setUserOffer(Math.max(selectedRide.basePrice, (userOffer ?? fare.totalFare) - 500))}>−</button>
+                    <button className="bid-step-btn" aria-label="Decrease offer by 500 shillings" onClick={() => setUserOffer(Math.max(fare.offerMin ?? selectedRide.basePrice, (userOffer ?? fare.totalFare) - 500))}>−</button>
                     <span className="bid-amount">UGX {(userOffer ?? fare.totalFare).toLocaleString()}</span>
-                    <button className="bid-step-btn" aria-label="Increase offer by 500 shillings" onClick={() => setUserOffer((userOffer ?? fare.totalFare) + 500)}>+</button>
+                    <button className="bid-step-btn" aria-label="Increase offer by 500 shillings" onClick={() => setUserOffer(Math.min(fare.offerMax ?? Number.MAX_SAFE_INTEGER, (userOffer ?? fare.totalFare) + 500))}>+</button>
                   </div>
                   <p className="bid-hint">Higher offers get picked up faster</p>
                 </div>
