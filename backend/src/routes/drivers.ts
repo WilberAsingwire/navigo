@@ -28,7 +28,7 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
       `SELECT u.id, COALESCE(dp.vehicleType, u.vehicleType) AS vehicleType,
               COALESCE(dp.lat, u.currentLat) AS lat, COALESCE(dp.lng, u.currentLng) AS lng
        FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
-       WHERE u.role = 'driver' AND u.isOnline = TRUE AND u.isAvailable = TRUE
+       WHERE (u.role = 'driver' OR u.role = 'motorist') AND u.isOnline = TRUE AND u.isAvailable = TRUE
          AND u.verificationStatus = 'approved'
          AND u.lastLocationAt IS NOT NULL
          AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
