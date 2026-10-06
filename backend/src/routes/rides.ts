@@ -180,8 +180,9 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
         distanceKm, durationMin,
         fareRecommended, fareOffered, fareFinal,
         packageDetails, receiverName, receiverPhone,
+        geometry,
         requestedAt, expiresAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         rideId,
         userId,
