@@ -71,6 +71,7 @@ const RideRequest: React.FC = () => {
   const [destSearch, setDestSearch] = useState('');
   const [searchResults, setSearchResults] = useState<Location[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [lastSearchedQuery, setLastSearchedQuery] = useState('');
   const [searchingPickup, setSearchingPickup] = useState(true);
   const [selectedRide, setSelectedRide] = useState(RIDE_OPTIONS[1]);
   const [fare, setFare] = useState<FareEstimate | null>(null);
@@ -322,6 +323,7 @@ const RideRequest: React.FC = () => {
 
     if (query.trim().length < 2) {
       setSearchResults([]);
+      setLastSearchedQuery('');
       setIsSearching(false);
       return;
     }
@@ -331,17 +333,26 @@ const RideRequest: React.FC = () => {
       const results = await searchLocation(query);
       if (requestId !== searchRequestRef.current) return;
       setSearchResults(results);
+      setLastSearchedQuery(query.trim());
       setIsSearching(false);
     }, 500);
   };
 
   const handleSearchFocus = (isPickup: boolean) => {
+    const value = isPickup ? pickupSearch : destSearch;
     setSearchingPickup(isPickup);
     setSearchResults([]);
+    setLastSearchedQuery('');
     setIsSearching(false);
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
       searchTimeoutRef.current = null;
+    }
+
+    // Re-run an existing query when the user returns to an input, so
+    // suggestions do not appear stale or vanish until another character is typed.
+    if (value.trim().length >= 2) {
+      handleSearch(value, isPickup);
     }
   };
 
@@ -358,6 +369,7 @@ const RideRequest: React.FC = () => {
       setDestSearch(loc.name || loc.address.split(',')[0]);
     }
     setSearchResults([]);
+    setLastSearchedQuery('');
     setIsSearching(false);
   };
 
@@ -638,7 +650,7 @@ const RideRequest: React.FC = () => {
                       <span style={{ marginLeft: '10px', fontSize: '12px', color: 'var(--nav-text-secondary)' }}>Searching Uganda...</span>
                     </div>
                   )}
-                  {!isSearching && searchResults.length === 0 && (searchingPickup ? pickupSearch : destSearch).trim().length >= 2 && (
+                  {!isSearching && searchResults.length === 0 && lastSearchedQuery === (searchingPickup ? pickupSearch : destSearch).trim() && lastSearchedQuery.length >= 2 && (
                     <div className="search-results-list" style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--nav-text-secondary)', fontSize: '12px' }}>
                       No matching places found in Uganda.
                     </div>
