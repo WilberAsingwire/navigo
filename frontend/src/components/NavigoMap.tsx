@@ -430,6 +430,28 @@ const NavigoMap: React.FC<MapProps> = ({
             }
           }}
         />
+        <MapInteractionController interactive={interactive} />
+
+        {isValidLatLng(pickupLocation) && (
+          <Marker
+            position={[pickupLocation!.lat, pickupLocation!.lng]}
+            icon={pickupIcon}
+            draggable={!!onPickupDrag}
+            eventHandlers={{
+              dragend: (e: any) => {
+                try {
+                  const ll = e.target.getLatLng();
+                  if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) onPickupDrag?.([ll.lat, ll.lng]);
+                } catch { /* noop */ }
+              },
+            }}
+          >
+            <Popup>
+              <strong>Pickup</strong>
+              <br />{pickupLocation?.name || pickupLocation?.lat.toFixed(5) + ', ' + pickupLocation?.lng.toFixed(5)}
+            </Popup>
+          </Marker>
+        )}
 
         {isValidLatLng(userLocation) && (
           <>
@@ -502,6 +524,7 @@ const NavigoMap: React.FC<MapProps> = ({
             <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>Satellite</button>
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance.toFixed(2)} km · {routeDuration} min</div>}
+          {showRoute && routeDistance === 0 && routeDuration === 0 && <div className="map-badge route">Route unavailable</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">{nearbyDrivers.length} driver{nearbyDrivers.length > 1 ? 's' : ''} nearby</div>}
         </div>
         <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
