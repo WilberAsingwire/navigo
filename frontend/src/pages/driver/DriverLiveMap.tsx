@@ -16,6 +16,7 @@ const DriverLiveMap: React.FC = () => {
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState('');
   const watchRef = useRef<number | null>(null);
+  const lastSentRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
@@ -32,7 +33,11 @@ const DriverLiveMap: React.FC = () => {
       if (!isValid(lat, lng)) return;
       setPosition({ lat, lng });
       setError('');
-      api.post('/drivers/location', { lat, lng }).catch(() => { /* map still works locally */ });
+      const now = Date.now();
+      if (now - lastSentRef.current >= 10000) {
+        lastSentRef.current = now;
+        api.post('/drivers/location', { lat, lng }).catch(() => { /* map still works locally */ });
+      }
     };
 
     const onError = (e: GeolocationPositionError) => {
