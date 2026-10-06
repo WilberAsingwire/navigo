@@ -18,7 +18,24 @@ router.get('/search', async (req, res) => {
     }
     try {
       const limit = Math.min(40, Math.max(5, Number(req.query.limit) || 20));
-      const results = await searchPlaces(q, limit);
+      const lat = req.query.lat === undefined ? null : Number(req.query.lat);
+      const lng = req.query.lng === undefined ? null : Number(req.query.lng);
+      const hasFocus = lat !== null || lng !== null;
+
+      if (
+        hasFocus &&
+        (!Number.isFinite(lat) ||
+          !Number.isFinite(lng) ||
+          !isUgandaPoint({ lat: Number(lat), lng: Number(lng) }))
+      ) {
+        return res.status(400).json({ ok: false, message: 'Search focus coordinates must be valid Uganda coordinates.' });
+      }
+
+      const results = await searchPlaces(
+        q,
+        limit,
+        hasFocus ? { lat: Number(lat), lng: Number(lng) } : null,
+      );
       return res.json({ ok: true, query: q, bounds: UGANDA_BOUNDS, results });
     } catch (error: any) {
       console.error('Place search error:', error?.message || error);
