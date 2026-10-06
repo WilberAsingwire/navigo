@@ -41,7 +41,7 @@ const Home: React.FC = () => {
   const navigate = (path: string) => {
     light();
     setIsMenuOpen(false);
-    setTimeout(() => history.push(path), 80);
+    history.push(path);
   };
 
   const rideOptions = [
@@ -143,11 +143,17 @@ const Home: React.FC = () => {
                   muted
                   loop
                   playsInline
-                  preload="metadata"
-                  poster="https://images.pexels.com/photos/27731041/pexels-photo-27731041.jpeg?cs=srgb&amp;w=900&amp;auto=format&amp;fit=crop"
-                  onTimeUpdate={(event) => {
-                    if (event.currentTarget.currentTime >= 8) event.currentTarget.currentTime = 0;
+                  preload="auto"
+                  poster="https://images.pexels.com/photos/27731041/pexels-photo-27731041.jpeg?cs=srgb&amp;w=1200&amp;auto=format&amp;fit=crop"
+                  onLoadedData={(event) => {
+                    const video = event.currentTarget;
+                    if (video.paused) {
+                      void video.play().catch(() => {
+                        setStreetVideoPaused(true);
+                      });
+                    }
                   }}
+                  onError={() => setStreetVideoPaused(true)}
                 >
                   <source
                     src="https://videos.pexels.com/video-files/30917019/13219337_2560_1440_24fps.mp4"
