@@ -642,9 +642,10 @@ const RideRequest: React.FC = () => {
               <div className="vehicle-options-grid">
                 <h3 className="section-label">Select Vehicle</h3>
                 {RIDE_OPTIONS.map(opt => {
-                  const est = fare ? Math.round((opt.basePrice + fare.distance * opt.pricePerKm + fare.duration * opt.pricePerMinute) * opt.surgeMultiplier) : opt.basePrice;
+                  const quote = vehicleQuotes[opt.dbVehicleType];
+                  const est = Number.isFinite(Number(quote?.fare)) ? Number(quote.fare) : null;
                   return (
-                    <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => setSelectedRide(opt)}>
+                    <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => { setSelectedRide(opt); setUserOffer(null); }}>
                       <div className="vehicle-main-info">
                         <span className="vehicle-emoji">
                           <img src={opt.image} alt={opt.name} className="vehicle-thumb" />
@@ -687,6 +688,11 @@ const RideRequest: React.FC = () => {
                 <div className="fare-detail">
                   <span className="fare-label">{selectedRide.name}</span>
                   <span className="fare-value">{fare?.distance ?? 0} km · {fare?.duration ?? 0} min</span>
+                   {fare && (
+                     <span className="promo-note">
+                       Base UGX {fare.baseFare.toLocaleString('en-UG')} · Distance UGX {fare.distanceFare.toLocaleString('en-UG')} · Time UGX {fare.timeFare.toLocaleString('en-UG')}{serviceType === 'delivery' && fare.deliveryFee > 0 ? ' · Delivery UGX ' + fare.deliveryFee.toLocaleString('en-UG') : ''}
+                     </span>
+                   )}
                   {discount === 'free' ? (
                     <span className="promo-note"><IonIcon icon={checkmarkCircleOutline} /> Free ride applied</span>
                   ) : discount > 0 ? (
@@ -726,7 +732,7 @@ const RideRequest: React.FC = () => {
                 <button className="promo-apply-btn" onClick={applyPromo}>Apply</button>
               </div>
 
-              <button className="btn-continue" data-loading={isLoading || undefined} disabled={isLoading || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
+              <button className="btn-continue" data-loading={isLoading || undefined} disabled={isLoading || routeStatus !== 'ready' || !fare || (serviceType === 'delivery' && (!packageDetails || !receiverName || !receiverPhone))} onClick={handleBookRide}>
                 {isLoading ? <IonSpinner name="crescent" /> : serviceType === 'ride' ? 'Confirm booking' : 'Confirm delivery'}
               </button>
               <button className="btn-secondary-outline" onClick={() => setStep(BookingStep.LOCATION)}>Change details</button>
