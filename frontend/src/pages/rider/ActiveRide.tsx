@@ -90,6 +90,9 @@ const ActiveRide: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     const socket = socketService.connect(user.id);
+    if (rideIdRef.current) {
+      socket.emit('join-ride-room', { rideId: rideIdRef.current });
+    }
 
     const onStatus = (data: { rideId: string; status: string }) => {
       if (data.rideId !== rideIdRef.current) return;
@@ -114,7 +117,7 @@ const ActiveRide: React.FC = () => {
       socket.off('location-updated', onLocation);
       socket.off('ride-cancelled', onCancelled);
     };
-  }, [user, history]);
+  }, [user, history, ride?.id]);
 
   const handleTip = async (amount: number) => {
     if (!ride) return;
