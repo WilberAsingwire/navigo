@@ -403,6 +403,14 @@ const NavigoMap: React.FC<MapProps> = ({
 
       <style>{`
         .navigo-map-root .leaflet-container { font-family: var(--font-body); background: ${mapStyle === 'satellite' ? '#0c1524' : '#e5e7eb'} !important; }
+        /* Keep Leaflet's internal map/tile positioning isolated from global UI styles. */
+        .navigo-map-root .leaflet-pane,
+        .navigo-map-root .leaflet-tile-container,
+        .navigo-map-root .leaflet-tile { position: absolute !important; }
+        .navigo-map-root .leaflet-pane { left: 0 !important; top: 0 !important; }
+        .navigo-map-root .leaflet-tile-pane { z-index: 200 !important; overflow: visible !important; }
+        .navigo-map-root .leaflet-tile-container { left: 0 !important; top: 0 !important; overflow: visible !important; }
+        .navigo-map-root .leaflet-tile { left: 0 !important; top: 0 !important; display: block !important; max-width: none !important; max-height: none !important; visibility: inherit !important; }
         .navigo-map-root .leaflet-control-attribution { font-size: 9px; background: rgba(255,255,255,0.75); }
         .navigo-map-root .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important; border-radius: 14px !important; overflow: hidden; margin: 0 16px 24px 0 !important; }
         .navigo-map-root .leaflet-control-zoom a { background: rgba(15,23,42,0.92) !important; color: white !important; width: 44px !important; height: 44px !important; line-height: 44px !important; font-size: 20px !important; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
