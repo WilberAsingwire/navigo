@@ -8,6 +8,7 @@ import {
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import api from '../../services/api';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface AdminStats {
   totalUsers: number;
@@ -95,9 +96,12 @@ const AdminDashboard: React.FC = () => {
       <IonHeader className="ion-no-border" style={{'--background': '#121212'} as any}>
         <IonToolbar style={{'--background': '#121212'}}>
           <IonTitle style={{ color: 'var(--nav-text)', fontSize: 18 }}>Admin Dashboard</IonTitle>
-          <IonButton slot="end" fill="clear" onClick={() => window.location.reload()}>
-            <IonIcon icon={refreshOutline} style={{ color: 'var(--navigo-orange)' }} />
-          </IonButton>
+          <div slot="end" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <ThemeToggle size="small" />
+            <IonButton fill="clear" onClick={() => window.location.reload()} aria-label="Refresh dashboard">
+              <IonIcon icon={refreshOutline} style={{ color: 'var(--navigo-orange)' }} />
+            </IonButton>
+          </div>
         </IonToolbar>
       </IonHeader>
 
@@ -114,11 +118,11 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* KPI Cards */}
-          <IonGrid className="ion-no-padding" style={{ marginBottom: 8 }}>
+          <IonGrid className="ion-no-padding admin-kpi-grid" style={{ marginBottom: 8 }}>
             <IonRow>
               {kpiCards.map((kpi, i) => (
                 <IonCol size="6" sizeMd="4" key={i}>
-                  <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid var(--nav-border)' }}>
+                  <div className="admin-kpi-card" data-reveal>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <IonIcon icon={kpi.icon} style={{ fontSize: 22, color: kpi.color }} />
                       <span style={{ fontSize: 10, color: kpi.color, fontWeight: 600 }}>{kpi.change}</span>
@@ -132,11 +136,11 @@ const AdminDashboard: React.FC = () => {
           </IonGrid>
 
           {/* Quick Actions */}
-          <h3 style={{ color: 'var(--nav-text)', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Quick Actions</h3>
+          <h3 className="admin-section-title" data-reveal>Quick Actions</h3>
           <div className="admin-quick-actions-grid">
             {quickActions.map((action, i) => (
               <div key={i} onClick={() => history.push(action.path)}
-                style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 16, textAlign: 'center', cursor: 'pointer', position: 'relative', border: '1px solid var(--nav-border)', transition: 'all 0.2s' }}>
+                className="admin-action-card" data-reveal="scale">
                 <IonIcon icon={action.icon} style={{ fontSize: 24, color: 'var(--navigo-orange)' }} />
                 <p style={{ color: 'var(--nav-text-secondary)', fontSize: 11, margin: '6px 0 0' }}>{action.label}</p>
                 {action.badge && (
@@ -149,7 +153,7 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Revenue Chart */}
-          <div style={{ background: 'var(--nav-card-soft)', borderRadius: 12, padding: 20, marginBottom: 24, border: '1px solid var(--nav-border)' }}>
+          <div className="admin-panel" data-reveal>
             <h3 style={{ color: 'var(--nav-text)', margin: '0 0 4px', fontSize: 15, fontWeight: 700 }}>Revenue Overview</h3>
             <p style={{ color: 'var(--nav-text-secondary)', fontSize: 12, margin: '0 0 16px' }}>Last 7 days</p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: 'var(--nav-text-dim)', fontSize: 12 }}>
@@ -161,7 +165,7 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Recent Alerts */}
-          <h3 style={{ color: 'var(--nav-text)', fontSize: 16, marginBottom: 12, fontWeight: 700 }}>Recent Activity</h3>
+          <h3 className="admin-section-title" data-reveal>Recent Activity</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 30 }}>
             {alerts.map((alert, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--nav-card-soft)', borderRadius: 12, padding: 12, border: '1px solid rgba(255,255,255,0.04)' }}>
