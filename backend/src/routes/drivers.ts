@@ -143,16 +143,20 @@ router.get('/stats', authenticate, async (req: any, res: Response) => {
       [userId]
     );
 
-    // Acceptance rate: completed / (completed + cancelled_by_driver)
-    const accepted = await db.get(
-      'SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status IN (\'completed\', \'cancelled\')',
+    // We do not persist a per-driver "offered ride" history yet, so a true
+    // acceptance rate cannot be calculated. Report the measurable completion
+    // rate instead of presenting a misleading acceptance percentage.
+    const assigned = await db.get(
+      "SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status IN ('completed', 'cancelled')",
       [userId]
     );
     const completed = await db.get(
-      'SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status = \'completed\'',
+      "SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status = 'completed'",
       [userId]
     );
-    const acceptanceRate = accepted.count > 0 ? Math.round((completed.count / accepted.count) * 100) : 100;
+    const completionRate = Number(assigned.count) > 0
+      ? Math.round((Number(completed.count) / Number(assigned.count)) * 100)
+      : 100;
 
     // Recent activity (last 10 events)
     const activity = await db.all(
@@ -166,7 +170,7 @@ router.get('/stats', authenticate, async (req: any, res: Response) => {
         todayEarnings: today.todayEarnings || 0,
         weeklyEarnings: weekly.weeklyEarnings || 0,
         completedRides: totals.completedCount || 0,
-        acceptanceRate: acceptanceRate,
+        completionRate,
         rating: (await db.get('SELECT rating FROM driver_profiles WHERE userId = ?', [userId]))?.rating || 5
       },
       activity: activity.map((r: any) => ({
