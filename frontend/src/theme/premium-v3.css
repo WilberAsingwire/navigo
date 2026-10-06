@@ -1100,3 +1100,438 @@ ion-content::part(scroll) {
     border-radius: 22px 22px 0 0;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO COMPOSITION V4
+   One focal point: the live booking preview.
+   Decorative route/live art supports it instead of competing with it.
+   ═══════════════════════════════════════════════════════════════ */
+
+.hero-section {
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.92fr);
+  gap: clamp(28px, 4vw, 64px);
+  max-width: 1360px;
+  min-height: 690px;
+  padding: clamp(64px, 7vw, 92px) clamp(24px, 5vw, 64px) 88px;
+  overflow: hidden;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  left: 46%;
+  top: 14%;
+  bottom: 8%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,.07), transparent);
+  opacity: .6;
+  pointer-events: none;
+}
+
+.hero-bg {
+  background:
+    radial-gradient(circle at 78% 42%, rgba(20,184,166,.07), transparent 28%),
+    radial-gradient(circle at 65% 48%, rgba(255,107,53,.075), transparent 30%);
+}
+
+.hero-text {
+  grid-column: 1;
+  align-self: center;
+  max-width: 610px;
+  z-index: 5;
+}
+
+.hero-ride-preview {
+  grid-column: 2;
+  align-self: center;
+  justify-content: flex-end;
+  padding-right: clamp(0px, 1vw, 14px);
+  z-index: 7;
+}
+
+.hero-ride-preview .ride-preview-card {
+  max-width: 440px;
+  background:
+    linear-gradient(145deg, rgba(22,31,45,.96), rgba(11,17,26,.96));
+  border-color: rgba(255,255,255,.105);
+  box-shadow:
+    0 28px 80px rgba(0,0,0,.46),
+    0 1px 0 rgba(255,255,255,.06) inset;
+}
+
+.hero-visual-stage {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.hero-visual-glow {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  filter: blur(30px);
+  opacity: .5;
+}
+
+.hero-visual-glow-orange {
+  top: 18%;
+  right: 9%;
+  background: radial-gradient(circle, rgba(255,107,53,.14), transparent 68%);
+}
+
+.hero-visual-glow-cyan {
+  bottom: 5%;
+  right: 28%;
+  background: radial-gradient(circle, rgba(20,184,166,.10), transparent 68%);
+}
+
+.hero-route-art {
+  position: absolute;
+  inset: 14% 8% 8% 4%;
+  opacity: .68;
+}
+
+.hero-route-path {
+  position: absolute;
+  left: 6%;
+  top: 12%;
+  width: 78%;
+  height: 72%;
+  border: 1.5px dashed rgba(185,200,214,.18);
+  border-left-color: transparent;
+  border-bottom-color: rgba(255,107,53,.20);
+  border-radius: 44% 56% 52% 38%;
+  transform: rotate(-7deg);
+}
+
+.hero-route-path::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  top: 56%;
+  width: 90px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--navigo-orange), transparent);
+  filter: blur(.2px);
+  animation: navigo-route-scan 3.5s ease-in-out infinite;
+}
+
+@keyframes navigo-route-scan {
+  0%, 100% { transform: translateX(0); opacity: .25; }
+  50% { transform: translateX(180px); opacity: .8; }
+}
+
+.hero-route-node {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.hero-route-node.start {
+  left: 5%;
+  top: 15%;
+  background: var(--navigo-orange);
+  box-shadow: 0 0 0 6px rgba(255,107,53,.09);
+}
+
+.hero-route-node.end {
+  right: 15%;
+  bottom: 17%;
+  background: var(--navigo-cyan);
+  box-shadow: 0 0 0 6px rgba(20,184,166,.08);
+}
+
+.hero-route-traveller {
+  position: absolute;
+  left: 43%;
+  top: 42%;
+  width: 112px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  transform: rotate(-4deg);
+  filter: drop-shadow(0 18px 24px rgba(0,0,0,.34));
+  animation: heroTravellerFloat 4.8s ease-in-out infinite;
+}
+
+.hero-route-traveller img {
+  width: 112px;
+  height: 70px;
+  object-fit: contain;
+}
+
+@keyframes heroTravellerFloat {
+  0%, 100% { transform: translate3d(0,0,0) rotate(-4deg); }
+  50% { transform: translate3d(0,-8px,0) rotate(1deg); }
+}
+
+.hero-live-card,
+.hero-distance-card {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(8,14,21,.68);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 45px rgba(0,0,0,.24);
+}
+
+.hero-live-card {
+  top: 22%;
+  left: 2%;
+  padding: 10px 13px;
+  border-radius: 999px;
+}
+
+.hero-live-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--navigo-cyan);
+  box-shadow: 0 0 0 5px rgba(20,184,166,.09);
+  animation: navigo-live-pulse 1.8s ease-out infinite;
+}
+
+.hero-live-card span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.hero-live-card strong {
+  color: #F8FAFC;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.hero-live-card small {
+  color: #8EA0B2;
+  font-size: 9px;
+}
+
+.hero-distance-card {
+  right: 2%;
+  bottom: 11%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 11px 13px;
+  border-radius: 15px;
+}
+
+.hero-distance-label {
+  color: #C8D4DF;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.hero-distance-card strong {
+  color: #7DD3C7;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.vehicle-art-clean {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  image-rendering: auto;
+}
+
+.hero-ride-preview .preview-vehicle-img.vehicle-art-clean {
+  width: 132px;
+  height: 88px;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 24px rgba(0,0,0,.28));
+}
+
+.hero-ride-preview .pill-img.vehicle-art-clean {
+  width: 21px;
+  height: 15px;
+}
+
+.ride-card .card-img-wrap {
+  background:
+    radial-gradient(circle at 50% 52%, rgba(255,107,53,.055), transparent 58%);
+}
+
+.ride-card .card-vehicle-img.vehicle-art-clean {
+  width: 178px;
+  height: 112px;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 22px rgba(0,0,0,.22));
+}
+
+/* The new visual stage replaces the old multi-object stack completely. */
+.hero-motion-stage,
+.hero-media-card,
+.hero-floating-vehicle,
+.hero-route-pill {
+  display: none !important;
+}
+
+body.light .hero-section::after {
+  background: linear-gradient(180deg, transparent, rgba(15,23,42,.08), transparent);
+}
+
+body.light .hero-ride-preview .ride-preview-card {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(247,250,252,.98));
+  border-color: rgba(15,23,42,.08);
+  box-shadow:
+    0 28px 70px rgba(15,23,42,.13),
+    0 1px 0 rgba(15,23,42,.03) inset;
+}
+
+body.light .hero-live-card,
+body.light .hero-distance-card {
+  background: rgba(255,255,255,.82);
+  border-color: rgba(15,23,42,.08);
+  box-shadow: 0 18px 40px rgba(15,23,42,.10);
+}
+
+body.light .hero-live-card strong { color: #0F172A; }
+body.light .hero-live-card small { color: #64748B; }
+body.light .hero-distance-label { color: #334155; }
+body.light .hero-distance-card strong { color: #0F766E; }
+
+@media (max-width: 1050px) {
+  .hero-section {
+    grid-template-columns: minmax(0, 1fr) minmax(380px, .88fr);
+    gap: 22px;
+  }
+
+  .hero-live-card { left: -2%; }
+  .hero-route-traveller { left: 37%; }
+}
+
+@media (max-width: 900px) {
+  .hero-section {
+    grid-template-columns: 1fr;
+    min-height: 940px;
+    padding-top: 52px;
+  }
+
+  .hero-section::after { display: none; }
+
+  .hero-text,
+  .hero-ride-preview {
+    grid-column: 1;
+  }
+
+  .hero-text {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .hero-ride-preview {
+    justify-content: center;
+    padding-right: 0;
+    margin-top: -30px;
+  }
+
+  .hero-ride-preview .ride-preview-card {
+    max-width: 480px;
+  }
+
+  .hero-visual-stage {
+    top: 42%;
+    width: 100%;
+    height: 54%;
+    opacity: .46;
+  }
+
+  .hero-route-traveller { left: 48%; }
+  .hero-live-card { top: 18%; left: 12%; }
+  .hero-distance-card { right: 10%; bottom: 8%; }
+}
+
+@media (max-width: 640px) {
+  .hero-section {
+    min-height: 920px;
+    padding: 42px 16px 74px;
+  }
+
+  .hero-title {
+    font-size: clamp(40px, 12vw, 55px);
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .hero-buttons {
+    gap: 10px;
+  }
+
+  .hero-btn {
+    height: 50px;
+    padding-inline: 18px;
+  }
+
+  .hero-ride-preview {
+    margin-top: -6px;
+  }
+
+  .hero-ride-preview .ride-preview-card {
+    max-width: 100%;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .hero-live-card {
+    left: 4%;
+    top: 12%;
+  }
+
+  .hero-distance-card {
+    right: 4%;
+    bottom: 4%;
+  }
+
+  .hero-visual-stage {
+    top: 45%;
+    height: 50%;
+    opacity: .22;
+  }
+
+  .hero-route-traveller {
+    left: 37%;
+    width: 92px;
+    height: 58px;
+  }
+
+  .hero-route-traveller img {
+    width: 92px;
+    height: 58px;
+  }
+
+  .hero-ride-preview .preview-main {
+    grid-template-columns: 1fr 118px;
+  }
+
+  .hero-ride-preview .preview-vehicle-img.vehicle-art-clean {
+    width: 112px;
+    height: 76px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-route-path::after,
+  .hero-route-traveller,
+  .hero-live-card-dot {
+    animation: none !important;
+  }
+}
