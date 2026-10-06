@@ -3,6 +3,7 @@ import { IonButton, IonContent, IonIcon, IonPage, IonSpinner, IonText, IonTitle,
 import { arrowBackOutline, locateOutline } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import NavigoMap from '../../components/NavigoMap';
+import api from '../../services/api';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,10 +32,7 @@ const DriverLiveMap: React.FC = () => {
       if (!isValid(lat, lng)) return;
       setPosition({ lat, lng });
       setError('');
-      // Keep the driver's profile location fresh even when there is no active ride.
-      // The backend accepts ride-bound location updates only, so this screen only
-      // displays the driver's own position; active-trip sharing is handled by
-      // DriverActiveRide.
+      api.post('/drivers/location', { lat, lng }).catch(() => { /* map still works locally */ });
     };
 
     const onError = (e: GeolocationPositionError) => {
