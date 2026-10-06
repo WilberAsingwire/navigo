@@ -73,6 +73,16 @@ const isValidLatLng = (ll: { lat: number; lng: number } | null | undefined): boo
   const { lat, lng } = ll;
   return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
 };
+const distanceMeters = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+};
+
 
 const MapEvents: React.FC<{
   onMapClick?: (ll: [number, number]) => void;
@@ -188,6 +198,11 @@ const NavigoMap: React.FC<MapProps> = ({
   const [tileProviderIndex, setTileProviderIndex] = useState(0);
   const tileFallbackRef = React.useRef(false);
   const mapRef = React.useRef<L.Map | null>(null);
+  const routeRequestRef = React.useRef<{
+    origin: { lat: number; lng: number };
+    destination: { lat: number; lng: number };
+    at: number;
+  } | null>(null);
 
   const getValidCenter = (): [number, number] => {
     if (isValidLatLng(userLocation)) return [userLocation!.lat, userLocation!.lng];
@@ -230,6 +245,24 @@ const NavigoMap: React.FC<MapProps> = ({
       onRouteStatusChange?.('unavailable');
       return;
     }
+
+    const previous = routeRequestRef.current;
+    const sameDestination = !!previous &&
+      Math.abs(previous.destination.lat - destination!.lat) < 0.00005 &&
+      Math.abs(previous.destination.lng - destination!.lng) < 0.00005;
+    const moved = previous && isValidLatLng(from)
+      ? distanceMeters(previous.origin, from!) : Infinity;
+    const recent = previous ? Date.now() - previous.at < 8000 : false;
+
+    // Live GPS markers can update every few seconds, but road geometry is
+    // recalculated only after meaningful movement or when the destination changes.
+    if (sameDestination && moved < 50 && recent) return;
+
+    routeRequestRef.current = {
+      origin: { lat: from!.lat, lng: from!.lng },
+      destination: { lat: destination!.lat, lng: destination!.lng },
+      at: Date.now(),
+    };
 
     const controller = new AbortController();
     let active = true;
@@ -524,7 +557,6 @@ const NavigoMap: React.FC<MapProps> = ({
             <button className={`ms-btn ${mapStyle === 'satellite' ? 'active' : ''}`} onClick={() => handleStyleChange('satellite')}>Satellite</button>
           </div>
           {routeDistance > 0 && <div className="map-badge route">{routeDistance.toFixed(2)} km · {routeDuration} min</div>}
-          {showRoute && routeDistance === 0 && routeDuration === 0 && <div className="map-badge route">Route unavailable</div>}
           {nearbyDrivers.length > 0 && <div className="map-badge drv">{nearbyDrivers.length} driver{nearbyDrivers.length > 1 ? 's' : ''} nearby</div>}
         </div>
         <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
