@@ -28,7 +28,7 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
       `SELECT u.id, COALESCE(dp.vehicleType, u.vehicleType) AS vehicleType,
               COALESCE(dp.lat, u.currentLat) AS lat, COALESCE(dp.lng, u.currentLng) AS lng
        FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
-       WHERE u.role = 'driver' AND u.isOnline = TRUE AND u.isAvailable = TRUE
+       WHERE (u.role = 'driver' OR u.role = 'motorist') AND u.isOnline = TRUE AND u.isAvailable = TRUE
          AND u.verificationStatus = 'approved'
          AND u.lastLocationAt IS NOT NULL
          AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
@@ -57,6 +57,31 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
 // SQL expression for the driver's take-home on a ride (fare minus commission).
 // COMMISSION_RATE is a server-side constant (clamped 0.05–0.2 in fare.ts), not user input.
 const DRIVER_SHARE_SQL = `(fareFinal - ROUND(fareFinal * ${COMMISSION_RATE}))`;
+
+// ─── Update driver's current location (online/live map) ─────────────
+router.post('/location', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
+  try {
+    const lat = Number(req.body?.lat);
+    const lng = Number(req.body?.lng);
+    const userId = (req as AuthRequest).user?.userId;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) {
+      return res.status(400).json({ message: 'Valid Uganda latitude and longitude are required.' });
+    }
+    const db = getDB();
+    await db.run(
+      'UPDATE users SET currentLat = ?, currentLng = ?, lastLocationAt = CURRENT_TIMESTAMP WHERE id = ?',
+      [lat, lng, userId]
+    );
+    await db.run(
+      'UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?',
+      [lat, lng, userId]
+    );
+    res.json({ ok: true, lat, lng });
+  } catch (error) {
+    console.error('Driver location error:', error);
+    res.status(500).json({ message: 'Failed to update driver location.' });
+  }
+});
 
 // ─── Toggle Online Status ─────────────────────────────
 router.post('/status/online', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {

@@ -22,6 +22,21 @@ const carIcon = L.divIcon({ html: '<div style="background:#4da6ff;width:18px;hei
 const bikeIcon = L.divIcon({ html: '<div style="background:#ffab40;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>', iconSize: [24, 24], iconAnchor: [12, 12] });
 const riderIcon = L.divIcon({ html: '<div style="background:#00e676;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.35)"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
 
+const isValidMapPoint = (lat: unknown, lng: unknown): lat is number =>
+  typeof lat === 'number' && typeof lng === 'number' &&
+  Number.isFinite(lat) && Number.isFinite(lng) &&
+  lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+
+const MapReady: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    const refresh = () => { try { map.invalidateSize({ pan: false }); } catch { /* noop */ } };
+    const timers = [0, 100, 400, 900].map(ms => window.setTimeout(refresh, ms));
+    return () => timers.forEach(window.clearTimeout);
+  }, [map]);
+  return null;
+};
+
 const FlyToButton: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
   return (
@@ -129,12 +144,14 @@ const AdminLiveMap: React.FC = () => {
     try {
       const res = await api.get('/auth/admin/live-locations');
       const { users: rawUsers, activeTrips } = res.data;
-      const fetchedUsers = rawUsers.map((u: { currentLat: number; currentLng: number; isOnline: boolean; role: string; [k: string]: any }) => ({
-        ...u,
-        lat: u.currentLat,
-        lng: u.currentLng,
-        status: u.isOnline ? 'active' : 'idle'
-      }));
+      const fetchedUsers = rawUsers
+        .map((u: { currentLat: number; currentLng: number; isOnline: boolean; role: string; [k: string]: any }) => ({
+          ...u,
+          lat: Number(u.currentLat),
+          lng: Number(u.currentLng),
+          status: u.isOnline ? 'active' : 'idle'
+        }))
+        .filter((u: any) => isValidMapPoint(u.lat, u.lng));
       setUsers(fetchedUsers);
       setStats({
         drivers: fetchedUsers.filter((u: { role: string }) => u.role === 'driver').length,
@@ -180,7 +197,10 @@ const AdminLiveMap: React.FC = () => {
 
   useEffect(() => {
     if (activeFilter === 'all') setFilteredUsers(users);
-    else setFilteredUsers(users.filter((u: { role: string }) => activeFilter === 'drivers' ? u.role === 'driver' : activeFilter === 'motorists' ? u.role === 'motorist' : u.role === 'rider'));
+    else if (activeFilter === 'drivers') setFilteredUsers(users.filter((u: { role: string }) => u.role === 'driver'));
+    else if (activeFilter === 'motorists') setFilteredUsers(users.filter((u: { role: string }) => u.role === 'motorist'));
+    else if (activeFilter === 'riders') setFilteredUsers(users.filter((u: { role: string }) => u.role === 'rider' || u.role === 'customer'));
+    else setFilteredUsers([]);
   }, [users, activeFilter]);
 
   const getIcon = (role: string) => role === 'driver' ? carIcon : role === 'motorist' ? bikeIcon : riderIcon;
@@ -226,11 +246,16 @@ const AdminLiveMap: React.FC = () => {
           </div>
         ) : (
           <div style={{height: '45vh', width: '100%', minHeight: 280}}>
-            <MapContainer center={userLocation} zoom={14} style={{height: '100%', width: '100%'}} ref={mapRef}>
-              <TileLayer url={tileUrls[mapStyle]} />
+            <MapContainer center={userLocation} zoom={14} style={{height: '100%', minHeight: 280, width: '100%', position: 'relative'}} ref={mapRef}>
+              <TileLayer
+                url={tileUrls[mapStyle]}
+                attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+                maxZoom={20}
+              />
+              <MapReady />
               <FlyToButton center={userLocation} />
               <Marker position={userLocation} icon={riderIcon}><Popup>Your location</Popup></Marker>
-              {filteredUsers.map(u => (
+              {activeFilter === 'heatmap' ? <DemandLayer /> : filteredUsers.map(u => (
                 <UserMarker key={u.id} user={u} icon={getIcon(u.role)} />
               ))}
             </MapContainer>

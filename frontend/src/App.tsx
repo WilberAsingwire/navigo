@@ -56,6 +56,7 @@ const DriverEarnings = lazy(() => import('./pages/driver/DriverEarnings'));
 const DriverVehicle = lazy(() => import('./pages/driver/DriverVehicle'));
 const DriverDocuments = lazy(() => import('./pages/driver/DriverDocuments'));
 const DriverActiveRide = lazy(() => import('./pages/driver/DriverActiveRide'));
+const DriverLiveMap = lazy(() => import('./pages/driver/DriverLiveMap'));
 
 /* Admin */
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -175,6 +176,7 @@ const AppContent: React.FC = () => {
             <Route path="/driver/vehicle" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverVehicle} /></ErrorBoundary>} />
             <Route path="/driver/documents" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverDocuments} /></ErrorBoundary>} />
             <Route path="/driver/active-ride" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverActiveRide} /></ErrorBoundary>} />
+            <Route path="/driver/live-map" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['driver', 'motorist']} component={DriverLiveMap} /></ErrorBoundary>} />
 
             {/* Admin Routes */}
             <Route path="/admin/dashboard" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['admin']} component={AdminDashboard} /></ErrorBoundary>} />

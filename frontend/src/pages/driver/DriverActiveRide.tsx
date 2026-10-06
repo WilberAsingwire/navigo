@@ -95,11 +95,15 @@ const DriverActiveRide: React.FC = () => {
     if (['completed', 'cancelled'].includes(ride.status)) return;
     if (!('geolocation' in navigator)) return;
 
+    const socket = socketService.connect(user.id);
+    if (rideIdRef.current) {
+      socket.emit('join-ride-room', { rideId: rideIdRef.current });
+    }
+
     watchIdRef.current = navigator.geolocation.watchPosition(
       (p) => {
         setPos([p.coords.latitude, p.coords.longitude]);
-        const socket = socketService.getSocket();
-        if (socket && rideIdRef.current) {
+        if (rideIdRef.current) {
           socket.emit('update-location', {
             rideId: rideIdRef.current,
             lat: p.coords.latitude,

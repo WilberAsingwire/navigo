@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   IonContent, IonPage, IonHeader, IonToolbar,
   IonIcon, IonText, IonToggle, IonToast,
@@ -25,6 +25,8 @@ const DriverHome: React.FC = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const locationWatchRef = useRef<number | null>(null);
+  const lastLocationSentRef = useRef(0);
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -70,6 +72,44 @@ const DriverHome: React.FC = () => {
     };
     fetchDriverData();
   }, []);
+
+  // Keep the backend's driver location fresh while the driver is online.
+  // This is what makes nearby-driver matching work before a ride starts.
+  useEffect(() => {
+    if (!isOnline || !user) {
+      if (locationWatchRef.current !== null && 'geolocation' in navigator) {
+        navigator.geolocation.clearWatch(locationWatchRef.current);
+        locationWatchRef.current = null;
+      }
+      return;
+    }
+    if (!('geolocation' in navigator)) {
+      setToastMsg('Location services are required to receive nearby ride requests.');
+      setShowToast(true);
+      return;
+    }
+
+    const sendLocation = (p: GeolocationPosition) => {
+      const lat = p.coords.latitude;
+      const lng = p.coords.longitude;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) return;
+      const now = Date.now();
+      if (now - lastLocationSentRef.current < 10000) return;
+      lastLocationSentRef.current = now;
+      api.post('/drivers/location', { lat, lng }).catch(() => { /* transient network failure; retry on next GPS update */ });
+    };
+
+    locationWatchRef.current = navigator.geolocation.watchPosition(
+      sendLocation,
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    );
+
+    return () => {
+      if (locationWatchRef.current !== null) navigator.geolocation.clearWatch(locationWatchRef.current);
+      locationWatchRef.current = null;
+    };
+  }, [isOnline, user]);
 
   const handleStatusToggle = async (online: boolean) => {
     if (user?.verificationStatus !== 'approved') {
