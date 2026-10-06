@@ -194,6 +194,7 @@ export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResu
   if (cached) return cached;
 
   const all: PlaceResult[] = [];
+  let photonFailed = false;
 
   try {
     const photon = await axios.get('https://photon.komoot.io/api/', {
@@ -213,13 +214,14 @@ export const searchPlaces = async (query: string, limit = 20): Promise<PlaceResu
       }
     }
   } catch (error: any) {
+    photonFailed = true;
     console.warn('Photon search failed:', error?.message || error);
   }
 
   // Nominatim is deliberately server-side and cached. The public service
   // explicitly disallows client-side autocomplete and asks applications to
   // cache requests and stay at or below one request per second.
-  if (all.length < Math.min(5, safeLimit)) {
+  if (photonFailed) {
     try {
       const nom = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: {
@@ -260,6 +262,7 @@ export const reverseGeocode = async (point: MapPoint): Promise<PlaceResult> => {
   const cached = cacheGet<PlaceResult>(key);
   if (cached) return cached;
 
+  let photonFailed = false;
   try {
     const photon = await axios.get('https://photon.komoot.io/reverse', {
       params: { lat: point.lat, lon: point.lng, lang: 'en' },
@@ -272,7 +275,12 @@ export const reverseGeocode = async (point: MapPoint): Promise<PlaceResult> => {
       return place;
     }
   } catch (error: any) {
+    photonFailed = true;
     console.warn('Photon reverse failed:', error?.message || error);
+  }
+
+  if (!photonFailed) {
+    throw new Error('No place found for this location');
   }
 
   const nom = await axios.get('https://nominatim.openstreetmap.org/reverse', {
