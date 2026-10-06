@@ -269,7 +269,7 @@ const DriverActiveRide: React.FC = () => {
             showRoute={!!pos && (phase === 'accepted' || phase === 'ongoing')}
             driverLocation={pos ? { lat: pos[0], lng: pos[1] } : null}
             driverType={(ride.vehicleType as any) || 'go'}
-            followUser={false}
+            followUser={true}
           />
           <div style={{ position: 'absolute', bottom: 12, right: 12, zIndex: 1000 }}>
             <IonButton color="light" size="small" onClick={openNavigation}>
