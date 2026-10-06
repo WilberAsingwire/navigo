@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, AuthRequest } from '../middleware/authMiddleware';
 import { rideRequestLimiter } from '../middleware/rateLimit';
-import { fareBreakdown, clampOffer } from '../utils/fare';
+import { VEHICLES, fareBreakdown, clampOffer, offerBounds } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
 import { settleRidePayment } from '../utils/settlement';
@@ -24,6 +24,37 @@ const normalizeVehicleType = (raw: string): string => {
   };
   return map[(raw || '').toLowerCase()] || 'economy';
 };
+
+// ─── Multi-vehicle fare quotations ─────────────────────────────
+router.get('/quotes', async (req: Request, res: Response) => {
+  try {
+    const kmNum = Number(req.query.km);
+    const minNum = Number(req.query.min ?? 0);
+    const service: 'ride' | 'delivery' = String(req.query.serviceType) === 'delivery' ? 'delivery' : 'ride';
+
+    if (!Number.isFinite(kmNum) || kmNum < 0 || kmNum > 500) {
+      return res.status(400).json({ ok: false, message: 'Invalid distance' });
+    }
+    if (!Number.isFinite(minNum) || minNum < 0 || minNum > 600) {
+      return res.status(400).json({ ok: false, message: 'Invalid duration' });
+    }
+
+    const quotes: Record<string, any> = {};
+    for (const vehicle of VEHICLES) {
+      const breakdown = fareBreakdown(vehicle.type, kmNum, minNum, service);
+      quotes[vehicle.type] = {
+        fare: breakdown.total,
+        breakdown,
+        offerBounds: offerBounds(vehicle.type, kmNum, minNum),
+      };
+    }
+
+    return res.json({ ok: true, km: kmNum, durationMin: minNum, serviceType: service, quotes });
+  } catch (error) {
+    console.error('Quotes error:', error);
+    return res.status(500).json({ ok: false, message: 'Error calculating vehicle quotes' });
+  }
+});
 
 // ─── Authoritative driving route ─────────────────────────────
 router.get('/route', async (req: Request, res: Response) => {
