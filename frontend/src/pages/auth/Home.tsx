@@ -14,10 +14,10 @@ import './Home.css';
 import useHaptic from '../../hooks/useHaptic';
 import ThemeToggle from '../../components/ThemeToggle';
 import Logo from '../../components/Logo';
-import bodaNew from '../../assets/vehicles/boda-new.png';
-import goNew from '../../assets/vehicles/go-new.png';
-import comfortNew from '../../assets/vehicles/comfort-new.png';
-import xlNew from '../../assets/vehicles/xl-new.png';
+import bodaNew from '../../assets/vehicles/boda-clean.svg';
+import goNew from '../../assets/vehicles/go-clean.svg';
+import comfortNew from '../../assets/vehicles/comfort-clean.svg';
+import xlNew from '../../assets/vehicles/xl-clean.svg';
 
 const Home: React.FC = () => {
   const history = useHistory();
@@ -129,16 +129,27 @@ const Home: React.FC = () => {
               <div className="hero-overlay" />
             </div>
 
-            <div className="hero-motion-stage" aria-hidden="true">
-              <div className="hero-media-card" />
-              <div className="hero-live-chip"><span className="pulse" /> Live network</div>
-              <div className="hero-floating-vehicle boda"><img src={bodaNew} alt="" /></div>
-              <div className="hero-floating-vehicle go"><img src={goNew} alt="" /></div>
-              <div className="hero-floating-vehicle xl"><img src={xlNew} alt="" /></div>
-              <div className="hero-route-pill">
-                <div className="route-head"><span>Kampala</span><span>Entebbe</span></div>
-                <div className="route-line" />
-                <div className="route-meta">Live route preview · pickup → destination</div>
+            <div className="hero-visual-stage" aria-hidden="true">
+              <div className="hero-visual-glow hero-visual-glow-orange" />
+              <div className="hero-visual-glow hero-visual-glow-cyan" />
+              <div className="hero-route-art">
+                <span className="hero-route-node start" />
+                <span className="hero-route-path" />
+                <span className="hero-route-node end" />
+                <span className="hero-route-traveller">
+                  <img src={bodaNew} alt="" />
+                </span>
+              </div>
+              <div className="hero-live-card">
+                <span className="hero-live-card-dot" />
+                <span>
+                  <strong>Live network</strong>
+                  <small>Drivers available nearby</small>
+                </span>
+              </div>
+              <div className="hero-distance-card">
+                <span className="hero-distance-label">Kampala → Entebbe</span>
+                <strong>Live route preview</strong>
               </div>
             </div>
 
@@ -212,7 +223,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="preview-vehicle">
-                    <img src={active.image} alt={active.name} className="preview-vehicle-img" />
+                    <img src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean" />
                     <div className="vehicle-meta">
                       <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
                       <span className="vehicle-seats"><IonIcon icon={peopleOutline} /> {active.seats}</span>
@@ -227,7 +238,7 @@ const Home: React.FC = () => {
                       className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
                       onClick={() => { light(); setActiveRide(ride.id); }}
                     >
-                      <img src={ride.image} alt="" className="pill-img" />
+                      <img src={ride.image} alt="" className="pill-img vehicle-art-clean" />
                       <span>{ride.short}</span>
                     </button>
                   ))}
@@ -259,7 +270,7 @@ const Home: React.FC = () => {
                 <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
                   {ride.popular && <div className="ride-badge">Most Popular</div>}
                   <div className="card-img-wrap">
-                    <img src={ride.image} alt={ride.name} className="card-vehicle-img" />
+                    <img src={ride.image} alt={ride.name} className="card-vehicle-img vehicle-art-clean" />
                   </div>
                   <h3 className="card-title">{ride.name}</h3>
                   <p className="card-desc">{ride.desc}</p>
