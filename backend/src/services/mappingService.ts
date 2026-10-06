@@ -62,6 +62,8 @@ const normaliseText = (value: unknown) => String(value || '').trim().replace(/\s
 
 const normaliseSearchQuery = (value: unknown) =>
   normaliseText(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[，、]/g, ',')
     .replace(/\s*,\s*/g, ', ')
     .replace(/\s+/g, ' ')
@@ -72,7 +74,7 @@ const searchTokens = (value: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .split(/\s+/)
-    .filter(token => token.length >= 2 && token !== 'uganda');
+    .filter(token => token.length >= 2 && !GENERIC_LOCATION_WORDS.has(token));
 
 const withinUganda = (lat: number, lng: number) =>
   lat >= UGANDA_BOUNDS.minLat &&
