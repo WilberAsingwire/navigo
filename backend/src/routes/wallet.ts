@@ -252,7 +252,7 @@ router.get('/transactions', authenticate, async (req: Request, res: Response) =>
   }
 });
 
-router.post('/payout', authenticate, payoutLimiter, async (req: Request, res: Response) => {
+router.post('/payout', authenticate, authorize(['driver', 'motorist']), payoutLimiter, async (req: Request, res: Response) => {
   try {
     const { amount, provider, phone } = req.body;
     const userId = (req as AuthRequest).user?.userId;
@@ -388,13 +388,17 @@ router.post('/topup', authenticate, async (req: Request, res: Response) => {
   try {
     const { amount, paymentReference } = req.body;
     const userId = (req as AuthRequest).user?.userId;
+    const requestedAmount = Number(amount);
     const db = getDB();
 
     if (!paymentReference) {
       return res.status(400).json({ ok: false, message: 'Payment reference is required for verification' });
     }
+    if (!Number.isInteger(requestedAmount) || requestedAmount < MIN_TOPUP || requestedAmount > MAX_TOPUP) {
+      return res.status(400).json({ ok: false, message: `Top-up must be between UGX ${MIN_TOPUP.toLocaleString()} and UGX ${MAX_TOPUP.toLocaleString()}` });
+    }
 
-    const verification = await paymentService.verifyTransaction(paymentReference);
+    const verification = await paymentService.verifyTransaction(String(paymentReference));
     if (verification.status !== 'success') {
       return res.status(400).json({
         ok: false,
@@ -413,10 +417,10 @@ router.post('/topup', authenticate, async (req: Request, res: Response) => {
       });
     }
 
-    if (verification.amount && verification.amount !== amount) {
+    if (verification.currency !== 'UGX' || Number(verification.amount) !== requestedAmount) {
       return res.status(400).json({
         ok: false,
-        message: `Amount mismatch. Verified: ${verification.amount}, Requested: ${amount}`
+        message: `Payment mismatch. Verified: UGX ${Number(verification.amount || 0).toLocaleString()}, requested: UGX ${requestedAmount.toLocaleString()}`
       });
     }
 
@@ -426,11 +430,11 @@ router.post('/topup', authenticate, async (req: Request, res: Response) => {
       await tx.query('BEGIN');
       await tx.query(
         'UPDATE wallets SET balance = balance + ?, updatedAt = CURRENT_TIMESTAMP WHERE userId = ?',
-        [amount, userId]
+        [requestedAmount, userId]
       );
       await tx.query(
         'INSERT INTO wallet_transactions (id, userId, kind, amount, reference, note) VALUES (?, ?, ?, ?, ?, ?)',
-        [transactionId, userId, 'topup', amount, paymentReference, `Wallet top-up (Ref: ${paymentReference})`]
+        [transactionId, userId, 'topup', requestedAmount, paymentReference, `Wallet top-up (Ref: ${paymentReference})`]
       );
       await tx.query('COMMIT');
       tx.release();

@@ -183,11 +183,14 @@ export const setupSocketHandlers = (io: Server) => {
           `SELECT u.id,
                   COALESCE(dp.vehicleType, u.vehicleType) AS vehicleType,
                   COALESCE(dp.lat, u.currentLat) AS lat,
-                  COALESCE(dp.lng, u.currentLng) AS lng
+                  COALESCE(dp.lng, u.currentLng) AS lng,
+                  u.lastLocationAt
            FROM users u
            LEFT JOIN driver_profiles dp ON dp.userId = u.id
            WHERE (u.role = ? OR u.role = ?) AND u.verificationStatus = ?
              AND u.isOnline = TRUE AND u.isAvailable = TRUE
+             AND u.lastLocationAt IS NOT NULL
+             AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
            LIMIT 200`,
           ['driver', 'motorist', 'approved']
         );
@@ -313,7 +316,7 @@ export const setupSocketHandlers = (io: Server) => {
       const db = getDB();
       try {
         // Update both users table (for admin live map) and driver_profiles (for rider tracking)
-        await db.run('UPDATE users SET currentLat = ?, currentLng = ? WHERE id = ?', [lat, lng, userId]);
+        await db.run('UPDATE users SET currentLat = ?, currentLng = ?, lastLocationAt = CURRENT_TIMESTAMP WHERE id = ?', [lat, lng, userId]);
         await db.run('UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?', [lat, lng, userId]);
 
         socket.to(rideId).emit('location-updated', { lat, lng, userId, timestamp: Date.now() });

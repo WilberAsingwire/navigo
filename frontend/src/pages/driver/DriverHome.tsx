@@ -14,8 +14,6 @@ import { useHistory } from 'react-router-dom';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import BodaSafeScore from '../../components/BodaSafeBadges';
-import LoyaltyCard from '../../components/LoyaltyCard';
 import ThemeToggle from '../../components/ThemeToggle';
 import useHaptic from '../../hooks/useHaptic';
 import './DriverHome.css';
@@ -51,7 +49,7 @@ const DriverHome: React.FC = () => {
     earnings: 0,
     rating: 5,
     completedRides: 0,
-    acceptanceRate: 100,
+    completionRate: 100,
     todayEarnings: 0,
     weeklyEarnings: 0
   });
@@ -145,8 +143,6 @@ const DriverHome: React.FC = () => {
             </div>
           </div>
 
-          <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={stats.rating} totalRides={stats.completedRides} />
-          <LoyaltyCard points={450} tier="gold" />
 
           <h3 className="actions-header">Quick Actions</h3>
           <div className="actions-grid">
@@ -154,7 +150,7 @@ const DriverHome: React.FC = () => {
               { label: 'Earnings', icon: walletOutline, path: '/driver/earnings', color: '#00e676' },
               { label: 'Vehicle', icon: carOutline, path: '/driver/vehicle', color: '#4da6ff' },
               { label: 'Documents', icon: documentTextOutline, path: '/driver/documents', color: '#b47fff' },
-              { label: 'Live Map', icon: mapOutline, path: '/admin/map', color: '#FF6B35' },
+              { label: 'Live Map', icon: mapOutline, path: '/driver/live-map', color: '#FF6B35' },
             ].map(action => (
               <div key={action.label} onClick={() => navWithHaptic(action.path)} className="action-card">
                 <IonIcon icon={action.icon} style={{ color: action.color }} />
@@ -178,7 +174,7 @@ const DriverHome: React.FC = () => {
 
           <div className="bottom-stats-grid">
             <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completedRides}</p><span className="bottom-stat-label">Total Rides</span></div>
-            <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.acceptanceRate}%</p><span className="bottom-stat-label">Acceptance</span></div>
+            <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completionRate}%</p><span className="bottom-stat-label">Completion</span></div>
             <div className="bottom-stat-card"><p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p><span className="bottom-stat-label">This Week</span></div>
           </div>
         </div>

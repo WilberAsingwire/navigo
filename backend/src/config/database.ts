@@ -28,7 +28,7 @@ const CAMEL_COLUMNS = [
   // users
   'fullName', 'phoneVerified', 'verificationStatus', 'driverDocs', 'rejectionReason',
   'socialProvider', 'socialId', 'createdAt', 'isOnline', 'isAvailable', 'isBot',
-  'vehicleType', 'currentLat', 'currentLng',
+  'vehicleType', 'currentLat', 'currentLng', 'lastLocationAt',
   // sessions / generic
   'userId', 'expiresAt', 'updatedAt',
   // driver_profiles
@@ -105,7 +105,8 @@ export const initDB = async () => {
           socialId TEXT,
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
           isOnline BOOLEAN DEFAULT FALSE,
-          isAvailable BOOLEAN DEFAULT FALSE
+          isAvailable BOOLEAN DEFAULT FALSE,
+          lastLocationAt TIMESTAMP WITH TIME ZONE
         );
 
         CREATE TABLE IF NOT EXISTS sessions (
@@ -334,6 +335,10 @@ export const initDB = async () => {
 
           IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='currentlng') THEN
             ALTER TABLE users ADD COLUMN currentLng DECIMAL;
+          END IF;
+
+          IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND lower(column_name)='lastlocationat') THEN
+            ALTER TABLE users ADD COLUMN lastLocationAt TIMESTAMP WITH TIME ZONE;
           END IF;
         END $$;
 

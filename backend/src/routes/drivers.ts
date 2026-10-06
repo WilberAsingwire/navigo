@@ -30,6 +30,8 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
        FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
        WHERE u.role = 'driver' AND u.isOnline = TRUE AND u.isAvailable = TRUE
          AND u.verificationStatus = 'approved'
+         AND u.lastLocationAt IS NOT NULL
+         AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
        LIMIT 200`,
       []
     );
@@ -57,7 +59,7 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
 const DRIVER_SHARE_SQL = `(fareFinal - ROUND(fareFinal * ${COMMISSION_RATE}))`;
 
 // ─── Toggle Online Status ─────────────────────────────
-router.post('/status/online', authenticate, async (req: any, res: Response) => {
+router.post('/status/online', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const { online } = req.body;
     const userId = (req as AuthRequest).user?.userId;
@@ -79,7 +81,7 @@ router.post('/status/online', authenticate, async (req: any, res: Response) => {
 });
 
 // ─── Toggle Availability ─────────────────────────────
-router.post('/status/available', authenticate, async (req: any, res: Response) => {
+router.post('/status/available', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const { available } = req.body;
     const userId = (req as AuthRequest).user?.userId;
@@ -99,7 +101,7 @@ router.post('/status/available', authenticate, async (req: any, res: Response) =
 });
 
 // ─── Get Driver Profile ───────────────────────────────
-router.get('/profile', authenticate, async (req: any, res: Response) => {
+router.get('/profile', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
@@ -120,7 +122,7 @@ router.get('/profile', authenticate, async (req: any, res: Response) => {
 });
 
 // ─── Get Driver Stats & Activity ────────────────────────
-router.get('/stats', authenticate, async (req: any, res: Response) => {
+router.get('/stats', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
   try {
     const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
@@ -143,16 +145,20 @@ router.get('/stats', authenticate, async (req: any, res: Response) => {
       [userId]
     );
 
-    // Acceptance rate: completed / (completed + cancelled_by_driver)
-    const accepted = await db.get(
-      'SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status IN (\'completed\', \'cancelled\')',
+    // We do not persist a per-driver "offered ride" history yet, so a true
+    // acceptance rate cannot be calculated. Report the measurable completion
+    // rate instead of presenting a misleading acceptance percentage.
+    const assigned = await db.get(
+      "SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status IN ('completed', 'cancelled')",
       [userId]
     );
     const completed = await db.get(
-      'SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status = \'completed\'',
+      "SELECT COUNT(*) as count FROM rides WHERE driverId = ? AND status = 'completed'",
       [userId]
     );
-    const acceptanceRate = accepted.count > 0 ? Math.round((completed.count / accepted.count) * 100) : 100;
+    const completionRate = Number(assigned.count) > 0
+      ? Math.round((Number(completed.count) / Number(assigned.count)) * 100)
+      : 100;
 
     // Recent activity (last 10 events)
     const activity = await db.all(
@@ -166,7 +172,7 @@ router.get('/stats', authenticate, async (req: any, res: Response) => {
         todayEarnings: today.todayEarnings || 0,
         weeklyEarnings: weekly.weeklyEarnings || 0,
         completedRides: totals.completedCount || 0,
-        acceptanceRate: acceptanceRate,
+        completionRate,
         rating: (await db.get('SELECT rating FROM driver_profiles WHERE userId = ?', [userId]))?.rating || 5
       },
       activity: activity.map((r: any) => ({
