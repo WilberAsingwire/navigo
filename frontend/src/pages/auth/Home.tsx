@@ -129,11 +129,24 @@ const Home: React.FC = () => {
               <div className="hero-overlay" />
             </div>
 
-            <div className="hero-text">
+            <div className="hero-motion-stage" aria-hidden="true">
+              <div className="hero-media-card" />
+              <div className="hero-live-chip"><span className="pulse" /> Live network</div>
+              <div className="hero-floating-vehicle boda"><img src={bodaNew} alt="" /></div>
+              <div className="hero-floating-vehicle go"><img src={goNew} alt="" /></div>
+              <div className="hero-floating-vehicle xl"><img src={xlNew} alt="" /></div>
+              <div className="hero-route-pill">
+                <div className="route-head"><span>Kampala</span><span>Entebbe</span></div>
+                <div className="route-line" />
+                <div className="route-meta">Live route preview · pickup → destination</div>
+              </div>
+            </div>
+
+            <div className="hero-text" data-reveal="left">
               <div className="hero-badge">
                 <span className="badge-dot" />
                 <IonIcon icon={flashOutline} className="badge-icon" />
-                Uganda's #1 Ride-Hailing App
+                Built for moving across Uganda
               </div>
 
               <h1 className="hero-title">
@@ -145,7 +158,7 @@ const Home: React.FC = () => {
               <p className="hero-desc">
                 Uganda's smartest way to move. <strong>Boda Safe™</strong> verified drivers,
                 women-preferred mode, and offline USSD booking. Ride with confidence
-                across every corner of the city.
+                across cities, towns and roads across Uganda.
               </p>
 
               <div className="hero-buttons">
@@ -165,7 +178,7 @@ const Home: React.FC = () => {
                   <IonIcon icon={starOutline} />
                   <IonIcon icon={peopleOutline} />
                 </div>
-                <span className="trust-text"><strong>50k+</strong> rides · <strong>4.9</strong> rating · <strong>2k+</strong> drivers</span>
+                <span className="trust-text"><strong>Safety-first</strong> · <strong>Live tracking</strong> · <strong>USSD ready</strong></span>
               </div>
             </div>
 
@@ -236,7 +249,7 @@ const Home: React.FC = () => {
           </section>
 
           {/* CHOOSE RIDE */}
-          <section className="section">
+          <section className="section" data-reveal>
             <div className="section-head">
               <h2 className="section-title">Choose Your Ride</h2>
               <p className="section-sub">From quick boda trips to luxury group rides — we've got you covered</p>
@@ -265,7 +278,7 @@ const Home: React.FC = () => {
           </section>
 
           {/* HOW IT WORKS */}
-          <section className="section alt">
+          <section className="section alt" data-reveal>
             <div className="how-it-works">
               <h2 className="section-title">How It Works</h2>
               <p className="section-sub">Get where you're going in three simple steps</p>
@@ -292,7 +305,7 @@ const Home: React.FC = () => {
           </section>
 
           {/* SAFETY */}
-          <section className="section">
+          <section className="section" data-reveal>
             <h2 className="section-title">Safety First</h2>
             <p className="section-sub">Your security is our non-negotiable priority</p>
             <div className="safety-grid">
@@ -320,7 +333,7 @@ const Home: React.FC = () => {
           </section>
 
           {/* REWARDS */}
-          <section className="section alt">
+          <section className="section alt" data-reveal>
             <h2 className="section-title">Zawadi Rewards</h2>
             <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
             <div className="rewards-grid">
