@@ -646,7 +646,7 @@ const RideRequest: React.FC = () => {
                           <span className="vehicle-type-desc">{opt.description}</span>
                         </div>
                       </div>
-                      <div className="vehicle-price-badge">UGX {est.toLocaleString()}</div>
+                      <div className="vehicle-price-badge">{est !== null ? `UGX ${est.toLocaleString()}` : '—'}</div>
                     </div>
                   );
                 })}
