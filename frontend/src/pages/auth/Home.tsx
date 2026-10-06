@@ -275,7 +275,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="preview-vehicle">
-                    <TransparentVehicleImage src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean vehicle-turntable-img" turntable />
+                    <TransparentVehicleImage key={activeRide} src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean vehicle-turntable-img" turntable />
                     <div className="vehicle-meta">
                       <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
                       <span className="vehicle-seats"><IonIcon icon={peopleOutline} /> {active.seats}</span>
@@ -290,7 +290,7 @@ const Home: React.FC = () => {
                       className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
                       onClick={() => { light(); setActiveRide(ride.id); }}
                     >
-                      <TransparentVehicleImage src={ride.image} alt="" className="pill-img vehicle-art-clean vehicle-turntable-img" turntable />
+                      <TransparentVehicleImage key={ride.id} src={ride.image} alt="" className="pill-img vehicle-art-clean vehicle-turntable-img" turntable />
                       <span>{ride.short}</span>
                     </button>
                   ))}
