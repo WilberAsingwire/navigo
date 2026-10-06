@@ -152,15 +152,26 @@ export function fareQuote(type: string, km: number, min: number = 0, serviceType
   return fareBreakdown(type, km, min, serviceType).total;
 }
 
-export function clampOffer(type: string, km: number, min: number, offer: number): number {
-  const rec = fareQuote(type, km, min);
+export function clampOffer(
+  type: string,
+  km: number,
+  min: number,
+  offer: number,
+  serviceType: "ride" | "delivery" = "ride"
+): number {
+  const rec = fareQuote(type, km, min, serviceType);
   const minBound = Math.round((rec * 0.65) / 100) * 100;
   const maxBound = Math.round((rec * 1.5) / 100) * 100;
   return Math.min(maxBound, Math.max(minBound, Math.round(offer / 100) * 100));
 }
 
-export function offerBounds(type: string, km: number, min: number): { min: number; max: number } {
-  const rec = fareQuote(type, km, min);
+export function offerBounds(
+  type: string,
+  km: number,
+  min: number,
+  serviceType: "ride" | "delivery" = "ride"
+): { min: number; max: number } {
+  const rec = fareQuote(type, km, min, serviceType);
   return {
     min: Math.round((rec * 0.65) / 100) * 100,
     max: Math.round((rec * 1.5) / 100) * 100,

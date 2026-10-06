@@ -34,9 +34,13 @@ const DriverLiveMap: React.FC = () => {
       setPosition({ lat, lng });
       setError('');
       const now = Date.now();
-      if (now - lastSentRef.current >= 10000) {
+      if (now - lastSentRef.current >= 5000) {
         lastSentRef.current = now;
-        api.post('/drivers/location', { lat, lng }).catch(() => { /* map still works locally */ });
+        if (socket.connected) {
+          socket.emit('publish-location', { lat, lng });
+        } else {
+          api.post('/drivers/location', { lat, lng }).catch(() => { /* map still works locally */ });
+        }
       }
     };
 

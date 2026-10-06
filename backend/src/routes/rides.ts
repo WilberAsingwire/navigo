@@ -2,10 +2,11 @@ import express, { Request, Response } from 'express';
 import { getDB } from '../config/database';
 import { authenticate, AuthRequest } from '../middleware/authMiddleware';
 import { rideRequestLimiter } from '../middleware/rateLimit';
-import { fareQuote, clampOffer } from '../utils/fare';
+import { VEHICLES, fareBreakdown, clampOffer, offerBounds } from '../utils/fare';
 import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
 import { settleRidePayment } from '../utils/settlement';
+import { getDrivingRoute, isUgandaPoint } from '../services/mappingService';
 
 const router = express.Router();
 
@@ -24,27 +25,86 @@ const normalizeVehicleType = (raw: string): string => {
   return map[(raw || '').toLowerCase()] || 'economy';
 };
 
+// ─── Multi-vehicle fare quotations ─────────────────────────────
+router.get('/quotes', async (req: Request, res: Response) => {
+  try {
+    const kmNum = Number(req.query.km);
+    const minNum = Number(req.query.min ?? 0);
+    const service: 'ride' | 'delivery' = String(req.query.serviceType) === 'delivery' ? 'delivery' : 'ride';
+
+    if (!Number.isFinite(kmNum) || kmNum < 0 || kmNum > 500) {
+      return res.status(400).json({ ok: false, message: 'Invalid distance' });
+    }
+    if (!Number.isFinite(minNum) || minNum < 0 || minNum > 600) {
+      return res.status(400).json({ ok: false, message: 'Invalid duration' });
+    }
+
+    const quotes: Record<string, any> = {};
+    for (const vehicle of VEHICLES) {
+      const breakdown = fareBreakdown(vehicle.type, kmNum, minNum, service);
+      quotes[vehicle.type] = {
+        fare: breakdown.total,
+        breakdown,
+        offerBounds: offerBounds(vehicle.type, kmNum, minNum, service),
+      };
+    }
+
+    return res.json({ ok: true, km: kmNum, durationMin: minNum, serviceType: service, quotes });
+  } catch (error) {
+    console.error('Quotes error:', error);
+    return res.status(500).json({ ok: false, message: 'Error calculating vehicle quotes' });
+  }
+});
+
+// ─── Authoritative driving route ─────────────────────────────
+router.get('/route', async (req: Request, res: Response) => {
+  try {
+    const from = { lat: Number(req.query.fromLat), lng: Number(req.query.fromLng) };
+    const to = { lat: Number(req.query.toLat), lng: Number(req.query.toLng) };
+
+    if (!isUgandaPoint(from) || !isUgandaPoint(to)) {
+      return res.status(400).json({ ok: false, message: 'Both route points must be within Uganda.' });
+    }
+
+    const route = await getDrivingRoute(from, to);
+    return res.json({ ok: true, route });
+  } catch (error: any) {
+    console.error('Route error:', error?.message || error);
+    return res.status(503).json({ ok: false, message: 'Driving route is temporarily unavailable.' });
+  }
+});
+
 // ─── Fare Quotation ──────────────────────────────────────
 router.get('/quote', async (req: Request, res: Response) => {
   try {
-    const { type, km, min } = req.query;
-    if (!type || !km) return res.status(400).json({ message: 'Ride type and distance are required' });
+    const { type, km, min, serviceType = 'ride' } = req.query;
+    if (!type || km === undefined) {
+      return res.status(400).json({ message: 'Ride type and distance are required' });
+    }
 
-    const normalized = normalizeVehicleType(type as string);
-    const kmNum = parseFloat(km as string);
-    const minNum = parseFloat((min as string) || '0');
-    if (isNaN(kmNum) || kmNum < 0 || kmNum > 500) {
+    const normalized = normalizeVehicleType(String(type));
+    const kmNum = Number(km);
+    const minNum = Number(min ?? 0);
+    const service: 'ride' | 'delivery' = String(serviceType) === 'delivery' ? 'delivery' : 'ride';
+
+    if (!Number.isFinite(kmNum) || kmNum < 0 || kmNum > 500) {
       return res.status(400).json({ message: 'Invalid distance' });
     }
-    if (isNaN(minNum) || minNum < 0 || minNum > 600) {
+    if (!Number.isFinite(minNum) || minNum < 0 || minNum > 600) {
       return res.status(400).json({ message: 'Invalid duration' });
     }
 
-    const fare = fareQuote(normalized, kmNum, minNum);
-    res.json({ ok: true, fare, vehicleType: normalized });
+    const breakdown = fareBreakdown(normalized, kmNum, minNum, service);
+    return res.json({
+      ok: true,
+      fare: breakdown.total,
+      breakdown,
+      vehicleType: normalized,
+      serviceType: service,
+    });
   } catch (error) {
     console.error('Quote error:', error);
-    res.status(500).json({ message: 'Error calculating quote' });
+    return res.status(500).json({ message: 'Error calculating quote' });
   }
 });
 
@@ -90,11 +150,29 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
     }
 
     const normalizedRideType = normalizeVehicleType(rideType);
-    const distNum = parseFloat(distanceKm) || 0;
-    const durNum = parseFloat(durationMin) || 0;
-    if (distNum < 0 || distNum > 500 || durNum < 0 || durNum > 600) {
-      return res.status(400).json({ message: 'Invalid distance or duration' });
+    const clientDist = Number(distanceKm);
+    const clientDur = Number(durationMin);
+    if (Number.isFinite(clientDist) && (clientDist < 0 || clientDist > 500)) {
+      return res.status(400).json({ message: 'Invalid distance' });
     }
+    if (Number.isFinite(clientDur) && (clientDur < 0 || clientDur > 600)) {
+      return res.status(400).json({ message: 'Invalid duration' });
+    }
+
+    const finalServiceType: 'ride' | 'delivery' = serviceType === 'delivery' ? 'delivery' : 'ride';
+
+    // Authoritative routing: the server recalculates the road route from the
+    // coordinates instead of trusting client-supplied distance/time.
+    let route;
+    try {
+      route = await getDrivingRoute(pickup, destination);
+    } catch (error: any) {
+      console.error('Authoritative route failed:', error?.message || error);
+      return res.status(503).json({ message: 'Unable to calculate a road route right now. Please try again.' });
+    }
+
+    const distNum = route.distanceKm;
+    const durNum = route.durationMin;
 
     // Auto-expire this rider's stale unaccepted requests first, so an old
     // request that nobody accepted doesn't lock them out of booking forever.
@@ -112,8 +190,8 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
       return res.status(400).json({ message: 'You already have an active ride. Complete or cancel it before requesting a new one.' });
     }
 
-    const fareRecommended = fareQuote(normalizedRideType, distNum, durNum);
-    const finalFareOffered = clampOffer(normalizedRideType, distNum, durNum, fareOffered || fareRecommended);
+    const fareRecommended = fareBreakdown(normalizedRideType, distNum, durNum, finalServiceType).total;
+    const finalFareOffered = clampOffer(normalizedRideType, distNum, durNum, Number(fareOffered) || fareRecommended, finalServiceType);
 
     if (paymentMethod === 'wallet') {
       const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
@@ -133,12 +211,13 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
         distanceKm, durationMin,
         fareRecommended, fareOffered, fareFinal,
         packageDetails, receiverName, receiverPhone,
+        geometry,
         requestedAt, expiresAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         rideId,
         userId,
-        serviceType,
+        finalServiceType,
         normalizedRideType,
         'requested',
         paymentMethod || 'cash',
@@ -153,6 +232,7 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
         packageDetails ? String(packageDetails).slice(0, 500) : null,
         receiverName ? String(receiverName).slice(0, 100) : null,
         receiverPhone ? String(receiverPhone).slice(0, 20) : null,
+        JSON.stringify(route.geometry),
         new Date().toISOString(),
         expiresAt
       ]
@@ -160,7 +240,16 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
 
     res.json({
       message: serviceType === 'delivery' ? 'Delivery requested successfully!' : 'Ride requested successfully!',
-      ride: { id: rideId, fareRecommended, status: 'requested', expiresAt }
+      ride: {
+        id: rideId,
+        fareRecommended,
+        fareOffered: finalFareOffered,
+        status: 'requested',
+        expiresAt,
+        distanceKm: distNum,
+        durationMin: durNum,
+        route: { geometry: route.geometry, provider: route.provider }
+      }
     });
   } catch (error) {
     console.error('Request error:', error);

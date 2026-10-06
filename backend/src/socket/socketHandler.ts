@@ -16,6 +16,17 @@ export const disconnectUserSockets = (userId: string) => {
   ioInstance.in(userId).disconnectSockets(true);
 };
 
+/** Push a driver's latest persisted GPS position to the admin live-map room. */
+export const notifyAdminLocation = (userId: string, lat: number, lng: number) => {
+  if (!ioInstance) return;
+  ioInstance.to('admins').emit('admin-location-updated', {
+    userId,
+    lat,
+    lng,
+    timestamp: Date.now(),
+  });
+};
+
 /** Emit to the ride room + the rider's and driver's personal rooms. */
 export const notifyRide = (rideId: string, riderId: string | null, driverId: string | null, event: string, payload: any) => {
   if (!ioInstance) return;
@@ -299,6 +310,39 @@ export const setupSocketHandlers = (io: Server) => {
       } catch (e: any) {
         console.error('Error accepting ride:', e);
         socket.emit('error', { message: e.message || 'Failed to accept ride.' });
+      }
+    });
+
+    // Standalone driver location publishing for the driver's live map/admin
+    // monitor. This is separate from ride-scoped location updates.
+    socket.on('publish-location', async (data: { lat: number; lng: number }) => {
+      if (!checkSocketRateLimit(`pub-loc:${userId}`, 12, 60000)) return;
+      if (userRole !== 'driver' && userRole !== 'motorist') {
+        return socket.emit('error', { message: 'Unauthorized: only drivers can publish live location' });
+      }
+
+      const lat = Number(data?.lat);
+      const lng = Number(data?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) return;
+
+      const db = getDB();
+      try {
+        await db.run(
+          'UPDATE users SET currentLat = ?, currentLng = ?, lastLocationAt = CURRENT_TIMESTAMP WHERE id = ?',
+          [lat, lng, userId]
+        );
+        await db.run(
+          'UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?',
+          [lat, lng, userId]
+        );
+        io.to('admins').emit('admin-location-updated', {
+          userId,
+          lat,
+          lng,
+          timestamp: Date.now(),
+        });
+      } catch (e) {
+        console.error('Error publishing standalone driver location:', e);
       }
     });
 

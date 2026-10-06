@@ -1,28 +1,47 @@
 import express from 'express';
 import axios from 'axios';
+import { isUgandaPoint, reverseGeocode, searchPlaces, UGANDA_BOUNDS } from '../services/mappingService';
 
 const router = express.Router();
 
+/**
+ * Map place search proxy.
+ * q is the text-search mode used by the rider booking map.
+ * Without q, the legacy nearby-POI mode remains available for compatibility.
+ */
 router.get('/search', async (req, res) => {
+  const q = String(req.query.q || '').trim();
+
+  if (q) {
+    if (q.length < 2 || q.length > 120) {
+      return res.status(400).json({ ok: false, message: 'Search text must be between 2 and 120 characters.' });
+    }
+    try {
+      const limit = Math.min(40, Math.max(5, Number(req.query.limit) || 20));
+      const results = await searchPlaces(q, limit);
+      return res.json({ ok: true, query: q, bounds: UGANDA_BOUNDS, results });
+    } catch (error: any) {
+      console.error('Place search error:', error?.message || error);
+      return res.status(503).json({ ok: false, message: 'Place search is temporarily unavailable. Please try again.' });
+    }
+  }
+
+  const { lat, lng, radius } = req.query;
+  if (!lat || !lng) {
+    return res.status(400).json({ ok: false, message: 'Latitude and longitude are required for nearby POI search.' });
+  }
+
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  let radiusNum = parseInt(String(radius || 2000), 10);
+
+  if (!Number.isFinite(latNum) || !Number.isFinite(lngNum) || !isUgandaPoint({ lat: latNum, lng: lngNum })) {
+    return res.status(400).json({ ok: false, message: 'Invalid Uganda coordinates.' });
+  }
+  if (!Number.isFinite(radiusNum) || radiusNum < 100) radiusNum = 500;
+  if (radiusNum > 5000) radiusNum = 5000;
+
   try {
-    const { lat, lng, radius } = req.query;
-    if (!lat || !lng) {
-      return res.status(400).json({ message: 'Latitude and longitude are required' });
-    }
-    const latNum = parseFloat(lat as string);
-    const lngNum = parseFloat(lng as string);
-    let radiusNum = parseInt((radius as string) || '2000', 10);
-
-    // Validation: lat/lng must be numbers within Uganda bounds, radius capped
-    if (isNaN(latNum) || isNaN(lngNum)) {
-      return res.status(400).json({ message: 'Invalid coordinates' });
-    }
-    if (latNum < -5 || latNum > 5 || lngNum < 29 || lngNum > 36) {
-      return res.status(400).json({ message: 'Coordinates out of supported region (Uganda)' });
-    }
-    if (isNaN(radiusNum) || radiusNum < 100) radiusNum = 500;
-    if (radiusNum > 5000) radiusNum = 5000; // cap to 5km to protect Overpass
-
     const query = `
       [out:json][timeout:25];
       (
@@ -30,27 +49,38 @@ router.get('/search', async (req, res) => {
         way["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radiusNum},${latNum},${lngNum});
         relation["amenity"~"restaurant|cafe|police|bank|atm|hospital|pharmacy|school"](around:${radiusNum},${latNum},${lngNum});
       );
-      out center 30;
+      out center 50;
     `;
 
-    const response = await axios.get(`https://overpass-api.de/api/interpreter`, {
+    const response = await axios.get('https://overpass-api.de/api/interpreter', {
       params: { data: query },
       timeout: 15000,
     });
 
-    res.json(response.data);
+    return res.json({ ok: true, ...response.data });
   } catch (error: any) {
     const status = error.response?.status;
-    const data = error.response?.data;
-    console.error(`POI Proxy Error [${status}]: ${error.message}`);
-
+    console.error(`POI proxy error [${status}]: ${error?.message || error}`);
     if (status === 429) {
-      res.status(429).json({ message: 'Too many requests to POI service. Please slow down.' });
-    } else if (status === 400) {
-      res.status(400).json({ message: 'Invalid query sent to POI service' });
-    } else {
-      res.status(500).json({ message: 'Failed to fetch POIs. Try again.' });
+      return res.status(429).json({ ok: false, message: 'Nearby place service is busy. Please try again shortly.' });
     }
+    return res.status(503).json({ ok: false, message: 'Nearby place service is temporarily unavailable.' });
+  }
+});
+
+router.get('/reverse', async (req, res) => {
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || !isUgandaPoint({ lat, lng })) {
+    return res.status(400).json({ ok: false, message: 'Valid Uganda latitude and longitude are required.' });
+  }
+
+  try {
+    const place = await reverseGeocode({ lat, lng });
+    return res.json({ ok: true, place });
+  } catch (error: any) {
+    console.error('Reverse geocoding error:', error?.message || error);
+    return res.status(503).json({ ok: false, message: 'Unable to identify this location right now.' });
   }
 });
 
