@@ -302,6 +302,39 @@ export const setupSocketHandlers = (io: Server) => {
       }
     });
 
+    // Standalone driver location publishing for the driver's live map/admin
+    // monitor. This is separate from ride-scoped location updates.
+    socket.on('publish-location', async (data: { lat: number; lng: number }) => {
+      if (!checkSocketRateLimit(`pub-loc:${userId}`, 12, 60000)) return;
+      if (userRole !== 'driver' && userRole !== 'motorist') {
+        return socket.emit('error', { message: 'Unauthorized: only drivers can publish live location' });
+      }
+
+      const lat = Number(data?.lat);
+      const lng = Number(data?.lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) return;
+
+      const db = getDB();
+      try {
+        await db.run(
+          'UPDATE users SET currentLat = ?, currentLng = ?, lastLocationAt = CURRENT_TIMESTAMP WHERE id = ?',
+          [lat, lng, userId]
+        );
+        await db.run(
+          'UPDATE driver_profiles SET lat = ?, lng = ? WHERE userId = ?',
+          [lat, lng, userId]
+        );
+        io.to('admins').emit('admin-location-updated', {
+          userId,
+          lat,
+          lng,
+          timestamp: Date.now(),
+        });
+      } catch (e) {
+        console.error('Error publishing standalone driver location:', e);
+      }
+    });
+
     // Real-time location updates from Driver to Rider — FIXED: rate limited + correct columns
     socket.on('update-location', async (data: { rideId: string; lat: number; lng: number; userId: string }) => {
       if (!checkSocketRateLimit(`loc:${userId}`, 30, 60000)) return; // max 30 updates/min
