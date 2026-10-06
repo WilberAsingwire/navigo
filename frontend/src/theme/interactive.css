@@ -42,7 +42,7 @@ ion-page {
 }
 
 /* ── Interactive Cards Everywhere ─────────────────────────── */
-[class*="card"], [class*="pill"], [class*="tile"], .action-btn, .action-card, .stat-pill, .kpi-card, .driver-row, .place-chip, .recent-trip-item, .vehicle-option-card, .reward-tile, .challenge-item {
+[class*="card"], [class*="pill"], [class*="tile"]:not([class*="leaflet"]), .action-btn, .action-card, .stat-pill, .kpi-card, .driver-row, .place-chip, .recent-trip-item, .vehicle-option-card, .reward-tile, .challenge-item {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
