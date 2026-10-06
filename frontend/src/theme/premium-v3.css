@@ -542,3 +542,339 @@ ion-toast {
     box-shadow: none;
   }
 }
+
+
+/* ── Layering: decorative hero art stays behind real controls ── */
+.hero-section > .hero-text,
+.hero-section > .hero-ride-preview {
+  position: relative;
+  z-index: 5;
+}
+
+.hero-motion-stage {
+  z-index: 2;
+  opacity: .94;
+  transform: translateZ(0);
+}
+
+.hero-motion-stage::before {
+  content: '';
+  position: absolute;
+  inset: 14% 4% 8% 8%;
+  border-radius: 40px;
+  background:
+    radial-gradient(circle at 30% 34%, rgba(255,107,53,.15), transparent 30%),
+    radial-gradient(circle at 78% 68%, rgba(20,184,166,.12), transparent 32%);
+  filter: blur(18px);
+}
+
+/* ── Landing page depth and responsive framing ─────────────── */
+.hero-text {
+  position: relative;
+  z-index: 5;
+}
+
+.hero-badge {
+  box-shadow: 0 12px 32px rgba(0,0,0,.18);
+}
+
+.hero-title .highlight {
+  background: linear-gradient(100deg, var(--navigo-orange), #FF9B73 55%, var(--navigo-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-btn.primary {
+  box-shadow: 0 16px 34px rgba(255,107,53,.20);
+}
+
+.hero-btn.secondary {
+  transition: transform .25s var(--ease-spring), background-color .25s ease, border-color .25s ease;
+}
+
+.ride-preview-card {
+  transform: translateY(0);
+  transition: transform .35s var(--ease-spring), box-shadow .35s var(--ease-spring);
+}
+
+@media (hover: hover) {
+  .ride-preview-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 30px 80px rgba(0,0,0,.36);
+  }
+  .ride-pill.active {
+    box-shadow: 0 10px 24px rgba(255,107,53,.18);
+  }
+  .card-vehicle-img:hover,
+  .preview-vehicle-img:hover {
+    transform: translateY(-5px) scale(1.035);
+  }
+}
+
+/* ── Rider network strip ──────────────────────────────────── */
+.rider-live-strip {
+  display: grid;
+  grid-template-columns: 68px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(20,184,166,.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(120deg, rgba(20,184,166,.07), rgba(255,107,53,.05)),
+    var(--nav-card);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.rider-live-strip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0 35%, rgba(255,255,255,.07) 48%, transparent 60%);
+  transform: translateX(-120%);
+  animation: navigo-sheen 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes navigo-sheen {
+  0%, 55% { transform: translateX(-120%); }
+  72%, 100% { transform: translateX(120%); }
+}
+
+.rider-live-strip-media {
+  height: 52px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,107,53,.08);
+  border: 1px solid rgba(255,107,53,.14);
+  overflow: hidden;
+}
+
+.rider-live-strip-media img {
+  width: 72px;
+  height: 52px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,.28));
+  animation: navigo-vehicle-float 4.8s ease-in-out infinite;
+}
+
+.rider-live-strip-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rider-live-strip-copy strong {
+  font-family: var(--font-display);
+  color: var(--nav-text);
+  font-size: 13px;
+}
+
+.rider-live-strip-copy > span:last-child {
+  color: var(--nav-text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rider-live-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--navigo-cyan);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.rider-live-arrow {
+  color: var(--navigo-cyan);
+  font-size: 18px;
+}
+
+/* ── Driver status / availability ─────────────────────────── */
+.status-banner {
+  box-shadow: var(--shadow-card);
+}
+
+.status-banner.online {
+  background:
+    radial-gradient(circle at 86% 24%, rgba(20,184,166,.14), transparent 26%),
+    var(--nav-success-soft);
+}
+
+.status-banner.offline {
+  background:
+    radial-gradient(circle at 86% 24%, rgba(255,107,53,.07), transparent 28%),
+    var(--nav-card);
+}
+
+.driver-status-text.online {
+  color: var(--navigo-cyan) !important;
+}
+
+.driver-status-text.online::before {
+  background: var(--navigo-cyan) !important;
+  box-shadow: 0 0 0 5px rgba(20,184,166,.09) !important;
+}
+
+/* ── Admin console surfaces ───────────────────────────────── */
+.admin-section-title {
+  font-family: var(--font-display);
+  color: var(--nav-text);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 20px 0 12px;
+  letter-spacing: -.02em;
+}
+
+.admin-kpi-card {
+  min-height: 98px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--nav-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.04), rgba(255,255,255,.012)),
+    var(--nav-card);
+  box-shadow: var(--shadow-card);
+  transition: transform .25s var(--ease-spring), border-color .25s ease, box-shadow .25s ease;
+}
+
+.admin-action-card {
+  min-height: 86px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 14px;
+  border: 1px solid var(--nav-border);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+    var(--nav-card);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform .25s var(--ease-spring), border-color .25s ease, box-shadow .25s ease;
+}
+
+.admin-action-card ion-icon {
+  filter: drop-shadow(0 6px 12px rgba(255,107,53,.16));
+}
+
+.admin-panel {
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid var(--nav-border);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.012)),
+    var(--nav-card);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-activity-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 82px;
+  justify-content: center;
+  color: var(--nav-text-muted);
+  border: 1px dashed var(--nav-border);
+  border-radius: 16px;
+  background: var(--nav-card-soft);
+}
+
+@media (hover: hover) {
+  .admin-kpi-card:hover,
+  .admin-action-card:hover,
+  .admin-panel:hover {
+    transform: translateY(-3px);
+    border-color: var(--nav-border-strong);
+    box-shadow: var(--shadow-float);
+  }
+}
+
+body.light .admin-kpi-card,
+body.light .admin-action-card,
+body.light .admin-panel {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.98), rgba(248,250,252,.98)),
+    var(--nav-card);
+}
+
+/* ── Global interaction quality ───────────────────────────── */
+button,
+[role="button"],
+.action-card,
+.action-btn,
+.stat-pill,
+.kpi-card,
+.ride-card,
+.driver-row,
+.activity-item,
+.place-chip,
+.vehicle-option-card,
+.admin-kpi-card,
+.admin-action-card,
+.rider-live-strip {
+  touch-action: manipulation;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+.action-card:focus-visible,
+.action-btn:focus-visible,
+.stat-pill:focus-visible,
+.kpi-card:focus-visible,
+.ride-card:focus-visible,
+.driver-row:focus-visible,
+.activity-item:focus-visible,
+.place-chip:focus-visible,
+.admin-action-card:focus-visible,
+.rider-live-strip:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+}
+
+@media (max-width: 640px) {
+  .rider-live-strip {
+    grid-template-columns: 58px 1fr auto;
+    padding: 9px 10px;
+    border-radius: 16px;
+  }
+
+  .rider-live-strip-media {
+    height: 48px;
+  }
+
+  .rider-live-strip-media img {
+    width: 64px;
+    height: 48px;
+  }
+
+  .hero-motion-stage {
+    pointer-events: none;
+    opacity: .40;
+  }
+
+  .hero-media-card {
+    border-radius: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rider-live-strip::after,
+  .rider-live-strip-media img {
+    animation: none !important;
+  }
+}
