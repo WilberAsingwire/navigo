@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { IonIcon } from '@ionic/react';
 import { locateOutline, warningOutline } from 'ionicons/icons';
-import { MapContainer, TileLayer, Marker, Polyline, Circle, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, Circle, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
@@ -60,6 +60,25 @@ const createSearchIcon = (n: number) => L.divIcon({
   iconAnchor: [14, 28],
 });
 
+interface MapFeature {
+  id: string;
+  lat: number;
+  lng: number;
+  name: string;
+  address: string;
+  category: string;
+  subtype?: string;
+  source: string;
+  tags?: Record<string, string>;
+}
+
+const FEATURE_COLORS: Record<string, string> = {
+  road: '#64748B', place: '#0F172A', education: '#2563EB', health: '#DC2626',
+  emergency: '#B91C1C', finance: '#059669', food: '#EA580C', shopping: '#9333EA',
+  transport: '#0891B2', tourism: '#D97706', leisure: '#16A34A', office: '#475569',
+  landmark: '#7C3AED', boundary: '#334155', natural: '#15803D', other: '#6B7280',
+};
+
 const VEHICLE_ICONS: Record<string, { url: string; color: string }> = {
   boda: { url: bodaNew, color: '#FF6B35' },
   go: { url: goNew, color: '#0EA5E9' },
@@ -91,23 +110,20 @@ const MapEvents: React.FC<{
   onMove?: (c: [number, number], z: number) => void;
 }> = ({ onMapClick, userLocation, followUser, onMove }) => {
   const map = useMap();
+  const reportViewport = () => {
+    try {
+      const c = map.getCenter();
+      if (Number.isFinite(c.lat) && Number.isFinite(c.lng)) onMove?.([c.lat, c.lng], map.getZoom());
+    } catch { /* noop */ }
+  };
+
   useMapEvents({
     click(e) {
       const ll = e.latlng;
       if (Number.isFinite(ll.lat) && Number.isFinite(ll.lng)) onMapClick?.([ll.lat, ll.lng]);
     },
-    move() {
-      try {
-        const c = map.getCenter();
-        if (Number.isFinite(c.lat) && Number.isFinite(c.lng)) onMove?.([c.lat, c.lng], map.getZoom());
-      } catch { /* noop */ }
-    },
-    zoom() {
-      try {
-        const c = map.getCenter();
-        if (Number.isFinite(c.lat) && Number.isFinite(c.lng)) onMove?.([c.lat, c.lng], map.getZoom());
-      } catch { /* noop */ }
-    },
+    moveend() { reportViewport(); },
+    zoomend() { reportViewport(); },
   });
 
   useEffect(() => {
@@ -193,6 +209,8 @@ const NavigoMap: React.FC<MapProps> = ({
   const [mapCenter, setMapCenter] = useState<[number, number]>([0.3476, 32.5825]);
   const [mapZoom, setMapZoom] = useState(15);
   const [nearbyDrivers, setNearbyDrivers] = useState<{ id: string; lat: number; lng: number; type: string }[]>([]);
+  const [mapFeatures, setMapFeatures] = useState<MapFeature[]>([]);
+  const [mapViewport, setMapViewport] = useState<{ south: number; west: number; north: number; east: number; zoom: number } | null>(null);
   const [tileError, setTileError] = useState(false);
   const [tileReloadKey, setTileReloadKey] = useState(0);
   const [tileProviderIndex, setTileProviderIndex] = useState(0);
@@ -212,6 +230,36 @@ const NavigoMap: React.FC<MapProps> = ({
   const center = getValidCenter();
 
   // Track zoom changes
+  useEffect(() => {
+    if (!mapViewport) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await api.get('/poi/map', {
+          params: {
+            south: mapViewport.south,
+            west: mapViewport.west,
+            north: mapViewport.north,
+            east: mapViewport.east,
+            zoom: mapViewport.zoom,
+          },
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setMapFeatures(Array.isArray(res.data?.features) ? res.data.features : []);
+        }
+      } catch (error: any) {
+        if (!controller.signal.aborted && error?.name !== 'CanceledError' && error?.name !== 'AbortError') {
+          setMapFeatures([]);
+        }
+      }
+    }, 450);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [mapViewport]);
+
 
   // REAL nearby drivers (was: 4 hardcoded fake markers). Refreshes every 15 s
   // while the map is visible; silently shows none if the request fails.
@@ -471,6 +519,18 @@ const NavigoMap: React.FC<MapProps> = ({
             if (!isNaN(c[0]) && !isNaN(c[1])) {
               setMapCenter(c);
               setMapZoom(z);
+              try {
+                const bounds = mapRef.current?.getBounds();
+                if (bounds) {
+                  setMapViewport({
+                    south: bounds.getSouth(),
+                    west: bounds.getWest(),
+                    north: bounds.getNorth(),
+                    east: bounds.getEast(),
+                    zoom: z,
+                  });
+                }
+              } catch { /* noop */ }
             }
           }}
         />
