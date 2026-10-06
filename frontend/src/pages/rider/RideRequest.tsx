@@ -18,6 +18,7 @@ import goImg from '../../assets/vehicles/go-new.png';
 import comfortImg from '../../assets/vehicles/comfort-new.png';
 import xlImg from '../../assets/vehicles/xl-new.png';
 import './RideRequest.css';
+import useHaptic from '../../hooks/useHaptic';
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
 interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; dbVehicleType: string; surgeMultiplier: number; color: string; image: string; }
@@ -63,6 +64,7 @@ const Stepper: React.FC<{ currentStep: BookingStep; onStepClick: (step: BookingS
 const RideRequest: React.FC = () => {
   const ionRouter = useIonRouter();
   const { isAuthenticated, isGuest, user } = useAuth();
+  const { light, medium, selection } = useHaptic();
   const [step, setStep] = useState<BookingStep>(BookingStep.HOME);
   const [serviceType, setServiceType] = useState<'ride' | 'delivery'>('ride');
   const [pickup, setPickup] = useState<Location | null>(null);
@@ -575,11 +577,11 @@ const RideRequest: React.FC = () => {
       <IonContent fullscreen scrollY={false} className="ride-request-content ride-request-wrapper" style={{'--background': 'var(--nav-bg)'} as any}>
         <div className="booking-page-container">
           <div className="booking-form-panel">
-            <button className="back-nav-btn" onClick={() => ionRouter.push('/customer/home')}>
+            <button className="back-nav-btn" onClick={() => { light(); ionRouter.push('/customer/home'); }}>
               <IonIcon icon={arrowBackOutline} /> Back
             </button>
 
-        <div className="glass-booking-card">
+        <div className={`glass-booking-card booking-step-${step}`} data-reveal="scale">
           {step === BookingStep.HOME && (
             <div className="space-y-6">
               <div className="welcome-header">
@@ -588,7 +590,7 @@ const RideRequest: React.FC = () => {
                 <p className="welcome-sub">Where would you like to go today?</p>
               </div>
 
-              <button className="quick-action-btn" onClick={() => { setStep(BookingStep.LOCATION); setSearchingPickup(false); }}>
+              <button className="quick-action-btn" onClick={() => { medium(); setStep(BookingStep.LOCATION); setSearchingPickup(false); }}>
                 <div className="quick-action-icon"><IonIcon icon={searchOutline} /></div>
                 <span>Enter destination...</span>
               </button>
@@ -633,10 +635,10 @@ const RideRequest: React.FC = () => {
             <div className="space-y-6">
               <h1 className="card-title">Where to?</h1>
               <div className="seg-control" role="tablist" aria-label="Service type">
-                <button role="tab" aria-selected={serviceType === 'ride'} className={`seg-btn ${serviceType === 'ride' ? 'active' : ''}`} onClick={() => setServiceType('ride')}>
+                <button role="tab" aria-selected={serviceType === 'ride'} className={`seg-btn ${serviceType === 'ride' ? 'active' : ''}`} onClick={() => { selection(); setServiceType('ride'); }}>
                   <IonIcon icon={carOutline} /> Ride
                 </button>
-                <button role="tab" aria-selected={serviceType === 'delivery'} className={`seg-btn ${serviceType === 'delivery' ? 'active' : ''}`} onClick={() => setServiceType('delivery')}>
+                <button role="tab" aria-selected={serviceType === 'delivery'} className={`seg-btn ${serviceType === 'delivery' ? 'active' : ''}`} onClick={() => { selection(); setServiceType('delivery'); }}>
                   <IonIcon icon={cubeOutline} /> Delivery
                 </button>
               </div>
@@ -676,7 +678,7 @@ const RideRequest: React.FC = () => {
                   {!isSearching && searchResults.length > 0 && (
                     <div className="search-results-list">
                       {searchResults.map((r, i) => (
-                        <div key={i} className="search-result-item" onClick={() => selectLocation(r)}>
+                        <div key={i} className="search-result-item" onClick={() => { selection(); selectLocation(r); }}>
                           <IonIcon icon={locationOutline} style={{ color: 'var(--navigo-orange)' }} />
                           <div className="result-info">
                             <span className="result-name">{r.name || r.address.split(',')[0]}</span>
@@ -695,7 +697,7 @@ const RideRequest: React.FC = () => {
                   const quote = vehicleQuotes[opt.dbVehicleType];
                   const est = Number.isFinite(Number(quote?.fare)) ? Number(quote.fare) : null;
                   return (
-                    <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => { setSelectedRide(opt); setUserOffer(null); }}>
+                    <div key={opt.id} className={`vehicle-option-card ${selectedRide.id === opt.id ? 'selected' : ''}`} onClick={() => { selection(); setSelectedRide(opt); setUserOffer(null); }}>
                       <div className="vehicle-main-info">
                         <span className="vehicle-emoji">
                           <img src={opt.image} alt={opt.name} className="vehicle-thumb" />
@@ -711,7 +713,7 @@ const RideRequest: React.FC = () => {
                 })}
               </div>
 
-              <button className="btn-continue" disabled={!pickup || !destination} onClick={() => setStep(BookingStep.PAYMENT)}>Continue</button>
+              <button className="btn-continue" disabled={!pickup || !destination} onClick={() => { medium(); setStep(BookingStep.PAYMENT); }}>Continue</button>
             </div>
           )}
 

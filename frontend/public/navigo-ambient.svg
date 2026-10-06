@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Animated NAVIGO city road ambience">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050A11"/>
+      <stop offset="0.55" stop-color="#091522"/>
+      <stop offset="1" stop-color="#0B1B24"/>
+    </linearGradient>
+    <radialGradient id="orangeGlow">
+      <stop offset="0" stop-color="#FF6B35" stop-opacity=".33"/>
+      <stop offset="1" stop-color="#FF6B35" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="tealGlow">
+      <stop offset="0" stop-color="#14B8A6" stop-opacity=".24"/>
+      <stop offset="1" stop-color="#14B8A6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="34"/>
+    </filter>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#162634" stop-opacity=".15"/>
+      <stop offset="1" stop-color="#02050A" stop-opacity=".9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="260" cy="190" r="260" fill="url(#orangeGlow)" filter="url(#blur)"/>
+  <circle cx="1370" cy="610" r="310" fill="url(#tealGlow)" filter="url(#blur)"/>
+
+  <g opacity=".14" fill="#B8C7D9">
+    <path d="M0 565L130 535L225 548L345 505L465 530L590 475L735 510L850 455L980 500L1120 447L1260 492L1400 438L1600 478V900H0Z"/>
+    <path d="M0 635L130 602L300 615L430 575L610 606L755 555L910 603L1080 560L1230 592L1380 545L1600 580V900H0Z" opacity=".5"/>
+  </g>
+
+  <path d="M-40 920 C 410 690 610 650 830 520 C 1070 380 1210 180 1640 -40"
+        fill="none" stroke="#233646" stroke-width="160" stroke-linecap="round" opacity=".82"/>
+  <path d="M-40 920 C 410 690 610 650 830 520 C 1070 380 1210 180 1640 -40"
+        fill="none" stroke="#0A1118" stroke-width="128" stroke-linecap="round"/>
+
+  <path d="M-50 920 C 410 690 610 650 830 520 C 1070 380 1210 180 1650 -40"
+        fill="none" stroke="#D6DEE8" stroke-width="4" stroke-dasharray="30 28" opacity=".32"/>
+
+  <g fill="#FFB59C" opacity=".9">
+    <circle r="5">
+      <animateMotion dur="5.6s" repeatCount="indefinite" path="M -30,880 C 410,690 610,650 830,520 C 1070,380 1210,180 1630,-30"/>
+    </circle>
+    <circle r="4">
+      <animateMotion dur="7.4s" begin="-2s" repeatCount="indefinite" path="M -30,880 C 410,690 610,650 830,520 C 1070,380 1210,180 1630,-30"/>
+    </circle>
+    <circle r="3">
+      <animateMotion dur="6.7s" begin="-4s" repeatCount="indefinite" path="M -30,880 C 410,690 610,650 830,520 C 1070,380 1210,180 1630,-30"/>
+    </circle>
+  </g>
+
+  <g fill="#7DE3D8" opacity=".8">
+    <circle r="3">
+      <animateMotion dur="8.3s" begin="-1s" repeatCount="indefinite" path="M 1630,-30 C 1210,180 1070,380 830,520 C 610,650 410,690 -30,880"/>
+    </circle>
+    <circle r="2.5">
+      <animateMotion dur="6.9s" begin="-3.5s" repeatCount="indefinite" path="M 1630,-30 C 1210,180 1070,380 830,520 C 610,650 410,690 -30,880"/>
+    </circle>
+  </g>
+
+  <g opacity=".24" stroke="#7F96AA" stroke-width="1">
+    <path d="M140 80H1460M140 170H1460M140 260H1460M140 350H1460M140 440H1460M140 530H1460M140 620H1460M140 710H1460"/>
+    <path d="M180 30V840M360 30V840M540 30V840M720 30V840M900 30V840M1080 30V840M1260 30V840M1440 30V840"/>
+  </g>
+</svg>

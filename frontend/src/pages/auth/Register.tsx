@@ -250,7 +250,7 @@ const Register: React.FC = () => {
             </div>
 
             <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '14px', color: 'var(--navigo-zinc-400)' }}>
-              Already have an account? <Link to="/login" style={{ color: 'var(--navigo-ember', fontWeight: 600, textDecoration: 'none' }}>Sign In</Link>
+              Already have an account? <Link to="/login" style={{ color: 'var(--navigo-ember)', fontWeight: 600, textDecoration: 'none' }}>Sign In</Link>
             </div>
 
             <div className="trust-row">
