@@ -45,7 +45,7 @@ router.get('/quotes', async (req: Request, res: Response) => {
       quotes[vehicle.type] = {
         fare: breakdown.total,
         breakdown,
-        offerBounds: offerBounds(vehicle.type, kmNum, minNum),
+        offerBounds: offerBounds(vehicle.type, kmNum, minNum, service),
       };
     }
 
@@ -191,7 +191,7 @@ router.post('/request', authenticate, rideRequestLimiter, async (req: Request, r
     }
 
     const fareRecommended = fareBreakdown(normalizedRideType, distNum, durNum, finalServiceType).total;
-    const finalFareOffered = clampOffer(normalizedRideType, distNum, durNum, Number(fareOffered) || fareRecommended);
+    const finalFareOffered = clampOffer(normalizedRideType, distNum, durNum, Number(fareOffered) || fareRecommended, finalServiceType);
 
     if (paymentMethod === 'wallet') {
       const wallet = await db.get('SELECT balance FROM wallets WHERE userId = ?', [userId]);
