@@ -9,10 +9,14 @@ import api from '../services/api';
 // FREE MAP STACK: OpenStreetMap tiles for the standard view and Esri World
 // Imagery for satellite — both free, no API key, no Google dependency. The
 // paid upgrade path (Google/Mapbox tiles) is a one-line TileLayer URL swap.
+// Carto is used for the default layer because it is compatible with browsers and
+// Vercel deployments while still using OpenStreetMap data. The previous
+// tile.openstreetmap.org URL could fail silently in production, leaving only
+// Leaflet's grey background visible.
 const TILE_LAYERS = {
   standard: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; OpenStreetMap contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -129,6 +133,7 @@ const NavigoMap: React.FC<MapProps> = ({
   loading, error
 }) => {
   const [mapStyle, setMapStyle] = useState<'standard' | 'satellite'>('standard');
+  const [tileError, setTileError] = useState(false);
   const [routePoints, setRoutePoints] = useState<[number, number][]>([]);
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeDuration, setRouteDuration] = useState(0);
@@ -231,6 +236,7 @@ const NavigoMap: React.FC<MapProps> = ({
   };
 
   const handleStyleChange = (newStyle: 'standard' | 'satellite') => {
+    setTileError(false);
     setMapStyle(newStyle);
   };
 
@@ -266,6 +272,14 @@ const NavigoMap: React.FC<MapProps> = ({
         </div>
       )}
 
+      {tileError && !error && (
+        <div className="map-tile-warning" role="status">
+          <IonIcon icon={warningOutline} />
+          <span>Map tiles are temporarily unavailable. Your location is still available.</span>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
+
       {/* LEAFLET MAP — real OSM/Esri tiles + markers, routes, and touch events */}
       <MapContainer
         center={center}
@@ -288,6 +302,10 @@ const NavigoMap: React.FC<MapProps> = ({
           url={TILE_LAYERS[mapStyle].url}
           attribution={TILE_LAYERS[mapStyle].attribution}
           maxZoom={19}
+          eventHandlers={{
+            tileerror: () => setTileError(true),
+            load: () => setTileError(false),
+          }}
         />
         <MapEvents
           onMapClick={onMapClick}
@@ -370,6 +388,9 @@ const NavigoMap: React.FC<MapProps> = ({
         }
         .nv-body img { width: 70%; height: 70%; object-fit: contain; }
         .ns-pin { width: 28px; height: 28px; background: #FF6B35; border: 3px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.35); }
+        .map-tile-warning { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 1001; display: flex; align-items: center; gap: 8px; max-width: min(420px, calc(100% - 32px)); padding: 9px 12px; border-radius: 10px; background: rgba(15,23,42,0.94); color: white; box-shadow: 0 4px 18px rgba(0,0,0,0.25); font-size: 11px; line-height: 1.35; }
+        .map-tile-warning ion-icon { color: #FFB020; flex: 0 0 auto; }
+        .map-tile-warning button { border: 0; border-radius: 6px; padding: 5px 8px; background: #FF6B35; color: white; font-size: 11px; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
         .map-controls-top { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; }
         .map-controls-left { display: flex; flex-wrap: wrap; gap: 8px; pointer-events: auto; align-items: center; }
         .map-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 1px 3px rgba(0,0,0,0.12); background: #ffffff; color: #0F172A; }
