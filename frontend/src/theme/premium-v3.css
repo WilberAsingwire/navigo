@@ -1733,3 +1733,72 @@ body.light .hero-story-video-shade {
     linear-gradient(180deg, rgba(248,250,252,.24), rgba(248,250,252,.64));
 }
 
+
+/* ── Vehicle motion V5: visible, slow, scoped to real vehicle artwork ── */
+.vehicle-turntable {
+  display: grid !important;
+  place-items: center;
+  width: max-content;
+  height: max-content;
+  transform-style: preserve-3d;
+  perspective: 1200px;
+  animation: navigo-vehicle-turntable-v5 8s ease-in-out infinite !important;
+  animation-play-state: running !important;
+  will-change: transform;
+}
+
+.vehicle-turntable-img {
+  display: block !important;
+  transform-origin: center center;
+  backface-visibility: visible;
+  transform-style: preserve-3d;
+}
+
+@keyframes navigo-vehicle-turntable-v5 {
+  0%, 10% {
+    transform: perspective(1200px) rotateY(0deg) rotateZ(-.8deg) scaleX(1);
+    filter: brightness(1);
+  }
+  22% {
+    transform: perspective(1200px) rotateY(70deg) rotateZ(0deg) scaleX(.82);
+    filter: brightness(.98);
+  }
+  35% {
+    transform: perspective(1200px) rotateY(140deg) rotateZ(.6deg) scaleX(.62);
+    filter: brightness(.94);
+  }
+  50% {
+    transform: perspective(1200px) rotateY(180deg) rotateZ(1deg) scaleX(.48);
+    filter: brightness(.90);
+  }
+  65% {
+    transform: perspective(1200px) rotateY(220deg) rotateZ(.5deg) scaleX(.66);
+    filter: brightness(.94);
+  }
+  78% {
+    transform: perspective(1200px) rotateY(290deg) rotateZ(0deg) scaleX(.84);
+    filter: brightness(.98);
+  }
+  90%, 100% {
+    transform: perspective(1200px) rotateY(360deg) rotateZ(-.8deg) scaleX(1);
+    filter: brightness(1);
+  }
+}
+
+/* Every vehicle icon gets its own subtle "turntable glow" so movement remains perceptible. */
+.vehicle-turntable::after {
+  content: '';
+  width: 54%;
+  height: 7px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,0,0,.28), transparent 72%);
+  transform: translateZ(-2px);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-turntable {
+    animation: none !important;
+  }
+}
