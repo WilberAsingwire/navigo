@@ -143,7 +143,7 @@ const TransparentVehicleImage: React.FC<TransparentVehicleImageProps> = ({
   turntable = false,
   ...props
 }) => {
-  const [processedSrc, setProcessedSrc] = useState<string | null>(null);
+  const [processedSrc, setProcessedSrc] = useState<string>(String(src || ''));
 
   useEffect(() => {
     let cancelled = false;
@@ -170,7 +170,7 @@ const TransparentVehicleImage: React.FC<TransparentVehicleImageProps> = ({
       className={className}
       style={{
         ...props.style,
-        opacity: processedSrc ? 1 : 0,
+        opacity: 1,
         transition: 'opacity 180ms ease'
       }}
     />
