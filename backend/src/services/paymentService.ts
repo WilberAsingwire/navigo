@@ -43,17 +43,23 @@ class PaymentService {
     }
 
     try {
-      const response = await axios.get(`https://api.flutterwave.com/v3/transactions/verify`, {
-        params: { id: transactionId },
-        headers: { Authorization: `Bearer ${this.secretKey}` }
+      const response = await axios.get(`https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`, {
+        headers: {
+          Authorization: `Bearer ${this.secretKey}`,
+          Accept: 'application/json',
+        },
+        timeout: 15000,
       });
 
       const data = response.data.data;
       if (data.status === 'successful') {
+        if (String(data.currency || '').toUpperCase() !== 'UGX') {
+          return { status: 'failed', error: 'Only UGX payments are accepted.' };
+        }
         return {
           status: 'success',
-          amount: data.amount,
-          currency: data.currency,
+          amount: Number(data.amount),
+          currency: String(data.currency).toUpperCase(),
           tx_ref: data.tx_ref,
         };
       }
@@ -68,50 +74,52 @@ class PaymentService {
   /**
    * Request a payout (NAVIGO → driver's Mobile Money wallet).
    *
-   * Receiving Mobile Money is free in Uganda, so the driver gets exactly the
-   * amount requested — the transfer fee is absorbed by NAVIGO.
-   *
-   * With FLUTTERWAVE_SECRET_KEY set: sends via the Flutterwave mobile-money
-   * collection API (the driver approves a prompt on their phone).
-   * Without it: returns 'manual' so the payout is queued for an admin to
-   * process from the NAVIGO wallet (works from day one, no gateway needed).
+   * Flutterwave payouts use the Transfers API, not the Collections API.
+   * They are intentionally opt-in because production transfers require a
+   * funded/approved Flutterwave account and provider-side testing.
+   * Without FLUTTERWAVE_PAYOUTS_ENABLED=true, payouts remain in the manual
+   * admin queue.
    */
   async requestPayout(req: PayoutRequest): Promise<PayoutResponse> {
-    if (!this.secretKey) {
-      console.warn(`⚠️ No gateway key — payout ${req.reference} queued for manual admin processing.`);
+    if (!this.secretKey || process.env.FLUTTERWAVE_PAYOUTS_ENABLED !== 'true') {
+      console.warn(`⚠️ Flutterwave payouts disabled — payout ${req.reference} queued for manual admin processing.`);
       return { mode: 'manual', status: 'pending' };
     }
 
     try {
+      // Flutterwave's v3 Uganda mobile-money transfer uses /transfers with
+      // account_bank=MPS and a recipient number in 256 format.
+      const ugxPhone = `256${req.phone.replace(/^0/, '')}`;
       const response = await axios.post(
-        'https://api.flutterwave.com/v3/collections/collect',
+        'https://api.flutterwave.com/v3/transfers',
         {
+          account_bank: 'MPS',
+          account_number: ugxPhone,
           amount: req.amount,
           currency: 'UGX',
-          tx_ref: req.reference,
-          name: req.name || 'NAVIGO Driver Payout',
+          beneficiary_name: req.name || 'NAVIGO Driver',
+          reference: req.reference,
+          narration: 'NAVIGO driver payout',
           callback_url: `${process.env.PUBLIC_BACKEND_URL || ''}/api/wallet/payout/callback`,
-          customizations: {
-            metadata: {
-              phone_number: req.phone,
-              network: req.provider === 'mtn' ? 'mtn' : 'airtel',
-              country_code: 'UG',
-            },
-          },
-          duration: 0,
         },
         {
           headers: {
             Authorization: `Bearer ${this.secretKey}`,
             'Content-Type': 'application/json',
-            'flw-Public-Key': process.env.FLUTTERWAVE_PUBLIC_KEY || '',
+            Accept: 'application/json',
           },
+          timeout: 20000,
         }
       );
 
       const data = response.data?.data;
-      if (data && (data.status === 'successful' || data.status === 'pending' || data.status === 'processing')) {
-        return { mode: 'gateway', status: 'processing', gatewayRef: data.reference || String(data.id) };
+      const transferStatus = String(data?.status || '').toUpperCase();
+      if (data && ['NEW', 'PENDING', 'PROCESSING', 'SUCCESSFUL'].includes(transferStatus)) {
+        return {
+          mode: 'gateway',
+          status: transferStatus === 'SUCCESSFUL' ? 'processing' : 'processing',
+          gatewayRef: data.reference || String(data.id),
+        };
       }
       return { mode: 'gateway', status: 'failed', error: data?.status || 'Provider rejected the payout' };
     } catch (error: any) {
