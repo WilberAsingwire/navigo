@@ -53,6 +53,16 @@ const PHASE_TITLES: Record<string, string> = {
  * live location over the socket, and drives the accepted → arrived →
  * ongoing → completed lifecycle (which also triggers settlement).
  */
+const haversineMeters = (a: [number, number], b: [number, number]): number => {
+  const R = 6371000;
+  const dLat = ((b[0] - a[0]) * Math.PI) / 180;
+  const dLng = ((b[1] - a[1]) * Math.PI) / 180;
+  const lat1 = (a[0] * Math.PI) / 180;
+  const lat2 = (b[0] * Math.PI) / 180;
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+};
+
 const DriverActiveRide: React.FC = () => {
   const history = useHistory();
   const { user } = useAuth();
@@ -89,38 +99,68 @@ const DriverActiveRide: React.FC = () => {
     loadRide();
   }, []);
 
-  // Share live location while a trip is active
+  // Share live location while a trip is active.
+  // Socket publishes frequently enough for a moving marker; REST persists a
+  // periodic snapshot so the map still works when the socket briefly drops.
   useEffect(() => {
-    if (!ride || !user) return;
-    if (['completed', 'cancelled'].includes(ride.status)) return;
+    if (!ride || !user || ['completed', 'cancelled'].includes(ride.status)) return;
     if (!('geolocation' in navigator)) return;
 
     const socket = socketService.connect(user.id);
-    if (rideIdRef.current) {
-      socket.emit('join-ride-room', { rideId: rideIdRef.current });
-    }
+    const joinRide = () => {
+      if (rideIdRef.current) socket.emit('join-ride-room', { rideId: rideIdRef.current });
+    };
+    joinRide();
+
+    let lastSocketAt = 0;
+    let lastRestAt = 0;
+    let lastPublished: [number, number] | null = null;
+
+    const publishLocation = (p: GeolocationPosition) => {
+      const lat = Number(p.coords.latitude);
+      const lng = Number(p.coords.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) return;
+
+      const point: [number, number] = [lat, lng];
+      setPos(point);
+      const now = Date.now();
+      const movedEnough = !lastPublished || haversineMeters(lastPublished, point) >= 15;
+
+      if (socket.connected && (now - lastSocketAt >= 3000 || movedEnough)) {
+        socket.emit('update-location', {
+          rideId: ride.id,
+          lat,
+          lng,
+          userId: user.id,
+        });
+        lastSocketAt = now;
+        lastPublished = point;
+      }
+
+      if (now - lastRestAt >= 10000) {
+        lastRestAt = now;
+        api.post('/drivers/location', { lat, lng }).catch(() => { /* socket may still carry the update */ });
+      }
+    };
 
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (p) => {
-        setPos([p.coords.latitude, p.coords.longitude]);
-        if (rideIdRef.current) {
-          socket.emit('update-location', {
-            rideId: rideIdRef.current,
-            lat: p.coords.latitude,
-            lng: p.coords.longitude,
-            userId: user.id,
-          });
-        }
-      },
-      () => { /* location unavailable — trip still works without live tracking */ },
-      { enableHighAccuracy: true, maximumAge: 10000 }
+      publishLocation,
+      () => { /* keep trip usable even when GPS is temporarily unavailable */ },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 3000,
+        timeout: 10000,
+      }
     );
+
+    socket.on('connect', joinRide);
+
     return () => {
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
+      socket.off('connect', joinRide);
     };
   }, [ride?.id, ride?.status, user]);
-
   // Rider cancellations while on this screen
   useEffect(() => {
     if (!user) return;
@@ -222,9 +262,12 @@ const DriverActiveRide: React.FC = () => {
         <div style={{ height: '40vh', width: '100%', position: 'relative' }}>
           <NavigoMap
             userLocation={pos ? { lat: pos[0], lng: pos[1] } : ride.pickup}
-            destination={ride.destination}
+            pickupLocation={ride.pickup}
+            routeOrigin={pos ? { lat: pos[0], lng: pos[1] } : null}
+            destination={phase === 'accepted' ? ride.pickup : phase === 'ongoing' ? ride.destination : null}
             height="100%"
-            showRoute={true}
+            showRoute={!!pos && (phase === 'accepted' || phase === 'ongoing')}
+            driverLocation={pos ? { lat: pos[0], lng: pos[1] } : null}
             driverType={(ride.vehicleType as any) || 'go'}
             followUser={false}
           />
