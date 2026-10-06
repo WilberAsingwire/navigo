@@ -4,7 +4,7 @@
   "description": "NAVIGO Backend API",
   "main": "dist/index.js",
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run src",
     "start": "tsx src/index.ts",
     "dev": "nodemon --exec tsx src/index.ts",
     "build": "tsc"
