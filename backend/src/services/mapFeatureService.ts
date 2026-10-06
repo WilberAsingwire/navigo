@@ -133,9 +133,12 @@ export const getMapFeatures = async (
   if (z >= 12) {
     parts.push(
       'way[highway~"^(unclassified|residential)$"][name](' + b + ');',
-      'nwr[amenity~"^(school|college|university|kindergarten|library|hospital|clinic|doctors|dentist|pharmacy|police|fire_station|ambulance_station|bank|atm|post_office|restaurant|cafe|fast_food|food_court|bus_station|fuel|ferry_terminal|parking|charging_station)$"][name](' + b + ');',
+      'nwr[amenity~"^(school|college|university|kindergarten|library|hospital|clinic|doctors|dentist|pharmacy|police|fire_station|ambulance_station|bank|atm|post_office|restaurant|cafe|fast_food|food_court|bar|pub|place_of_worship|bus_station|taxi|fuel|ferry_terminal|parking|charging_station|toilets|drinking_water)$"][name](' + b + ');',
       'nwr[shop][name](' + b + ');',
       'nwr[office][name](' + b + ');',
+      'nwr[brand][name](' + b + ');',
+      'nwr[operator][name](' + b + ');',
+      'nwr[craft][name](' + b + ');',
       'nwr[tourism][name](' + b + ');',
       'nwr[leisure][name](' + b + ');',
       'nwr[historic][name](' + b + ');',
@@ -156,7 +159,7 @@ export const getMapFeatures = async (
     );
   }
 
-  const query = '[out:json][timeout:25];(' + parts.join('') + ');out center tags;';
+  const query = '[out:json][timeout:25];(' + parts.join('') + ');out center tags 500;';
   let elements: any[] = [];
   let lastError: unknown = null;
 
