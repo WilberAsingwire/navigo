@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
+import { IonPage, IonContent, IonIcon, useIonRouter } from '@ionic/react';
 import {
   shieldCheckmarkOutline, starOutline,
   phonePortraitOutline, mapOutline,
@@ -9,7 +9,6 @@ import {
   timeOutline, peopleOutline,
   medalOutline, trophyOutline, diamondOutline
 } from 'ionicons/icons';
-import { useHistory } from 'react-router-dom';
 import './Home.css';
 import useHaptic from '../../hooks/useHaptic';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -22,6 +21,7 @@ import xlNew from '../../assets/vehicles/xl-new.png';
 
 const Home: React.FC = () => {
   const history = useHistory();
+  const ionRouter = useIonRouter();
   const { light } = useHaptic();
   const [activeRide, setActiveRide] = useState('boda');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
   const navigate = (path: string) => {
     light();
     setIsMenuOpen(false);
-    history.push(path);
+    ionRouter.push(path, 'forward', undefined, { animated: true });
   };
 
   const rideOptions = [
@@ -166,7 +166,7 @@ const Home: React.FC = () => {
                 <span className="hero-route-path" />
                 <span className="hero-route-node end" />
                 <span className="hero-route-traveller">
-                  <TransparentVehicleImage src={bodaNew} alt="" turntable className="hero-route-vehicle" />
+                  <TransparentVehicleImage src={bodaNew} alt="" turntable className="hero-route-vehicle vehicle-turntable-img" />
                 </span>
               </div>
 
@@ -275,7 +275,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="preview-vehicle">
-                    <TransparentVehicleImage src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean" turntable />
+                    <TransparentVehicleImage src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean vehicle-turntable-img" turntable />
                     <div className="vehicle-meta">
                       <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
                       <span className="vehicle-seats"><IonIcon icon={peopleOutline} /> {active.seats}</span>
@@ -290,7 +290,7 @@ const Home: React.FC = () => {
                       className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
                       onClick={() => { light(); setActiveRide(ride.id); }}
                     >
-                      <TransparentVehicleImage src={ride.image} alt="" className="pill-img vehicle-art-clean" turntable />
+                      <TransparentVehicleImage src={ride.image} alt="" className="pill-img vehicle-art-clean vehicle-turntable-img" turntable />
                       <span>{ride.short}</span>
                     </button>
                   ))}
@@ -322,7 +322,7 @@ const Home: React.FC = () => {
                 <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
                   {ride.popular && <div className="ride-badge">Most Popular</div>}
                   <div className="card-img-wrap">
-                    <TransparentVehicleImage src={ride.image} alt={ride.name} className="card-vehicle-img vehicle-art-clean" turntable />
+                    <TransparentVehicleImage src={ride.image} alt={ride.name} className="card-vehicle-img vehicle-art-clean vehicle-turntable-img" turntable />
                   </div>
                   <h3 className="card-title">{ride.name}</h3>
                   <p className="card-desc">{ride.desc}</p>
