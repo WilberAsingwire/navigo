@@ -296,13 +296,24 @@ const NavigoMap: React.FC<MapProps> = ({
         }
 
         const d = Math.round(Number(route.distanceKm) * 100) / 100;
-        const t = Math.max(1, Math.round(Number(route.durationMin)));
+        const t = Math.max(0.1, Math.round(Number(route.durationMin) * 10) / 10);
 
         setRoutePoints(pts);
         setRouteDistance(d);
         setRouteDuration(t);
         onDistanceChange?.(d, t);
         onRouteStatusChange?.('ready');
+
+        if (!routeOrigin && mapRef.current && pts.length > 1) {
+          try {
+            mapRef.current.fitBounds(pts as any, {
+              padding: [40, 40],
+              maxZoom: 16,
+              animate: true,
+              duration: 0.6,
+            });
+          } catch { /* noop */ }
+        }
       } catch (e: any) {
         if (!active || e?.name === 'CanceledError' || e?.name === 'AbortError') return;
         setRoutePoints([]);
@@ -540,7 +551,12 @@ const NavigoMap: React.FC<MapProps> = ({
             key={`${r.lat}-${r.lng}-${i}`}
             position={[r.lat, r.lng]}
             icon={createSearchIcon(i + 1)}
-            eventHandlers={{ click: () => onSearchResultClick?.(r) }}
+            eventHandlers={{
+              click: () => {
+                onSearchResultClick?.(r);
+                try { mapRef.current?.flyTo([r.lat, r.lng], Math.max(16, mapRef.current.getZoom()), { duration: 0.6 }); } catch { /* noop */ }
+              },
+            }}
           >
             <Popup>
               <strong>{r.name || 'Place'}</strong>
