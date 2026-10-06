@@ -216,7 +216,7 @@ const RideRequest: React.FC = () => {
       if (socket?.connected && user?.id) {
         socket.emit('request-ride', { userId: user.id, rideId: pendingRideId });
       }
-    }, 12000);
+    }, 15000);
     return () => window.clearInterval(timer);
   }, [step, pendingRideId, user?.id]);
 
