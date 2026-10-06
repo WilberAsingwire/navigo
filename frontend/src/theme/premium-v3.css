@@ -959,3 +959,144 @@ button:focus-visible,
     transition: none !important;
   }
 }
+
+/* ── Ionic surface system ─────────────────────────────────── */
+ion-card,
+ion-list,
+ion-item,
+ion-accordion,
+ion-accordion-group,
+ion-searchbar,
+ion-segment {
+  --background: var(--nav-card);
+  --color: var(--nav-text);
+}
+
+ion-card {
+  border: 1px solid var(--nav-border);
+  border-radius: var(--navigo-radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+ion-item {
+  --background: transparent;
+  --background-hover: var(--nav-card-hover);
+  --border-color: var(--nav-border);
+  --color: var(--nav-text);
+}
+
+ion-list {
+  background: transparent !important;
+}
+
+ion-input,
+ion-textarea,
+ion-select,
+ion-searchbar {
+  --color: var(--nav-text);
+  --placeholder-color: var(--nav-text-muted);
+  --highlight-color-focused: var(--navigo-orange);
+}
+
+ion-searchbar {
+  --background: var(--nav-card);
+  --border-radius: var(--navigo-radius-control);
+  --box-shadow: none;
+  border: 1px solid var(--nav-border);
+  border-radius: var(--navigo-radius-control);
+  transition: border-color .22s ease, box-shadow .22s ease, transform .22s var(--ease-spring);
+}
+
+ion-searchbar:focus-within {
+  transform: translateY(-1px);
+  border-color: var(--navigo-orange);
+  box-shadow: 0 0 0 4px rgba(255,107,53,.075);
+}
+
+ion-button {
+  --border-radius: 13px;
+  --box-shadow: none;
+  text-transform: none;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+ion-segment {
+  border: 1px solid var(--nav-border);
+  border-radius: 14px;
+  padding: 3px;
+}
+
+ion-segment-button {
+  --border-radius: 11px;
+  --color: var(--nav-text-secondary);
+  --color-checked: #fff;
+  --indicator-color: var(--navigo-orange);
+  min-height: 42px;
+}
+
+ion-modal {
+  --backdrop-opacity: .5;
+}
+
+ion-modal::part(content) {
+  border: 1px solid var(--nav-border-strong);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -30px 100px rgba(0,0,0,.35);
+  overflow: hidden;
+}
+
+ion-popover::part(content) {
+  border: 1px solid var(--nav-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.28);
+}
+
+ion-toast {
+  --border-width: 1px !important;
+  --border-style: solid !important;
+  --border-color: var(--nav-border-strong) !important;
+  --border-radius: 14px !important;
+  --box-shadow: 0 16px 50px rgba(0,0,0,.28) !important;
+}
+
+ion-badge {
+  border-radius: 999px;
+}
+
+ion-chip {
+  --background: var(--nav-card-soft);
+  --color: var(--nav-text);
+  border: 1px solid var(--nav-border);
+  border-radius: 999px;
+}
+
+ion-refresher-content {
+  --color: var(--navigo-orange);
+}
+
+ion-spinner {
+  --color: var(--navigo-orange);
+}
+
+/* Loading surfaces should feel intentional, not like a blank freeze. */
+.loading-screen,
+.loading-container,
+.full-page-loader {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,107,53,.07), transparent 28%),
+    var(--nav-bg) !important;
+}
+
+/* Keyboard and mobile safe-area polish */
+ion-content::part(scroll) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nav-border-strong) transparent;
+}
+
+@media (max-width: 640px) {
+  ion-modal::part(content) {
+    border-radius: 22px 22px 0 0;
+  }
+}
