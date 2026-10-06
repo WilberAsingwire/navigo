@@ -150,10 +150,9 @@ const RideRequest: React.FC = () => {
       socket.emit('join-ride-room', { rideId: data.rideId });
       setTimeout(() => ionRouter.push('/customer/active-ride'), 1500);
     };
-    const onNoDrivers = (data: any) => {
+    const onNoDrivers = (_data: any) => {
       // Temporary driver absence is not a failed match; the matching loop retries.
-      setToastMsg(data.message || 'No nearby driver yet — still searching…');
-      setShowToast(true);
+      // The matching panel already communicates that the search is still active.
     };
     const onTaken = (data: any) => {
       // If our pending ride was taken by another driver? Actually this is for other rides
