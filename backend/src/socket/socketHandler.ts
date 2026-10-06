@@ -16,6 +16,17 @@ export const disconnectUserSockets = (userId: string) => {
   ioInstance.in(userId).disconnectSockets(true);
 };
 
+/** Push a driver's latest persisted GPS position to the admin live-map room. */
+export const notifyAdminLocation = (userId: string, lat: number, lng: number) => {
+  if (!ioInstance) return;
+  ioInstance.to('admins').emit('admin-location-updated', {
+    userId,
+    lat,
+    lng,
+    timestamp: Date.now(),
+  });
+};
+
 /** Emit to the ride room + the rider's and driver's personal rooms. */
 export const notifyRide = (rideId: string, riderId: string | null, driverId: string | null, event: string, payload: any) => {
   if (!ioInstance) return;
