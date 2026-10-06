@@ -145,8 +145,8 @@ const DriverHome: React.FC = () => {
             </div>
           </div>
 
-          <BodaSafeScore badges={['helmet', 'sanitized', 'idverified', 'trained']} rating={stats.rating} totalRides={stats.completedRides} />
-          <LoyaltyCard points={450} tier="gold" />
+          <BodaSafeScore badges={[]} rating={stats.rating} totalRides={stats.completedRides} />
+          <LoyaltyCard points={0} tier="bronze" />
 
           <h3 className="actions-header">Quick Actions</h3>
           <div className="actions-grid">
@@ -154,7 +154,7 @@ const DriverHome: React.FC = () => {
               { label: 'Earnings', icon: walletOutline, path: '/driver/earnings', color: '#00e676' },
               { label: 'Vehicle', icon: carOutline, path: '/driver/vehicle', color: '#4da6ff' },
               { label: 'Documents', icon: documentTextOutline, path: '/driver/documents', color: '#b47fff' },
-              { label: 'Live Map', icon: mapOutline, path: '/admin/map', color: '#FF6B35' },
+              { label: 'Live Map', icon: mapOutline, path: '/driver/live-map', color: '#FF6B35' },
             ].map(action => (
               <div key={action.label} onClick={() => navWithHaptic(action.path)} className="action-card">
                 <IonIcon icon={action.icon} style={{ color: action.color }} />
