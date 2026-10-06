@@ -15,7 +15,7 @@ import api from '../services/api';
 // Leaflet's grey background visible.
 const TILE_LAYERS = {
   standard: {
-    url: '/map-tiles/{z}/{x}/{y}.png',
+    url: '/api/map-tile?z={z}&x={x}&y={y}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
   satellite: {
