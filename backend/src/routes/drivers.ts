@@ -30,6 +30,8 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
        FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
        WHERE u.role = 'driver' AND u.isOnline = TRUE AND u.isAvailable = TRUE
          AND u.verificationStatus = 'approved'
+         AND u.lastLocationAt IS NOT NULL
+         AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
        LIMIT 200`,
       []
     );
