@@ -69,6 +69,11 @@ const normaliseSearchQuery = (value: unknown) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const GENERIC_LOCATION_WORDS = new Set([
+  'uganda', 'ug', 'city', 'town', 'municipality', 'district', 'county',
+  'ward', 'division', 'region', 'village', 'province', 'capital',
+]);
+
 const searchTokens = (value: string) =>
   normaliseSearchQuery(value)
     .toLowerCase()
@@ -210,11 +215,6 @@ const toNominatimPlace = (item: any): PlaceResult | null => {
     source: 'nominatim',
   };
 };
-
-const GENERIC_LOCATION_WORDS = new Set([
-  'uganda', 'ug', 'city', 'town', 'municipality', 'district', 'county',
-  'ward', 'division', 'region', 'village', 'province', 'capital',
-]);
 
 const buildSearchVariants = (query: string) => {
   const original = normaliseSearchQuery(query);
