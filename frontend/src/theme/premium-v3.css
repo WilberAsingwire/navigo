@@ -878,3 +878,84 @@ button:focus-visible,
     animation: none !important;
   }
 }
+
+/* ── Booking experience ───────────────────────────────────── */
+.glass-booking-card {
+  will-change: transform;
+}
+
+.glass-booking-card.booking-step-0 { --booking-accent: var(--navigo-orange); }
+.glass-booking-card.booking-step-1 { --booking-accent: var(--navigo-cyan); }
+.glass-booking-card.booking-step-2,
+.glass-booking-card.booking-step-3 { --booking-accent: var(--navigo-orange); }
+.glass-booking-card.booking-step-4 { --booking-accent: var(--navigo-cyan); }
+
+.seg-control {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.035), rgba(255,255,255,.01)),
+    var(--nav-card);
+  border: 1px solid var(--nav-border);
+  border-radius: 16px;
+  padding: 4px;
+}
+
+.seg-control .seg-btn {
+  min-height: 44px;
+  border-radius: 12px;
+  transition: transform .22s var(--ease-spring), background .22s ease, color .22s ease;
+}
+
+.seg-control .seg-btn.active {
+  background: var(--booking-accent, var(--navigo-orange));
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(255,107,53,.12);
+}
+
+.location-input-wrapper {
+  transition: transform .22s var(--ease-spring), border-color .22s ease, box-shadow .22s ease;
+}
+
+.location-input-wrapper:focus-within {
+  transform: translateY(-1px);
+  border-color: var(--booking-accent, var(--navigo-orange));
+  box-shadow: 0 0 0 4px rgba(255,107,53,.075);
+}
+
+.search-result-item {
+  transition: transform .18s var(--ease-spring), background-color .18s ease, border-color .18s ease;
+}
+
+.search-result-item:hover {
+  transform: translateX(3px);
+  background: var(--nav-card-hover);
+  border-color: var(--nav-border-strong);
+}
+
+.vehicle-option-card {
+  transition: transform .22s var(--ease-spring), border-color .22s ease, background-color .22s ease, box-shadow .22s ease;
+}
+
+.vehicle-option-card.selected {
+  border-color: var(--navigo-orange) !important;
+  box-shadow: 0 12px 30px rgba(255,107,53,.10);
+}
+
+.btn-continue {
+  box-shadow: 0 14px 30px rgba(255,107,53,.18);
+  transition: transform .22s var(--ease-spring), filter .22s ease, box-shadow .22s ease;
+}
+
+.btn-continue:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-booking-card,
+  .location-input-wrapper,
+  .search-result-item,
+  .vehicle-option-card,
+  .btn-continue {
+    transition: none !important;
+  }
+}
