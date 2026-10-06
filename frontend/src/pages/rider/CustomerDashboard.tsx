@@ -20,6 +20,7 @@ import SafeRender from '../../components/SafeRender';
 import useHaptic from '../../hooks/useHaptic';
 import ThemeToggle from '../../components/ThemeToggle';
 import './CustomerDashboard.css';
+import bodaImg from '../../assets/vehicles/boda-new.png';
 
 const POPULAR_DESTINATIONS = [
   { id: 'city-square', name: 'Uganda Central Square', area: 'Central', icon: businessOutline, lat: 0.3136, lng: 32.5811 },
@@ -142,7 +143,19 @@ const CustomerDashboard: React.FC = () => {
         <div style={{ padding: '0 12px', maxWidth: 500, margin: '0 auto' }}>
           <OnboardingBanner />
 
-          <div className="ride-cta-card" onClick={() => navWithHaptic('/customer/book', 'medium')}>
+          <div className="rider-live-strip" data-reveal="right">
+            <div className="rider-live-strip-media">
+              <img src={bodaImg} alt="" />
+            </div>
+            <div className="rider-live-strip-copy">
+              <span className="rider-live-kicker"><span className="live-dot" /> NAVIGO network</span>
+              <strong>Ready when you are</strong>
+              <span>Choose a destination and we’ll build your route.</span>
+            </div>
+            <IonIcon icon={arrowForwardOutline} className="rider-live-arrow" />
+          </div>
+
+          <div className="ride-cta-card" data-reveal="scale" onClick={() => navWithHaptic('/customer/book', 'medium')}>
             <button
               className="btn-request-ride"
               onClick={(e) => { e.stopPropagation(); navWithHaptic('/customer/book', 'medium'); }}
@@ -159,7 +172,7 @@ const CustomerDashboard: React.FC = () => {
               <Skeleton rows={2} trailingWidth="0px" />
             </div>
           ) : (
-            <div className="stats-grid">
+            <div className="stats-grid" data-reveal>
               <div className="stat-pill" onClick={() => { selection(); navWithHaptic('/customer/history'); }}>
                 <IonIcon icon={carOutline} className="stat-icon" />
                 <h3 className="stat-value">{totalRides}</h3>
@@ -181,8 +194,8 @@ const CustomerDashboard: React.FC = () => {
           )}
           </SafeRender>
 
-          <h3 className="quick-actions-header">Quick Actions</h3>
-          <div className="quick-actions-grid">
+          <h3 className="quick-actions-header" data-reveal>Quick Actions</h3>
+          <div className="quick-actions-grid" data-reveal>
             {[
               { label: 'History', icon: timeOutline, path: '/customer/history' },
               { label: 'Places', icon: locationOutline, path: '/customer/places' },
@@ -200,11 +213,12 @@ const CustomerDashboard: React.FC = () => {
             ))}
           </div>
 
+          <div data-reveal="left">
           <SafeRender>
             {user && <LoyaltyCard points={loyaltyTier.points} tier={loyaltyTier.tier} />}
           </SafeRender>
 
-          <div className="drivers-section-header">
+          <div className="drivers-section-header" data-reveal>
             <h3 className="drivers-title">Popular Destinations</h3>
             <span
               className="view-map-link"
