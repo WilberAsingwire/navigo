@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 300">
+  <defs>
+    <linearGradient id="xlc" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1E2935"/><stop offset=".6" stop-color="#283544"/><stop offset="1" stop-color="#0C131B"/></linearGradient>
+    <linearGradient id="xla" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#F59E0B"/><stop offset="1" stop-color="#F59E0B88"/></linearGradient>
+    <filter id="xls"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".28"/></filter>
+  </defs>
+  <g filter="url(#xls)">
+    <ellipse cx="300" cy="247" rx="220" ry="17" fill="#000" opacity=".16"/>
+    <path d="M89 207L116 164L194 143L234 93L386 94L445 143L511 167L533 207L520 224L475 224L456 201L150 201L130 224L91 224Z"
+          fill="url(#xlc)" stroke="#D6DEE8" stroke-opacity=".54" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M222 105L253 79L369 80L406 111L429 141L194 141Z" fill="#15202B"/>
+    <path d="M246 89L264 83L357 84L382 110L257 109Z" fill="#273B4D"/>
+    <path d="M95 188L124 174L192 168L216 181L198 194L112 195Z" fill="url(#xla)"/>
+    <path d="M396 178L462 168L511 183L513 194L414 194Z" fill="#F59E0B" opacity=".34"/>
+    <circle cx="154" cy="217" r="38" fill="#080D13" stroke="#AEB9C6" stroke-width="5"/>
+    <circle cx="452" cy="217" r="38" fill="#080D13" stroke="#AEB9C6" stroke-width="5"/>
+    <circle cx="154" cy="217" r="13" fill="#6C7785"/><circle cx="452" cy="217" r="13" fill="#6C7785"/>
+    <rect x="254" y="177" width="93" height="11" rx="5.5" fill="#DDE4EB" opacity=".75"/>
+    <text x="300" y="196" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="800" fill="#FFFFFF" opacity=".86">XL</text>
+  </g>
+</svg>
