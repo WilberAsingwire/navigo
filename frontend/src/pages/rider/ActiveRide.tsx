@@ -146,7 +146,7 @@ const ActiveRide: React.FC = () => {
       socket.off('ride-cancelled', onCancelled);
       window.clearInterval(fallbackTimer);
     };
-  }, [user, history]);
+  }, [user, history, ride?.id]);
   const handleTip = async (amount: number) => {
     if (!ride) return;
     setIsTipping(true);
