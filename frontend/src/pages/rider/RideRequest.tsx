@@ -288,7 +288,16 @@ const RideRequest: React.FC = () => {
     if (q.length < 2) return [];
 
     try {
-      const res = await api.get('/poi/search', { params: { q, limit: 30 } });
+      const focus = pickup && Number.isFinite(pickup.lat) && Number.isFinite(pickup.lng)
+        ? { lat: pickup.lat, lng: pickup.lng }
+        : null;
+      const res = await api.get('/poi/search', {
+        params: {
+          q,
+          limit: 30,
+          ...(focus ? { lat: focus.lat, lng: focus.lng } : {}),
+        },
+      });
       return Array.isArray(res.data?.results)
         ? res.data.results
             .map((item: any) => ({
@@ -326,7 +335,21 @@ const RideRequest: React.FC = () => {
     }, 500);
   };
 
+  const handleSearchFocus = (isPickup: boolean) => {
+    setSearchingPickup(isPickup);
+    setSearchResults([]);
+    setIsSearching(false);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
+  };
+
   const selectLocation = (loc: Location) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null;
+    }
     if (searchingPickup) {
       setPickup(loc);
       setPickupSearch(loc.name || loc.address.split(',')[0]);
@@ -335,6 +358,7 @@ const RideRequest: React.FC = () => {
       setDestSearch(loc.name || loc.address.split(',')[0]);
     }
     setSearchResults([]);
+    setIsSearching(false);
   };
 
   const calculateFare = async () => {
@@ -597,14 +621,14 @@ const RideRequest: React.FC = () => {
                   <div className="location-input-group-relative" style={{ position: 'relative' }}>
                     <div className="location-input-wrapper">
                       <div className="input-icon"><IonIcon icon={globeOutline} /></div>
-                      <input className="location-input" placeholder="Pickup Location" value={pickupSearch} onChange={e => handleSearch(e.target.value, true)} onFocus={() => setSearchingPickup(true)} />
+                      <input className="location-input" placeholder="Search pickup anywhere in Uganda" value={pickupSearch} onChange={e => handleSearch(e.target.value, true)} onFocus={() => handleSearchFocus(true)} />
                     </div>
                   </div>
 
                   <div className="location-input-group-relative" style={{ position: 'relative' }}>
                     <div className="location-input-wrapper">
                       <div className="input-icon"><IonIcon icon={locationOutline} /></div>
-                      <input className="location-input" placeholder="Destination" value={destSearch} onChange={e => handleSearch(e.target.value, false)} onFocus={() => setSearchingPickup(false)} />
+                      <input className="location-input" placeholder="Search destination anywhere in Uganda" value={destSearch} onChange={e => handleSearch(e.target.value, false)} onFocus={() => handleSearchFocus(false)} />
                     </div>
                   </div>
 
@@ -612,6 +636,11 @@ const RideRequest: React.FC = () => {
                     <div className="search-results-list" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', textAlign: 'center' }}>
                       <IonSpinner name="crescent" color="warning" />
                       <span style={{ marginLeft: '10px', fontSize: '12px', color: 'var(--nav-text-secondary)' }}>Searching Uganda...</span>
+                    </div>
+                  )}
+                  {!isSearching && searchResults.length === 0 && (searchingPickup ? pickupSearch : destSearch).trim().length >= 2 && (
+                    <div className="search-results-list" style={{ padding: '14px 16px', textAlign: 'center', color: 'var(--nav-text-secondary)', fontSize: '12px' }}>
+                      No matching places found in Uganda.
                     </div>
                   )}
                   {!isSearching && searchResults.length > 0 && (
@@ -760,6 +789,13 @@ const RideRequest: React.FC = () => {
           showControls={true}
           showNearbyDrivers={step === BookingStep.HOME}
           searchResults={searchResults.map(r => ({ lat: r.lat, lng: r.lng, name: r.name || r.address.split(',')[0], address: r.address }))}
+          onSearchResultClick={(result) => selectLocation({
+            lat: result.lat,
+            lng: result.lng,
+            name: result.name || result.address?.split(',')[0] || 'Selected place',
+            address: result.address || result.name || 'Selected place',
+          })}
+          onRouteStatusChange={setRouteStatus}
           onMapClick={handleMapClick}
           onPickupDrag={(ll) => {
             const [lat, lng] = ll;
