@@ -3,6 +3,10 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "rewrites": [
+    {
+      "source": "/map-tiles/:z/:x/:y.png",
+      "destination": "https://tile.openstreetmap.org/:z/:x/:y.png"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
