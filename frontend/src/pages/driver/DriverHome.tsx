@@ -163,14 +163,14 @@ const DriverHome: React.FC = () => {
         </IonRefresher>
 
         <div style={{ padding: 14, maxWidth: 500, margin: '0 auto' }}>
-          <div className={`status-banner ${isOnline ? 'online' : 'offline'}`} onClick={() => handleStatusToggle(!isOnline)}>
+          <div className={`status-banner ${isOnline ? 'online' : 'offline'}`} data-reveal onClick={() => handleStatusToggle(!isOnline)}>
             <IonIcon icon={isOnline ? leafOutline : timeOutline} className="status-icon" style={{ color: isOnline ? '#2D6A4F' : '#888' }} />
             <IonText className="status-text" style={{ color: isOnline ? '#2D6A4F' : '#888' }}>
               {isOnline ? 'You are visible to nearby riders' : 'Go online to start receiving ride requests'}
             </IonText>
           </div>
 
-          <div className="kpi-grid">
+          <div className="kpi-grid" data-reveal>
             <div className="kpi-card" onClick={() => navWithHaptic('/driver/earnings')}>
               <IonIcon icon={walletOutline} className="kpi-icon" style={{ color: '#00e676' }} />
               <h3 className="kpi-value">UGX {stats.todayEarnings.toLocaleString()}</h3>
@@ -184,8 +184,8 @@ const DriverHome: React.FC = () => {
           </div>
 
 
-          <h3 className="actions-header">Quick Actions</h3>
-          <div className="actions-grid">
+          <h3 className="actions-header" data-reveal>Quick Actions</h3>
+          <div className="actions-grid" data-reveal>
             {[
               { label: 'Earnings', icon: walletOutline, path: '/driver/earnings', color: '#00e676' },
               { label: 'Vehicle', icon: carOutline, path: '/driver/vehicle', color: '#4da6ff' },
@@ -199,10 +199,10 @@ const DriverHome: React.FC = () => {
             ))}
           </div>
 
-          <h3 className="activity-header">Recent Activity</h3>
+          <h3 className="activity-header" data-reveal>Recent Activity</h3>
           {recentActivity.length > 0 ? (
             recentActivity.map(activity => (
-              <div key={activity.id} className="activity-item" onClick={() => light()}>
+              <div key={activity.id} className="activity-item" data-reveal onClick={() => light()}>
                 <IonIcon icon={activity.icon || checkmarkCircleOutline} className="activity-icon" style={{ color: activity.color }} />
                 <span className="activity-text">{activity.text}</span>
                 <span className="activity-time">{new Date(activity.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -212,7 +212,7 @@ const DriverHome: React.FC = () => {
             <div style={{ textAlign: 'center', padding: 20, color: 'var(--nav-text-muted)', fontSize: 13 }}>No recent activity yet</div>
           )}
 
-          <div className="bottom-stats-grid">
+          <div className="bottom-stats-grid" data-reveal>
             <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completedRides}</p><span className="bottom-stat-label">Total Rides</span></div>
             <div className="bottom-stat-card"><p className="bottom-stat-value">{stats.completionRate}%</p><span className="bottom-stat-label">Completion</span></div>
             <div className="bottom-stat-card"><p className="bottom-stat-value">UGX {Math.round(stats.weeklyEarnings/1000)}K</p><span className="bottom-stat-label">This Week</span></div>
