@@ -8,7 +8,10 @@ const PremiumExperience: React.FC = () => {
     const updateScroll = () => {
       raf = 0;
       const scrollable = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
-      root.style.setProperty('--navigo-scroll-progress', String(Math.min(1, Math.max(0, window.scrollY / scrollable))));
+      root.style.setProperty(
+        '--navigo-scroll-progress',
+        String(Math.min(1, Math.max(0, window.scrollY / scrollable)))
+      );
     };
 
     const onScroll = () => {
@@ -32,52 +35,30 @@ const PremiumExperience: React.FC = () => {
     };
   }, []);
 
+  // Enhance reveal elements without touching Ionic Router/page visibility.
   useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let observer: IntersectionObserver | null = null;
-
-    const reveal = (node: Element) => {
-      if (reduced) {
+    const revealAll = (root: ParentNode = document) => {
+      root.querySelectorAll<HTMLElement>('[data-reveal]').forEach(node => {
         node.classList.add('is-visible');
-        return;
-      }
-      observer?.observe(node);
+      });
     };
 
-    if (!reduced && typeof IntersectionObserver !== 'undefined') {
-      observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            observer?.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: '0px 0px -4% 0px' });
-    }
+    revealAll();
 
-    document.querySelectorAll<HTMLElement>('[data-reveal]').forEach(reveal);
-    if (!reduced && !observer) {
-      document.querySelectorAll<HTMLElement>('[data-reveal]').forEach(node => node.classList.add('is-visible'));
-    }
+    if (typeof MutationObserver === 'undefined') return;
 
-    const mutationObserver = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
         mutation.addedNodes.forEach(node => {
           if (!(node instanceof Element)) return;
-          if (node.matches('[data-reveal]')) reveal(node);
-          node.querySelectorAll<HTMLElement>('[data-reveal]').forEach(reveal);
+          if (node.matches('[data-reveal]')) node.classList.add('is-visible');
+          revealAll(node);
         });
-      }
+      });
     });
 
-    if (typeof MutationObserver !== 'undefined') {
-      mutationObserver.observe(document.body, { childList: true, subtree: true });
-    }
-
-    return () => {
-      mutationObserver.disconnect();
-      observer?.disconnect();
-    };
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   return <div className="navigo-pointer-aura" aria-hidden="true" />;

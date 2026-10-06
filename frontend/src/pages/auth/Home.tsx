@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { IonPage, IonContent, IonIcon } from '@ionic/react';
 import {
   shieldCheckmarkOutline, starOutline,
@@ -14,16 +14,19 @@ import './Home.css';
 import useHaptic from '../../hooks/useHaptic';
 import ThemeToggle from '../../components/ThemeToggle';
 import Logo from '../../components/Logo';
-import bodaNew from '../../assets/vehicles/boda-clean.svg';
-import goNew from '../../assets/vehicles/go-clean.svg';
-import comfortNew from '../../assets/vehicles/comfort-clean.svg';
-import xlNew from '../../assets/vehicles/xl-clean.svg';
+import TransparentVehicleImage from '../../components/TransparentVehicleImage';
+import bodaNew from '../../assets/vehicles/boda-new.png';
+import goNew from '../../assets/vehicles/go-new.png';
+import comfortNew from '../../assets/vehicles/comfort-new.png';
+import xlNew from '../../assets/vehicles/xl-new.png';
 
 const Home: React.FC = () => {
   const history = useHistory();
   const { light } = useHaptic();
   const [activeRide, setActiveRide] = useState('boda');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [streetVideoPaused, setStreetVideoPaused] = useState(false);
+  const streetVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -38,7 +41,7 @@ const Home: React.FC = () => {
   const navigate = (path: string) => {
     light();
     setIsMenuOpen(false);
-    setTimeout(() => history.push(path), 80);
+    history.push(path);
   };
 
   const rideOptions = [
@@ -129,17 +132,44 @@ const Home: React.FC = () => {
               <div className="hero-overlay" />
             </div>
 
+
+            <div className="hero-story-video" aria-hidden="true">
+              <video
+                ref={streetVideoRef}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                poster="https://images.pexels.com/photos/27731041/pexels-photo-27731041.jpeg?cs=srgb&amp;w=1200&amp;auto=format&amp;fit=crop"
+                onCanPlay={(event) => {
+                  const video = event.currentTarget;
+                  void video.play()
+                    .then(() => setStreetVideoPaused(false))
+                    .catch(() => setStreetVideoPaused(true));
+                }}
+                onError={() => setStreetVideoPaused(true)}
+              >
+                <source
+                  src="https://videos.pexels.com/video-files/30917019/13219337_2560_1440_24fps.mp4"
+                  type="video/mp4"
+                />
+              </video>
+              <div className="hero-story-video-shade" />
+            </div>
             <div className="hero-visual-stage" aria-hidden="true">
               <div className="hero-visual-glow hero-visual-glow-orange" />
               <div className="hero-visual-glow hero-visual-glow-cyan" />
+
               <div className="hero-route-art">
                 <span className="hero-route-node start" />
                 <span className="hero-route-path" />
                 <span className="hero-route-node end" />
                 <span className="hero-route-traveller">
-                  <img src={bodaNew} alt="" />
+                  <TransparentVehicleImage src={bodaNew} alt="" turntable className="hero-route-vehicle" />
                 </span>
               </div>
+
               <div className="hero-live-card">
                 <span className="hero-live-card-dot" />
                 <span>
@@ -152,6 +182,28 @@ const Home: React.FC = () => {
                 <strong>Live route preview</strong>
               </div>
             </div>
+
+
+            <button
+              className="hero-story-video-toggle"
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                const video = streetVideoRef.current;
+                if (!video) return;
+                if (video.paused) {
+                  void video.play()
+                    .then(() => setStreetVideoPaused(false))
+                    .catch(() => setStreetVideoPaused(true));
+                } else {
+                  video.pause();
+                  setStreetVideoPaused(true);
+                }
+              }}
+            >
+              <span className="video-control-dot" />
+              {streetVideoPaused ? 'Play story' : 'Pause story'}
+            </button>
 
             <div className="hero-text" data-reveal="left">
               <div className="hero-badge">
@@ -223,7 +275,7 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="preview-vehicle">
-                    <img src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean" />
+                    <TransparentVehicleImage src={active.image} alt={active.name} className="preview-vehicle-img vehicle-art-clean" turntable />
                     <div className="vehicle-meta">
                       <span className="vehicle-eta"><IonIcon icon={timeOutline} /> {active.eta}</span>
                       <span className="vehicle-seats"><IonIcon icon={peopleOutline} /> {active.seats}</span>
@@ -238,7 +290,7 @@ const Home: React.FC = () => {
                       className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
                       onClick={() => { light(); setActiveRide(ride.id); }}
                     >
-                      <img src={ride.image} alt="" className="pill-img vehicle-art-clean" />
+                      <TransparentVehicleImage src={ride.image} alt="" className="pill-img vehicle-art-clean" turntable />
                       <span>{ride.short}</span>
                     </button>
                   ))}
@@ -270,7 +322,7 @@ const Home: React.FC = () => {
                 <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
                   {ride.popular && <div className="ride-badge">Most Popular</div>}
                   <div className="card-img-wrap">
-                    <img src={ride.image} alt={ride.name} className="card-vehicle-img vehicle-art-clean" />
+                    <TransparentVehicleImage src={ride.image} alt={ride.name} className="card-vehicle-img vehicle-art-clean" turntable />
                   </div>
                   <h3 className="card-title">{ride.name}</h3>
                   <p className="card-desc">{ride.desc}</p>
