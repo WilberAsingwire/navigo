@@ -41,7 +41,7 @@ const Home: React.FC = () => {
   const navigate = (path: string) => {
     light();
     setIsMenuOpen(false);
-    ionRouter.push(path, 'forward', undefined, { animated: true });
+    ionRouter.push(path);
   };
 
   const rideOptions = [
