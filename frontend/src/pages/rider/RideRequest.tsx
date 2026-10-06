@@ -9,7 +9,6 @@ import {
   timeOutline, cubeOutline, cashOutline, walletOutline,
   pricetagOutline
 } from 'ionicons/icons';
-import axios from 'axios';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
@@ -22,7 +21,7 @@ import './RideRequest.css';
 
 interface Location { lat: number; lng: number; address: string; name?: string; }
 interface RideOption { id: string; name: string; description: string; basePrice: number; pricePerKm: number; pricePerMinute: number; capacity: number; vehicleType: string; dbVehicleType: string; surgeMultiplier: number; color: string; image: string; }
-interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; surgeFare: number; totalFare: number; formattedTotal: string; }
+interface FareEstimate { distance: number; duration: number; baseFare: number; distanceFare: number; timeFare: number; deliveryFee: number; totalFare: number; formattedTotal: string; offerMin?: number; offerMax?: number; }
 enum BookingStep { HOME = 0, LOCATION = 1, RIDE_TYPE = 2, PAYMENT = 3, MATCHING = 4 }
 
 // Unified promo codes — single source of truth
@@ -87,7 +86,7 @@ const RideRequest: React.FC = () => {
   const [isMatching, setIsMatching] = useState(false);
   const [actualRouteDist, setActualRouteDist] = useState(0);
   const [actualRouteDur, setActualRouteDur] = useState(0);
-  const [routeStatus, setRouteStatus] = useState<'calculating' | 'optimized' | 'unavailable'>('calculating');
+  const [routeStatus, setRouteStatus] = useState<'calculating' | 'ready' | 'unavailable'>('unavailable');
   const [driverFound, setDriverFound] = useState(false);
   const [matchedDriver, setMatchedDriver] = useState<any>(null);
   const [pendingRideId, setPendingRideId] = useState<string | null>(null);
@@ -104,6 +103,7 @@ const RideRequest: React.FC = () => {
   const [recentRides, setRecentRides] = useState<any[]>([]);
   const [matchingSeconds, setMatchingSeconds] = useState(0);
 
+  const [vehicleQuotes, setVehicleQuotes] = useState<Record<string, any>>({});
   const [packageDetails, setPackageDetails] = useState('');
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
@@ -112,6 +112,7 @@ const RideRequest: React.FC = () => {
   const matchingTimeoutRef = useRef<any>(null);
   const matchingIntervalRef = useRef<any>(null);
   const searchTimeoutRef = useRef<any>(null);
+  const searchRequestRef = useRef(0);
 
   const clearMatchingTimers = useCallback(() => {
     if (matchingTimeoutRef.current) clearTimeout(matchingTimeoutRef.current);
@@ -150,12 +151,9 @@ const RideRequest: React.FC = () => {
       setTimeout(() => ionRouter.push('/customer/active-ride'), 1500);
     };
     const onNoDrivers = (data: any) => {
-      clearMatchingTimers();
-      setIsMatching(false);
-      setToastMsg(data.message || 'No drivers available. Try again.');
+      // Temporary driver absence is not a failed match; the matching loop retries.
+      setToastMsg(data.message || 'No nearby driver yet — still searching…');
       setShowToast(true);
-      setStep(BookingStep.LOCATION);
-      setPendingRideId(null);
     };
     const onTaken = (data: any) => {
       // If our pending ride was taken by another driver? Actually this is for other rides
@@ -173,8 +171,12 @@ const RideRequest: React.FC = () => {
   }, [isAuthenticated, user, pendingRideId, clearMatchingTimers]);
 
   useEffect(() => {
-    if (pickup && destination) calculateFare();
-  }, [pickup, destination, selectedRide, discount, actualRouteDist, actualRouteDur]);
+    if (!pickup || !destination || routeStatus !== 'ready' || actualRouteDist <= 0 || actualRouteDur <= 0) {
+      setFare(null);
+      return;
+    }
+    void calculateFare();
+  }, [pickup, destination, selectedRide, serviceType, discount, actualRouteDist, actualRouteDur, routeStatus]);
 
   // Matching timer — shows elapsed seconds and auto-cancels after 120s
   useEffect(() => {
@@ -200,6 +202,33 @@ const RideRequest: React.FC = () => {
     return clearMatchingTimers;
   }, [step, pendingRideId, clearMatchingTimers]);
 
+  useEffect(() => {
+    if (!pickup || !destination || routeStatus !== 'ready' || actualRouteDist <= 0 || actualRouteDur <= 0) {
+      setVehicleQuotes({});
+      return;
+    }
+    let active = true;
+    api.get('/rides/quotes', {
+      params: { km: actualRouteDist, min: actualRouteDur, serviceType },
+    }).then(res => {
+      if (active && res.data?.ok) setVehicleQuotes(res.data.quotes || {});
+    }).catch(() => {
+      if (active) setVehicleQuotes({});
+    });
+    return () => { active = false; };
+  }, [pickup, destination, serviceType, actualRouteDist, actualRouteDur, routeStatus]);
+
+  useEffect(() => {
+    if (step !== BookingStep.MATCHING || !pendingRideId) return;
+    const timer = window.setInterval(() => {
+      const socket = socketService.getSocket();
+      if (socket?.connected && user?.id) {
+        socket.emit('request-ride', { userId: user.id, rideId: pendingRideId });
+      }
+    }, 12000);
+    return () => window.clearInterval(timer);
+  }, [step, pendingRideId, user?.id]);
+
   const fetchWalletBalance = async () => {
     try {
       const res = await api.get(`/wallet/balance`);
@@ -217,6 +246,7 @@ const RideRequest: React.FC = () => {
   const getCurrentLocation = useCallback(() => {
     if (!('geolocation' in navigator)) {
       setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
+      setPickupSearch('Kampala');
       return;
     }
 
@@ -224,72 +254,60 @@ const RideRequest: React.FC = () => {
       async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        const accuracy = pos.coords.accuracy;
-        if (lat < -1.5 || lat > 4.5 || lng < 29.5 || lng > 35.5) {
-          setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala', name: 'Kampala' });
+        if (lat < -5 || lat > 5 || lng < 29 || lng > 36) {
+          setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
           setPickupSearch('Kampala');
           return;
         }
-        setPickup({ lat, lng, address: `Current Location (±${Math.round(accuracy)}m)`, name: 'Current Location' });
+
+        const fallback: Location = {
+          lat,
+          lng,
+          address: 'Current Location',
+          name: 'Current Location',
+        };
+        setPickup(fallback);
         setPickupSearch('Current Location');
+
         try {
-          const res = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
-            params: { format: 'json', lat, lon: lng, zoom: 18, addressdetails: 1 },
-            timeout: 8000
-          });
-          const data = res.data;
-          const addr = data.display_name || '';
-          const address = data.address || {};
-          const road = address.road || address.pedestrian || address.footway || '';
-          const suburb = address.suburb || address.neighbourhood || address.village || '';
-          const city = address.city || address.town || '';
-          const shortName = road || suburb || city || addr.split(',')[0] || 'Current Location';
-          setPickup({ lat, lng, address: addr || 'Current Location', name: shortName });
-          setPickupSearch(shortName);
-        } catch { /* noop */ }
+          const res = await api.get('/poi/reverse', { params: { lat, lng } });
+          const place = res.data?.place;
+          if (place) {
+            const resolved: Location = {
+              lat,
+              lng,
+              address: place.address || fallback.address,
+              name: place.name || fallback.name,
+            };
+            setPickup(resolved);
+            setPickupSearch(resolved.name || 'Current Location');
+          }
+        } catch { /* keep GPS coordinates if reverse geocoding is unavailable */ }
       },
       () => {
         setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
         setPickupSearch('Kampala');
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
   }, []);
 
-  const searchLocation = async (query: string) => {
-    if (query.length < 2) return [];
-    const UGANDA_BBOX = { minLat: -1.5, maxLat: 4.2, minLon: 29.5, maxLon: 35.0 };
+  const searchLocation = async (query: string): Promise<Location[]> => {
+    const q = query.trim();
+    if (q.length < 2) return [];
+
     try {
-      const nomRes = await axios.get('https://nominatim.openstreetmap.org/search', {
-        params: {
-          q: `${query}, Uganda`,
-          format: 'json',
-          addressdetails: 1,
-          limit: 15,
-          viewbox: `${UGANDA_BBOX.minLon},${UGANDA_BBOX.minLat},${UGANDA_BBOX.maxLon},${UGANDA_BBOX.maxLat}`,
-          bounded: 1
-        },
-        timeout: 8000
-      });
-      const results = nomRes.data.map((item: any) => ({
-        lat: parseFloat(item.lat),
-        lng: parseFloat(item.lon),
-        address: item.display_name,
-        name: item.display_name.split(',')[0]
-      })).filter((r: any) => !isNaN(r.lat) && !isNaN(r.lng));
-
-      const unique = new Map();
-      results.forEach((r: any) => {
-        const key = `${Math.round(r.lat * 10000)}-${Math.round(r.lng * 10000)}`;
-        if (!unique.has(key)) unique.set(key, r);
-      });
-      const finalResults = Array.from(unique.values()) as Location[];
-
-      if (finalResults.length === 0) {
-        setToastMsg('No results in Uganda. Try Kampala, Entebbe, Jinja, etc.');
-        setShowToast(true);
-      }
-      return finalResults;
+      const res = await api.get('/poi/search', { params: { q, limit: 30 } });
+      return Array.isArray(res.data?.results)
+        ? res.data.results
+            .map((item: any) => ({
+              lat: Number(item.lat),
+              lng: Number(item.lng),
+              address: item.address || item.name || 'Selected place',
+              name: item.name || item.address?.split(',')?.[0] || 'Selected place',
+            }))
+            .filter((item: Location) => Number.isFinite(item.lat) && Number.isFinite(item.lng))
+        : [];
     } catch {
       return [];
     }
@@ -298,18 +316,23 @@ const RideRequest: React.FC = () => {
   const handleSearch = async (query: string, isPickup: boolean) => {
     if (isPickup) setPickupSearch(query); else setDestSearch(query);
     setSearchingPickup(isPickup);
+
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    if (query.length >= 2) {
-      setIsSearching(true);
-      searchTimeoutRef.current = setTimeout(async () => {
-        const results = await searchLocation(query);
-        setSearchResults(results);
-        setIsSearching(false);
-      }, 300);
-    } else {
+    const requestId = ++searchRequestRef.current;
+
+    if (query.trim().length < 2) {
       setSearchResults([]);
       setIsSearching(false);
+      return;
     }
+
+    setIsSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      const results = await searchLocation(query);
+      if (requestId !== searchRequestRef.current) return;
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 500);
   };
 
   const selectLocation = (loc: Location) => {
@@ -323,52 +346,46 @@ const RideRequest: React.FC = () => {
     setSearchResults([]);
   };
 
-  const calculateFastFare = useCallback(() => {
-    if (!pickup || !destination) return;
-    const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
-    const speed = selectedRide.vehicleType === 'boda' ? 28 : 22;
-    const dur = actualRouteDur > 0 ? actualRouteDur : (dist / speed) * 60;
-
-    const rawTotal = Math.max(selectedRide.basePrice + (dist * selectedRide.pricePerKm) + (dur * selectedRide.pricePerMinute), selectedRide.basePrice);
-    const finalTotal = discount === 'free' ? 0 : Math.max(rawTotal - (discount as number), 0);
-
-    setFare({
-      distance: Math.round(dist * 10) / 10,
-      duration: Math.round(dur),
-      baseFare: selectedRide.basePrice,
-      distanceFare: 0,
-      timeFare: 0,
-      surgeFare: 0,
-      totalFare: finalTotal,
-      formattedTotal: 'UGX ' + Math.round(finalTotal).toLocaleString()
-    });
-  }, [pickup, destination, selectedRide, discount, actualRouteDist, actualRouteDur]);
-
   const calculateFare = async () => {
-    if (!pickup || !destination) return;
-    const dist = actualRouteDist > 0 ? actualRouteDist : calculateDistance(pickup.lat, pickup.lng, destination.lat, destination.lng);
-    const speed = selectedRide.vehicleType === 'boda' ? 28 : 22;
-    const dur = actualRouteDur > 0 ? actualRouteDur : (dist / speed) * 60;
+    if (!pickup || !destination || routeStatus !== 'ready' || actualRouteDist <= 0 || actualRouteDur <= 0) {
+      setFare(null);
+      return;
+    }
 
     try {
-      const res = await api.get(`/rides/quote`, {
-        params: { type: selectedRide.dbVehicleType, km: dist, min: dur }
+      const res = await api.get('/rides/quote', {
+        params: {
+          type: selectedRide.dbVehicleType,
+          km: actualRouteDist,
+          min: actualRouteDur,
+          serviceType,
+        },
       });
-      if (res.data.ok) {
-        const rawFare = res.data.fare;
-        const finalTotal = discount === 'free' ? 0 : Math.max(rawFare - (discount as number), 0);
-        setFare({
-          distance: Math.round(dist * 10) / 10,
-          duration: Math.round(dur),
-          baseFare: selectedRide.basePrice,
-          distanceFare: 0,
-          timeFare: 0,
-          surgeFare: 0,
-          totalFare: finalTotal,
-          formattedTotal: 'UGX ' + finalTotal.toLocaleString()
-        });
-      }
-    } catch { /* noop */ }
+      if (!res.data?.ok) throw new Error('Fare unavailable');
+
+      const breakdown = res.data.breakdown || {};
+      const rawFare = Number(res.data.fare);
+      if (!Number.isFinite(rawFare)) throw new Error('Invalid fare');
+
+      const finalTotal = discount === 'free'
+        ? 0
+        : Math.max(rawFare - Number(discount || 0), 0);
+
+      setFare({
+        distance: Number(actualRouteDist.toFixed(2)),
+        duration: Math.round(actualRouteDur),
+        baseFare: Number(breakdown.base) || 0,
+        distanceFare: Number(breakdown.distance) || 0,
+        timeFare: Number(breakdown.time) || 0,
+        deliveryFee: Number(breakdown.deliveryFee) || 0,
+        totalFare: finalTotal,
+        formattedTotal: 'UGX ' + Math.round(finalTotal).toLocaleString('en-UG'),
+        offerMin: Number(res.data.offerBounds?.min) || undefined,
+        offerMax: Number(res.data.offerBounds?.max) || undefined,
+      });
+    } catch {
+      setFare(null);
+    }
   };
 
   const applyPromo = () => {
@@ -391,40 +408,42 @@ const RideRequest: React.FC = () => {
 
   const handleMapClick = async (latlng: [number, number]) => {
     const [lat, lng] = latlng;
-    if (lat < -1.5 || lat > 4.2 || lng < 29.5 || lng > 35) {
+    if (lat < -5 || lat > 5 || lng < 29 || lng > 36) {
       setToastMsg('Please select a location within Uganda.');
       setShowToast(true);
       return;
     }
+
+    const fallback: Location = { lat, lng, address: 'Selected Point', name: 'Selected Point' };
     try {
-      const res = await axios.get(`https://nominatim.openstreetmap.org/reverse`, {
-        params: { format: 'json', lat, lon: lng, zoom: 18, addressdetails: 1 },
-        timeout: 8000
-      });
-      const addr = res.data.display_name || '';
-      const address = res.data.address || {};
-      const road = address.road || address.pedestrian || '';
-      const suburb = address.suburb || address.neighbourhood || '';
-      const city = address.city || address.town || '';
-      const shortName = road || suburb || city || addr.split(',')[0] || 'Selected Point';
-      const loc: Location = { lat, lng, address: addr || 'Selected Point', name: shortName };
+      const res = await api.get('/poi/reverse', { params: { lat, lng } });
+      const place = res.data?.place;
+      const loc: Location = place
+        ? {
+            lat,
+            lng,
+            address: place.address || fallback.address,
+            name: place.name || fallback.name,
+          }
+        : fallback;
+
       if (searchingPickup) {
         setPickup(loc);
-        setPickupSearch(shortName);
+        setPickupSearch(loc.name || loc.address.split(',')[0]);
       } else {
         setDestination(loc);
-        setDestSearch(shortName);
+        setDestSearch(loc.name || loc.address.split(',')[0]);
       }
     } catch {
-      const loc: Location = { lat, lng, address: 'Selected Point', name: 'Selected Point' };
       if (searchingPickup) {
-        setPickup(loc);
-        setPickupSearch(loc.name || '');
+        setPickup(fallback);
+        setPickupSearch('Selected Point');
       } else {
-        setDestination(loc);
+        setDestination(fallback);
         setDestSearch('Selected Point');
       }
     }
+    setSearchResults([]);
   };
 
   const handleBookRide = async () => {
@@ -437,6 +456,11 @@ const RideRequest: React.FC = () => {
       setShowToast(true);
       return;
     }
+    if (routeStatus !== 'ready' || actualRouteDist <= 0 || actualRouteDur <= 0 || !fare) {
+      setToastMsg('Please wait for a valid road route and fare before booking.');
+      setShowToast(true);
+      return;
+    }
     setIsLoading(true);
     try {
       const finalFare = userOffer ?? fare?.totalFare;
@@ -446,8 +470,8 @@ const RideRequest: React.FC = () => {
         destination,
         rideType: selectedRide.dbVehicleType,
         paymentMethod,
-        distanceKm: actualRouteDist > 0 ? actualRouteDist : fare?.distance,
-        durationMin: actualRouteDur > 0 ? actualRouteDur : fare?.duration,
+        distanceKm: actualRouteDist,
+        durationMin: actualRouteDur,
         packageDetails: serviceType === 'delivery' ? packageDetails : null,
         receiverName: serviceType === 'delivery' ? receiverName : null,
         receiverPhone: serviceType === 'delivery' ? receiverPhone : null,
