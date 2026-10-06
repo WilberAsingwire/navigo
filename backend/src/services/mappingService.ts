@@ -62,28 +62,24 @@ const normaliseText = (value: unknown) => String(value || '').trim().replace(/\s
 
 const normaliseSearchQuery = (value: unknown) =>
   normaliseText(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[，、]/g, ',')
     .replace(/\s*,\s*/g, ', ')
     .replace(/\s+/g, ' ')
     .trim();
+
+const GENERIC_LOCATION_WORDS = new Set([
+  'uganda', 'ug', 'city', 'town', 'municipality', 'district', 'county',
+  'ward', 'division', 'region', 'village', 'province', 'capital',
+]);
 
 const searchTokens = (value: string) =>
   normaliseSearchQuery(value)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .split(/\s+/)
-    .filter(token => token.length >= 2 && token !== 'uganda');
-
-const haversineKm = (a: MapPoint, b: MapPoint) => {
-  const R = 6371;
-  const lat1 = a.lat * Math.PI / 180;
-  const lat2 = b.lat * Math.PI / 180;
-  const dLat = (b.lat - a.lat) * Math.PI / 180;
-  const dLng = (b.lng - a.lng) * Math.PI / 180;
-  const h = Math.sin(dLat / 2) ** 2 +
-    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-};
+    .filter(token => token.length >= 2 && !GENERIC_LOCATION_WORDS.has(token));
 
 const withinUganda = (lat: number, lng: number) =>
   lat >= UGANDA_BOUNDS.minLat &&
@@ -220,6 +216,35 @@ const toNominatimPlace = (item: any): PlaceResult | null => {
   };
 };
 
+const buildSearchVariants = (query: string) => {
+  const original = normaliseSearchQuery(query);
+  const originalWords = original.split(/\s+/).filter(Boolean);
+  const meaningful = originalWords.filter(word => {
+    const clean = word.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    return clean.length >= 2 && !GENERIC_LOCATION_WORDS.has(clean);
+  });
+  const core = meaningful.join(' ').replace(/\s+,/g, ',').trim();
+
+  const variants = [
+    original,
+    core,
+    originalWords.filter(word => word.toLowerCase() !== 'uganda' && word.toLowerCase() !== 'ug').join(' ').trim(),
+  ];
+
+  return Array.from(new Set(variants.filter(v => v.length >= 2)));
+};
+
+const haversineKm = (a: MapPoint, b: MapPoint) => {
+  const R = 6371;
+  const lat1 = a.lat * Math.PI / 180;
+  const lat2 = b.lat * Math.PI / 180;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const h = Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+};
+
 const dedupePlaces = (items: PlaceResult[], limit: number) => {
   const seen = new Set<string>();
   const output: PlaceResult[] = [];
@@ -239,43 +264,61 @@ const rankPlaces = (
   focus?: MapPoint | null,
 ) => {
   const tokens = searchTokens(query);
-  const normalisedQuery = normaliseSearchQuery(query)
+  const coreQuery = tokens.join(' ');
+  const original = normaliseSearchQuery(query)
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
   return items
     .map(place => {
-      const name = normaliseText(place.name).toLowerCase();
-      const address = normaliseText(place.address).toLowerCase();
+      const name = normaliseText(place.name)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      const address = normaliseText(place.address)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
       const haystack = `${name} ${address}`;
       const compactName = name.replace(/[^a-z0-9]+/g, ' ').trim();
+      const matchedTokens = tokens.filter(token => haystack.includes(token)).length;
 
       let score = 0;
-      if (compactName === normalisedQuery) score += 1000;
-      if (name === normalisedQuery) score += 900;
-      if (compactName.startsWith(normalisedQuery)) score += 500;
-      if (name.startsWith(normalisedQuery)) score += 450;
-      if (haystack.includes(normalisedQuery)) score += 300;
-
-      const matchedTokens = tokens.filter(token => haystack.includes(token)).length;
-      score += matchedTokens * 80;
-      if (tokens.length > 0 && matchedTokens === tokens.length) score += 180;
+      if (coreQuery && compactName === coreQuery) score += 1500;
+      if (coreQuery && compactName.startsWith(coreQuery)) score += 700;
+      if (original && haystack.includes(original)) score += 400;
+      if (matchedTokens) score += matchedTokens * 100;
+      if (tokens.length > 0 && matchedTokens === tokens.length) score += 300;
 
       const type = String(place.type || '').toLowerCase();
-      if (['poi', 'amenity', 'city', 'town', 'village', 'locality', 'district', 'street', 'house'].includes(type)) {
-        score += 10;
+      if (['city', 'town', 'village', 'municipality', 'district', 'county', 'locality', 'street', 'house', 'poi', 'amenity'].includes(type)) {
+        score += 25;
       }
 
       if (focus && isUgandaPoint(focus)) {
         const distance = haversineKm(focus, place);
-        score += Math.max(0, 120 - Math.min(distance, 120));
+        score += Math.max(0, 80 - Math.min(distance, 80));
       }
 
       return { place, score };
     })
     .sort((a, b) => b.score - a.score)
     .map(item => item.place);
+};
+
+const hasStrongTextMatch = (items: PlaceResult[], query: string) => {
+  const tokens = searchTokens(query);
+  if (!tokens.length) return false;
+  return items.some(place => {
+    const haystack = `${normaliseText(place.name)} ${normaliseText(place.address)}`
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    return tokens.every(token => haystack.includes(token));
+  });
 };
 
 let nextNominatimRequestAt = 0;
@@ -293,6 +336,61 @@ const waitForNominatimSlot = async () => {
   release();
 };
 
+const searchNominatimFreeform = async (query: string, limit: number) => {
+  await waitForNominatimSlot();
+  const nom = await axios.get('https://nominatim.openstreetmap.org/search', {
+    params: {
+      q: query,
+      format: 'jsonv2',
+      addressdetails: 1,
+      namedetails: 1,
+      limit,
+      countrycodes: 'ug',
+      viewbox: `${UGANDA_BOUNDS.minLng},${UGANDA_BOUNDS.minLat},${UGANDA_BOUNDS.maxLng},${UGANDA_BOUNDS.maxLat}`,
+      bounded: 1,
+    },
+    headers: {
+      'User-Agent': process.env.GEOCODING_USER_AGENT || 'NAVIGO/1.0 (contact admin@navigo.ug)',
+      'Accept-Language': 'en',
+    },
+    timeout: 10_000,
+  });
+
+  return Array.isArray(nom.data)
+    ? nom.data.map(toNominatimPlace).filter((place): place is PlaceResult => !!place)
+    : [];
+};
+
+const searchNominatimStructured = async (
+  field: 'city' | 'county' | 'state',
+  value: string,
+  limit: number,
+) => {
+  await waitForNominatimSlot();
+  const nom = await axios.get('https://nominatim.openstreetmap.org/search', {
+    params: {
+      [field]: value,
+      country: 'Uganda',
+      countrycodes: 'ug',
+      format: 'jsonv2',
+      addressdetails: 1,
+      namedetails: 1,
+      limit,
+      viewbox: `${UGANDA_BOUNDS.minLng},${UGANDA_BOUNDS.minLat},${UGANDA_BOUNDS.maxLng},${UGANDA_BOUNDS.maxLat}`,
+      bounded: 1,
+    },
+    headers: {
+      'User-Agent': process.env.GEOCODING_USER_AGENT || 'NAVIGO/1.0 (contact admin@navigo.ug)',
+      'Accept-Language': 'en',
+    },
+    timeout: 10_000,
+  });
+
+  return Array.isArray(nom.data)
+    ? nom.data.map(toNominatimPlace).filter((place): place is PlaceResult => !!place)
+    : [];
+};
+
 export const searchPlaces = async (
   query: string,
   limit = 20,
@@ -304,69 +402,77 @@ export const searchPlaces = async (
 
   const safeLimit = Math.min(40, Math.max(5, Number(limit) || 20));
   const focusKey = focus ? `:${focus.lat.toFixed(3)},${focus.lng.toFixed(3)}` : '';
-  const key = `search:${q.toLowerCase()}:${safeLimit}${focusKey}`;
+  const key = `search2:${q.toLowerCase()}:${safeLimit}${focusKey}`;
   const cached = cacheGet<PlaceResult[]>(key);
   if (cached) return cached;
 
+  const variants = buildSearchVariants(q);
   const all: PlaceResult[] = [];
   let photonFailed = false;
 
-  try {
-    const photon = await axios.get('https://photon.komoot.io/api/', {
+  // Run a small number of provider-side query variants in parallel. The
+  // important distinction is that broad searches are NOT location-biased:
+  // "Arua city" must still find Arua when the rider is currently in Kampala.
+  const photonResponses = await Promise.allSettled(
+    variants.slice(0, 3).map(variant => axios.get('https://photon.komoot.io/api/', {
       params: {
-        q,
+        q: variant,
         bbox: `${UGANDA_BOUNDS.minLng},${UGANDA_BOUNDS.minLat},${UGANDA_BOUNDS.maxLng},${UGANDA_BOUNDS.maxLat}`,
         countrycode: 'ug',
         limit: safeLimit,
         lang: 'en',
-        ...(focus ? {
-          lat: focus.lat,
-          lon: focus.lng,
-          zoom: 10,
-          location_bias_scale: 0.25,
-        } : {}),
       },
       timeout: 8_000,
-    });
+    })),
+  );
 
-    if (Array.isArray(photon.data?.features)) {
-      for (const feature of photon.data.features) {
-        const place = toPhotonPlace(feature);
-        if (place) all.push(place);
+  for (const response of photonResponses) {
+    if (response.status === 'fulfilled') {
+      const features = response.value.data?.features;
+      if (Array.isArray(features)) {
+        for (const feature of features) {
+          const place = toPhotonPlace(feature);
+          if (place) all.push(place);
+        }
       }
+    } else {
+      photonFailed = true;
+      console.warn('Photon search failed:', response.reason?.message || response.reason);
     }
-  } catch (error: any) {
-    photonFailed = true;
-    console.warn('Photon search failed:', error?.message || error);
   }
 
-  // Photon remains the fast primary search engine. Nominatim is a secondary
-  // server-side source only when Photon fails or returns too little data.
-  // The queue keeps total fallback traffic at approximately one request/sec.
-  if (photonFailed || all.length < 2) {
-    try {
-      await waitForNominatimSlot();
-      const nom = await axios.get('https://nominatim.openstreetmap.org/search', {
-        params: {
-          q,
-          format: 'jsonv2',
-          addressdetails: 1,
-          limit: safeLimit,
-          countrycodes: 'ug',
-          viewbox: `${UGANDA_BOUNDS.minLng},${UGANDA_BOUNDS.minLat},${UGANDA_BOUNDS.maxLng},${UGANDA_BOUNDS.maxLat}`,
-          bounded: 1,
-        },
-        headers: {
-          'User-Agent': process.env.GEOCODING_USER_AGENT || 'NAVIGO/1.0 (contact admin@navigo.ug)',
-          'Accept-Language': 'en',
-        },
-        timeout: 10_000,
-      });
+  let result = dedupePlaces(rankPlaces(all, q, focus), safeLimit);
+  const needsFallback = photonFailed || result.length < 3 || !hasStrongTextMatch(result, q);
 
-      if (Array.isArray(nom.data)) {
-        for (const item of nom.data) {
-          const place = toNominatimPlace(item);
-          if (place) all.push(place);
+  if (needsFallback) {
+    try {
+      for (const variant of variants.slice(0, 2)) {
+        const nomResults = await searchNominatimFreeform(variant, safeLimit);
+        all.push(...nomResults);
+        result = dedupePlaces(rankPlaces(all, q, focus), safeLimit);
+        if (result.length >= 3 && hasStrongTextMatch(result, q)) break;
+      }
+
+      // Administrative/settlement searches get an additional structured
+      // lookup. This is the key recovery path for inputs such as
+      // "Arua city", "Gulu district", or "Hoima town".
+      const adminWords = q.toLowerCase();
+      const isAdminSearch = /\b(city|town|municipality|district|county|region|village)\b/i.test(adminWords);
+      const core = searchTokens(q).join(' ').trim();
+
+      if (isAdminSearch && core.length >= 2 && !hasStrongTextMatch(result, q)) {
+        const fields: Array<'city' | 'county' | 'state'> =
+          /\b(city|town|municipality|village)\b/i.test(adminWords)
+            ? ['city', 'county']
+            : /\b(district|county)\b/i.test(adminWords)
+              ? ['county', 'state']
+              : ['state', 'county'];
+
+        for (const field of fields) {
+          const structured = await searchNominatimStructured(field, core, safeLimit);
+          all.push(...structured);
+          result = dedupePlaces(rankPlaces(all, q, focus), safeLimit);
+          if (hasStrongTextMatch(result, q)) break;
         }
       }
     } catch (error: any) {
@@ -374,7 +480,6 @@ export const searchPlaces = async (
     }
   }
 
-  const result = dedupePlaces(rankPlaces(all, q, focus), safeLimit);
   cacheSet(key, result);
   return result;
 };
