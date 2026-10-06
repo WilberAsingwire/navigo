@@ -8,8 +8,14 @@ class SocketService {
     if (this.socket) return this.socket;
 
     this.socket = io(SOCKET_URL, {
-      transports: ['websocket'],
-      upgrade: false,
+      // Allow polling fallback for mobile networks, restrictive proxies and
+      // deployments where a direct WebSocket upgrade is unavailable.
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      reconnection: true,
+      reconnectionAttempts: 8,
+      reconnectionDelay: 1000,
+      timeout: 10000,
       auth: {
         token: localStorage.getItem('navigo_token')
       }
