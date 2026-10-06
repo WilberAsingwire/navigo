@@ -102,7 +102,7 @@ const routeWithProvider = async (baseUrl: string, from: MapPoint, to: MapPoint):
 
   return {
     distanceKm: Math.round((Number(route.distance) / 1000) * 1000) / 1000,
-    durationMin: Math.max(1, Math.round(Number(route.duration) / 60)),
+    durationMin: Math.max(0.1, Math.round((Number(route.duration) / 60) * 10) / 10),
     geometry,
     provider: baseUrl,
   };
