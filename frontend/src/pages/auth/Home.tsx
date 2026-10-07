@@ -470,10 +470,10 @@ const Home: React.FC = () => {
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Company</h4>
-                <span className="footer-link">About Us</span>
+                <span className="footer-link footer-link-static">About Us</span>
                 <button type="button" className="footer-link" onClick={() => navigate('/customer/support')}>Support</button>
-                <span className="footer-link">Privacy Policy</span>
-                <span className="footer-link">Terms of Service</span>
+                <span className="footer-link footer-link-static">Privacy Policy</span>
+                <span className="footer-link footer-link-static">Terms of Service</span>
               </div>
             </div>
             <div className="footer-bottom">
