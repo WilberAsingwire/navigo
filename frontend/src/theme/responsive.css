@@ -810,14 +810,23 @@ ion-searchbar {
   padding-right: var(--responsive-gutter);
 }
 
-/* Preserve deliberately narrow admin forms (for example approvals) while
-   still making them fluid at smaller widths. */
+/* Preserve deliberately narrow admin forms while keeping every shell fluid. */
 .admin-container,
 .admin-approvals-container {
-  width: 100%;
-  max-width: 100%;
+  width: min(100%, 700px);
+  max-width: 700px;
   min-width: 0;
+  margin-inline: auto;
   padding-inline: var(--responsive-gutter);
+}
+
+/* Dashboard/list analytics screens intentionally use the wider desktop canvas. */
+.analytics-container.admin-container,
+.admin-users-container.admin-container,
+.admin-support-container.admin-container,
+.admin-settings-container.admin-container {
+  width: min(100%, 1120px);
+  max-width: 1120px;
 }
 
 .admin-kpi-grid,
