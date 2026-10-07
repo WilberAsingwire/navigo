@@ -54,19 +54,6 @@ button {
   touch-action: manipulation;
 }
 
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-span,
-label,
-ion-label {
-  overflow-wrap: anywhere;
-}
-
 /* ---------- Safe-area aware shells ---------- */
 ion-content::part(scroll) {
   padding-left: env(safe-area-inset-left);
