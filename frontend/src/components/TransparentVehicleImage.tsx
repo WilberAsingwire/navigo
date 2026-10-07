@@ -168,7 +168,7 @@ const processCheckerboard = (source: string): Promise<ProcessedEntry> => {
 };
 
 const useVehicleMotion = (
-  ref: React.RefObject<HTMLSpanElement>,
+  ref: React.RefObject<HTMLSpanElement | null>,
   enabled: boolean
 ) => {
   const [reducedMotion, setReducedMotion] = useState(false);
