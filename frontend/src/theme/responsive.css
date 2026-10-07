@@ -873,11 +873,7 @@ ion-searchbar {
   padding-right: var(--responsive-gutter);
 }
 
-/* The live-map screens are intentionally edge-to-edge. */
-.rider-page-container:has(.leaflet-container),
-.driver-page-container:has(.leaflet-container) {
-  max-width: none;
-}
+/* Full-screen map pages keep their own edge-to-edge layout rules. */
 
 /* ---------- Forms and two-column groups collapse cleanly ---------- */
 .form-row,
