@@ -113,12 +113,18 @@ const Home: React.FC = () => {
             <Logo variant="full" size="medium" onClick={() => navigate('/')} className="nav-logo-real" />
             <div className="nav-right">
               <div className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
-                <div className="nav-link-text" onClick={() => navigate('/explore')}>Explore</div>
-                <div className="nav-link-text" onClick={() => navigate('/login')}>Sign In</div>
+                <button type="button" className="nav-link-text" onClick={() => navigate('/explore')}>Explore</button>
+                <button type="button" className="nav-link-text" onClick={() => navigate('/login')}>Sign In</button>
                 <ThemeToggle size="medium" />
-                <button className="nav-signup-pill" onClick={() => navigate('/register')}>Sign Up</button>
+                <button type="button" className="nav-signup-pill" onClick={() => navigate('/register')}>Sign Up</button>
               </div>
-              <button className="mobile-menu-toggle" onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}>
+              <button
+                type="button"
+                className="mobile-menu-toggle"
+                aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={isMenuOpen}
+                onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
+              >
                 <IonIcon icon={isMenuOpen ? closeOutline : menuOutline} />
               </button>
             </div>
@@ -186,6 +192,7 @@ const Home: React.FC = () => {
             <button
               className="hero-story-video-toggle"
               type="button"
+              aria-label={streetVideoPaused ? 'Play the hero street story' : 'Pause the hero street story'}
               onClick={(event) => {
                 event.stopPropagation();
                 const video = streetVideoRef.current;
@@ -224,11 +231,11 @@ const Home: React.FC = () => {
               </p>
 
               <div className="hero-buttons">
-                <button className="hero-btn primary" onClick={() => navigate('/register')}>
+                <button type="button" className="hero-btn primary" onClick={() => navigate('/register')}>
                   <span>Get Started Free</span>
                   <IonIcon icon={arrowForwardOutline} />
                 </button>
-                <button className="hero-btn secondary" onClick={() => navigate('/explore')}>
+                <button type="button" className="hero-btn secondary" onClick={() => navigate('/explore')}>
                   <IonIcon icon={mapOutline} />
                   <span>See Prices Near You</span>
                 </button>
@@ -285,8 +292,10 @@ const Home: React.FC = () => {
                 <div className="ride-selection-pills">
                   {rideOptions.map(ride => (
                     <button
+                      type="button"
                       key={ride.id}
                       className={`ride-pill ${activeRide === ride.id ? 'active' : ''}`}
+                      aria-pressed={activeRide === ride.id}
                       onClick={() => { light(); setActiveRide(ride.id); }}
                     >
                       <TransparentVehicleImage key={ride.id} src={ride.image} alt="" className="pill-img vehicle-art-clean vehicle-turntable-img" turntable />
@@ -303,7 +312,7 @@ const Home: React.FC = () => {
                   <span className="fare-amount">from UGX {active.minFare}</span>
                 </div>
 
-                <button className="preview-book-btn" onClick={() => navigate('/register')}>
+                <button type="button" className="preview-book-btn" onClick={() => navigate('/register')}>
                   Book {active.short} Now <IonIcon icon={arrowForwardOutline} />
                 </button>
               </div>
@@ -313,12 +322,19 @@ const Home: React.FC = () => {
           {/* CHOOSE RIDE */}
           <section className="section" data-reveal>
             <div className="section-head">
+              <span className="section-kicker">One app · every journey</span>
               <h2 className="section-title">Choose Your Ride</h2>
               <p className="section-sub">From quick boda trips to luxury group rides — we've got you covered</p>
             </div>
             <div className="ride-carousel">
               {rideOptions.map((ride) => (
-                <div key={ride.id} className={`ride-card ${ride.popular ? 'featured' : ''}`} onClick={() => navigate('/register')}>
+                <button
+                  type="button"
+                  key={ride.id}
+                  className={`ride-card ${ride.popular ? 'featured' : ''}`}
+                  aria-label={`Book ${ride.name}`}
+                  onClick={() => navigate('/register')}
+                >
                   {ride.popular && <div className="ride-badge">Most Popular</div>}
                   <div className="card-img-wrap">
                     <TransparentVehicleImage src={ride.image} alt={ride.name} className="card-vehicle-img vehicle-art-clean vehicle-turntable-img" turntable />
@@ -334,7 +350,8 @@ const Home: React.FC = () => {
                     <span className="ride-rate">UGX {ride.price}<span className="per-km">/km</span></span>
                     <span className="ride-eta-chip"><IonIcon icon={timeOutline} /> {ride.eta}</span>
                   </div>
-                </div>
+                  <span className="ride-card-cta">Book ride <IonIcon icon={arrowForwardOutline} /></span>
+                </button>
               ))}
             </div>
           </section>
@@ -342,6 +359,7 @@ const Home: React.FC = () => {
           {/* HOW IT WORKS */}
           <section className="section alt" data-reveal>
             <div className="how-it-works">
+              <span className="section-kicker">Simple by design</span>
               <h2 className="section-title">How It Works</h2>
               <p className="section-sub">Get where you're going in three simple steps</p>
               <div className="timeline">
@@ -368,6 +386,7 @@ const Home: React.FC = () => {
 
           {/* SAFETY */}
           <section className="section" data-reveal>
+            <span className="section-kicker section-kicker-center">Built into every ride</span>
             <h2 className="section-title">Safety First</h2>
             <p className="section-sub">Your security is our non-negotiable priority</p>
             <div className="safety-grid">
@@ -396,6 +415,7 @@ const Home: React.FC = () => {
 
           {/* REWARDS */}
           <section className="section alt" data-reveal>
+            <span className="section-kicker section-kicker-center">Every trip gives you more</span>
             <h2 className="section-title">Zawadi Rewards</h2>
             <p className="section-sub">Ride more, earn more. Redeem points for free trips and airtime</p>
             <div className="rewards-grid">
@@ -439,19 +459,19 @@ const Home: React.FC = () => {
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Ride</h4>
-                <span className="footer-link" onClick={() => navigate('/explore')}>Book a Ride</span>
-                <span className="footer-link" onClick={() => navigate('/customer/history')}>Ride History</span>
-                <span className="footer-link" onClick={() => navigate('/ussd')}>Offline Booking</span>
+                <button type="button" className="footer-link" onClick={() => navigate('/explore')}>Book a Ride</button>
+                <button type="button" className="footer-link" onClick={() => navigate('/customer/history')}>Ride History</button>
+                <button type="button" className="footer-link" onClick={() => navigate('/ussd')}>Offline Booking</button>
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Drive</h4>
-                <span className="footer-link" onClick={() => navigate('/register')}>Become a Driver</span>
-                <span className="footer-link" onClick={() => navigate('/driver/earnings')}>Earnings Calculator</span>
+                <button type="button" className="footer-link" onClick={() => navigate('/register')}>Become a Driver</button>
+                <button type="button" className="footer-link" onClick={() => navigate('/driver/earnings')}>Earnings Calculator</button>
               </div>
               <div className="footer-col">
                 <h4 className="footer-col-title">Company</h4>
                 <span className="footer-link">About Us</span>
-                <span className="footer-link" onClick={() => navigate('/customer/support')}>Support</span>
+                <button type="button" className="footer-link" onClick={() => navigate('/customer/support')}>Support</button>
                 <span className="footer-link">Privacy Policy</span>
                 <span className="footer-link">Terms of Service</span>
               </div>
@@ -463,7 +483,7 @@ const Home: React.FC = () => {
           </footer>
 
           <div className="sticky-bottom-bar">
-            <button className="ussd-pill" onClick={() => navigate('/ussd')}>
+            <button type="button" className="ussd-pill" onClick={() => navigate('/ussd')}>
               <IonIcon icon={phonePortraitOutline} />
               <span>Book via USSD: <strong>*284*624#</strong></span>
             </button>
