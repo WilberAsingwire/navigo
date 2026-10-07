@@ -800,16 +800,24 @@ ion-searchbar {
 }
 
 /* ---------- Admin / analytics layouts ---------- */
-.admin-container,
 .analytics-container,
 .admin-users-container,
-.admin-approvals-container,
 .admin-support-container,
 .admin-settings-container {
   width: min(100%, 1120px);
   max-width: 1120px;
   padding-left: var(--responsive-gutter);
   padding-right: var(--responsive-gutter);
+}
+
+/* Preserve deliberately narrow admin forms (for example approvals) while
+   still making them fluid at smaller widths. */
+.admin-container,
+.admin-approvals-container {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding-inline: var(--responsive-gutter);
 }
 
 .admin-kpi-grid,
@@ -845,8 +853,6 @@ ion-searchbar {
 /* ---------- Rider / driver content widths ---------- */
 .rider-page-container,
 .ride-history-container,
-.payments-container,
-.payments-content,
 .profile-wrapper,
 .support-container,
 .places-wrapper,
@@ -855,8 +861,7 @@ ion-searchbar {
 .driver-docs-container,
 .driver-earnings-container,
 .driver-vehicle-wrapper,
-.incoming-wrapper,
-.request-container {
+.incoming-wrapper {
   width: min(100%, 1120px);
   max-width: 1120px;
   min-width: 0;
