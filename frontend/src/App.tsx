@@ -29,6 +29,7 @@ import './theme/design-polish.css';
 import './theme/light-mode.css';
 import './theme/system.css'; /* interaction discipline — must load last */
 import './theme/premium-v3.css';
+import './theme/responsive.css'; /* responsive contract — must load after every visual layer */
 
 setupIonicReact({ mode: 'md' });
 
