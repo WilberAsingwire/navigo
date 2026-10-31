@@ -6,6 +6,7 @@ import NavigoMap from '../../components/NavigoMap';
 import api from '../../services/api';
 import socketService from '../../services/socketService';
 import { useAuth } from '../../context/AuthContext';
+import { clearLocationWatch, getCurrentLocation, isLocationAvailable, watchLocation, type LocationWatchHandle } from '../../services/locationService';
 
 const isValid = (lat: number, lng: number) =>
   Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
@@ -15,14 +16,14 @@ const DriverLiveMap: React.FC = () => {
   const { user } = useAuth();
   const [position, setPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState('');
-  const watchRef = useRef<number | null>(null);
+  const watchRef = useRef<LocationWatchHandle | null>(null);
   const lastSentRef = useRef(0);
 
   useEffect(() => {
     if (!user) return;
     const socket = socketService.connect(user.id);
 
-    if (!('geolocation' in navigator)) {
+    if (!isLocationAvailable()) {
       setError('This device does not provide location services.');
       return;
     }
@@ -52,14 +53,14 @@ const DriverLiveMap: React.FC = () => {
       }
     };
 
-    watchRef.current = navigator.geolocation.watchPosition(onSuccess, onError, {
+    watchRef.current = watchLocation(onSuccess, onError, {
       enableHighAccuracy: true,
       maximumAge: 5000,
       timeout: 10000,
     });
 
     return () => {
-      if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
+      if (watchRef.current !== null) void clearLocationWatch(watchRef.current);
       watchRef.current = null;
       void socket;
     };
@@ -107,17 +108,14 @@ const DriverLiveMap: React.FC = () => {
             color="light"
             style={{ position: 'absolute', right: 14, bottom: 18, zIndex: 1100 }}
             onClick={() => {
-              if (!navigator.geolocation) return;
-              navigator.geolocation.getCurrentPosition(
-                p => {
+              void getCurrentLocation({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+                .then(p => {
                   if (isValid(p.coords.latitude, p.coords.longitude)) {
                     setPosition({ lat: p.coords.latitude, lng: p.coords.longitude });
                     setError('');
                   }
-                },
-                () => setError('Location permission or GPS signal is unavailable.'),
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-              );
+                })
+                .catch(() => setError('Location permission or GPS signal is unavailable.'));
             }}
           >
             <IonIcon icon={locateOutline} slot="start" />
