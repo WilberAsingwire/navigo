@@ -1,0 +1,55 @@
+name: Scaffold Capacitor Android
+
+on:
+  push:
+    branches:
+      - fix/driver-availability-lifecycle
+    paths:
+      - .github/workflows/capacitor-scaffold.yml
+
+permissions:
+  contents: write
+
+jobs:
+  scaffold:
+    if: "!contains(github.event.head_commit.message, '[capacitor scaffold]')"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Generate the Android project
+        run: |
+          set -euo pipefail
+          if [ -d frontend/android ]; then
+            echo "Android project already exists; no scaffolding needed."
+            exit 0
+          fi
+          cd frontend
+          npm install
+          npm run build
+          npx cap add android
+          npx cap sync android
+          npm run test.unit -- --run
+
+      - name: Commit generated files to this feature branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/package.json frontend/package-lock.json frontend/android
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "Scaffold Android app with Capacitor [capacitor scaffold]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
