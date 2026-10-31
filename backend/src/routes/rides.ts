@@ -8,6 +8,7 @@ import { notifyRide } from '../socket/socketHandler';
 import { settleRidePayment } from '../utils/settlement';
 import { getDrivingRoute, isUgandaPoint } from '../services/mappingService';
 import { syncDriverAvailability } from '../utils/driverAvailability';
+import { sendPushToUser } from '../services/pushNotificationService';
 
 const router = express.Router();
 
@@ -349,6 +350,12 @@ router.post('/:rideId/cancel', authenticate, async (req: Request, res: Response)
     }
 
     // Tell the other party in real time (fire & forget).
+    const otherPartyId = userId === cancelledRide.userId ? cancelledRide.driverId : cancelledRide.userId;
+    void sendPushToUser(otherPartyId, {
+      title: 'Booking cancelled',
+      body: userId === cancelledRide.userId ? 'The customer cancelled the booking.' : 'The driver cancelled the booking.',
+      data: { type: 'ride-cancelled', rideId: String(rideId) },
+    });
     notifyRide(String(rideId), cancelledRide.userId, cancelledRide.driverId, 'ride-cancelled', {
       rideId,
       cancelledBy: userId,
@@ -423,6 +430,17 @@ router.post('/:rideId/status', authenticate, async (req: Request, res: Response)
     }
 
     notifyRide(String(rideId), ride.userId ?? null, userId ?? null, 'status-changed', { rideId: String(rideId), status });
+    const statusPushes: Record<string, { title: string; body: string }> = {
+      accepted: { title: 'Driver found!', body: 'A driver has accepted your NAVIGO request.' },
+      arrived: { title: 'Your driver has arrived', body: 'Your NAVIGO driver is at the pickup location.' },
+      ongoing: { title: 'Your trip has started', body: 'Your NAVIGO trip is now in progress.' },
+      completed: { title: 'Trip completed', body: 'Your NAVIGO trip has been completed.' },
+    };
+    const push = statusPushes[status];
+    if (push) void sendPushToUser(ride.userId, {
+      ...push,
+      data: { type: 'ride-status', rideId: String(rideId), status: String(status) },
+    });
 
     res.json({ ok: true, status, settlement: settlementResult });
   } catch (error) {
