@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (isLoading || !authenticatedUserId || isGuest) return;
 
     let disposed = false;
-    let removeListeners = () => undefined;
+    let removeListeners: () => void = () => {};
 
     void startPushNotificationRegistration().then(cleanup => {
       if (disposed) cleanup();
