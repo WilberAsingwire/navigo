@@ -7,6 +7,7 @@ import { normalizeUgPhone } from '../utils/uganda';
 import { notifyRide } from '../socket/socketHandler';
 import { settleRidePayment } from '../utils/settlement';
 import { getDrivingRoute, isUgandaPoint } from '../services/mappingService';
+import { syncDriverAvailability } from '../utils/driverAvailability';
 
 const router = express.Router();
 
@@ -330,6 +331,8 @@ router.post('/:rideId/cancel', authenticate, async (req: Request, res: Response)
       'UPDATE rides SET status = ?, cancelledAt = ? WHERE id = ?',
       ['cancelled', new Date().toISOString(), rideId]
     );
+    // Release the assigned driver if they are still online and have no other trip.
+    await syncDriverAvailability(db, ride.driverId);
 
     // Tell the other party in real time (fire & forget).
     notifyRide(String(rideId), ride.userId, ride.driverId, 'ride-cancelled', {
@@ -386,6 +389,9 @@ router.post('/:rideId/status', authenticate, async (req: Request, res: Response)
     }
 
     await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
+    if (status === 'completed') {
+      await syncDriverAvailability(db, userId);
+    }
 
     let settlementResult = null;
     if (status === 'completed') {
