@@ -327,22 +327,32 @@ router.post('/:rideId/cancel', authenticate, async (req: Request, res: Response)
       return res.status(400).json({ message: `A ride that is ${ride.status} can't be cancelled` });
     }
 
-    await db.run(
-      'UPDATE rides SET status = ?, cancelledAt = ? WHERE id = ?',
-      ['cancelled', new Date().toISOString(), rideId]
+    // Claim the cancellation atomically and read the final assigned driver.
+    // A booking may have been accepted between the initial read and this update.
+    const cancellation = await db.run(
+      `UPDATE rides
+       SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP
+       WHERE id = ? AND status IN ('requested', 'accepted', 'arrived', 'ongoing')
+       RETURNING userId, driverId`,
+      [rideId]
     );
+    const cancelledRide = cancellation.rows?.[0];
+    if (!cancelledRide) {
+      return res.status(400).json({ message: 'This booking is no longer active and cannot be cancelled.' });
+    }
+
     // Release the assigned driver if they are still online and have no other trip.
     try {
-      await syncDriverAvailability(db, ride.driverId);
+      await syncDriverAvailability(db, cancelledRide.driverId);
     } catch (availabilityError) {
       console.error('Could not refresh driver availability after cancellation:', availabilityError);
     }
 
     // Tell the other party in real time (fire & forget).
-    notifyRide(String(rideId), ride.userId, ride.driverId, 'ride-cancelled', {
+    notifyRide(String(rideId), cancelledRide.userId, cancelledRide.driverId, 'ride-cancelled', {
       rideId,
       cancelledBy: userId,
-      message: userId === ride.userId ? 'The rider cancelled the ride.' : 'The driver cancelled the ride.'
+      message: userId === cancelledRide.userId ? 'The rider cancelled the ride.' : 'The driver cancelled the ride.'
     });
 
     res.json({ message: 'Ride cancelled' });
