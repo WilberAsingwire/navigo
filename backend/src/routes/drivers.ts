@@ -97,8 +97,9 @@ router.post('/status/online', authenticate, authorize(['driver', 'motorist']), a
     return res.status(400).json({ message: 'online must be a boolean' });
   }
 
-  const tx = await db.getTransactionClient();
+  let tx: any = null;
   try {
+    tx = await db.getTransactionClient();
     await tx.query('BEGIN');
 
     // Lock the driver row so going online/offline cannot race with ride acceptance.
@@ -148,8 +149,10 @@ router.post('/status/online', authenticate, authorize(['driver', 'motorist']), a
       isAvailable,
     });
   } catch (error) {
-    try { await tx.query('ROLLBACK'); } catch {}
-    tx.release();
+    if (tx) {
+      try { await tx.query('ROLLBACK'); } catch {}
+      tx.release();
+    }
     console.error('Online status error:', error);
     res.status(500).json({ message: 'Error updating online status' });
   }
@@ -165,8 +168,9 @@ router.post('/status/available', authenticate, authorize(['driver', 'motorist'])
     return res.status(400).json({ message: 'available must be a boolean' });
   }
 
-  const tx = await db.getTransactionClient();
+  let tx: any = null;
   try {
+    tx = await db.getTransactionClient();
     await tx.query('BEGIN');
     const driverResult = await tx.query(
       `SELECT isOnline, verificationStatus, COALESCE(status, 'active') AS "accountStatus"
@@ -209,8 +213,10 @@ router.post('/status/available', authenticate, authorize(['driver', 'motorist'])
       isAvailable: available && shouldBeAvailable,
     });
   } catch (error) {
-    try { await tx.query('ROLLBACK'); } catch {}
-    tx.release();
+    if (tx) {
+      try { await tx.query('ROLLBACK'); } catch {}
+      tx.release();
+    }
     console.error('Availability error:', error);
     res.status(500).json({ message: 'Error updating availability status' });
   }
