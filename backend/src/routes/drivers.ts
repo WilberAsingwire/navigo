@@ -3,6 +3,7 @@ import { getDB } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/authMiddleware';
 import { COMMISSION_RATE, driverShare } from '../utils/fare';
 import { notifyAdminLocation } from '../socket/socketHandler';
+import { canReceiveBookings, syncDriverAvailability } from '../utils/driverAvailability';
 
 const router = express.Router();
 
@@ -31,6 +32,7 @@ router.get('/nearby', authenticate, async (req: Request, res: Response) => {
        FROM users u LEFT JOIN driver_profiles dp ON dp.userId = u.id
        WHERE (u.role = 'driver' OR u.role = 'motorist') AND u.isOnline = TRUE AND u.isAvailable = TRUE
          AND u.verificationStatus = 'approved'
+         AND COALESCE(u.status, 'active') = 'active'
          AND u.lastLocationAt IS NOT NULL
          AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
        LIMIT 200`,
@@ -87,21 +89,67 @@ router.post('/location', authenticate, authorize(['driver', 'motorist']), async 
 
 // ─── Toggle Online Status ─────────────────────────────
 router.post('/status/online', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
-  try {
-    const { online } = req.body;
-    const userId = (req as AuthRequest).user?.userId;
-    const db = getDB();
+  const { online } = req.body;
+  const userId = (req as AuthRequest).user?.userId;
+  const db = getDB();
 
-    if (typeof online !== 'boolean') {
-      return res.status(400).json({ message: 'online must be a boolean' });
+  if (typeof online !== 'boolean') {
+    return res.status(400).json({ message: 'online must be a boolean' });
+  }
+
+  const tx = await db.getTransactionClient();
+  try {
+    await tx.query('BEGIN');
+
+    // Lock the driver row so going online/offline cannot race with ride acceptance.
+    const driverResult = await tx.query(
+      `SELECT verificationStatus, COALESCE(status, 'active') AS "accountStatus"
+       FROM users
+       WHERE id = ? AND role IN ('driver', 'motorist')
+       FOR UPDATE`,
+      [userId]
+    );
+    const driver = driverResult.rows[0];
+    if (!driver) {
+      await tx.query('ROLLBACK');
+      tx.release();
+      return res.status(404).json({ message: 'Driver account not found.' });
     }
 
-    // Update both users and driver_profiles for consistency
-    await db.run('UPDATE users SET isOnline = ? WHERE id = ?', [online, userId]);
-    await db.run('UPDATE driver_profiles SET online = ? WHERE userId = ?', [online, userId]);
+    if (online && !canReceiveBookings({ isOnline: true, verificationStatus: driver.verificationStatus, accountStatus: driver.accountStatus }, false)) {
+      await tx.query('ROLLBACK');
+      tx.release();
+      return res.status(403).json({ message: 'Your account must be approved and active before you can go online.' });
+    }
 
-    res.json({ message: `You are now ${online ? 'online' : 'offline'}`, isOnline: online });
+    const activeRideResult = await tx.query(
+      `SELECT id FROM rides
+       WHERE driverId = ? AND status IN ('accepted', 'arrived', 'ongoing')
+       LIMIT 1`,
+      [userId]
+    );
+    const isAvailable = online && activeRideResult.rows.length === 0;
+
+    await tx.query(
+      'UPDATE users SET isOnline = ?, isAvailable = ? WHERE id = ?',
+      [online, isAvailable, userId]
+    );
+    await tx.query(
+      'UPDATE driver_profiles SET online = ? WHERE userId = ?',
+      [online, userId]
+    );
+
+    await tx.query('COMMIT');
+    tx.release();
+
+    res.json({
+      message: `You are now ${online ? 'online' : 'offline'}`,
+      isOnline: online,
+      isAvailable,
+    });
   } catch (error) {
+    try { await tx.query('ROLLBACK'); } catch {}
+    tx.release();
     console.error('Online status error:', error);
     res.status(500).json({ message: 'Error updating online status' });
   }
@@ -109,19 +157,60 @@ router.post('/status/online', authenticate, authorize(['driver', 'motorist']), a
 
 // ─── Toggle Availability ─────────────────────────────
 router.post('/status/available', authenticate, authorize(['driver', 'motorist']), async (req: any, res: Response) => {
-  try {
-    const { available } = req.body;
-    const userId = (req as AuthRequest).user?.userId;
-    const db = getDB();
+  const { available } = req.body;
+  const userId = (req as AuthRequest).user?.userId;
+  const db = getDB();
 
-    if (typeof available !== 'boolean') {
-      return res.status(400).json({ message: 'available must be a boolean' });
+  if (typeof available !== 'boolean') {
+    return res.status(400).json({ message: 'available must be a boolean' });
+  }
+
+  const tx = await db.getTransactionClient();
+  try {
+    await tx.query('BEGIN');
+    const driverResult = await tx.query(
+      `SELECT isOnline, verificationStatus, COALESCE(status, 'active') AS "accountStatus"
+       FROM users
+       WHERE id = ? AND role IN ('driver', 'motorist')
+       FOR UPDATE`,
+      [userId]
+    );
+    const driver = driverResult.rows[0];
+    if (!driver) {
+      await tx.query('ROLLBACK');
+      tx.release();
+      return res.status(404).json({ message: 'Driver account not found.' });
     }
 
-    await db.run('UPDATE users SET isAvailable = ? WHERE id = ?', [available, userId]);
+    const activeRideResult = await tx.query(
+      `SELECT id FROM rides
+       WHERE driverId = ? AND status IN ('accepted', 'arrived', 'ongoing')
+       LIMIT 1`,
+      [userId]
+    );
+    const shouldBeAvailable = canReceiveBookings({
+      isOnline: driver.isOnline,
+      verificationStatus: driver.verificationStatus,
+      accountStatus: driver.accountStatus,
+    }, activeRideResult.rows.length > 0);
 
-    res.json({ message: `You are now ${available ? 'available' : 'unavailable'}`, isAvailable: available });
+    if (available && !shouldBeAvailable) {
+      await tx.query('ROLLBACK');
+      tx.release();
+      return res.status(409).json({ message: 'You must be online, approved and free of active rides before accepting bookings.' });
+    }
+
+    await tx.query('UPDATE users SET isAvailable = ? WHERE id = ?', [available && shouldBeAvailable, userId]);
+    await tx.query('COMMIT');
+    tx.release();
+
+    res.json({
+      message: `You are now ${available && shouldBeAvailable ? 'available' : 'unavailable'}`,
+      isAvailable: available && shouldBeAvailable,
+    });
   } catch (error) {
+    try { await tx.query('ROLLBACK'); } catch {}
+    tx.release();
     console.error('Availability error:', error);
     res.status(500).json({ message: 'Error updating availability status' });
   }
@@ -133,6 +222,8 @@ router.get('/profile', authenticate, authorize(['driver', 'motorist']), async (r
     const userId = (req as AuthRequest).user?.userId;
     const db = getDB();
 
+    // Repair availability for existing accounts after deploying this lifecycle fix.
+    await syncDriverAvailability(db, userId);
     const user = await db.get('SELECT id, fullName, phone, role, isOnline, isAvailable, verificationStatus FROM users WHERE id = ?', [userId]);
     const profile = await db.get('SELECT * FROM driver_profiles WHERE userId = ?', [userId]);
 
