@@ -23,6 +23,7 @@ const DriverHome: React.FC = () => {
   const { user } = useAuth();
   const { light, medium } = useHaptic();
   const [isOnline, setIsOnline] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
   const locationWatchRef = useRef<number | null>(null);
@@ -33,6 +34,7 @@ const DriverHome: React.FC = () => {
       try {
         const res = await api.get('/drivers/profile');
         setIsOnline(res.data.user?.isOnline || false);
+        setIsAvailable(res.data.user?.isAvailable || false);
       } catch (e) {
         console.error('Failed to fetch driver status:', e);
       }
@@ -118,15 +120,19 @@ const DriverHome: React.FC = () => {
       setShowToast(true);
       return;
     }
+    const previousOnline = isOnline;
+    const previousAvailable = isAvailable;
     try {
       medium();
-      await api.post('/drivers/status/online', { online });
-      setIsOnline(online);
+      const res = await api.post('/drivers/status/online', { online });
+      setIsOnline(res.data?.isOnline ?? online);
+      setIsAvailable(res.data?.isAvailable ?? online);
     } catch (error) {
       console.error('Failed to update online status:', error);
       setToastMsg('Could not update status. Please try again.');
       setShowToast(true);
-      setIsOnline(!online);
+      setIsOnline(previousOnline);
+      setIsAvailable(previousAvailable);
     }
   };
 
@@ -166,7 +172,7 @@ const DriverHome: React.FC = () => {
           <div className={`status-banner ${isOnline ? 'online' : 'offline'}`} data-reveal onClick={() => handleStatusToggle(!isOnline)}>
             <IonIcon icon={isOnline ? leafOutline : timeOutline} className="status-icon" style={{ color: isOnline ? '#2D6A4F' : '#888' }} />
             <IonText className="status-text" style={{ color: isOnline ? '#2D6A4F' : '#888' }}>
-              {isOnline ? 'You are visible to nearby riders' : 'Go online to start receiving ride requests'}
+              {isOnline ? (isAvailable ? 'You are visible to nearby riders' : 'You are online but unavailable for new bookings') : 'Go online to start receiving ride requests'}
             </IonText>
           </div>
 
