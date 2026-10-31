@@ -10,7 +10,7 @@ import {
   pricetagOutline
 } from 'ionicons/icons';
 import api from '../../services/api';
-import { clearLocationWatch, getCurrentLocation, type LocationWatchHandle } from '../../services/locationService';
+import { clearLocationWatch, getCurrentLocation as getDeviceLocation, type LocationWatchHandle } from '../../services/locationService';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
@@ -241,7 +241,7 @@ const RideRequest: React.FC = () => {
   };
 
   const getCurrentLocation = useCallback(() => {
-    void getCurrentLocation()
+    void getDeviceLocation()
       .then(async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
