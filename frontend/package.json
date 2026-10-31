@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
-    "build:android": "npm run build && cap sync android"
+    "build:android": "node ./scripts/validate-native-api.mjs && npm run build && cap sync android"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
