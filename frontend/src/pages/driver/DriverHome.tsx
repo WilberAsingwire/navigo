@@ -14,7 +14,7 @@ import { useHistory } from 'react-router-dom';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { clearLocationWatch, isLocationAvailable, watchLocation, type LocationWatchHandle } from '../../services/locationService';
+import { clearLocationWatch, getCurrentLocation, isLocationAvailable, watchLocation, type LocationWatchHandle } from '../../services/locationService';
 import ThemeToggle from '../../components/ThemeToggle';
 import useHaptic from '../../hooks/useHaptic';
 import './DriverHome.css';
@@ -126,12 +126,33 @@ const DriverHome: React.FC = () => {
     const previousAvailable = isAvailable;
     try {
       medium();
+
+      // Get and persist a fresh position before marking the driver online.
+      // This prevents matching against an old/stale coordinate.
+      if (online) {
+        const position = await getCurrentLocation({
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 5000,
+        });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) {
+          setToastMsg('NAVIGO driver availability currently requires a location within Uganda.');
+          setShowToast(true);
+          return;
+        }
+        await api.post('/drivers/location', { lat, lng });
+      }
+
       const res = await api.post('/drivers/status/online', { online });
       setIsOnline(res.data?.isOnline ?? online);
       setIsAvailable(res.data?.isAvailable ?? online);
     } catch (error) {
       console.error('Failed to update online status:', error);
-      setToastMsg('Could not update status. Please try again.');
+      setToastMsg(online
+        ? 'Location access is required. Enable GPS and allow NAVIGO to use your location before going online.'
+        : 'Could not update status. Please try again.');
       setShowToast(true);
       setIsOnline(previousOnline);
       setIsAvailable(previousAvailable);
