@@ -21,7 +21,7 @@ const timeoutCode = 3;
 
 export const isLocationAvailable = (): boolean =>
   Capacitor.isNativePlatform() ||
-  (typeof navigator !== 'undefined' && 'geolocation' in navigator);
+  (typeof navigator !== 'undefined' && Boolean(navigator.geolocation));
 
 const toNativeOptions = (options: LocationOptions = {}): NativePositionOptions => ({
   enableHighAccuracy: options.enableHighAccuracy ?? false,
