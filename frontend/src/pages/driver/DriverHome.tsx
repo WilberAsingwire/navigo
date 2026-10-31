@@ -14,6 +14,7 @@ import { useHistory } from 'react-router-dom';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { clearLocationWatch, isLocationAvailable, watchLocation, type LocationWatchHandle } from '../../services/locationService';
 import ThemeToggle from '../../components/ThemeToggle';
 import useHaptic from '../../hooks/useHaptic';
 import './DriverHome.css';
@@ -26,7 +27,7 @@ const DriverHome: React.FC = () => {
   const [isAvailable, setIsAvailable] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const locationWatchRef = useRef<number | null>(null);
+  const locationWatchRef = useRef<LocationWatchHandle | null>(null);
   const lastLocationSentRef = useRef(0);
 
   useEffect(() => {
@@ -79,13 +80,13 @@ const DriverHome: React.FC = () => {
   // This is what makes nearby-driver matching work before a ride starts.
   useEffect(() => {
     if (!isOnline || !user) {
-      if (locationWatchRef.current !== null && 'geolocation' in navigator) {
-        navigator.geolocation.clearWatch(locationWatchRef.current);
+      if (locationWatchRef.current !== null) {
+        void clearLocationWatch(locationWatchRef.current);
         locationWatchRef.current = null;
       }
       return;
     }
-    if (!('geolocation' in navigator)) {
+    if (!isLocationAvailable()) {
       setToastMsg('Location services are required to receive nearby ride requests.');
       setShowToast(true);
       return;
@@ -101,14 +102,14 @@ const DriverHome: React.FC = () => {
       api.post('/drivers/location', { lat, lng }).catch(() => { /* transient network failure; retry on next GPS update */ });
     };
 
-    locationWatchRef.current = navigator.geolocation.watchPosition(
+    locationWatchRef.current = watchLocation(
       sendLocation,
       () => {},
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
     );
 
     return () => {
-      if (locationWatchRef.current !== null) navigator.geolocation.clearWatch(locationWatchRef.current);
+      if (locationWatchRef.current !== null) void clearLocationWatch(locationWatchRef.current);
       locationWatchRef.current = null;
     };
   }, [isOnline, user]);
