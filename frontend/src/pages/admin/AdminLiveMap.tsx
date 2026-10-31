@@ -10,6 +10,7 @@ import markerShadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import api from '../../services/api';
 import { io } from 'socket.io-client';
 import { SOCKET_URL } from '../../config';
+import { getCurrentLocation } from '../../services/locationService';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -133,13 +134,9 @@ const AdminLiveMap: React.FC = () => {
     setLoading(true);
 
 
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-        () => {},
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    }
+    void getCurrentLocation({ enableHighAccuracy: true, timeout: 5000 })
+      .then((pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]))
+      .catch(() => { /* admin map remains usable without this device's location */ });
 
     try {
       const res = await api.get('/auth/admin/live-locations');
