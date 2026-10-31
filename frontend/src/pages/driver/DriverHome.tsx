@@ -116,6 +116,7 @@ const DriverHome: React.FC = () => {
   const handleStatusToggle = async (online: boolean) => {
     if (user?.verificationStatus !== 'approved') {
       setIsOnline(false);
+      setIsAvailable(false);
       setToastMsg('Your account must be approved by an admin before you can go online.');
       setShowToast(true);
       return;
