@@ -55,7 +55,10 @@ export const sendPushToUser = async (userId: string | null | undefined, message:
 
     const db = getDB();
     const devices = await db.all('SELECT token FROM device_tokens WHERE userId = ?', [userId]);
-    const tokens = [...new Set((devices || []).map((device: any) => String(device.token || '')).filter(Boolean))];
+    const tokenValues: string[] = (devices || [])
+      .map((device: any): string => String(device.token || ''))
+      .filter((token: string) => token.length > 0);
+    const tokens: string[] = Array.from(new Set<string>(tokenValues));
     if (tokens.length === 0) return;
 
     const data = Object.fromEntries(
