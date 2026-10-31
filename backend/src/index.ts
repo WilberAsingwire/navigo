@@ -15,6 +15,7 @@ import walletRoutes from './routes/wallet';
 import poiRoutes from './routes/poi';
 import supportRoutes from './routes/support';
 import adminRoutes from './routes/admin';
+import notificationRoutes from './routes/notifications';
 import { initDB } from './config/database';
 import { setupSocketHandlers, setIO } from './socket/socketHandler';
 import { generalLimiter } from './middleware/rateLimit';
@@ -137,6 +138,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/poi', poiRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', async (_req: any, res: any) => {
   try {
