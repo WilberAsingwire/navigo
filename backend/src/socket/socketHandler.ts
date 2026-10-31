@@ -448,7 +448,11 @@ export const setupSocketHandlers = (io: Server) => {
         if (status === 'completed') {
           // Make the driver eligible for another request only after this trip
           // has left the active states, and only if they remain online/approved.
-          await syncDriverAvailability(db, userId);
+          try {
+            await syncDriverAvailability(db, userId);
+          } catch (availabilityError) {
+            console.error('Could not refresh driver availability after completion:', availabilityError);
+          }
           console.log(`🏁 Ride ${rideId} marked as completed. Triggering settlement...`);
           const settlement = await settleRidePayment(rideId);
           if (settlement.success) {
