@@ -241,7 +241,7 @@ const RideRequest: React.FC = () => {
   };
 
   const getCurrentLocation = useCallback(() => {
-    void getDeviceLocation()
+    void getDeviceLocation({ enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 })
       .then(async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
