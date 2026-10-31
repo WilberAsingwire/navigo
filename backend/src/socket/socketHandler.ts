@@ -184,7 +184,7 @@ export const setupSocketHandlers = (io: Server) => {
       try {
         // The ride must exist, belong to this rider, and still be open.
         const ride = await db.get(
-          "SELECT vehicleType, pickupLat, pickupLng, status FROM rides WHERE id = ? AND userId = ?",
+          "SELECT vehicleType, serviceType, pickupLat, pickupLng, status FROM rides WHERE id = ? AND userId = ?",
           [rideId, userId]
         );
         if (!ride || ride.status !== 'requested') {
