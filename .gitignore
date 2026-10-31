@@ -16,3 +16,10 @@ screenshots/
 
 # local tooling
 .claude/
+
+# Capacitor / Android local build outputs
+**/.gradle/
+**/local.properties
+**/.idea/
+**/.cxx/
+**/captures/
