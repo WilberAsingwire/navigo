@@ -48,8 +48,7 @@ jobs:
         working-directory: frontend
         run: |
           npm ci
-          npm run build
-          npx cap sync android
+          VITE_API_URL=https://navigo-1-z7ne.onrender.com/api npm run build:android
       - name: Compile Android debug APK
         working-directory: frontend/android
         run: ./gradlew assembleDebug
