@@ -4,6 +4,7 @@ import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
 import { getBlockMessage } from '../utils/userStatus';
 import { canReceiveBookings, syncDriverAvailability } from '../utils/driverAvailability';
+import { sendPushToUser } from '../services/pushNotificationService';
 
 let ioInstance: Server | null = null;
 
@@ -230,7 +231,14 @@ export const setupSocketHandlers = (io: Server) => {
 
         const payload = { rideId, riderId: userId, vehicleType: ride.vehicleType, timestamp: new Date().toISOString() };
         // Targeted dispatch: each matched driver's personal room (not the whole fleet) + admins.
-        for (const d of targets) io.to(d.id).emit('ride-requested', payload);
+        for (const d of targets) {
+          io.to(d.id).emit('ride-requested', payload);
+          void sendPushToUser(d.id, {
+            title: ride.serviceType === 'delivery' ? 'New delivery request' : 'New ride request',
+            body: 'A nearby customer is requesting a booking. Open NAVIGO to view the details.',
+            data: { type: 'ride-requested', rideId, serviceType: String(ride.serviceType || 'ride') },
+          });
+        }
         io.to('admins').emit('ride-requested', payload);
         console.log(`🚕 Ride ${rideId} (${ride.vehicleType}) dispatched to ${targets.length}/${drivers.length} drivers (${near.length > 0 ? `within ${MATCH_RADIUS_KM}km` : 'radius widened'})`);
       } catch (e) {
@@ -337,6 +345,11 @@ export const setupSocketHandlers = (io: Server) => {
         // this (not assume success) because another driver may have won the race.
         socket.emit('accept-confirmed', { rideId, timestamp: new Date().toISOString() });
 
+        void sendPushToUser(actualRiderId, {
+          title: 'Driver found!',
+          body: 'A driver has accepted your NAVIGO request.',
+          data: { type: 'ride-accepted', rideId },
+        });
         io.to(actualRiderId).emit('ride-accepted', {
           rideId,
           driverId,
@@ -472,6 +485,16 @@ export const setupSocketHandlers = (io: Server) => {
 
         // Notify the rider (from the DB, never client-supplied) + the ride room
         notifyRide(rideId, ride.userId, userId, 'status-changed', { rideId, status });
+        const statusMessages: Record<string, { title: string; body: string }> = {
+          arrived: { title: 'Your driver has arrived', body: 'Your NAVIGO driver is at the pickup location.' },
+          ongoing: { title: 'Your trip has started', body: 'Your NAVIGO trip is now in progress.' },
+          completed: { title: 'Trip completed', body: 'Your NAVIGO trip has been completed.' },
+        };
+        const push = statusMessages[status];
+        if (push) void sendPushToUser(ride.userId, {
+          ...push,
+          data: { type: 'ride-status', rideId, status },
+        });
       } catch (e) {
         console.error('Error updating status:', e);
         socket.emit('error', { message: 'Failed to update status.' });
