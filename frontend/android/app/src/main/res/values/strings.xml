@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NAVIGO</string>
+    <string name="title_activity_main">NAVIGO</string>
+    <string name="package_name">ug.co.navigo.app</string>
+    <string name="custom_url_scheme">ug.co.navigo.app</string>
+</resources>

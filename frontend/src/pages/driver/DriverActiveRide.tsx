@@ -18,6 +18,7 @@ import SOSButton from '../../components/SOSButton';
 import ChatBox from '../../components/ChatBox';
 import socketService from '../../services/socketService';
 import api from '../../services/api';
+import { clearLocationWatch, isLocationAvailable, watchLocation, type LocationWatchHandle } from '../../services/locationService';
 import { useAuth } from '../../context/AuthContext';
 import './DriverActiveRide.css';
 
@@ -74,7 +75,7 @@ const DriverActiveRide: React.FC = () => {
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [sendingStatus, setSendingStatus] = useState(false);
-  const watchIdRef = useRef<number | null>(null);
+  const watchIdRef = useRef<LocationWatchHandle | null>(null);
   const rideIdRef = useRef<string | null>(null);
 
   const loadRide = async () => {
@@ -104,7 +105,7 @@ const DriverActiveRide: React.FC = () => {
   // periodic snapshot so the map still works when the socket briefly drops.
   useEffect(() => {
     if (!ride || !user || ['completed', 'cancelled'].includes(ride.status)) return;
-    if (!('geolocation' in navigator)) return;
+    if (!isLocationAvailable()) return;
 
     const socket = socketService.connect(user.id);
     const joinRide = () => {
@@ -143,7 +144,7 @@ const DriverActiveRide: React.FC = () => {
       }
     };
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
+    watchIdRef.current = watchLocation(
       publishLocation,
       () => { /* keep trip usable even when GPS is temporarily unavailable */ },
       {
@@ -156,7 +157,7 @@ const DriverActiveRide: React.FC = () => {
     socket.on('connect', joinRide);
 
     return () => {
-      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+      if (watchIdRef.current !== null) void clearLocationWatch(watchIdRef.current);
       watchIdRef.current = null;
       socket.off('connect', joinRide);
     };

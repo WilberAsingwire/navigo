@@ -3,6 +3,8 @@ import { getDB } from '../config/database';
 import { settleRidePayment } from '../utils/settlement';
 import { verifyToken } from '../utils/auth';
 import { getBlockMessage } from '../utils/userStatus';
+import { canReceiveBookings, syncDriverAvailability } from '../utils/driverAvailability';
+import { sendPushToUser } from '../services/pushNotificationService';
 
 let ioInstance: Server | null = null;
 
@@ -182,7 +184,7 @@ export const setupSocketHandlers = (io: Server) => {
       try {
         // The ride must exist, belong to this rider, and still be open.
         const ride = await db.get(
-          "SELECT vehicleType, pickupLat, pickupLng, status FROM rides WHERE id = ? AND userId = ?",
+          "SELECT vehicleType, serviceType, pickupLat, pickupLng, status FROM rides WHERE id = ? AND userId = ?",
           [rideId, userId]
         );
         if (!ride || ride.status !== 'requested') {
@@ -200,6 +202,7 @@ export const setupSocketHandlers = (io: Server) => {
            LEFT JOIN driver_profiles dp ON dp.userId = u.id
            WHERE (u.role = ? OR u.role = ?) AND u.verificationStatus = ?
              AND u.isOnline = TRUE AND u.isAvailable = TRUE
+             AND COALESCE(u.status, 'active') = 'active'
              AND u.lastLocationAt IS NOT NULL
              AND u.lastLocationAt >= CURRENT_TIMESTAMP - INTERVAL '90 seconds'
            LIMIT 200`,
@@ -228,7 +231,14 @@ export const setupSocketHandlers = (io: Server) => {
 
         const payload = { rideId, riderId: userId, vehicleType: ride.vehicleType, timestamp: new Date().toISOString() };
         // Targeted dispatch: each matched driver's personal room (not the whole fleet) + admins.
-        for (const d of targets) io.to(d.id).emit('ride-requested', payload);
+        for (const d of targets) {
+          io.to(d.id).emit('ride-requested', payload);
+          void sendPushToUser(d.id, {
+            title: ride.serviceType === 'delivery' ? 'New delivery request' : 'New ride request',
+            body: 'A nearby customer is requesting a booking. Open NAVIGO to view the details.',
+            data: { type: 'ride-requested', rideId, serviceType: String(ride.serviceType || 'ride') },
+          });
+        }
         io.to('admins').emit('ride-requested', payload);
         console.log(`🚕 Ride ${rideId} (${ride.vehicleType}) dispatched to ${targets.length}/${drivers.length} drivers (${near.length > 0 ? `within ${MATCH_RADIUS_KM}km` : 'radius widened'})`);
       } catch (e) {
@@ -251,45 +261,82 @@ export const setupSocketHandlers = (io: Server) => {
       }
 
       const db = getDB();
+      let actualRiderId = '';
       try {
-        // Guard: driver must not already have an active ride
-        const active = await db.get(
-          "SELECT id FROM rides WHERE driverId = ? AND status IN ('accepted','arrived','ongoing') LIMIT 1",
-          [driverId]
-        );
-        if (active) {
-          return socket.emit('error', { message: 'You already have an active ride. Complete it first.' });
-        }
-
-        const ride = await db.get('SELECT userId, status, expiresAt FROM rides WHERE id = ?', [rideId]);
-        if (!ride) return socket.emit('error', { message: 'Ride not found.' });
-        if (ride.status !== 'requested') return socket.emit('error', { message: 'Ride is no longer available.' });
-        // Enforce request expiry — stale requests can't be accepted hours later.
-        if (ride.expiresat || ride.expiresAt) {
-          const expiry = new Date(ride.expiresat || ride.expiresAt);
-          if (!isNaN(expiry.getTime()) && expiry < new Date()) {
-            await db.run(
-              "UPDATE rides SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP WHERE id = ? AND status = 'requested'",
-              [rideId]
-            );
-            return socket.emit('error', { message: 'This ride request has expired.' });
-          }
-        }
-        const actualRiderId = ride.userId;
-
+        // Lock the driver row first. The online toggle and every acceptance
+        // use this same lock, preventing two simultaneous assignments.
         const tx = await db.getTransactionClient();
         try {
           await tx.query('BEGIN');
-          const updateRes = await tx.query(
-            'UPDATE rides SET status = ?, driverId = ?, acceptedAt = CURRENT_TIMESTAMP WHERE id = ? AND status = ?',
-            ['accepted', driverId, rideId, 'requested']
+
+          const driverResult = await tx.query(
+            `SELECT isOnline, isAvailable, verificationStatus,
+                    COALESCE(status, 'active') AS "accountStatus"
+             FROM users
+             WHERE id = ? AND role IN ('driver', 'motorist')
+             FOR UPDATE`,
+            [driverId]
           );
-          if (updateRes.rowCount === 0) throw new Error('Ride is no longer available');
+          const driver = driverResult.rows[0];
+          if (!driver) throw new Error('Driver account not found.');
+          if (!canReceiveBookings(driver, false) || driver.isAvailable !== true) {
+            throw new Error('You must be online, approved and available to accept this request.');
+          }
+
+          // This check is inside the same driver-row lock, so two different
+          // requests cannot be accepted by the same driver at the same time.
+          const active = await tx.query(
+            `SELECT id FROM rides
+             WHERE driverId = ? AND status IN ('accepted', 'arrived', 'ongoing')
+             LIMIT 1`,
+            [driverId]
+          );
+          if (active.rows.length > 0) {
+            throw new Error('You already have an active ride. Complete it first.');
+          }
+
+          // Lock the booking row so competing drivers cannot both accept it.
+          const rideResult = await tx.query(
+            'SELECT userId, status, expiresAt FROM rides WHERE id = ? FOR UPDATE',
+            [rideId]
+          );
+          const ride = rideResult.rows[0];
+          if (!ride) throw new Error('Ride not found.');
+          if (ride.status !== 'requested') throw new Error('Ride is no longer available.');
+
+          // Enforce request expiry — stale requests cannot be accepted later.
+          let requestExpired = false;
+          if (ride.expiresAt) {
+            const expiry = new Date(ride.expiresAt);
+            if (!isNaN(expiry.getTime()) && expiry < new Date()) {
+              await tx.query(
+                "UPDATE rides SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP WHERE id = ? AND status = 'requested'",
+                [rideId]
+              );
+              requestExpired = true;
+            }
+          }
+          if (requestExpired) {
+            // Commit the expiry transition; throwing here would roll it back.
+            await tx.query('COMMIT');
+            tx.release();
+            return socket.emit('error', { message: 'This ride request has expired.' });
+          }
+
+          actualRiderId = ride.userId;
+          const updateRes = await tx.query(
+            `UPDATE rides
+             SET status = 'accepted', driverId = ?, acceptedAt = CURRENT_TIMESTAMP
+             WHERE id = ? AND status = 'requested'`,
+            [driverId, rideId]
+          );
+          if (updateRes.rowCount === 0) throw new Error('Ride is no longer available.');
+
           await tx.query('UPDATE users SET isAvailable = FALSE WHERE id = ?', [driverId]);
           await tx.query('COMMIT');
           tx.release();
         } catch (e: any) {
-          await tx.query('ROLLBACK');
+          try { await tx.query('ROLLBACK'); } catch {}
           tx.release();
           throw e;
         }
@@ -298,6 +345,11 @@ export const setupSocketHandlers = (io: Server) => {
         // this (not assume success) because another driver may have won the race.
         socket.emit('accept-confirmed', { rideId, timestamp: new Date().toISOString() });
 
+        void sendPushToUser(actualRiderId, {
+          title: 'Driver found!',
+          body: 'A driver has accepted your NAVIGO request.',
+          data: { type: 'ride-accepted', rideId },
+        });
         io.to(actualRiderId).emit('ride-accepted', {
           rideId,
           driverId,
@@ -407,6 +459,13 @@ export const setupSocketHandlers = (io: Server) => {
         await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
 
         if (status === 'completed') {
+          // Make the driver eligible for another request only after this trip
+          // has left the active states, and only if they remain online/approved.
+          try {
+            await syncDriverAvailability(db, userId);
+          } catch (availabilityError) {
+            console.error('Could not refresh driver availability after completion:', availabilityError);
+          }
           console.log(`🏁 Ride ${rideId} marked as completed. Triggering settlement...`);
           const settlement = await settleRidePayment(rideId);
           if (settlement.success) {
@@ -426,6 +485,16 @@ export const setupSocketHandlers = (io: Server) => {
 
         // Notify the rider (from the DB, never client-supplied) + the ride room
         notifyRide(rideId, ride.userId, userId, 'status-changed', { rideId, status });
+        const statusMessages: Record<string, { title: string; body: string }> = {
+          arrived: { title: 'Your driver has arrived', body: 'Your NAVIGO driver is at the pickup location.' },
+          ongoing: { title: 'Your trip has started', body: 'Your NAVIGO trip is now in progress.' },
+          completed: { title: 'Trip completed', body: 'Your NAVIGO trip has been completed.' },
+        };
+        const push = statusMessages[status];
+        if (push) void sendPushToUser(ride.userId, {
+          ...push,
+          data: { type: 'ride-status', rideId, status },
+        });
       } catch (e) {
         console.error('Error updating status:', e);
         socket.emit('error', { message: 'Failed to update status.' });

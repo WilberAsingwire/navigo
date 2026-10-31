@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import api from '../services/api';
+import {
+  startPushNotificationRegistration,
+  unregisterCurrentPushDevice
+} from '../services/pushNotificationService';
 
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const SESSION_WARNING = 25 * 60 * 1000; // warn at 25 min
@@ -51,6 +55,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  const authenticatedUserId = user?.id ?? null;
+
+  // Register native Android push notifications only after a real user session exists.
+  useEffect(() => {
+    if (isLoading || !authenticatedUserId || isGuest) return;
+
+    let disposed = false;
+    let removeListeners: () => void = () => {};
+
+    void startPushNotificationRegistration().then(cleanup => {
+      if (disposed) cleanup();
+      else removeListeners = cleanup;
+    });
+
+    return () => {
+      disposed = true;
+      removeListeners();
+    };
+  }, [isLoading, authenticatedUserId, isGuest]);
 
   // Track user activity for session timeout
   useEffect(() => {
@@ -174,6 +197,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = useCallback(() => {
+    void unregisterCurrentPushDevice(localStorage.getItem('navigo_token'));
     setUser(null);
     setToken(null);
     setIsGuest(false);
@@ -211,6 +235,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const continueAsGuest = useCallback(() => {
+    void unregisterCurrentPushDevice(localStorage.getItem('navigo_token'));
     setUser(null);
     setToken(null);
     setIsGuest(true);

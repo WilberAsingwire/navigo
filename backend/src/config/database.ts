@@ -117,6 +117,17 @@ export const initDB = async () => {
           createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS device_tokens (
+          id TEXT PRIMARY KEY,
+          userId TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token TEXT NOT NULL UNIQUE,
+          platform TEXT NOT NULL CHECK(platform IN ('android', 'ios')),
+          createdAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(userId);
+
         CREATE TABLE IF NOT EXISTS driver_profiles (
           userId TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
           vehicleType TEXT DEFAULT 'boda',
@@ -406,6 +417,7 @@ export const initDB = async () => {
       payouts: [],
       ride_messages: [],
       phone_verifications: [],
+      device_tokens: [],
     };
     // Minimal mock pool object to prevent null checks
     const emptyResult = (): QueryResult<any> => ({ rows: [], rowCount: 0, command: '', oid: 0, fields: [] });
@@ -512,6 +524,26 @@ export const getDB = () => {
         if (q.includes('update users set phoneverified')) {
           const u = mockStore.users.find((x: any) => x.phone === params[0]);
           if (u) u.phoneVerified = true;
+          return emptyResult();
+        }
+        if (q.includes('insert into device_tokens')) {
+          const [id, userId, token, platform] = params;
+          const existing = mockStore.device_tokens.find((item: any) => item.token === token);
+          const now = new Date().toISOString();
+          if (existing) {
+            existing.userId = userId;
+            existing.platform = platform;
+            existing.updatedAt = now;
+          } else {
+            mockStore.device_tokens.push({ id, userId, token, platform, createdAt: now, updatedAt: now });
+          }
+          return emptyResult();
+        }
+        if (q.includes('delete from device_tokens')) {
+          const [userId, token] = params;
+          mockStore.device_tokens = mockStore.device_tokens.filter(
+            (item: any) => !(item.userId === userId && item.token === token)
+          );
           return emptyResult();
         }
         if (q.includes('insert into ride_messages')) {

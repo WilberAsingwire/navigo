@@ -14,6 +14,7 @@ import { useHistory } from 'react-router-dom';
 import InitialsAvatar from '../../components/InitialsAvatar';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import { clearLocationWatch, getCurrentLocation, isLocationAvailable, watchLocation, type LocationWatchHandle } from '../../services/locationService';
 import ThemeToggle from '../../components/ThemeToggle';
 import useHaptic from '../../hooks/useHaptic';
 import './DriverHome.css';
@@ -23,9 +24,10 @@ const DriverHome: React.FC = () => {
   const { user } = useAuth();
   const { light, medium } = useHaptic();
   const [isOnline, setIsOnline] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const locationWatchRef = useRef<number | null>(null);
+  const locationWatchRef = useRef<LocationWatchHandle | null>(null);
   const lastLocationSentRef = useRef(0);
 
   useEffect(() => {
@@ -33,6 +35,7 @@ const DriverHome: React.FC = () => {
       try {
         const res = await api.get('/drivers/profile');
         setIsOnline(res.data.user?.isOnline || false);
+        setIsAvailable(res.data.user?.isAvailable || false);
       } catch (e) {
         console.error('Failed to fetch driver status:', e);
       }
@@ -77,13 +80,13 @@ const DriverHome: React.FC = () => {
   // This is what makes nearby-driver matching work before a ride starts.
   useEffect(() => {
     if (!isOnline || !user) {
-      if (locationWatchRef.current !== null && 'geolocation' in navigator) {
-        navigator.geolocation.clearWatch(locationWatchRef.current);
+      if (locationWatchRef.current !== null) {
+        void clearLocationWatch(locationWatchRef.current);
         locationWatchRef.current = null;
       }
       return;
     }
-    if (!('geolocation' in navigator)) {
+    if (!isLocationAvailable()) {
       setToastMsg('Location services are required to receive nearby ride requests.');
       setShowToast(true);
       return;
@@ -99,14 +102,14 @@ const DriverHome: React.FC = () => {
       api.post('/drivers/location', { lat, lng }).catch(() => { /* transient network failure; retry on next GPS update */ });
     };
 
-    locationWatchRef.current = navigator.geolocation.watchPosition(
+    locationWatchRef.current = watchLocation(
       sendLocation,
       () => {},
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
     );
 
     return () => {
-      if (locationWatchRef.current !== null) navigator.geolocation.clearWatch(locationWatchRef.current);
+      if (locationWatchRef.current !== null) void clearLocationWatch(locationWatchRef.current);
       locationWatchRef.current = null;
     };
   }, [isOnline, user]);
@@ -114,19 +117,50 @@ const DriverHome: React.FC = () => {
   const handleStatusToggle = async (online: boolean) => {
     if (user?.verificationStatus !== 'approved') {
       setIsOnline(false);
+      setIsAvailable(false);
       setToastMsg('Your account must be approved by an admin before you can go online.');
       setShowToast(true);
       return;
     }
+    const previousOnline = isOnline;
+    const previousAvailable = isAvailable;
     try {
       medium();
-      await api.post('/drivers/status/online', { online });
-      setIsOnline(online);
+
+      // Get and persist a fresh position before marking the driver online.
+      // This prevents matching against an old/stale coordinate.
+      if (online) {
+        try {
+          const position = await getCurrentLocation({
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 5000,
+          });
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) {
+            setToastMsg('NAVIGO driver availability currently requires a location within Uganda.');
+            setShowToast(true);
+            return;
+          }
+          await api.post('/drivers/location', { lat, lng });
+        } catch (locationError) {
+          console.error('Driver location permission or GPS error:', locationError);
+          setToastMsg('Location access is required. Enable GPS and allow NAVIGO to use your location before going online.');
+          setShowToast(true);
+          return;
+        }
+      }
+
+      const res = await api.post('/drivers/status/online', { online });
+      setIsOnline(res.data?.isOnline ?? online);
+      setIsAvailable(res.data?.isAvailable ?? online);
     } catch (error) {
       console.error('Failed to update online status:', error);
       setToastMsg('Could not update status. Please try again.');
       setShowToast(true);
-      setIsOnline(!online);
+      setIsOnline(previousOnline);
+      setIsAvailable(previousAvailable);
     }
   };
 
@@ -166,7 +200,7 @@ const DriverHome: React.FC = () => {
           <div className={`status-banner ${isOnline ? 'online' : 'offline'}`} data-reveal onClick={() => handleStatusToggle(!isOnline)}>
             <IonIcon icon={isOnline ? leafOutline : timeOutline} className="status-icon" style={{ color: isOnline ? '#2D6A4F' : '#888' }} />
             <IonText className="status-text" style={{ color: isOnline ? '#2D6A4F' : '#888' }}>
-              {isOnline ? 'You are visible to nearby riders' : 'Go online to start receiving ride requests'}
+              {isOnline ? (isAvailable ? 'You are visible to nearby riders' : 'You are online but unavailable for new bookings') : 'Go online to start receiving ride requests'}
             </IonText>
           </div>
 
