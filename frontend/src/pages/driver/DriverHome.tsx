@@ -130,19 +130,26 @@ const DriverHome: React.FC = () => {
       // Get and persist a fresh position before marking the driver online.
       // This prevents matching against an old/stale coordinate.
       if (online) {
-        const position = await getCurrentLocation({
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 5000,
-        });
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) {
-          setToastMsg('NAVIGO driver availability currently requires a location within Uganda.');
+        try {
+          const position = await getCurrentLocation({
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 5000,
+          });
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -5 || lat > 5 || lng < 29 || lng > 36) {
+            setToastMsg('NAVIGO driver availability currently requires a location within Uganda.');
+            setShowToast(true);
+            return;
+          }
+          await api.post('/drivers/location', { lat, lng });
+        } catch (locationError) {
+          console.error('Driver location permission or GPS error:', locationError);
+          setToastMsg('Location access is required. Enable GPS and allow NAVIGO to use your location before going online.');
           setShowToast(true);
           return;
         }
-        await api.post('/drivers/location', { lat, lng });
       }
 
       const res = await api.post('/drivers/status/online', { online });
@@ -150,9 +157,7 @@ const DriverHome: React.FC = () => {
       setIsAvailable(res.data?.isAvailable ?? online);
     } catch (error) {
       console.error('Failed to update online status:', error);
-      setToastMsg(online
-        ? 'Location access is required. Enable GPS and allow NAVIGO to use your location before going online.'
-        : 'Could not update status. Please try again.');
+      setToastMsg('Could not update status. Please try again.');
       setShowToast(true);
       setIsOnline(previousOnline);
       setIsAvailable(previousAvailable);
