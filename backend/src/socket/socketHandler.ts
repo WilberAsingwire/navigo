@@ -253,7 +253,7 @@ export const setupSocketHandlers = (io: Server) => {
       }
 
       const db = getDB();
-      let actualRiderId: string;
+      let actualRiderId = '';
       try {
         // Lock the driver row first. The online toggle and every acceptance
         // use this same lock, preventing two simultaneous assignments.
@@ -297,6 +297,7 @@ export const setupSocketHandlers = (io: Server) => {
           if (ride.status !== 'requested') throw new Error('Ride is no longer available.');
 
           // Enforce request expiry — stale requests cannot be accepted later.
+          let requestExpired = false;
           if (ride.expiresAt) {
             const expiry = new Date(ride.expiresAt);
             if (!isNaN(expiry.getTime()) && expiry < new Date()) {
@@ -304,8 +305,14 @@ export const setupSocketHandlers = (io: Server) => {
                 "UPDATE rides SET status = 'cancelled', cancelledAt = CURRENT_TIMESTAMP WHERE id = ? AND status = 'requested'",
                 [rideId]
               );
-              throw new Error('This ride request has expired.');
+              requestExpired = true;
             }
+          }
+          if (requestExpired) {
+            // Commit the expiry transition; throwing here would roll it back.
+            await tx.query('COMMIT');
+            tx.release();
+            return socket.emit('error', { message: 'This ride request has expired.' });
           }
 
           actualRiderId = ride.userId;
