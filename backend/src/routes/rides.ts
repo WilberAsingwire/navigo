@@ -332,7 +332,11 @@ router.post('/:rideId/cancel', authenticate, async (req: Request, res: Response)
       ['cancelled', new Date().toISOString(), rideId]
     );
     // Release the assigned driver if they are still online and have no other trip.
-    await syncDriverAvailability(db, ride.driverId);
+    try {
+      await syncDriverAvailability(db, ride.driverId);
+    } catch (availabilityError) {
+      console.error('Could not refresh driver availability after cancellation:', availabilityError);
+    }
 
     // Tell the other party in real time (fire & forget).
     notifyRide(String(rideId), ride.userId, ride.driverId, 'ride-cancelled', {
@@ -390,7 +394,11 @@ router.post('/:rideId/status', authenticate, async (req: Request, res: Response)
 
     await db.run('UPDATE rides SET status = ? WHERE id = ?', [status, rideId]);
     if (status === 'completed') {
-      await syncDriverAvailability(db, userId);
+      try {
+        await syncDriverAvailability(db, userId);
+      } catch (availabilityError) {
+        console.error('Could not refresh driver availability after completion:', availabilityError);
+      }
     }
 
     let settlementResult = null;
