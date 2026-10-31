@@ -10,6 +10,7 @@ import {
   pricetagOutline
 } from 'ionicons/icons';
 import api from '../../services/api';
+import { clearLocationWatch, getCurrentLocation, type LocationWatchHandle } from '../../services/locationService';
 import { useAuth } from '../../context/AuthContext';
 import NavigoMap from '../../components/NavigoMap';
 import socketService from '../../services/socketService';
@@ -104,7 +105,7 @@ const RideRequest: React.FC = () => {
   const [receiverName, setReceiverName] = useState('');
   const [receiverPhone, setReceiverPhone] = useState('');
 
-  const geoWatchRef = useRef<number | null>(null);
+  const geoWatchRef = useRef<LocationWatchHandle | null>(null);
   const matchingTimeoutRef = useRef<any>(null);
   const matchingIntervalRef = useRef<any>(null);
   const searchTimeoutRef = useRef<any>(null);
@@ -128,7 +129,8 @@ const RideRequest: React.FC = () => {
       clearMatchingTimers();
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
       if (geoWatchRef.current !== null) {
-        navigator.geolocation.clearWatch(geoWatchRef.current);
+        void clearLocationWatch(geoWatchRef.current);
+        geoWatchRef.current = null;
       }
     };
   }, []);
@@ -239,14 +241,8 @@ const RideRequest: React.FC = () => {
   };
 
   const getCurrentLocation = useCallback(() => {
-    if (!('geolocation' in navigator)) {
-      setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
-      setPickupSearch('Kampala');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+    void getCurrentLocation()
+      .then(async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         if (lat < -5 || lat > 5 || lng < 29 || lng > 36) {
@@ -278,13 +274,11 @@ const RideRequest: React.FC = () => {
             setPickupSearch(resolved.name || 'Current Location');
           }
         } catch { /* keep GPS coordinates if reverse geocoding is unavailable */ }
-      },
-      () => {
+      })
+      .catch(() => {
         setPickup({ lat: 0.3476, lng: 32.5825, address: 'Kampala, Uganda', name: 'Kampala' });
         setPickupSearch('Kampala');
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+      });
   }, []);
 
   const searchLocation = async (query: string): Promise<Location[]> => {
