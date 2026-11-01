@@ -40,10 +40,11 @@ const redirectOrigin = (() => {
   catch { return 'https://navigo-five.vercel.app'; }
 })();
 const nativeOrigins = ['https://localhost', 'capacitor://localhost', 'ionic://localhost'];
-const allowedOrigins = [...new Set([
-  ...(envOrigins || (process.env.NODE_ENV === 'production' ? [redirectOrigin] : [])),
-  ...nativeOrigins,
-])];
+const configuredOrigins = envOrigins
+  || (process.env.NODE_ENV === 'production' ? [redirectOrigin] : null);
+const allowedOrigins = configuredOrigins
+  ? [...new Set([...configuredOrigins, ...nativeOrigins])]
+  : null;
 
 // Security headers (H11). API-only server, so the strict defaults are safe.
 app.use(helmet());
