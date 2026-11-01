@@ -27,8 +27,11 @@ const httpServer = createServer(app);
 
 // CORS (H12): deny-by-default in production. Origins come from
 // ALLOWED_ORIGINS; if unset in production we fall back to the known frontend
-// (REDIRECT_URL's origin / the Vercel deployment) instead of allowing '*'.
-// In development, no list = allow all (local tooling, device testing).
+// (REDIRECT_URL's origin / the Vercel deployment). Capacitor Android serves
+// its bundled app from https://localhost (androidScheme: 'https'), which is
+// a separate origin from the hosted web frontend and must be explicitly
+// allowed for native-app API calls. These exact local origins do not expose
+// the API to arbitrary websites.
 const envOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
   : null;
@@ -36,16 +39,20 @@ const redirectOrigin = (() => {
   try { return new URL(process.env.REDIRECT_URL || 'https://navigo-five.vercel.app/auth/callback').origin; }
   catch { return 'https://navigo-five.vercel.app'; }
 })();
-const allowedOrigins = envOrigins
+const nativeOrigins = ['https://localhost', 'capacitor://localhost', 'ionic://localhost'];
+const configuredOrigins = envOrigins
   || (process.env.NODE_ENV === 'production' ? [redirectOrigin] : null);
+const allowedOrigins = [...new Set([
+  ...(configuredOrigins || []),
+  ...nativeOrigins,
+])];
 
 // Security headers (H11). API-only server, so the strict defaults are safe.
 app.use(helmet());
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!allowedOrigins) return callback(null, true);
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    if (!configuredOrigins || !origin || allowedOrigins.includes(origin)) callback(null, true);
     else callback(new Error('Not allowed by CORS'));
   },
   credentials: true
@@ -153,13 +160,14 @@ app.get('/api/health', async (_req: any, res: any) => {
 // Socket.io — use same CORS allowlist as REST, with credentials
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins || '*',
+    origin: configuredOrigins ? allowedOrigins : true,
     credentials: true,
     methods: ['GET', 'POST'],
   },
   pingTimeout: 60000,
   pingInterval: 25000,
 });
+
 setIO(io);
 setupSocketHandlers(io);
 
