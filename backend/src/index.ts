@@ -42,16 +42,17 @@ const redirectOrigin = (() => {
 const nativeOrigins = ['https://localhost', 'capacitor://localhost', 'ionic://localhost'];
 const configuredOrigins = envOrigins
   || (process.env.NODE_ENV === 'production' ? [redirectOrigin] : null);
-const allowedOrigins = configuredOrigins
-  ? [...new Set([...configuredOrigins, ...nativeOrigins])]
-  : null;
+const allowedOrigins = [...new Set([
+  ...(configuredOrigins || []),
+  ...nativeOrigins,
+])];
 
 // Security headers (H11). API-only server, so the strict defaults are safe.
 app.use(helmet());
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+    if (!configuredOrigins || !origin || allowedOrigins.includes(origin)) callback(null, true);
     else callback(new Error('Not allowed by CORS'));
   },
   credentials: true
@@ -159,7 +160,7 @@ app.get('/api/health', async (_req: any, res: any) => {
 // Socket.io — use same CORS allowlist as REST, with credentials
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: configuredOrigins ? allowedOrigins : true,
     credentials: true,
     methods: ['GET', 'POST'],
   },
