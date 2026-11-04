@@ -29,6 +29,7 @@ import './theme/design-polish.css';
 import './theme/light-mode.css';
 import './theme/system.css'; /* interaction discipline — must load last */
 import './theme/premium-v3.css';
+import './theme/responsive.css'; /* responsive contract — must load after every visual layer */
 
 setupIonicReact({ mode: 'md' });
 
@@ -91,7 +92,11 @@ const ProtectedContent: React.FC<{ allowedRoles: string[]; component: React.Elem
       (normalizedRole === 'driver' || normalizedRole === 'motorist') ? '/driver/home' : '/customer/home';
     return <Redirect to={redirectPath} />;
   }
-  return <Component {...props} />;
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Component {...props} />
+    </Suspense>
+  );
 };
 
 const HomeRedirect: React.FC = () => {
@@ -149,18 +154,17 @@ const AppContent: React.FC = () => {
       <a href="#main-content" className="skip-link">Skip to content</a>
       {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
       <IonReactRouter>
-        <Suspense fallback={<PageLoader />}>
           <IonRouterOutlet id="main-content">
 
             {/* Public Routes */}
-            <Route path="/login" render={() => <ErrorBoundary><Login /></ErrorBoundary>} exact />
-            <Route path="/register" render={() => <ErrorBoundary><Register /></ErrorBoundary>} exact />
-            <Route path="/forgot-password" render={() => <ErrorBoundary><ForgotPassword /></ErrorBoundary>} exact />
-            <Route path="/verify-phone" component={PhoneVerification} exact />
-            <Route path="/explore" render={() => <ErrorBoundary><RideRequest /></ErrorBoundary>} exact />
-            <Route path="/ussd" render={() => <ErrorBoundary><USSDInfo /></ErrorBoundary>} exact />
-            <Route path="/auth/callback" render={() => <ErrorBoundary><AuthCallback /></ErrorBoundary>} exact />
-            <Route path="/auth/complete-social-reg" render={() => <ErrorBoundary><CompleteSocialRegistration /></ErrorBoundary>} exact />
+            <Route path="/login" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><Login /></Suspense></ErrorBoundary>} />
+            <Route path="/register" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><Register /></Suspense></ErrorBoundary>} />
+            <Route path="/forgot-password" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><ForgotPassword /></Suspense></ErrorBoundary>} />
+            <Route path="/verify-phone" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><PhoneVerification /></Suspense></ErrorBoundary>} />
+            <Route path="/explore" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><RideRequest /></Suspense></ErrorBoundary>} />
+            <Route path="/ussd" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><USSDInfo /></Suspense></ErrorBoundary>} />
+            <Route path="/auth/callback" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><AuthCallback /></Suspense></ErrorBoundary>} />
+            <Route path="/auth/complete-social-reg" exact render={() => <ErrorBoundary><Suspense fallback={<PageLoader />}><CompleteSocialRegistration /></Suspense></ErrorBoundary>} />
 
             {/* Customer Routes */}
             <Route path="/customer/home" exact render={() => <ErrorBoundary><ProtectedContent allowedRoles={['rider', 'customer']} component={CustomerDashboard} /></ErrorBoundary>} />
@@ -197,7 +201,6 @@ const AppContent: React.FC = () => {
             <Route path="/" render={() => <ErrorBoundary><Home /></ErrorBoundary>} exact />
 
           </IonRouterOutlet>
-        </Suspense>
       </IonReactRouter>
     </IonApp>
   );

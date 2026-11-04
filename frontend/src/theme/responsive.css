@@ -1,0 +1,1065 @@
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGO RESPONSIVE SYSTEM
+   One responsive contract for phones, tablets, laptops and desktop.
+   Loaded last so page-specific styles can opt in without breaking
+   maps, auth forms, dashboards or full-screen booking.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --responsive-gutter: clamp(14px, 3.2vw, 48px);
+  --responsive-content-max: 1240px;
+  --responsive-control-h: 48px;
+}
+
+/* ---------- Foundational sizing ---------- */
+html {
+  width: 100%;
+  min-width: 280px;
+  overflow-x: hidden;
+}
+
+body,
+ion-app,
+ion-page,
+ion-content {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+/* ---------- Safe-area aware shells ---------- */
+ion-content::part(scroll) {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.page-shell,
+.content-shell,
+.admin-container,
+.analytics-container,
+.admin-users-container,
+.admin-approvals-container,
+.admin-support-container,
+.admin-settings-container {
+  width: min(100%, var(--responsive-content-max));
+  max-width: var(--responsive-content-max);
+  margin-inline: auto;
+  min-width: 0;
+}
+
+/* ---------- Auth / narrow forms ---------- */
+.auth-container,
+.social-reg-page-container,
+.forgot-page-container,
+.reg-page-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  padding-left: clamp(14px, 4vw, 24px);
+  padding-right: clamp(14px, 4vw, 24px);
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+.auth-card,
+.social-reg-card,
+.forgot-card,
+.reg-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.auth-card form,
+.social-reg-card form,
+.forgot-card form,
+.reg-card form {
+  width: 100%;
+  min-width: 0;
+}
+
+.auth-input,
+.input-field,
+.phone-field,
+.reset-input,
+.docs-input,
+.support-input-field,
+.support-textarea,
+.location-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.auth-button,
+.social-reg-card ion-button,
+.forgot-card ion-button,
+.reg-card ion-button {
+  width: 100%;
+}
+
+/* ---------- Universal fluid grids ---------- */
+.stats-grid,
+.kpi-grid,
+.actions-grid,
+.bottom-stats-grid,
+.history-stats-grid,
+.profile-stats-grid,
+.earnings-stats-grid,
+.trip-stats-grid,
+.rewards-grid,
+.safety-grid,
+.photo-uploads,
+.support-contact-grid,
+.admin-quick-actions-grid {
+  min-width: 0;
+}
+
+.stats-grid > *,
+.kpi-grid > *,
+.actions-grid > *,
+.bottom-stats-grid > *,
+.history-stats-grid > *,
+.profile-stats-grid > *,
+.earnings-stats-grid > *,
+.trip-stats-grid > *,
+.rewards-grid > *,
+.safety-grid > *,
+.photo-uploads > *,
+.support-contact-grid > *,
+.admin-quick-actions-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ---------- Text that must never push a layout wider ---------- */
+.ride-route,
+.route-text p,
+.user-meta,
+.user-name,
+.activity-text,
+.activity-time,
+.performer-name,
+.performer-meta,
+.support-info-text,
+.support-info-link,
+.result-name,
+.result-addr,
+.address-text,
+.destination-text {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.result-name,
+.result-addr {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Common rows become fluid before they become stacked ---------- */
+.rider-header,
+.driver-toolbar .header-content,
+.admin-welcome-row,
+.analytics-header,
+.status-header,
+.rider-info-card,
+.driver-actions,
+.rider-actions,
+.action-grid,
+.earnings-payout-card,
+.performer-item,
+.performer-info,
+.performer-stats {
+  min-width: 0;
+}
+
+.rider-header,
+.admin-welcome-row,
+.analytics-header {
+  gap: 12px;
+}
+
+.performer-info,
+.performer-stats {
+  flex-wrap: wrap;
+}
+
+/* ---------- Maps: never exceed the viewport ---------- */
+.booking-page-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.booking-map-panel,
+.booking-map-panel .leaflet-container,
+.admin-live-map .leaflet-container,
+.driver-live-map .leaflet-container {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.map-controls-top {
+  right: max(10px, env(safe-area-inset-right)) !important;
+  left: max(10px, env(safe-area-inset-left)) !important;
+}
+
+.map-controls-left {
+  min-width: 0;
+  max-width: 72%;
+}
+
+.map-controls-left > * {
+  max-width: 100%;
+}
+
+.map-style-toggle {
+  max-width: 100%;
+}
+
+.my-location-btn {
+  min-width: 44px;
+  max-width: 100%;
+}
+
+.booking-form-panel {
+  left: max(8px, env(safe-area-inset-left)) !important;
+  right: max(8px, env(safe-area-inset-right)) !important;
+  width: auto !important;
+  max-width: 520px !important;
+  margin-inline: auto !important;
+}
+
+@media (min-width: 1024px) {
+  .booking-form-panel {
+    left: max(18px, env(safe-area-inset-left)) !important;
+    right: auto !important;
+    width: min(420px, calc(100vw - 36px)) !important;
+    max-width: 420px !important;
+    margin-inline: 0 !important;
+  }
+}
+
+/* ---------- Mobile navigation / action rows ---------- */
+@media (max-width: 767px) {
+  .desktop-only,
+  .desktop-nav-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+
+  .rider-header,
+  .admin-welcome-row,
+  .analytics-header,
+  .status-header {
+    align-items: flex-start;
+  }
+
+  .rider-header > *,
+  .admin-welcome-row > *,
+  .analytics-header > * {
+    min-width: 0;
+  }
+
+  .rider-header {
+    padding-inline: 16px !important;
+  }
+
+  .action-grid,
+  .driver-actions,
+  .rider-actions {
+    flex-wrap: wrap;
+  }
+
+  .action-grid ion-button,
+  .driver-actions ion-button,
+  .rider-actions ion-button {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  .trip-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .performer-stats {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Prevent fixed card widths from creating a horizontal page scroll. */
+  [style*="width: 480px"],
+  [style*="width: 500px"],
+  [style*="width: 600px"],
+  [style*="width: 700px"],
+  [style*="width: 800px"] {
+    max-width: 100% !important;
+  }
+}
+
+/* ---------- Phones: 320–479px ---------- */
+@media (max-width: 479px) {
+  :root {
+    --responsive-gutter: 14px;
+  }
+
+  ion-title {
+    font-size: 16px !important;
+  }
+
+  ion-toolbar {
+    --min-height: 56px;
+  }
+
+  .auth-container,
+  .social-reg-page-container,
+  .forgot-page-container,
+  .reg-page-container {
+    padding-top: 18px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .auth-card,
+  .social-reg-card,
+  .forgot-card,
+  .reg-card {
+    padding: 20px 16px !important;
+    border-radius: 16px !important;
+  }
+
+  .history-stats-grid,
+  .profile-stats-grid,
+  .earnings-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .stats-grid,
+  .kpi-grid,
+  .actions-grid,
+  .bottom-stats-grid {
+    gap: 8px !important;
+  }
+
+  .stat-value,
+  .kpi-value {
+    font-size: clamp(1rem, 6vw, 1.35rem) !important;
+  }
+
+  .support-contact-grid,
+  .photo-uploads,
+  .safety-grid,
+  .rewards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rider-info-card,
+  .performer-item,
+  .earnings-payout-card,
+  .status-header {
+    align-items: flex-start;
+  }
+
+  .rider-actions,
+  .driver-actions {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .rider-actions ion-button,
+  .driver-actions ion-button {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .route-info-card,
+  .route-card,
+  .fare-display,
+  .glass-booking-card,
+  .status-card,
+  .vehicle-main-card {
+    padding: 14px !important;
+  }
+
+  .timer-circle {
+    width: 76px !important;
+    height: 76px !important;
+  }
+
+  .fare-amount {
+    font-size: clamp(28px, 9vw, 36px) !important;
+  }
+
+  .booking-form-panel {
+    max-height: 76svh !important;
+    padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .glass-booking-card {
+    border-radius: 18px !important;
+  }
+
+  .map-controls-top {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .map-controls-left {
+    gap: 5px;
+    max-width: calc(100% - 48px);
+  }
+
+  .map-badge {
+    font-size: 10px;
+    padding: 4px 7px;
+  }
+
+  .map-style-btn {
+    padding: 6px 9px !important;
+    font-size: 10px;
+  }
+
+  .my-location-btn span {
+    display: none;
+  }
+
+  .my-location-btn {
+    width: 42px;
+    height: 42px;
+    justify-content: center;
+    padding: 0 !important;
+  }
+
+  .chat-box,
+  .chat-window,
+  .chat-panel {
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  .sticky-bottom-bar {
+    width: calc(100% - 24px) !important;
+    max-width: 420px;
+    left: 12px !important;
+    right: 12px !important;
+    transform: none !important;
+  }
+
+  .ussd-pill {
+    width: 100%;
+  }
+}
+
+/* ---------- Very small phones: 280–359px ---------- */
+@media (max-width: 359px) {
+  .home-nav {
+    padding-inline: 10px !important;
+  }
+
+  .nav-signup-pill {
+    padding-inline: 14px !important;
+    font-size: 12px !important;
+  }
+
+  .mobile-menu-toggle {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .ride-card {
+    flex-basis: min(88vw, 300px) !important;
+  }
+
+  .preview-main {
+    grid-template-columns: 1fr !important;
+  }
+
+  .vehicle-option-card {
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  .vehicle-main-info {
+    min-width: 0;
+  }
+
+  .vehicle-details {
+    min-width: 0;
+  }
+
+  .vehicle-type-name,
+  .vehicle-type-desc {
+    overflow-wrap: anywhere;
+  }
+
+  .action-grid ion-button,
+  .rider-actions ion-button,
+  .driver-actions ion-button {
+    font-size: 12px !important;
+  }
+
+  .history-stats-grid,
+  .profile-stats-grid,
+  .earnings-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ---------- Small tablets: 480–767px ---------- */
+@media (min-width: 480px) and (max-width: 767px) {
+  .support-contact-grid,
+  .photo-uploads,
+  .safety-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rewards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auth-card,
+  .social-reg-card,
+  .forgot-card,
+  .reg-card {
+    padding-inline: 24px !important;
+  }
+}
+
+/* ---------- Tablets: 768–1023px ---------- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --responsive-gutter: clamp(20px, 4vw, 36px);
+  }
+
+  .admin-container,
+  .analytics-container,
+  .admin-users-container,
+  .admin-approvals-container {
+    width: min(100%, 900px);
+    padding-inline: 20px;
+  }
+
+  .history-stats-grid,
+  .profile-stats-grid,
+  .earnings-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .ride-history-container,
+  .payments-container,
+  .profile-wrapper,
+  .support-wrapper,
+  .rider-page-container,
+  .driver-page-container {
+    padding-inline: 20px !important;
+  }
+
+  .booking-form-panel {
+    max-width: 560px !important;
+    max-height: 72svh !important;
+  }
+
+  .map-controls-left {
+    max-width: 78%;
+  }
+}
+
+/* ---------- Large desktops: 1440px+ ---------- */
+@media (min-width: 1440px) {
+  .admin-container,
+  .analytics-container,
+  .admin-users-container,
+  .admin-approvals-container {
+    width: min(100%, 1180px);
+  }
+
+  .rider-page-container,
+  .driver-page-container {
+    max-width: 1180px;
+    margin-inline: auto;
+  }
+}
+
+/* ---------- Landscape phones / short windows ---------- */
+@media (max-height: 560px) and (orientation: landscape) {
+  .auth-container,
+  .social-reg-page-container,
+  .forgot-page-container,
+  .reg-page-container {
+    min-height: auto !important;
+    justify-content: flex-start !important;
+    padding-top: 16px !important;
+    padding-bottom: 16px !important;
+  }
+
+  .auth-logo,
+  .auth-header {
+    margin-bottom: 14px !important;
+  }
+
+  .hero-section {
+    min-height: 760px !important;
+  }
+
+  .booking-form-panel {
+    max-height: 88svh !important;
+  }
+
+  .timer-circle {
+    width: 64px !important;
+    height: 64px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .completion-state {
+    padding-block: 20px !important;
+  }
+}
+
+/* ---------- Touch devices: comfortable targets ---------- */
+@media (pointer: coarse) {
+  button,
+  ion-button,
+  a[role="button"],
+  [role="button"],
+  .nav-link-text,
+  .footer-link {
+    min-height: 44px;
+  }
+
+  input,
+  select,
+  textarea,
+  .location-input-wrapper {
+    min-height: 46px;
+  }
+
+  .leaflet-control-zoom a {
+    width: 42px !important;
+    height: 42px !important;
+    line-height: 42px !important;
+  }
+}
+
+
+/* ---------- Shared overlays, drawers and chat ---------- */
+.driver-alert-overlay,
+.onboarding-overlay {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 100svh;
+  min-height: 100dvh;
+  padding:
+    max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right))
+    max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+
+.alert-container,
+.onboarding-card {
+  width: min(100%, 420px) !important;
+  max-width: 100% !important;
+  min-width: 0;
+  max-height: calc(100svh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chat-box {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.chat-header,
+.chat-input-area {
+  min-width: 0;
+}
+
+.chat-user-info,
+.chat-user-details {
+  min-width: 0;
+}
+
+.chat-user-details {
+  overflow: hidden;
+}
+
+.chat-user-details h4,
+.chat-user-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message-wrapper {
+  min-width: 0;
+  max-width: min(82%, 520px);
+}
+
+.message-bubble {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.chat-input-area {
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* ---------- Ionic controls: allow content to wrap instead of overflow ---------- */
+ion-grid,
+ion-row,
+ion-col,
+ion-list,
+ion-item,
+ion-card,
+ion-card-content,
+ion-card-header {
+  min-width: 0;
+}
+
+ion-segment {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+ion-segment::-webkit-scrollbar {
+  display: none;
+}
+
+ion-segment-button {
+  min-width: 0;
+  --padding-start: 10px;
+  --padding-end: 10px;
+}
+
+ion-item {
+  --inner-padding-end: 12px;
+}
+
+ion-input,
+ion-textarea,
+ion-select,
+ion-searchbar {
+  min-width: 0 !important;
+  width: 100%;
+}
+
+ion-searchbar {
+  --box-shadow: none;
+}
+
+/* ---------- Admin / analytics layouts ---------- */
+.analytics-container,
+.admin-users-container,
+.admin-support-container,
+.admin-settings-container {
+  width: min(100%, 1120px);
+  max-width: 1120px;
+  padding-left: var(--responsive-gutter);
+  padding-right: var(--responsive-gutter);
+}
+
+/* Preserve deliberately narrow admin forms while keeping every shell fluid. */
+.admin-container,
+.admin-approvals-container {
+  width: min(100%, 700px);
+  max-width: 700px;
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: var(--responsive-gutter);
+}
+
+/* Dashboard/list analytics screens intentionally use the wider desktop canvas. */
+.analytics-container.admin-container,
+.admin-users-container.admin-container,
+.admin-support-container.admin-container,
+.admin-settings-container.admin-container {
+  width: min(100%, 1120px);
+  max-width: 1120px;
+}
+
+.admin-kpi-grid,
+.admin-quick-actions-grid,
+.stats-grid,
+.kpi-grid {
+  min-width: 0;
+}
+
+.admin-welcome-row,
+.analytics-header {
+  flex-wrap: wrap;
+}
+
+.admin-welcome-row > div,
+.analytics-header > div {
+  min-width: 0;
+}
+
+.admin-revenue-chart,
+.bar-chart {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-revenue-chart::-webkit-scrollbar,
+.bar-chart::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------- Rider / driver content widths ---------- */
+.rider-page-container,
+.ride-history-container,
+.profile-wrapper,
+.support-container,
+.places-wrapper,
+.driver-page-container,
+.driver-active-container,
+.driver-docs-container,
+.driver-earnings-container,
+.driver-vehicle-wrapper,
+.incoming-wrapper {
+  width: min(100%, 1120px);
+  max-width: 1120px;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.rider-page-container,
+.driver-page-container,
+.driver-active-container,
+.driver-docs-container,
+.driver-earnings-container,
+.driver-vehicle-wrapper {
+  padding-left: var(--responsive-gutter);
+  padding-right: var(--responsive-gutter);
+}
+
+/* Full-screen map pages keep their own edge-to-edge layout rules. */
+
+/* ---------- Forms and two-column groups collapse cleanly ---------- */
+.form-row,
+.form-grid,
+.input-row,
+.phone-input-row,
+.options-row,
+.actions-row,
+.button-row {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .form-row,
+  .form-grid,
+  .input-row,
+  .phone-input-row,
+  .options-row,
+  .actions-row,
+  .button-row {
+    grid-template-columns: 1fr !important;
+    flex-direction: column;
+  }
+
+  .form-row > *,
+  .form-grid > *,
+  .input-row > *,
+  .phone-input-row > *,
+  .options-row > *,
+  .actions-row > *,
+  .button-row > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .alert-container {
+    padding: 24px 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .alert-title {
+    font-size: clamp(24px, 8vw, 32px) !important;
+  }
+
+  .request-details {
+    padding: 14px !important;
+  }
+
+  .detail-item {
+    font-size: 14px !important;
+  }
+
+  .alert-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .onboarding-card {
+    padding: 22px 16px !important;
+    border-radius: 22px !important;
+  }
+
+  .onboarding-progress-wrapper,
+  .onboarding-content {
+    margin-bottom: 24px !important;
+  }
+
+  .onboarding-visual {
+    width: 132px !important;
+    height: 132px !important;
+  }
+
+  .visual-emoji {
+    font-size: 52px !important;
+  }
+
+  .onboarding-title {
+    font-size: clamp(22px, 7vw, 28px) !important;
+  }
+
+  .onboarding-description {
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .rider-page-container,
+  .ride-history-container,
+  .payments-container,
+  .payments-content,
+  .profile-wrapper,
+  .support-container,
+  .places-wrapper,
+  .driver-page-container,
+  .driver-active-container,
+  .driver-docs-container,
+  .driver-earnings-container,
+  .driver-vehicle-wrapper,
+  .request-container {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .performer-item,
+  .user-card,
+  .admin-alert-item,
+  .activity-item {
+    flex-wrap: wrap;
+  }
+
+  .admin-alert-time,
+  .activity-time {
+    margin-left: auto;
+  }
+
+  .tier-info,
+  .points-display {
+    min-width: 0;
+  }
+
+  .loyalty-content {
+    padding: 16px !important;
+  }
+
+  .loyalty-header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .loyalty-tabs {
+    overflow-x: auto;
+  }
+
+  .loyalty-tab {
+    flex: 0 0 auto;
+    min-width: 88px;
+    padding-inline: 10px;
+  }
+}
+
+/* ---------- Tablet landscape: use the space without creating tiny columns ---------- */
+@media (min-width: 768px) and (max-width: 1199px) and (orientation: landscape) {
+  .admin-container,
+  .analytics-container,
+  .admin-users-container,
+  .admin-approvals-container {
+    width: min(100%, 980px);
+  }
+
+  .ride-history-container,
+  .payments-container,
+  .profile-wrapper,
+  .support-container,
+  .rider-page-container,
+  .driver-page-container {
+    width: min(100%, 980px);
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Print: usable receipts/reports ---------- */
+@media print {
+  .home-nav,
+  .sticky-bottom-bar,
+  .mobile-menu-toggle,
+  .hero-story-video,
+  .hero-story-video-toggle,
+  .leaflet-control-container {
+    display: none !important;
+  }
+
+  body,
+  ion-app,
+  ion-page,
+  ion-content {
+    background: #fff !important;
+    color: #111 !important;
+  }
+}

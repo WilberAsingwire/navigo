@@ -37,9 +37,7 @@
   to { transform: scale(4); opacity: 0; }
 }
 
-ion-page {
-  animation: navigo-page-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Ionic Router controls ion-page visibility and transitions. Do not animate ion-page globally. */
 
 /* ── Interactive Cards Everywhere ─────────────────────────── */
 [class*="card"], [class*="pill"], [class*="tile"]:not([class*="leaflet"]), .action-btn, .action-card, .stat-pill, .kpi-card, .driver-row, .place-chip, .recent-trip-item, .vehicle-option-card, .reward-tile, .challenge-item {
